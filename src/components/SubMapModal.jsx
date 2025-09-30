@@ -17,7 +17,14 @@ function pageStepMilesForZoom(baseZoom) {
 }
 
 /* ---- Drag + edge paging controller ---- */
-function DragAndPageController({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
+function DragAndPageController({
+  pos,
+  setPos,
+  pageTile,
+  handoff,
+  onPointerUpCommit,
+  mainMapRef,                // ⬅️ NEW: let controller sync the main map during drag
+}) {
   const map = useMap()
   const posRef = useRef(pos)
   const activeIdRef = useRef(null)
@@ -59,13 +66,19 @@ function DragAndPageController({ pos, setPos, pageTile, handoff, onPointerUpComm
   const startDrag = (clientX, clientY, id = -1) => {
     activeIdRef.current = id
     const startLL = clientToLatLng(clientX, clientY)
-    setBoth({ lat: startLL.lat, lng: startLL.lng })
+    const start = { lat: startLL.lat, lng: startLL.lng }
+    setBoth(start)
+    // ⬇️ keep main map centered immediately on drag start
+    mainMapRef?.current?.panTo([start.lat, start.lng], { animate: false })
 
     const onMove = (ev) => {
       if (activeIdRef.current !== -1 && ev.pointerId !== activeIdRef.current) return
       maybePageAtEdges(ev.clientX, ev.clientY)
       const ll = clientToLatLng(ev.clientX, ev.clientY)
-      setBoth({ lat: ll.lat, lng: ll.lng })
+      const next = { lat: ll.lat, lng: ll.lng }
+      setBoth(next)
+      // ⬇️ continuous follow while dragging
+      mainMapRef?.current?.panTo([next.lat, next.lng], { animate: false })
       ev.preventDefault?.()
     }
 
@@ -184,7 +197,7 @@ export default function SubMapModal({
     if (dir === 'W') next = { lat: viewCenter.lat, lng: viewCenter.lng - dLngMiles }
     setViewCenter(next)
 
-    // sync main map center as we page
+    // ✅ keep main map centered as we page
     mainMapRef?.current?.panTo([next.lat, next.lng], { animate: false })
 
     requestAnimationFrame(() => {
@@ -193,7 +206,10 @@ export default function SubMapModal({
       const rect = map.getContainer().getBoundingClientRect()
       const pt = L.point(clientPoint.x - rect.left, clientPoint.y - rect.top)
       const ll = map.containerPointToLatLng(pt)
-      setPos({ lat: ll.lat, lng: ll.lng })
+      const updated = { lat: ll.lat, lng: ll.lng }
+      setPos(updated)
+      // also sync main map to the new pin position after paging snap
+      mainMapRef?.current?.panTo([updated.lat, updated.lng], { animate: false })
     })
   }
 
@@ -228,6 +244,7 @@ export default function SubMapModal({
               pageTile={pageTile}
               handoff={handoff}
               onPointerUpCommit={(finalPos) => onCommit(finalPos)}
+              mainMapRef={mainMapRef}         // ⬅️ NEW: live-sync main map on drag
             />
           </MapContainer>
         </div>
