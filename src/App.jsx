@@ -122,7 +122,6 @@ const DEFAULT_FUN_FACTS = {
 /* -------- Small safe fallback if your table doesn’t expose onSelect -------- */
 const RecentPinsTable = (props) => {
   if (RecentPinsTableBase) return <RecentPinsTableBase {...props} />
-  // extremely basic fallback
   const pins = props.pins || []
   return (
     <div className="list" style={{ padding: 10 }}>
@@ -539,7 +538,7 @@ export default function App() {
     gap: 8,
   })
 
-  // Desktop header content (unchanged)
+  // Desktop header content (single definition)
   const desktopHeaderRight =
     mapMode === 'chicago'
       ? (
@@ -566,49 +565,6 @@ export default function App() {
       : (
         <GlobalCounters counts={continentCounts} />
       )
-
-  /* ---------------- Admin (hidden) ---------------- */
-  const [adminOpen, setAdminOpen] = useState(
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1'
-  )
-  const tapCountRef = useRef(0)
-  const tapTimerRef = useRef(null)
-
-  const shouldCountTap = (e) => {
-    const target = e.target
-    if (!target) return false
-    if (target.closest('button, a, input, textarea, select, [role="button"], [data-no-admin-tap]')) {
-      return false
-    }
-    return true
-  }
-
-  const registerTap = () => {
-    if (!tapTimerRef.current) {
-      tapTimerRef.current = setTimeout(() => {
-        tapCountRef.current = 0
-        tapTimerRef.current = null
-      }, 5000)
-    }
-    tapCountRef.current += 1
-    if (tapCountRef.current >= 3) {
-      clearTimeout(tapTimerRef.current)
-      tapTimerRef.current = null
-      tapCountRef.current = 0
-      setAdminOpen(true)
-    }
-  }
-
-  const handleFooterClick = (e) => { if (shouldCountTap(e)) registerTap() }
-  const handleFooterTouch = (e) => { if (shouldCountTap(e)) registerTap() }
-
-  useEffect(() => {
-    return () => { if (tapTimerRef.current) clearTimeout(tapTimerRef.current) }
-  }, [])
-
-  // -------- Modal for mobile Table row selection --------
-  const [selectedPin, setSelectedPin] = useState(null)
-  const closeSelectedModal = () => setSelectedPin(null)
 
   /* --------------------------- RENDER --------------------------- */
   return (
@@ -761,7 +717,7 @@ export default function App() {
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
 
       {/* Mobile details modal */}
-      {isMobile && <PinDetailsModal pin={selectedPin} onClose={closeSelectedModal} />}
+      {isMobile && <PinDetailsModal pin={selectedPin} onClose={() => setSelectedPin(null)} />}
     </div>
   )
 }
