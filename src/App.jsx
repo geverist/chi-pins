@@ -11,12 +11,11 @@ import { useHighlightPin } from './hooks/useHighlightPin'
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo'
 import {
-  CHI,                         // assumed center or helper constant from your mapUtils
   INITIAL_RADIUS_MILES,
   enableMainMapInteractions,
   disableMainMapInteractions
 } from './lib/mapUtils'
-import { focusDraft, goToChicago } from './lib/mapActions' // keeps your canonical Chicago view
+import { focusDraft, goToChicago } from './lib/mapActions'
 
 // pin helpers
 import { ensureUniqueSlug, makeChiSlug } from './lib/pinsUtils'
@@ -118,12 +117,6 @@ const DEFAULT_FUN_FACTS = {
   waukegan: "Ray Bradbury’s hometown; see the annual Ray Bradbury Days."
 }
 
-// World view constants (pleasant framing)
-const GLOBAL_CENTER = [20, 0]
-const GLOBAL_ZOOM = 3
-// Reasonable fallback Chicago zoom if your goToChicago doesn’t override zoom
-const CHICAGO_ZOOM_OUT = 11
-
 export default function App() {
   const mainMapRef = useRef(null)
 
@@ -133,11 +126,11 @@ export default function App() {
   // map mode
   const [mapMode, setMapMode] = useState('chicago') // 'chicago' | 'global'
 
-  // fun facts
+  // fun facts (DB-backed with fallback)
   const funFacts = useFunFacts(DEFAULT_FUN_FACTS)
 
   // draft pin
-  const [draft, setDraft] = useState(null)
+  const [draft, setDraft] = useState(null) // {lat,lng}
   const [slug, setSlug] = useState(null)
   const [tipToken, setTipToken] = useState(0)
 
@@ -311,9 +304,8 @@ export default function App() {
     setShareOpen(false)
     setShareToFb(false)
     setExploring(isMobile ? true : false)
-    clearHighlight()
     setMapMode('chicago')
-    // snap map back
+    // snap map back using your helper if available
     const map = mainMapRef.current
     if (map) goToChicago(map)
     setForm(f => ({ ...f, name:'', neighborhood:'', hotdog:'', note:'' }))
@@ -404,140 +396,6 @@ export default function App() {
     setTipToken(t => t + 1)
   }
 
-  /* ---------------- View helpers ---------------- */
-  const applyConstraintsForMode = (map, mode, isMobileFlag) => {
-    try {
-      if (mode === 'global') {
-        // global: allow wide zooming
-        map.setMinZoom(2)
-        map.setMaxBounds(null)
-      } else {
-        // chicago:
-        if (isMobileFlag) {
-          // per your earlier request: remove zoom-out restrictions on mobile
-          map.setMinZoom(2)
-          map.setMaxBounds(null)
-        } else {
-          // kiosk/desktop: keep things constrained so Chicago remains the focus
-          // Give a reasonable min zoom (no hard bounds to avoid tile drag issues)
-          map.setMinZoom(CHICAGO_ZOOM_OUT)
-          map.setMaxBounds(null)
-        }
-      }
-    } catch {}
-  }
-
-  const flyToGlobal = () => {
-    const map = mainMapRef.current
-    if (!map) return
-    applyConstraintsForMode(map, 'global', isMobile)
-    try {
-      map.stop()
-      map.flyTo(GLOBAL_CENTER, GLOBAL_ZOOM, { animate: true })
-      setTimeout(() => map.invalidateSize?.(), 50)
-    } catch {}
-  }
-
-  const snapToChicago = () => {
-    const map = mainMapRef.current
-    if (!map) return
-    applyConstraintsForMode(map, 'chicago', isMobile)
-    try {
-      map.stop()
-      // Prefer your canonical helper:
-      goToChicago(map)
-      // Fallback if goToChicago is a no-op:
-      const c = Array.isArray(CHI) ? CHI : [41.8781, -87.6298]
-      if (map.getZoom() < 3) {
-        map.setView(c, CHICAGO_ZOOM_OUT, { animate: false })
-      }
-      setTimeout(() => map.invalidateSize?.(), 50)
-    } catch {}
-  }
-
-  // Keep the Leaflet view + constraints in sync with mapMode and device
-  useEffect(() => {
-    const map = mainMapRef.current
-    if (!map) return
-    if (mapMode === 'global') {
-      flyToGlobal()
-    } else {
-      snapToChicago()
-    }
-  }, [mapMode, isMobile])
-
-  /* ---------------- Fine-tune modal ---------------- */
-  const openSubmap = (center, pointer) => {
-    if (isMobile) return
-    const live = mainMapRef.current?.getCenter?.()
-    const safeCenter =
-      (center && Number.isFinite(center.lat) && Number.isFinite(center.lng)) ? center :
-      (live && Number.isFinite(live.lat) && Number.isFinite(live.lng)) ? { lat: live.lat, lng: live.lng } :
-      CHI
-
-    const z = mainMapRef.current?.getZoom?.() ?? null
-    disableMainMapInteractions(mainMapRef.current)
-    setSubmapBaseZoom(z)
-    setSubmapCenter(safeCenter)
-    setHandoff(pointer)
-  }
-
-  const closeSubmap = () => {
-    enableMainMapInteractions(mainMapRef.current)
-    setTimeout(() => mainMapRef.current?.invalidateSize(), 0)
-    setSubmapCenter(null)
-    setHandoff(null)
-    setSubmapBaseZoom(null)
-  }
-
-  // mode switches (trigger view immediately too)
-  const goGlobal = () => {
-    setMapMode('global')
-    setDraft(null); setSlug(null); setSubmapCenter(null); setHandoff(null)
-    setSubmapBaseZoom(null)
-    setShowAttractor(false); setExploring(isMobile ? true : false)
-    setToast(null)
-    flyToGlobal()
-  }
-
-  const goChicagoZoomedOut = () => {
-    const needsReset = !!(draft || submapCenter || shareOpen)
-    if (needsReset) {
-      cancelEditing()
-      setTimeout(() => {
-        setShowAttractor(!isMobile)
-        snapToChicago()
-      }, 0)
-      return
-    }
-    setMapMode('chicago')
-    setShowAttractor(!isMobile)
-    setExploring(isMobile ? true : false)
-    snapToChicago()
-  }
-
-  // style helper
-  const btn3d = (pressed) => ({
-    padding: '10px 12px',
-    borderRadius: 12,
-    border: '1px solid #2a2f37',
-    background: pressed
-      ? 'linear-gradient(#242a33, #1a1f26)'
-      : 'linear-gradient(#1f242b, #171b20)',
-    color: '#f4f6f8',
-    boxShadow: pressed
-      ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
-      : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-    transform: pressed ? 'translateY(1px)' : 'translateY(0)',
-    transition: 'transform 80ms ease, box-shadow 120ms ease',
-    cursor: 'pointer',
-    fontSize: 14,
-    lineHeight: 1,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-  })
-
   // Desktop header content
   const desktopHeaderRight =
     mapMode === 'chicago'
@@ -548,7 +406,11 @@ export default function App() {
             type="button"
             aria-pressed={showPopularSpots}
             onClick={() => setShowPopularSpots(v => !v)}
-            style={btn3d(showPopularSpots)}
+            style={{
+              padding:'10px 12px', borderRadius:12, border:'1px solid #2a2f37',
+              background: showPopularSpots ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
+              color:'#f4f6f8'
+            }}
           >
             🌟 {showPopularSpots ? 'Popular spots ON' : 'Popular spots OFF'}
           </button>
@@ -556,7 +418,11 @@ export default function App() {
             type="button"
             aria-pressed={showCommunityPins}
             onClick={() => setShowCommunityPins(v => !v)}
-            style={btn3d(showCommunityPins)}
+            style={{
+              padding:'10px 12px', borderRadius:12, border:'1px solid #2a2f37',
+              background: showCommunityPins ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
+              color:'#f4f6f8'
+            }}
           >
             📍 {showCommunityPins ? 'Hide pins' : 'Show pins'}
           </button>
@@ -589,6 +455,30 @@ export default function App() {
       <div />
     </div>
   )
+
+  // Mode change handlers (no map work here; MapShell reacts to mapMode)
+  const goGlobal = () => {
+    setMapMode('global')
+    setDraft(null); setSlug(null); setSubmapCenter(null); setHandoff(null)
+    setSubmapBaseZoom(null)
+    setShowAttractor(false); setExploring(isMobile ? true : false)
+    setToast(null)
+  }
+
+  const goChicagoZoomedOut = () => {
+    const needsReset = !!(draft || submapCenter || shareOpen)
+    if (needsReset) {
+      cancelEditing()
+      setTimeout(() => {
+        setShowAttractor(!isMobile)
+      }, 0)
+      return
+    }
+    setMapMode('chicago')
+    setShowAttractor(!isMobile)
+    setExploring(isMobile ? true : false)
+    // MapShell will snap the view on mapMode change
+  }
 
   /* ---------------- Admin (hidden) ---------------- */
   const [adminOpen, setAdminOpen] = useState(
@@ -645,7 +535,7 @@ export default function App() {
         ) : (
           <MapShell
             mapMode={mapMode}
-            isMobile={isMobile}           
+            isMobile={isMobile}
             mainMapRef={mainMapRef}
             exploring={exploring}
             onPick={handlePick}
@@ -712,7 +602,10 @@ export default function App() {
           onCommit={(ll) => {
             setDraft(ll)
             mainMapRef.current?.panTo([ll.lat, ll.lng], { animate: false })
-            closeSubmap()
+            enableMainMapInteractions(mainMapRef.current)
+            setSubmapCenter(null)
+            setHandoff(null)
+            setSubmapBaseZoom(null)
             setTipToken(t => t + 1)
           }}
         />

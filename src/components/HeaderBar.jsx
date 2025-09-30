@@ -36,7 +36,6 @@ export default function HeaderBar({
   logoSrc,
   onLogoClick,
   continentCounts = null,
-  titleOverride, // optional: lets mobile say "Chicago Mike's Guest Pins"
 }) {
   const switchBtnStyle = (pressed) => ({
     padding:'10px 12px', borderRadius:12,
@@ -46,12 +45,6 @@ export default function HeaderBar({
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   })
-
-  const titleText =
-    titleOverride ??
-    (mapMode === 'global'
-      ? 'Where in the world are you from?'
-      : 'Where in Chicago(land) are you from?')
 
   return (
     <header
@@ -79,7 +72,9 @@ export default function HeaderBar({
         ) : null}
 
         <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap' }}>
-          {titleText}
+          {mapMode === 'global'
+            ? 'Where in the world are you from?'
+            : 'Where in Chicago(land) are you from?'}
         </h1>
 
         <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10 }}>
@@ -88,7 +83,7 @@ export default function HeaderBar({
         </span>
       </div>
 
-      {/* Right: continent counts (inline) + children + view switch */}
+      {/* Right: continent counts (inline) + children + switch */}
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
