@@ -13,11 +13,13 @@ import {
 } from '../lib/mapUtils'
 
 /* ------------------------ Chicago-biased glassy search ------------------------ */
+/* ------------------------ Chicago-biased glassy search ------------------------ */
 function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const map = useMap()
   const hostRef = useRef(null)
   const shellRef = useRef(null)
   const geocoderRef = useRef(null)
+  const inputRef = useRef(null)
   const clearBtnRef = useRef(null)
 
   // Create a top-center host on mount
@@ -111,6 +113,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
 
       // style the input (higher contrast)
       const input = ctrlEl.querySelector('.leaflet-control-geocoder-form input')
+      inputRef.current = input
       if (input) {
         Object.assign(input.style, {
           background: 'rgba(0,0,0,0.30)',
@@ -124,7 +127,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         })
         input.placeholder = placeholder
 
-        // placeholder contrast
         input.addEventListener('focus', () => {
           input.style.border = '1px solid #7fb1ff'
           input.style.boxShadow = '0 0 0 2px rgba(127,177,255,0.25)'
@@ -153,16 +155,9 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
           maxHeight: '50vh',
           overscrollBehavior: 'contain',
         })
-        // make each item higher contrast & full-width hit area
-        alts.querySelectorAll('a').forEach(a => {
-          a.style.color = '#ffffff'
-          a.style.textDecoration = 'none'
-          a.style.display = 'block'
-          a.style.padding = '8px 10px'
-        })
       }
 
-      // Add a centered "×" clear button inside the shell (fully functional)
+      // Add a centered "×" clear button inside the shell (now fully functional)
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
       Object.assign(clearBtn.style, {
         position: 'absolute',
@@ -194,22 +189,32 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       clearBtn.addEventListener('click', (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
-        if (input) {
-          input.value = ''
-          input.dispatchEvent(new Event('input', { bubbles: true }))
-          // hide results, if open
-          const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
-          if (list) list.style.display = 'none'
-          input.focus()
+        const g = geocoderRef.current
+        const i = inputRef.current
+        // clear both DOM input and the control’s internal input
+        if (i) {
+          i.value = ''
+          i.dispatchEvent(new Event('input', { bubbles: true }))
         }
+        if (g && g._input) {
+          g._input.value = ''
+        }
+        // clear results via control API
+        try { g?._clearResults?.() } catch {}
+        // hide dropdown if present
+        const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
+        if (list) list.style.display = 'none'
+        // refocus the field
+        i?.focus()
+        // hide the clear button
         clearBtn.style.display = 'none'
       })
 
       // toggle clear button visibility on input
       const onInput = () => {
-        const hasText = !!input?.value
+        const hasText = !!inputRef.current?.value
         clearBtn.style.display = hasText ? 'inline-flex' : 'none'
-        // if user typed again, ensure results container can re-show
+        // allow dropdown to re-open naturally when typing resumes
         const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
         if (list && hasText) list.style.display = ''
       }
@@ -234,6 +239,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
 
   return null
 }
+
 /* --------------------------------------------------------------------------- */
 
 function MapModeController({ mode, onMapReady }) {
