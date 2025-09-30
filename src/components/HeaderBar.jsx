@@ -1,3 +1,4 @@
+// src/components/HeaderBar.jsx
 const PIN_COLOR = {
   chicago:  '#0ea5e9',
   na:       '#3b82f6',
@@ -10,6 +11,7 @@ const PIN_COLOR = {
 function InlineCount({ color, label, count }) {
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
+      {/* tiny pin head swatch (bordered like TeamCount) */}
       <span
         aria-hidden
         style={{
@@ -37,6 +39,7 @@ export default function HeaderBar({
   onLogoClick,
   continentCounts = null,
 }) {
+  // keep whatever 3D style func you had before if you want; here’s a minimal one
   const switchBtnStyle = (pressed) => ({
     padding:'10px 12px', borderRadius:12,
     border:'1px solid #2a2f37',
@@ -83,7 +86,7 @@ export default function HeaderBar({
         </span>
       </div>
 
-      {/* Right: continent counts (inline) + children + switch */}
+      {/* Right: continent counts (inline, no boxes) + children + switch */}
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>

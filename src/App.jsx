@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react'
 import logoUrl from './assets/logo.png'
 import { supabase } from './lib/supabase'
@@ -11,6 +12,7 @@ import { useHighlightPin } from './hooks/useHighlightPin'
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo'
 import {
+  CHI,
   INITIAL_RADIUS_MILES,
   enableMainMapInteractions,
   disableMainMapInteractions
@@ -42,9 +44,6 @@ import ZoomGate from './components/ZoomGate'
 // Admin panel
 import AdminPanel from './components/AdminPanel'
 
-// Mobile table view
-import RecentPinsTable from './components/RecentPinsTable'
-
 /* ---------------- KIOSK HELPERS ---------------- */
 async function enterFullscreen(el) {
   const root = el || (typeof document !== 'undefined' ? document.documentElement : null)
@@ -59,7 +58,7 @@ async function ensureWakeLock() {
       wakeLockRef = await navigator.wakeLock.request('screen')
       wakeLockRef.addEventListener?.('release', () => { wakeLockRef = null })
     }
-  } catch {}
+  } catch {/* ignore */}
 }
 async function exitFullscreenAndWake() {
   try { await document.exitFullscreen?.() } catch {}
@@ -68,11 +67,8 @@ async function exitFullscreenAndWake() {
 }
 function onFullscreenChange(cb) {
   const handler = () => cb?.(!!document.fullscreenElement)
-  if (typeof document !== 'undefined') {
-    document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
-  }
-  return () => {}
+  document.addEventListener('fullscreenchange', handler)
+  return () => document.removeEventListener('fullscreenchange', handler)
 }
 function KioskStartOverlay({ visible, onStart }) {
   if (!visible) return null
@@ -164,34 +160,23 @@ export default function App() {
     note: ''
   })
 
-  // ---------- Detect mobile ----------
-  const [isMobile, setIsMobile] = useState(false)
+  /* ---------------- MOBILE MODE DETECTION ---------------- */
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 640px)').matches : false
+  )
   useEffect(() => {
-    const check = () => {
-      const mq = typeof window !== 'undefined'
-        ? window.matchMedia('(max-width: 768px)').matches
-        : false
-      const touch = typeof window !== 'undefined' && 'ontouchstart' in window
-      setIsMobile(mq || (touch && window.innerWidth < 1024))
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 640px)')
+    const handler = (e) => {
+      setIsMobile(e.matches)
+      if (e.matches) setExploring(true) // auto-explore on mobile
     }
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
+    // initial
+    if (mq.matches) setExploring(true)
+    mq.addEventListener?.('change', handler)
+    return () => mq.removeEventListener?.('change', handler)
   }, [])
-
-  // Mobile: auto-explore & hide popular spots by default
-  useEffect(() => {
-    if (isMobile) {
-      setExploring(true)
-      setShowPopularSpots(false)
-    }
-  }, [isMobile])
-
-  // Mobile View Mode: 'map' | 'table'
-  const [mobileViewMode, setMobileViewMode] = useState('map')
-  useEffect(() => {
-    if (!isMobile) setMobileViewMode('map')
-  }, [isMobile])
+  /* ------------------------------------------------------ */
 
   /* ---------------- KIOSK STATE ---------------- */
   const [needsKioskStart, setNeedsKioskStart] = useState(false)
@@ -206,7 +191,7 @@ export default function App() {
     if (typeof document === 'undefined') return
     const off = onFullscreenChange(setIsFullscreen)
     ;(async () => {
-      if (autoKiosk && !isMobile) {
+      if (autoKiosk) {
         await enterFullscreen()
         await ensureWakeLock()
         setNeedsKioskStart(!document.fullscreenElement)
@@ -215,47 +200,20 @@ export default function App() {
       }
     })()
     return () => off?.()
-  }, [autoKiosk, isMobile])
-
-  // Hidden kiosk toggle (desktop/kiosk only)
-  useEffect(() => {
-    if (isMobile) return
-    let count = 0
-    let timer = null
-    const onKey = async (e) => {
-      if (!e.shiftKey) return
-      if ((e.key || '').toLowerCase() !== 'k') return
-      count += 1
-      clearTimeout(timer)
-      timer = setTimeout(() => { count = 0 }, 3000)
-      if (count >= 3) {
-        count = 0
-        clearTimeout(timer)
-        if (document.fullscreenElement) {
-          await exitFullscreenAndWake()
-        } else {
-          await enterFullscreen()
-          await ensureWakeLock()
-        }
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer) }
-  }, [isMobile])
+  }, [autoKiosk])
 
   const startKioskNow = async () => {
-    if (isMobile) return
     await enterFullscreen()
     await ensureWakeLock()
     setNeedsKioskStart(false)
   }
   const exitKioskNow = async () => {
-    if (isMobile) return
     await exitFullscreenAndWake()
     setNeedsKioskStart(false)
   }
+  /* ---------------------------------------------------------------------- */
 
-  /* ------------------ DEDUPE PINS ------------------ */
+  /* ------------------ DEDUPE PINS (avoid double render) ------------------ */
   const pinsDeduped = useMemo(() => {
     const seen = new Set()
     const out = []
@@ -268,8 +226,10 @@ export default function App() {
     return out
   }, [pins])
 
+  // continent counters for Global header chips (use deduped)
   const continentCounts = useMemo(() => countByContinent(pinsDeduped), [pinsDeduped])
 
+  // Render-only mapping: color global pins by continent (use deduped)
   const pinsForRender = useMemo(() => {
     return (pinsDeduped || []).map(p => {
       if (p?.source === 'global') {
@@ -304,13 +264,13 @@ export default function App() {
     setShareOpen(false)
     setShareToFb(false)
     setExploring(isMobile ? true : false)
+    clearHighlight()
     setMapMode('chicago')
-    // snap map back using your helper if available
-    const map = mainMapRef.current
-    if (map) goToChicago(map)
+    goToChicago(mainMapRef.current)
     setForm(f => ({ ...f, name:'', neighborhood:'', hotdog:'', note:'' }))
   }
 
+  // fun-fact toast
   async function showNearestTownFact(lat, lng) {
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
@@ -326,14 +286,16 @@ export default function App() {
     } catch {}
   }
 
-  // map click (disabled on mobile — read-only)
+  // map click
   const handlePick = async (ll) => {
-    if (isMobile) return
+    if (isMobile) return // Mobile: no pin placement; stay in Explore
     focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES)
     setDraft(ll)
+
     if (mapMode === 'chicago') {
       showNearestTownFact(ll.lat, ll.lng)
     }
+
     if (!slug) {
       const fresh = await ensureUniqueSlug(makeChiSlug())
       setSlug(fresh)
@@ -348,6 +310,7 @@ export default function App() {
     const isChicago = mapMode === 'chicago'
     const cont = continentFor(draft.lat, draft.lng)
 
+    // loyalty derived from the phone itself (no checkbox)
     const loyaltyPhoneNormalized = normalizePhoneToE164ish(form?.loyaltyPhone)
     const loyaltyOptIn = !!loyaltyPhoneNormalized
 
@@ -365,6 +328,8 @@ export default function App() {
       source: isChicago ? 'kiosk' : 'global',
       created_at: new Date().toISOString(),
       device_id: 'kiosk-1',
+
+      // NEW fields (nullable)
       loyalty_phone: loyaltyPhoneNormalized,
       loyalty_opt_in: loyaltyOptIn,
     }
@@ -389,79 +354,44 @@ export default function App() {
     cancelEditing()
 
     if (isChicago) {
-      triggerHighlight(inserted.slug, 350)
+      triggerHighlight(inserted.slug, 350) // temporary details popup behavior
     } else {
       clearHighlight()
     }
+
     setTipToken(t => t + 1)
   }
 
-  // Desktop header content
-  const desktopHeaderRight =
-    mapMode === 'chicago'
-      ? (
-        <div style={{display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
-          <TeamCount pins={pinsDeduped} />
-          <button
-            type="button"
-            aria-pressed={showPopularSpots}
-            onClick={() => setShowPopularSpots(v => !v)}
-            style={{
-              padding:'10px 12px', borderRadius:12, border:'1px solid #2a2f37',
-              background: showPopularSpots ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-              color:'#f4f6f8'
-            }}
-          >
-            🌟 {showPopularSpots ? 'Popular spots ON' : 'Popular spots OFF'}
-          </button>
-          <button
-            type="button"
-            aria-pressed={showCommunityPins}
-            onClick={() => setShowCommunityPins(v => !v)}
-            style={{
-              padding:'10px 12px', borderRadius:12, border:'1px solid #2a2f37',
-              background: showCommunityPins ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-              color:'#f4f6f8'
-            }}
-          >
-            📍 {showCommunityPins ? 'Hide pins' : 'Show pins'}
-          </button>
-        </div>
-      )
-      : (
-        <GlobalCounters counts={continentCounts} />
-      )
+  /* ---------------- Fine-tune modal ---------------- */
+  const openSubmap = (center, pointer) => {
+    const live = mainMapRef.current?.getCenter?.()
+    const safeCenter =
+      (center && Number.isFinite(center.lat) && Number.isFinite(center.lng)) ? center :
+      (live && Number.isFinite(live.lat) && Number.isFinite(live.lng)) ? { lat: live.lat, lng: live.lng } :
+      CHI
 
-  // Mobile header content: map/table toggle only
-  const mobileHeaderRight = (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:8, flexWrap:'wrap' }}>
-      <div />
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <button
-          className="btn-toggle btn-toggle--sm"
-          aria-pressed={mobileViewMode === 'map'}
-          onClick={() => setMobileViewMode('map')}
-        >
-          Map
-        </button>
-        <button
-          className="btn-toggle btn-toggle--sm"
-          aria-pressed={mobileViewMode === 'table'}
-          onClick={() => setMobileViewMode('table')}
-        >
-          Table
-        </button>
-      </div>
-      <div />
-    </div>
-  )
+    const z = mainMapRef.current?.getZoom?.() ?? null
+    disableMainMapInteractions(mainMapRef.current)
+    setSubmapBaseZoom(z)
+    setSubmapCenter(safeCenter)
+    setHandoff(pointer)
+  }
 
-  // Mode change handlers (no map work here; MapShell reacts to mapMode)
+  const closeSubmap = () => {
+    enableMainMapInteractions(mainMapRef.current)
+    setTimeout(() => mainMapRef.current?.invalidateSize(), 0)
+    setSubmapCenter(null)
+    setHandoff(null)
+    setSubmapBaseZoom(null)
+  }
+
+  // mode switches
   const goGlobal = () => {
     setMapMode('global')
     setDraft(null); setSlug(null); setSubmapCenter(null); setHandoff(null)
     setSubmapBaseZoom(null)
-    setShowAttractor(false); setExploring(isMobile ? true : false)
+    setShowAttractor(false)
+    setExploring(isMobile ? true : false)
     setToast(null)
   }
 
@@ -471,14 +401,88 @@ export default function App() {
       cancelEditing()
       setTimeout(() => {
         setShowAttractor(!isMobile)
+        setExploring(isMobile ? true : false)
+        goToChicago(mainMapRef.current)
       }, 0)
       return
     }
     setMapMode('chicago')
     setShowAttractor(!isMobile)
     setExploring(isMobile ? true : false)
-    // MapShell will snap the view on mapMode change
+    goToChicago(mainMapRef.current)
   }
+
+  // button style helper
+  const btn3d = (pressed) => ({
+    padding: '10px 12px',
+    borderRadius: 12,
+    border: '1px solid #2a2f37',
+    background: pressed
+      ? 'linear-gradient(#242a33, #1a1f26)'
+      : 'linear-gradient(#1f242b, #171b20)',
+    color: '#f4f6f8',
+    boxShadow: pressed
+      ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
+      : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
+    transform: pressed ? 'translateY(1px)' : 'translateY(0)',
+    transition: 'transform 80ms ease, box-shadow 120ms ease',
+    cursor: 'pointer',
+    fontSize: 14,
+    lineHeight: 1,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+  })
+
+  const headerRight =
+    mapMode === 'chicago'
+      ? (
+        <div style={{display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
+          <TeamCount pins={pinsDeduped} />
+
+          {/* Layer toggles visible on all devices */}
+          <button
+            type="button"
+            aria-pressed={showPopularSpots}
+            onClick={() => setShowPopularSpots(v => !v)}
+            style={btn3d(showPopularSpots)}
+          >
+            🌟 {showPopularSpots ? 'Popular spots ON' : 'Popular spots OFF'}
+          </button>
+          <button
+            type="button"
+            aria-pressed={showCommunityPins}
+            onClick={() => setShowCommunityPins(v => !v)}
+            style={btn3d(showCommunityPins)}
+          >
+            📍 {showCommunityPins ? 'Hide pins' : 'Show pins'}
+          </button>
+
+          {/* Kiosk toggle — hidden on mobile */}
+          {!isMobile && (!isFullscreen ? (
+            <button
+              type="button"
+              onClick={startKioskNow}
+              style={btn3d(false)}
+              title="Enter fullscreen & keep screen awake"
+            >
+              🖥️ Enter Kiosk Mode
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={exitKioskNow}
+              style={btn3d(true)}
+              title="Exit fullscreen and release wake lock"
+            >
+              ⤴️ Exit Kiosk Mode
+            </button>
+          ))}
+        </div>
+      )
+      : (
+        <GlobalCounters counts={continentCounts} />
+      )
 
   /* ---------------- Admin (hidden) ---------------- */
   const [adminOpen, setAdminOpen] = useState(
@@ -486,6 +490,8 @@ export default function App() {
   )
   const tapCountRef = useRef(0)
   const tapTimerRef = useRef(null)
+
+  // Friendlier: count taps anywhere in the footer that's not an interactive element
   const shouldCountTap = (e) => {
     const target = e.target
     if (!target) return false
@@ -494,6 +500,7 @@ export default function App() {
     }
     return true
   }
+
   const registerTap = () => {
     if (!tapTimerRef.current) {
       tapTimerRef.current = setTimeout(() => {
@@ -509,13 +516,15 @@ export default function App() {
       setAdminOpen(true)
     }
   }
+
   const handleFooterClick = (e) => { if (shouldCountTap(e)) registerTap() }
   const handleFooterTouch = (e) => { if (shouldCountTap(e)) registerTap() }
+
   useEffect(() => {
     return () => { if (tapTimerRef.current) clearTimeout(tapTimerRef.current) }
   }, [])
+  /* ------------------------------------------------ */
 
-  // --------- MAIN RENDER ----------
   return (
     <div className="app">
       <HeaderBar
@@ -526,62 +535,57 @@ export default function App() {
         logoSrc={logoUrl}
         onLogoClick={goChicagoZoomedOut}
       >
-        {isMobile ? mobileHeaderRight : desktopHeaderRight}
+        {headerRight}
       </HeaderBar>
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
-        {isMobile && mobileViewMode === 'table' ? (
-          <RecentPinsTable pins={pinsDeduped} />
-        ) : (
-          <MapShell
-            mapMode={mapMode}
-            isMobile={isMobile}
-            mainMapRef={mainMapRef}
-            exploring={exploring}
-            onPick={handlePick}
-          >
-            {showPopularSpots
-              && mapMode === 'chicago'
-              && !draft
-              && (!isMobile || (isMobile && exploring)) && (
-                <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
-            )}
+        <MapShell
+          mapMode={mapMode}
+          mainMapRef={mainMapRef}
+          exploring={exploring}
+          onPick={handlePick}
+        >
+          {/* Popular labels only when not placing a draft */}
+          {showPopularSpots && mapMode === 'chicago' && !draft && (
+            <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
+          )}
 
-            {showCommunityPins && !draft && (
-              <PinBubbles
-                pins={pinsDeduped}
-                enabled={true}
-                minZoomForPins={13}
-                maxZoom={19}
+          {/* Zoomed OUT: show clustering bubbles (Chicago + Global) */}
+          {showCommunityPins && !draft && (
+            <PinBubbles
+              pins={pinsDeduped}
+              enabled={true}
+              minZoomForPins={13}
+              maxZoom={19}
+            />
+          )}
+
+          {/* Zoomed IN (Chicago only): show real pins with explore-only interactivity & highlight-after-save */}
+          {showCommunityPins && !draft && mapMode === 'chicago' && (
+            <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>
+              <SavedPins
+                key={`pins-${exploring ? 'on' : 'off'}`}
+                pins={pinsForRender}
+                exploring={exploring}
+                highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
+                highlightMs={15000}
+                onHighlightEnd={clearHighlight}
               />
-            )}
+            </ZoomGate>
+          )}
 
-            {showCommunityPins && !draft && mapMode === 'chicago' && (
-              <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>
-                <SavedPins
-                  key={`pins-${exploring ? 'on' : 'off'}`}
-                  pins={pinsForRender}
-                  exploring={exploring}
-                  highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
-                  highlightMs={15000}
-                  onHighlightEnd={clearHighlight}
-                />
-              </ZoomGate>
-            )}
-
-            {draft && !isMobile && (
-              <DraftMarker
-                lat={draft.lat}
-                lng={draft.lng}
-                team={form.team}
-                onOpenModal={(center, pointer) => openSubmap(center, pointer)}
-                tipToken={tipToken}
-                setDraft={setDraft}
-                modalOpen={!!submapCenter}
-              />
-            )}
-          </MapShell>
-        )}
+          {draft && (
+            <DraftMarker
+              lat={draft.lat}
+              lng={draft.lng}
+              team={form.team}
+              onOpenModal={(center, pointer) => openSubmap(center, pointer)}
+              tipToken={tipToken}
+              setDraft={setDraft}
+              modalOpen={!!submapCenter}
+            />
+          )}
+        </MapShell>
 
         {showAttractor && !draft && !submapCenter && !exploring && (
           <AttractorOverlay onDismiss={() => setShowAttractor(false)} />
@@ -602,42 +606,52 @@ export default function App() {
           onCommit={(ll) => {
             setDraft(ll)
             mainMapRef.current?.panTo([ll.lat, ll.lng], { animate: false })
-            enableMainMapInteractions(mainMapRef.current)
-            setSubmapCenter(null)
-            setHandoff(null)
-            setSubmapBaseZoom(null)
+            closeSubmap()
             setTipToken(t => t + 1)
           }}
         />
       )}
 
-      <footer style={{ padding:'10px 14px' }}>
+      {/* -------- FOOTER -------- */}
+      <footer
+        style={{ padding:'10px 14px' }}
+        onClick={handleFooterClick}
+        onTouchStart={handleFooterTouch}
+      >
         {!draft ? (
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
             <div className="hint" style={{ color:'#a7b0b8', margin:'0 auto', textAlign:'center', flex:1 }}>
-              {exploring
-                ? 'Click any pin to see details.'
-                : (mapMode === 'global'
-                    ? 'Click the map to place your pin anywhere in the world.'
-                    : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                  )
+              {isMobile
+                ? 'Browse pins near you.'
+                : exploring
+                  ? 'Click any pin to see details.'
+                  : (mapMode === 'global'
+                      ? 'Click the map to place your pin anywhere in the world.'
+                      : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+                    )
               }
             </div>
+            {/* Explore buttons hidden on mobile */}
+            {!isMobile && !exploring && (
+              <button data-no-admin-tap onClick={()=> { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
+            )}
+            {!isMobile && exploring && (
+              <button data-no-admin-tap onClick={()=> setExploring(false)}>✖ Close explore</button>
+            )}
           </div>
         ) : (
-          !isMobile && (
-            <Editor
-              mapMode={mapMode}
-              slug={slug}
-              form={form}
-              setForm={setForm}
-              hotdogSuggestions={hotdogSuggestions}
-              onCancel={cancelEditing}
-              onOpenShare={() => setShareOpen(true)}
-            />
-          )
+          <Editor
+            mapMode={mapMode}
+            slug={slug}
+            form={form}
+            setForm={setForm}
+            hotdogSuggestions={hotdogSuggestions}
+            onCancel={cancelEditing}
+            onOpenShare={() => setShareOpen(true)}
+          />
         )}
       </footer>
+      {/* ------------------------ */}
 
       <ShareConfirmModal
         open={shareOpen}
@@ -650,7 +664,10 @@ export default function App() {
         mapMode={mapMode}
       />
 
-      <KioskStartOverlay visible={!isMobile && autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
+      {/* Overlay only if launched with ?kiosk=1 and fullscreen was blocked */}
+      <KioskStartOverlay visible={autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
+
+      {/* Hidden Admin (triple-tap footer background to open; also ?admin=1) */}
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
     </div>
   )
