@@ -40,6 +40,7 @@ import GlobalCounters from './components/GlobalCounters'
 // clustering helpers
 import PinBubbles from './components/PinBubbles'
 import ZoomGate from './components/ZoomGate'
+import HeatmapOverlay from './components/HeatmapOverlay' // NEW
 
 // Admin panel
 import AdminPanel from './components/AdminPanel'
@@ -88,6 +89,18 @@ function KioskStartOverlay({ visible, onStart }) {
   )
 }
 
+function useOnline() {
+  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)
+  useEffect(() => {
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  return online
+}
+
 function normalizePhoneToE164ish(raw) {
   if (!raw) return null
   const digits = String(raw).replace(/\D+/g, '')
@@ -99,6 +112,7 @@ function normalizePhoneToE164ish(raw) {
 }
 
 /* ------------------------------------------------------------------------ */
+const online = useOnline()
 
 const DEFAULT_FUN_FACTS = {
   chicago: "Home of the first skyscraper (1885) and deep-dish pizza debates.",
@@ -160,23 +174,21 @@ export default function App() {
     note: ''
   })
 
-  /* ---------------- MOBILE MODE DETECTION ---------------- */
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 640px)').matches : false
-  )
+  // NEW: Admin settings watcher (for cluster mode + heatmap params)
+  const [adminSettings, setAdminSettings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('adminSettings')) || {} } catch { return {} }
+  })
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const mq = window.matchMedia('(max-width: 640px)')
-    const handler = (e) => {
-      setIsMobile(e.matches)
-      if (e.matches) setExploring(true) // auto-explore on mobile
+    const onStorage = (e) => {
+      if (e.key === 'adminSettings') {
+        try { setAdminSettings(JSON.parse(e.newValue || '{}') || {}) } catch {}
+      }
     }
-    // initial
-    if (mq.matches) setExploring(true)
-    mq.addEventListener?.('change', handler)
-    return () => mq.removeEventListener?.('change', handler)
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [])
-  /* ------------------------------------------------------ */
+  const clusterMode = adminSettings?.clusterMode || 'bubbles'
+  const heatCfg = adminSettings?.heatmap || {}
 
   /* ---------------- KIOSK STATE ---------------- */
   const [needsKioskStart, setNeedsKioskStart] = useState(false)
@@ -263,7 +275,7 @@ export default function App() {
     setSubmapBaseZoom(null)
     setShareOpen(false)
     setShareToFb(false)
-    setExploring(isMobile ? true : false)
+    setExploring(false)
     clearHighlight()
     setMapMode('chicago')
     goToChicago(mainMapRef.current)
@@ -288,7 +300,6 @@ export default function App() {
 
   // map click
   const handlePick = async (ll) => {
-    if (isMobile) return // Mobile: no pin placement; stay in Explore
     focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES)
     setDraft(ll)
 
@@ -328,7 +339,6 @@ export default function App() {
       source: isChicago ? 'kiosk' : 'global',
       created_at: new Date().toISOString(),
       device_id: 'kiosk-1',
-
       // NEW fields (nullable)
       loyalty_phone: loyaltyPhoneNormalized,
       loyalty_opt_in: loyaltyOptIn,
@@ -390,8 +400,7 @@ export default function App() {
     setMapMode('global')
     setDraft(null); setSlug(null); setSubmapCenter(null); setHandoff(null)
     setSubmapBaseZoom(null)
-    setShowAttractor(false)
-    setExploring(isMobile ? true : false)
+    setShowAttractor(false); setExploring(false)
     setToast(null)
   }
 
@@ -400,15 +409,14 @@ export default function App() {
     if (needsReset) {
       cancelEditing()
       setTimeout(() => {
-        setShowAttractor(!isMobile)
-        setExploring(isMobile ? true : false)
+        setShowAttractor(true)
         goToChicago(mainMapRef.current)
       }, 0)
       return
     }
     setMapMode('chicago')
-    setShowAttractor(!isMobile)
-    setExploring(isMobile ? true : false)
+    setShowAttractor(true)
+    setExploring(false)
     goToChicago(mainMapRef.current)
   }
 
@@ -439,8 +447,6 @@ export default function App() {
       ? (
         <div style={{display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
           <TeamCount pins={pinsDeduped} />
-
-          {/* Layer toggles visible on all devices */}
           <button
             type="button"
             aria-pressed={showPopularSpots}
@@ -458,8 +464,8 @@ export default function App() {
             📍 {showCommunityPins ? 'Hide pins' : 'Show pins'}
           </button>
 
-          {/* Kiosk toggle — hidden on mobile */}
-          {!isMobile && (!isFullscreen ? (
+          {/* Kiosk toggle */}
+          {!isFullscreen ? (
             <button
               type="button"
               onClick={startKioskNow}
@@ -477,7 +483,7 @@ export default function App() {
             >
               ⤴️ Exit Kiosk Mode
             </button>
-          ))}
+          )}
         </div>
       )
       : (
@@ -538,6 +544,12 @@ export default function App() {
         {headerRight}
       </HeaderBar>
 
+{!online && (
+  <div style={{padding:'8px 12px', textAlign:'center', background:'rgba(255,200,0,0.08)', borderBottom:'1px solid rgba(255,200,0,0.25)', color:'#ffd27f'}}>
+    You’re offline. Changes won’t sync until your connection returns.
+  </div>
+)}
+
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
         <MapShell
           mapMode={mapMode}
@@ -550,13 +562,23 @@ export default function App() {
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
           )}
 
-          {/* Zoomed OUT: show clustering bubbles (Chicago + Global) */}
-          {showCommunityPins && !draft && (
+          {/* Zoomed OUT: either Bubbles or Heatmap (configured in Admin) */}
+          {showCommunityPins && !draft && clusterMode === 'bubbles' && (
             <PinBubbles
               pins={pinsDeduped}
               enabled={true}
-              minZoomForPins={13}
-              maxZoom={19}
+              minZoomForPins={adminSettings?.minZoomForPins ?? 13}
+              maxZoom={adminSettings?.maxZoom ?? 19}
+            />
+          )}
+          {showCommunityPins && !draft && clusterMode === 'heatmap' && (
+            <HeatmapOverlay
+              pins={pinsDeduped}
+              enabled={true}
+              minZoomForHeatmap={heatCfg?.minZoom ?? 10}
+              radius={heatCfg?.radius ?? 25}
+              blur={heatCfg?.blur ?? 15}
+              maxOpacity={heatCfg?.maxOpacity ?? 0.6}
             />
           )}
 
@@ -612,7 +634,7 @@ export default function App() {
         />
       )}
 
-      {/* -------- FOOTER -------- */}
+      {/* -------- RESTORED FOOTER (triple-tap area) -------- */}
       <footer
         style={{ padding:'10px 14px' }}
         onClick={handleFooterClick}
@@ -621,21 +643,18 @@ export default function App() {
         {!draft ? (
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
             <div className="hint" style={{ color:'#a7b0b8', margin:'0 auto', textAlign:'center', flex:1 }}>
-              {isMobile
-                ? 'Browse pins near you.'
-                : exploring
-                  ? 'Click any pin to see details.'
-                  : (mapMode === 'global'
-                      ? 'Click the map to place your pin anywhere in the world.'
-                      : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                    )
+              {exploring
+                ? 'Click any pin to see details.'
+                : (mapMode === 'global'
+                    ? 'Click the map to place your pin anywhere in the world.'
+                    : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+                  )
               }
             </div>
-            {/* Explore buttons hidden on mobile */}
-            {!isMobile && !exploring && (
+            {!exploring && (
               <button data-no-admin-tap onClick={()=> { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
             )}
-            {!isMobile && exploring && (
+            {exploring && (
               <button data-no-admin-tap onClick={()=> setExploring(false)}>✖ Close explore</button>
             )}
           </div>
@@ -651,7 +670,7 @@ export default function App() {
           />
         )}
       </footer>
-      {/* ------------------------ */}
+      {/* --------------------------------------------------- */}
 
       <ShareConfirmModal
         open={shareOpen}
