@@ -48,7 +48,7 @@ import AdminPanel from './components/AdminPanel'
 async function enterFullscreen(el) {
   const root = el || (typeof document !== 'undefined' ? document.documentElement : null)
   if (root && !document.fullscreenElement && root.requestFullscreen) {
-    try { await root.requestFullscreen() } catch {}
+    try { await root.requestFullscreen() } catch { }
   }
 }
 let wakeLockRef = null
@@ -58,14 +58,16 @@ async function ensureWakeLock() {
       wakeLockRef = await navigator.wakeLock.request('screen')
       wakeLockRef.addEventListener?.('release', () => { wakeLockRef = null })
     }
-  } catch {/* ignore */}
+  } catch {/* ignore */ }
 }
 async function exitFullscreenAndWake() {
-  try { await document.exitFullscreen?.() } catch {}
-  try { await wakeLockRef?.release?.() } catch {}
+  try { await document.exitFullscreen?.() } catch { }
+  try { await wakeLockRef?.release?.() } catch { }
   wakeLockRef = null
 }
 function onFullscreenChange(cb) {
+  // ✅ SSR-safe
+  if (typeof document === 'undefined') return () => {}
   const handler = () => cb?.(!!document.fullscreenElement)
   document.addEventListener('fullscreenchange', handler)
   return () => document.removeEventListener('fullscreenchange', handler)
@@ -75,13 +77,13 @@ function KioskStartOverlay({ visible, onStart }) {
   return (
     <div
       style={{
-        position:'fixed', inset:0, zIndex:5000,
-        display:'grid', placeItems:'center',
-        background:'rgba(0,0,0,0.6)'
+        position: 'fixed', inset: 0, zIndex: 5000,
+        display: 'grid', placeItems: 'center',
+        background: 'rgba(0,0,0,0.6)'
       }}
       className="kiosk-overlay"
     >
-      <button onClick={onStart} className="btn-toggle" style={{ fontSize:18, padding:'16px 22px' }}>
+      <button onClick={onStart} className="btn-toggle" style={{ fontSize: 18, padding: '16px 22px' }}>
         Start Kiosk
       </button>
     </div>
@@ -198,15 +200,15 @@ export default function App() {
   useEffect(() => {
     if (typeof document === 'undefined') return
     const off = onFullscreenChange(setIsFullscreen)
-    ;(async () => {
-      if (autoKiosk) {
-        await enterFullscreen()
-        await ensureWakeLock()
-        setNeedsKioskStart(!document.fullscreenElement)
-      } else {
-        setNeedsKioskStart(false)
-      }
-    })()
+      ; (async () => {
+        if (autoKiosk) {
+          await enterFullscreen()
+          await ensureWakeLock()
+          setNeedsKioskStart(!document.fullscreenElement)
+        } else {
+          setNeedsKioskStart(false)
+        }
+      })()
     return () => off?.()
   }, [autoKiosk])
 
@@ -250,6 +252,9 @@ export default function App() {
     })
   }, [pinsDeduped])
 
+  // ✅ token that lets MapShell force a Chicago refit even if already in Chicago
+  const [resetCameraToken, setResetCameraToken] = useState(0)
+
   // idle attractor
   const { showAttractor, setShowAttractor } = useIdleAttractor({
     deps: [mapMode],
@@ -275,7 +280,8 @@ export default function App() {
     clearHighlight()
     setMapMode('chicago')
     goToChicago(mainMapRef.current)
-    setForm(f => ({ ...f, name:'', neighborhood:'', hotdog:'', note:'' }))
+    setResetCameraToken(t => t + 1) // ✅ ensure full Chicago refit (idle/logo/etc.)
+    setForm(f => ({ ...f, name: '', neighborhood: '', hotdog: '', note: '' }))
   }
 
   // fun-fact toast
@@ -291,7 +297,7 @@ export default function App() {
       const fact = funFacts[key] || `You’re near ${candidate}.`
       setToast({ title: candidate, text: fact })
       setTimeout(() => setToast(null), 10000)
-    } catch {}
+    } catch { }
   }
 
   // map click
@@ -375,8 +381,8 @@ export default function App() {
     const live = mainMapRef.current?.getCenter?.()
     const safeCenter =
       (center && Number.isFinite(center.lat) && Number.isFinite(center.lng)) ? center :
-      (live && Number.isFinite(live.lat) && Number.isFinite(live.lng)) ? { lat: live.lat, lng: live.lng } :
-      CHI
+        (live && Number.isFinite(live.lat) && Number.isFinite(live.lng)) ? { lat: live.lat, lng: live.lng } :
+          CHI
 
     const z = mainMapRef.current?.getZoom?.() ?? null
     disableMainMapInteractions(mainMapRef.current)
@@ -392,9 +398,6 @@ export default function App() {
     setHandoff(null)
     setSubmapBaseZoom(null)
   }
-
-  // ✅ add a token that lets MapShell force a Chicago refit even if already in Chicago
-  const [resetCameraToken, setResetCameraToken] = useState(0) // NEW
 
   // mode switches
   const goGlobal = () => {
@@ -414,7 +417,7 @@ export default function App() {
         setShowAttractor(!isMobile)
         setExploring(isMobile ? true : false)
         goToChicago(mainMapRef.current)
-        setResetCameraToken(t => t + 1) // NEW: force refit
+        setResetCameraToken(t => t + 1) // keep behavior consistent via token
       }, 0)
       return
     }
@@ -422,7 +425,7 @@ export default function App() {
     setShowAttractor(!isMobile)
     setExploring(isMobile ? true : false)
     goToChicago(mainMapRef.current)
-    setResetCameraToken(t => t + 1) // NEW: force refit
+    setResetCameraToken(t => t + 1) // ensure full refit even if already in Chicago
   }
 
   // button style helper
@@ -450,7 +453,7 @@ export default function App() {
   const headerRight =
     mapMode === 'chicago'
       ? (
-        <div style={{display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <TeamCount pins={pinsDeduped} />
 
           {/* Layer toggles visible on all devices */}
@@ -551,13 +554,13 @@ export default function App() {
         {headerRight}
       </HeaderBar>
 
-      <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
+      <div className="map-wrap" style={{ position: 'relative', flex: 1, minHeight: '60vh', borderTop: '1px solid #222', borderBottom: '1px solid #222' }}>
         <MapShell
           mapMode={mapMode}
           mainMapRef={mainMapRef}
           exploring={exploring}
           onPick={handlePick}
-          resetCameraToken={resetCameraToken} // NEW
+          resetCameraToken={resetCameraToken} // ensures zoomed-out Chicago refit
         >
           {/* Popular labels only when not placing a draft */}
           {showPopularSpots && mapMode === 'chicago' && !draft && (
@@ -628,29 +631,29 @@ export default function App() {
 
       {/* -------- FOOTER -------- */}
       <footer
-        style={{ padding:'10px 14px' }}
+        style={{ padding: '10px 14px' }}
         onClick={handleFooterClick}
         onTouchStart={handleFooterTouch}
       >
         {!draft ? (
-          <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
-            <div className="hint" style={{ color:'#a7b0b8', margin:'0 auto', textAlign:'center', flex:1 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="hint" style={{ color: '#a7b0b8', margin: '0 auto', textAlign: 'center', flex: 1 }}>
               {isMobile
                 ? 'Browse pins near you.'
                 : exploring
                   ? 'Click any pin to see details.'
                   : (mapMode === 'global'
-                      ? 'Click the map to place your pin anywhere in the world.'
-                      : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                    )
+                    ? 'Click the map to place your pin anywhere in the world.'
+                    : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+                  )
               }
             </div>
             {/* Explore buttons hidden on mobile */}
             {!isMobile && !exploring && (
-              <button data-no-admin-tap onClick={()=> { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
+              <button data-no-admin-tap onClick={() => { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
             )}
             {!isMobile && exploring && (
-              <button data-no-admin-tap onClick={()=> setExploring(false)}>✖ Close explore</button>
+              <button data-no-admin-tap onClick={() => setExploring(false)}>✖ Close explore</button>
             )}
           </div>
         ) : (
