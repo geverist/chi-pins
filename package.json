@@ -11,12 +11,12 @@
     "qr": "node scripts/generate-qr.mjs",
     "seed:spots": "node scripts/seed-popular-spots.js"
   },
-  "dependencies": {
+"dependencies": {
     "@supabase/supabase-js": "^2.58.0",
     "dotenv": "^17.2.2",
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
-    "leaflet.heat": "^0.2.0",
+    "leaflet-control-geocoder": "^2.4.0",
     "node-fetch": "^3.3.2",
     "openai": "^5.23.1",
     "qrcode": "^1.5.3",

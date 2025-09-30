@@ -512,7 +512,7 @@ export default function App() {
     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:8, flexWrap:'wrap' }}>
 
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ fontSize:12, color:'#a7b0b8' }}>View:</span>
+        <span style={{ fontSize:12, color:'#a7b0b8' }}></span>
         <button
           className="btn-toggle btn-toggle--sm"
           aria-pressed={mobileViewMode === 'map'}
