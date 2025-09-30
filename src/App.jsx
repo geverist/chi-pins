@@ -561,6 +561,7 @@ export default function App() {
           exploring={exploring}
           onPick={handlePick}
           resetCameraToken={resetCameraToken} // ensures zoomed-out Chicago refit
+          editing={!!draft}  
         >
           {/* Popular labels only when not placing a draft */}
           {showPopularSpots && mapMode === 'chicago' && !draft && (
