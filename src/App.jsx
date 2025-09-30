@@ -393,6 +393,9 @@ export default function App() {
     setSubmapBaseZoom(null)
   }
 
+  // ✅ add a token that lets MapShell force a Chicago refit even if already in Chicago
+  const [resetCameraToken, setResetCameraToken] = useState(0) // NEW
+
   // mode switches
   const goGlobal = () => {
     setMapMode('global')
@@ -411,6 +414,7 @@ export default function App() {
         setShowAttractor(!isMobile)
         setExploring(isMobile ? true : false)
         goToChicago(mainMapRef.current)
+        setResetCameraToken(t => t + 1) // NEW: force refit
       }, 0)
       return
     }
@@ -418,6 +422,7 @@ export default function App() {
     setShowAttractor(!isMobile)
     setExploring(isMobile ? true : false)
     goToChicago(mainMapRef.current)
+    setResetCameraToken(t => t + 1) // NEW: force refit
   }
 
   // button style helper
@@ -552,6 +557,7 @@ export default function App() {
           mainMapRef={mainMapRef}
           exploring={exploring}
           onPick={handlePick}
+          resetCameraToken={resetCameraToken} // NEW
         >
           {/* Popular labels only when not placing a draft */}
           {showPopularSpots && mapMode === 'chicago' && !draft && (
