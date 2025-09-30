@@ -1,41 +1,43 @@
 // src/components/AdminPanel.jsx
 import { useEffect, useMemo, useState } from 'react'
 
-const DEFAULT_SETTINGS = {
-  idleAttractorSeconds: 60,
-  minZoomForPins: 13,
-  maxZoom: 19,
-  kioskAutoStart: true,
-  pinAgeMonths: 24,
-  showPopularSpots: true,
-  showCommunityPins: true,
-  clusterBubbleThreshold: 13,
-  showLabelsZoom: 13,
-  // NEW:
-  clusterMode: 'bubbles', // 'bubbles' | 'heatmap'
-  heatmap: { minZoom: 10, radius: 25, blur: 15, maxOpacity: 0.6 },
-}
-
-function deepMerge(a, b) {
-  if (Array.isArray(a) || Array.isArray(b)) return b ?? a
-  if (typeof a === 'object' && typeof b === 'object' && a && b) {
-    const out = { ...a }
-    for (const k of Object.keys(b)) out[k] = deepMerge(a[k], b[k])
-    return out
-  }
-  return b ?? a
-}
-
 export default function AdminPanel({ open, onClose }) {
   const [tab, setTab] = useState('general')
 
-  // Load + merge defaults so new keys always appear
+  // Example settings state (persisted locally; safe defaults)
   const [settings, setSettings] = useState(() => {
     try {
       const raw = localStorage.getItem('adminSettings')
-      const parsed = raw ? JSON.parse(raw) : {}
-      return deepMerge(DEFAULT_SETTINGS, parsed)
-    } catch { return { ...DEFAULT_SETTINGS } }
+      return raw ? JSON.parse(raw) : {
+        idleAttractorSeconds: 60,
+        minZoomForPins: 13,
+        maxZoom: 19,
+        kioskAutoStart: true,
+        pinAgeMonths: 24,
+        showPopularSpots: true,
+        showCommunityPins: true,
+        clusterBubbleThreshold: 13,
+        showLabelsZoom: 13,
+        // NEW:
+        clusterMode: 'bubbles', // 'bubbles' | 'heatmap'
+        heatmap: { minZoom: 10, radius: 25, blur: 15, maxOpacity: 0.6 }
+      }
+    } catch {
+      return {
+        idleAttractorSeconds: 60,
+        minZoomForPins: 13,
+        maxZoom: 19,
+        kioskAutoStart: true,
+        pinAgeMonths: 24,
+        showPopularSpots: true,
+        showCommunityPins: true,
+        clusterBubbleThreshold: 13,
+        showLabelsZoom: 13,
+        // NEW:
+        clusterMode: 'bubbles',
+        heatmap: { minZoom: 10, radius: 25, blur: 15, maxOpacity: 0.6 }
+      }
+    }
   })
 
   const [popularSpots, setPopularSpots] = useState(() => {
@@ -48,9 +50,9 @@ export default function AdminPanel({ open, onClose }) {
     } catch { return [] }
   })
 
+  // simple local “pending delete” list for moderation demo
   const [pendingDeletes, setPendingDeletes] = useState(new Set())
 
-  // Close via ESC
   useEffect(() => {
     if (!open) return
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -58,39 +60,32 @@ export default function AdminPanel({ open, onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
-  // If something else updates localStorage, merge it live
-  useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === 'adminSettings') {
-        try {
-          const incoming = JSON.parse(e.newValue || '{}')
-          setSettings(s => deepMerge(DEFAULT_SETTINGS, incoming ?? {}))
-        } catch {}
-      }
-      if (e.key === 'adminPopularSpots') {
-        try { setPopularSpots(JSON.parse(e.newValue || '[]') || []) } catch {}
-      }
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
-  }, [])
-
   const saveLocal = () => {
     localStorage.setItem('adminSettings', JSON.stringify(settings))
     localStorage.setItem('adminPopularSpots', JSON.stringify(popularSpots))
+    // You can also POST these to an API / supabase if you want to sync
   }
 
-  const applyAndClose = () => { saveLocal(); onClose?.() }
+  const applyAndClose = () => {
+    saveLocal()
+    onClose?.()
+  }
 
-  const addSpot = () => setPopularSpots(s => [...s, { label: '', category: 'hotdog' }])
-  const updateSpot = (idx, patch) =>
-    setPopularSpots(s => s.map((row, i) => (i === idx ? { ...row, ...patch } : row)))
-  const removeSpot = (idx) => setPopularSpots(s => s.filter((_, i) => i !== idx))
+  const addSpot = () => {
+    setPopularSpots(s => [...s, { label: '', category: 'hotdog' }])
+  }
+  const updateSpot = (idx, patch) => {
+    setPopularSpots(s => s.map((row, i) => i === idx ? { ...row, ...patch } : row))
+  }
+  const removeSpot = (idx) => {
+    setPopularSpots(s => s.filter((_, i) => i !== idx))
+  }
 
   const togglePendingDelete = (id) => {
     setPendingDeletes(s => {
       const next = new Set(s)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -117,7 +112,7 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
           <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>Display</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
-          <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
+          <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn}
         </div>
 
         <div style={s.body}>
@@ -205,7 +200,7 @@ export default function AdminPanel({ open, onClose }) {
                 </FieldRow>
               </Card>
 
-              {/* NEW: Cluster view mode + heatmap tuning (this is what you’re looking for) */}
+              {/* NEW: Cluster view mode + heatmap tuning */}
               <Card title="Clusters View">
                 <FieldRow label="Mode">
                   <div style={{ display:'flex', gap:8 }}>
@@ -415,6 +410,7 @@ function NumberInput({ value, min, max, onChange }) {
 
 /** Demo table for moderation; replace with live data if desired */
 function ModerationTable({ selected, onToggle }) {
+  // Fake rows (replace with real pins you fetch)
   const rows = useMemo(() => ([
     { id: 'pin-001', slug: 'bridgeport-jordan', note: 'First Sox game with dad!', created_at: '2024-06-10' },
     { id: 'pin-002', slug: 'pilsen-ditka', note: 'Maxwell St Polish > *chef’s kiss*', created_at: '2024-08-01' },
@@ -505,7 +501,10 @@ const s = {
     display: 'flex', gap: 6, padding: '8px 10px',
     borderBottom: '1px solid rgba(255,255,255,0.04)'
   },
-  body: { padding: 12, overflow: 'auto' },
+  body: {
+    padding: 12,
+    overflow: 'auto'
+  },
   row: {
     display: 'grid',
     gridTemplateColumns: '120px 1fr auto',
