@@ -116,7 +116,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
           background: 'rgba(0,0,0,0.22)',
           border: '1px solid rgba(255,255,255,0.18)',
           color: '#e9eef3',
-          padding: '10px 36px 10px 12px', // room for the clear "×"
+          padding: '10px 36px 10px 12px', // extra right padding for the clear "×"
           borderRadius: '10px',
           outline: 'none',
           width: 'min(72vw, 520px)',
@@ -144,11 +144,12 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         })
       }
 
-      // Add a centered "×" clear button
+      // Add a centered "×" clear button inside the shell
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
       Object.assign(clearBtn.style, {
         position: 'absolute',
         right: '16px',
+        // center the "×" vertically relative to the input line-box
         top: '50%',
         transform: 'translateY(-50%)',
         width: '22px',
@@ -169,47 +170,33 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       clearBtn.title = 'Clear'
       clearBtnRef.current = clearBtn
 
+      // ensure clear button doesn't interact with the map
       L.DomEvent.disableClickPropagation(clearBtn)
-
-      const hideResults = () => {
-        // hide/clear results list if present
-        const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
-        if (list) {
-          list.innerHTML = ''
-          list.style.display = 'none'
-        }
-        // call geocoder's internal clear helpers if available
-        try { geocoderRef.current?._clearResults?.() } catch {}
-        try { geocoderRef.current?._collapse?.() } catch {}
-      }
-
-      const clearSearch = () => {
-        if (!input) return
-        input.value = ''
-        // trigger the geocoder's own listeners to update state
-        input.dispatchEvent(new Event('input', { bubbles: true }))
-        input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Escape' }))
-        hideResults()
-        clearBtn.style.display = 'none'
-        input.focus()
-      }
-
       clearBtn.addEventListener('click', (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
-        clearSearch()
+        if (input) {
+          input.value = ''
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+          // hide results, if open
+          const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
+          if (list) list.style.display = 'none'
+          // refocus input
+          input.focus()
+        }
+        clearBtn.style.display = 'none'
       })
 
       // toggle clear button visibility on input
       const onInput = () => {
         const hasText = !!input?.value
         clearBtn.style.display = hasText ? 'inline-flex' : 'none'
-        if (!hasText) hideResults()
       }
       input?.addEventListener('input', onInput)
-      onInput() // initial
+      // initial state
+      onInput()
 
-      // cleanup
+      // cleanup listeners we attached
       return () => {
         input?.removeEventListener('input', onInput)
       }
@@ -239,7 +226,7 @@ function MapModeController({ mode, onMapReady }) {
     // Chicago camera limits only (no pannable bounds)
     map.setMinZoom(CHI_MIN_ZOOM)
     map.setMaxZoom(CHI_MAX_ZOOM)
-    map.setMaxBounds(null)
+    map.setMaxBounds(null) // ensure no residual bounds
     map.fitBounds(CHI_BOUNDS, { animate: false })
 
     // enable interactions
@@ -257,7 +244,7 @@ function MapModeController({ mode, onMapReady }) {
       map.invalidateSize()
 
       if (mode === 'global') {
-        // Global: free pan/zoom
+        // Global: totally free pan/zoom (no bounds)
         map.setMaxBounds(null)
         map.setMinZoom(2)
         map.setMaxZoom(19)
@@ -269,7 +256,7 @@ function MapModeController({ mode, onMapReady }) {
         map.boxZoom?.enable()
         map.keyboard?.enable()
       } else {
-        // Chicago: min/max zoom; no bounds
+        // Chicago: only min/max zoom; no bounds
         map.setMaxBounds(null)
         map.setMinZoom(CHI_MIN_ZOOM)
         map.setMaxZoom(CHI_MAX_ZOOM)
