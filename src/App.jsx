@@ -664,8 +664,8 @@ export default function App() {
             exploring={exploring}
             onPick={handlePick}
           >
-            {/* NEW: on-map typeahead search (all views) */}
-            <SearchControl />
+          {/* On-map typeahead search (top-centered, protected from map clicks) */}
+            <SearchControl mainMapRef={mainMapRef} />
 
             {/* NEW: Mobile-only free zoom (remove bounds/minZoom on mobile only) */}
             {isMobile && <MobileFreeZoom minZoom={1} maxBounds={null} />}
