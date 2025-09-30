@@ -33,13 +33,11 @@ export default function HeaderBar({
   totalCount = 0,
   onGlobal,
   onChicago,
-  children,
+  children,            // If provided, built-in nav is hidden
   logoSrc,
   onLogoClick,
   continentCounts = null,
   titleOverride,
-  isMobile = false,
-  suppressDefaultNavOnMobile = false,
 }) {
   const title =
     titleOverride ||
@@ -62,30 +60,32 @@ export default function HeaderBar({
     gap:8,
   })
 
-  // Only show default nav if no custom children AND (not suppressed on mobile)
-  const showDefaultNav = !children && !(isMobile && suppressDefaultNavOnMobile)
+  // Only show default nav when NO children are provided
+  const showDefaultNav = !children
 
   let defaultNav = null
   if (showDefaultNav) {
-    defaultNav = mapMode === 'chicago' ? (
-      <button
-        type="button"
-        onClick={onGlobal}
-        style={switchBtnStyle(false)}
-        title="Switch to Global map"
-      >
-        🌎 Global map
-      </button>
-    ) : (
-      <button
-        type="button"
-        onClick={onChicago}
-        style={switchBtnStyle(true)}
-        title="Back to Chicago"
-      >
-        🏙️ Back to Chicago
-      </button>
-    )
+    defaultNav = mapMode === 'chicago'
+      ? (
+        <button
+          type="button"
+          onClick={onGlobal}
+          style={switchBtnStyle(false)}
+          title="Switch to Global map"
+        >
+          🌎 Global map
+        </button>
+      )
+      : (
+        <button
+          type="button"
+          onClick={onChicago}
+          style={switchBtnStyle(true)}
+          title="Back to Chicago"
+        >
+          🏙️ Back to Chicago
+        </button>
+      )
   }
 
   return (
@@ -131,7 +131,7 @@ export default function HeaderBar({
         </span>
       </div>
 
-      {/* Right: continent counts + children OR default nav */}
+      {/* Right: continent counts + custom children OR default nav */}
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end', flex: '0 0 auto' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
@@ -144,7 +144,7 @@ export default function HeaderBar({
           </div>
         )}
 
-        {children ? children : defaultNav}
+        {children ?? defaultNav}
       </div>
     </header>
   )
