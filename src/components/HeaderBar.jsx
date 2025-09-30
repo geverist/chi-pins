@@ -29,6 +29,22 @@ function InlineCount({ color, label, count }) {
   )
 }
 
+/**
+ * HeaderBar
+ *
+ * Props:
+ * - mapMode: 'chicago' | 'global'
+ * - totalCount: number
+ * - onGlobal(): go to global
+ * - onChicago(): back to Chicago
+ * - continentCounts: { chicago, na, sa, eu, af, as }
+ * - logoSrc: string
+ * - onLogoClick(): function
+ * - children: ReactNode — if provided, it REPLACES the default right-side content
+ * - titleOverride?: string — replaces the default question title
+ * - isMobile?: boolean — lets the bar adapt for mobile layouts
+ * - suppressDefaultNavOnMobile?: boolean — hides the built-in Global/Back buttons on mobile
+ */
 export default function HeaderBar({
   mapMode,
   totalCount = 0,
@@ -38,8 +54,17 @@ export default function HeaderBar({
   logoSrc,
   onLogoClick,
   continentCounts = null,
+  titleOverride,
+  isMobile = false,
+  suppressDefaultNavOnMobile = false,
 }) {
-  // keep whatever 3D style func you had before if you want; here’s a minimal one
+  const title =
+    titleOverride ||
+    (mapMode === 'global'
+      ? 'Where in the world are you from?'
+      : 'Where in Chicago(land) are you from?')
+
+  // minimal 3D style
   const switchBtnStyle = (pressed) => ({
     padding:'10px 12px', borderRadius:12,
     border:'1px solid #2a2f37',
@@ -47,7 +72,23 @@ export default function HeaderBar({
     color:'#f4f6f8', boxShadow: pressed
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
+    cursor: 'pointer'
   })
+
+  // Default right-side nav (hidden on mobile if suppressDefaultNavOnMobile=true)
+  const defaultRight = (
+    <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+      {mapMode === 'global' ? (
+        <button type="button" onClick={onChicago} style={switchBtnStyle(true)} title="Back to Chicago">
+          🏙️ Back to Chicago
+        </button>
+      ) : (
+        <button type="button" onClick={onGlobal} style={switchBtnStyle(false)} title="Switch to Global map">
+          🌎 Global map
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <header
@@ -58,7 +99,7 @@ export default function HeaderBar({
       }}
     >
       {/* Left: logo + title + total */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0, flex: '1 1 auto' }}>
         {logoSrc ? (
           <button
             onClick={onLogoClick}
@@ -74,20 +115,18 @@ export default function HeaderBar({
           </button>
         ) : null}
 
-        <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap' }}>
-          {mapMode === 'global'
-            ? 'Where in the world are you from?'
-            : 'Where in Chicago(land) are you from?'}
+        <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+          {title}
         </h1>
 
-        <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10 }}>
+        <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10, whiteSpace:'nowrap' }}>
           <span>📍</span>
           <strong style={{ fontWeight:700 }}>{totalCount}</strong>
         </span>
       </div>
 
-      {/* Right: continent counts (inline, no boxes) + children + switch */}
-      <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+      {/* Right: continent counts (inline) + children OR default nav */}
+      <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end', flex: '0 0 auto' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
             <InlineCount color={PIN_COLOR.chicago} label="Chicago"       count={continentCounts.chicago} />
@@ -99,17 +138,8 @@ export default function HeaderBar({
           </div>
         )}
 
-        {children}
-
-        {mapMode === 'chicago' ? (
-          <button type="button" onClick={onGlobal} style={switchBtnStyle(false)} title="Switch to Global map">
-            🌎 Global map
-          </button>
-        ) : (
-          <button type="button" onClick={onChicago} style={switchBtnStyle(true)} title="Back to Chicago">
-            🏙️ Back to Chicago
-          </button>
-        )}
+        {/* If parent supplies children, use them; otherwise show default nav (unless suppressed on mobile) */}
+        {children ?? (isMobile && suppressDefaultNavOnMobile ? null : defaultRight)}
       </div>
     </header>
   )
