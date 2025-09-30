@@ -325,6 +325,18 @@ export default function App() {
     setShowAttractor(false)
   }
 
+  // ✅ Keep the draft pin centered while fine-tuning on the main map.
+  // Only runs when the submap is not open so it doesn't fight that UI.
+  useEffect(() => {
+    if (!draft || submapCenter) return
+    const { lat, lng } = draft
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      try {
+        mainMapRef.current?.panTo([lat, lng], { animate: false })
+      } catch {}
+    }
+  }, [draft?.lat, draft?.lng, submapCenter])
+
   // save
   async function savePin() {
     if (!draft || !slug) return
@@ -698,5 +710,3 @@ export default function App() {
     </div>
   )
 }
-
-
