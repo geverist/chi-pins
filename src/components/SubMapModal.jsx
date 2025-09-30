@@ -23,7 +23,7 @@ function DragAndPageController({
   pageTile,
   handoff,
   onPointerUpCommit,
-  mainMapRef,                // ⬅️ NEW: let controller sync the main map during drag
+  mainMapRef,                // ⬅️ let controller sync the main map during drag
 }) {
   const map = useMap()
   const posRef = useRef(pos)
@@ -68,7 +68,7 @@ function DragAndPageController({
     const startLL = clientToLatLng(clientX, clientY)
     const start = { lat: startLL.lat, lng: startLL.lng }
     setBoth(start)
-    // ⬇️ keep main map centered immediately on drag start
+    // keep main map centered immediately on drag start
     mainMapRef?.current?.panTo([start.lat, start.lng], { animate: false })
 
     const onMove = (ev) => {
@@ -77,7 +77,7 @@ function DragAndPageController({
       const ll = clientToLatLng(ev.clientX, ev.clientY)
       const next = { lat: ll.lat, lng: ll.lng }
       setBoth(next)
-      // ⬇️ continuous follow while dragging
+      // continuous follow while dragging
       mainMapRef?.current?.panTo([next.lat, next.lng], { animate: false })
       ev.preventDefault?.()
     }
@@ -145,6 +145,12 @@ export default function SubMapModal({
   const [viewCenter, setViewCenter] = useState(safeCenter)
   const subMapRef = useRef(null)
 
+  // NEW: absolute safety—whenever pos changes, follow on the main map
+  useEffect(() => {
+    if (!pos || !Number.isFinite(pos.lat) || !Number.isFinite(pos.lng)) return
+    mainMapRef?.current?.panTo([pos.lat, pos.lng], { animate: false })
+  }, [pos, mainMapRef])
+
   // Adopt new center from parent if it changes to a valid value
   useEffect(() => {
     if (center && Number.isFinite(center.lat) && Number.isFinite(center.lng)) {
@@ -197,7 +203,7 @@ export default function SubMapModal({
     if (dir === 'W') next = { lat: viewCenter.lat, lng: viewCenter.lng - dLngMiles }
     setViewCenter(next)
 
-    // ✅ keep main map centered as we page
+    // keep main map centered as we page
     mainMapRef?.current?.panTo([next.lat, next.lng], { animate: false })
 
     requestAnimationFrame(() => {
@@ -244,7 +250,7 @@ export default function SubMapModal({
               pageTile={pageTile}
               handoff={handoff}
               onPointerUpCommit={(finalPos) => onCommit(finalPos)}
-              mainMapRef={mainMapRef}         // ⬅️ NEW: live-sync main map on drag
+              mainMapRef={mainMapRef} // live-sync main map on drag
             />
           </MapContainer>
         </div>
