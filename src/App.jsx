@@ -354,6 +354,12 @@ export default function App() {
     })
   }, [pinsDeduped])
 
+  // ✅ Accurate total count for header (Chicago-only when in Chicago)
+  const totalCountForHeader = useMemo(() => {
+    if (mapMode === 'global') return pinsDeduped.length
+    return pinsDeduped.filter(p => p?.source !== 'global').length
+  }, [mapMode, pinsDeduped])
+
   // idle attractor
   const { showAttractor, setShowAttractor } = useIdleAttractor({
     deps: [mapMode],
@@ -582,7 +588,7 @@ export default function App() {
       <HeaderBar
         isMobile={isMobile}
         mapMode={mapMode}
-        totalCount={pinsDeduped.length}
+        totalCount={totalCountForHeader}   
         onGlobal={goGlobal}
         onChicago={goChicagoZoomedOut}
         logoSrc={logoUrl}
@@ -696,6 +702,27 @@ export default function App() {
                   )
               }
             </div>
+
+            {/* ✅ Explore toggle restored (desktop/kiosk only) */}
+            {!isMobile && (
+              <div style={{ display:'flex', gap:8 }}>
+                {!exploring ? (
+                  <button
+                    data-no-admin-tap
+                    onClick={() => { setExploring(true); setShowAttractor(false) }}
+                  >
+                    🔎 Explore pins
+                  </button>
+                ) : (
+                  <button
+                    data-no-admin-tap
+                    onClick={() => setExploring(false)}
+                  >
+                    ✖ Close explore
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           !isMobile && (
