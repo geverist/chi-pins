@@ -632,20 +632,17 @@ export default function App() {
 <HeaderBar
   mapMode={mapMode}
   totalCount={pinsDeduped.length}
+  onGlobal={goGlobal}
+  onChicago={goChicagoZoomedOut}
   logoSrc={logoUrl}
-  onLogoClick={goChicagoZoomedOut} // optional
+  onLogoClick={goChicagoZoomedOut}
+  continentCounts={continentCounts}
   titleOverride={isMobile ? "Chicago Mike's Guest Pins" : undefined}
+  isMobile={isMobile}
+  suppressDefaultNavOnMobile={true}
 >
-  {/* Centered on its own row */}
-  <button
-    className="btn-toggle btn-toggle--sm"
-    aria-pressed={mobileViewMode === 'map'}
-    onClick={() => setMobileViewMode(m => (m === 'map' ? 'table' : 'map'))}
-  >
-    {mobileViewMode === 'map' ? 'Table View' : 'Map View'}
-  </button>
+  {isMobile ? mobileHeaderRight : desktopHeaderRight}
 </HeaderBar>
-
 
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
