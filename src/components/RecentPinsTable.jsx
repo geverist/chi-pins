@@ -1,82 +1,84 @@
 // src/components/RecentPinsTable.jsx
-import React from "react"
-import { titleFromSlug } from "../lib/pinsUtils"
+import React, { useMemo } from 'react'
 
-export default function RecentPinsTable({ pins }) {
-  if (!pins?.length) {
+export default function RecentPinsTable({ pins = [], onSelect }) {
+  const rows = useMemo(() => {
+    const copy = Array.isArray(pins) ? [...pins] : []
+    copy.sort((a, b) => (b?.created_at || '').localeCompare(a?.created_at || ''))
+    return copy.slice(0, 250)
+  }, [pins])
+
+  if (!rows.length) {
     return (
-      <div style={{ padding: 20, textAlign: "center", color: "var(--muted)" }}>
-        No pins yet. Try switching to Map view to browse.
+      <div style={{ padding: 12, color: '#a7b0b8', background: 'var(--bg)', height: '100%' }}>
+        No recent pins yet.
       </div>
     )
   }
 
   return (
-    <div style={{ height: "100%", overflow: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 14,
-          color: "var(--fg)",
-        }}
-      >
-        <thead
-          style={{
-            position: "sticky",
-            top: 0,
-            background: "rgba(16,17,20,0.85)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
-            zIndex: 1,
-          }}
-        >
-          <tr>
-            <th style={thStyle}>Guest / ID</th>
-            <th style={thStyle}>Neighborhood / Region</th>
-            <th style={thStyle}>Comment</th>
-            <th style={thStyle}>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pins.map((p, i) => {
-            const prettyId = titleFromSlug(p?.slug)
-            const who = p?.name?.trim() || prettyId || "—"
-            const where =
-              p?.neighborhood?.trim() ||
-              (p?.continent ? p.continent : "—")
-            const note = p?.note || ""
-            const date = p?.created_at
-              ? new Date(p.created_at).toLocaleDateString()
-              : "—"
+    <div
+      style={{
+        height: '100%',
+        overflow: 'auto',
+        padding: 8,
+        display: 'grid',
+        gap: 8,
+        background: 'var(--bg)'  // ensure map is not visible underneath
+      }}
+    >
+      {rows.map((r) => {
+        const created = r.created_at ? new Date(r.created_at).toLocaleString() : '—'
+        const noteShort = (r.note || '').length > 120 ? (r.note.slice(0, 120) + '…') : (r.note || '—')
+        return (
+          <button
+            key={r.id || r.slug || `${r.lat},${r.lng},${r.created_at}`}
+            className="card"
+            style={{
+              textAlign: 'left',
+              display: 'grid',
+              gap: 6,
+              padding: 12,
+              cursor: 'pointer'
+            }}
+            onClick={() => onSelect?.(r)}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
+              <strong style={{ fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {r.name || r.neighborhood || r.slug || 'Guest'}
+              </strong>
+              <small className="muted">{created}</small>
+            </div>
 
-            return (
-              <tr key={p?.id || p?.slug || i} style={{ borderBottom: "1px solid #2a2f37" }}>
-                <td style={tdStyle}>{who}</td>
-                <td style={tdStyle}>{where}</td>
-                <td style={{ ...tdStyle, maxWidth: 260, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {note}
-                </td>
-                <td style={tdStyle}>{date}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+            <div style={{ display: 'grid', gap: 4 }}>
+              {r.neighborhood ? (
+                <div>
+                  <small className="muted">Neighborhood</small>
+                  <div>{r.neighborhood}</div>
+                </div>
+              ) : null}
+
+              {r.hotdog ? (
+                <div>
+                  <small className="muted">Favorite stand</small>
+                  <div>{r.hotdog}</div>
+                </div>
+              ) : null}
+
+              <div>
+                <small className="muted">Note</small>
+                <div style={{ whiteSpace: 'pre-wrap' }}>{noteShort}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, color: '#a7b0b8', fontSize: 12 }}>
+              <span>Source: {r.source || '—'}</span>
+              {r.continent ? <span>• {r.continent}</span> : null}
+              {r.team ? <span>• {r.team}</span> : null}
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
-}
-
-const thStyle = {
-  textAlign: "left",
-  padding: "8px 12px",
-  fontWeight: 600,
-  color: "#eef3f8",
-  borderBottom: "1px solid #2a2f37",
-}
-
-const tdStyle = {
-  padding: "8px 12px",
-  verticalAlign: "top",
-  color: "var(--fg)",
 }
