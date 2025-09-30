@@ -119,6 +119,12 @@ const DEFAULT_FUN_FACTS = {
   waukegan: "Ray Bradbury’s hometown; see the annual Ray Bradbury Days."
 }
 
+// Admin (hidden)
+const [adminOpen, setAdminOpen] = useState(
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('admin') === '1'
+)
+
 /* -------- Small safe fallback if your table doesn’t expose onSelect -------- */
 const RecentPinsTable = (props) => {
   if (RecentPinsTableBase) return <RecentPinsTableBase {...props} />
