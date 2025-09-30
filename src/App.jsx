@@ -89,6 +89,18 @@ function KioskStartOverlay({ visible, onStart }) {
   )
 }
 
+function useOnline() {
+  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)
+  useEffect(() => {
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  return online
+}
+
 function normalizePhoneToE164ish(raw) {
   if (!raw) return null
   const digits = String(raw).replace(/\D+/g, '')
@@ -100,6 +112,7 @@ function normalizePhoneToE164ish(raw) {
 }
 
 /* ------------------------------------------------------------------------ */
+const online = useOnline()
 
 const DEFAULT_FUN_FACTS = {
   chicago: "Home of the first skyscraper (1885) and deep-dish pizza debates.",
@@ -530,6 +543,12 @@ export default function App() {
       >
         {headerRight}
       </HeaderBar>
+
+{!online && (
+  <div style={{padding:'8px 12px', textAlign:'center', background:'rgba(255,200,0,0.08)', borderBottom:'1px solid rgba(255,200,0,0.25)', color:'#ffd27f'}}>
+    You’re offline. Changes won’t sync until your connection returns.
+  </div>
+)}
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
         <MapShell
