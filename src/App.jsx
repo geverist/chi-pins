@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react'
 import logoUrl from './assets/logo.png'
 import { supabase } from './lib/supabase'
@@ -43,7 +44,7 @@ import ZoomGate from './components/ZoomGate'
 // Admin panel
 import AdminPanel from './components/AdminPanel'
 
-// Mobile table view
+// NEW: mobile table view
 import RecentPinsTable from './components/RecentPinsTable'
 
 /* ---------------- KIOSK HELPERS ---------------- */
@@ -218,7 +219,7 @@ export default function App() {
     return () => off?.()
   }, [autoKiosk, isMobile])
 
-  // HIDDEN kiosk toggle: Shift + K pressed 3 times within 3s (desktop/kiosk only)
+  // HIDDEN kiosk toggle: Shift + K pressed 3 times within 3s
   useEffect(() => {
     if (isMobile) return
     let count = 0
@@ -331,10 +332,9 @@ export default function App() {
     } catch {}
   }
 
-  // map click (disabled on mobile — read-only)
+  // map click
   const handlePick = async (ll) => {
     if (isMobile) return
-
     focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES)
     setDraft(ll)
 
@@ -476,7 +476,7 @@ export default function App() {
     gap: 8,
   })
 
-  // Desktop header content (unchanged; no visible kiosk buttons)
+  // Desktop header content (no visible kiosk buttons)
   const desktopHeaderRight =
     mapMode === 'chicago'
       ? (
@@ -504,42 +504,24 @@ export default function App() {
         <GlobalCounters counts={continentCounts} />
       )
 
-  // ---------- Mobile header row ----------
-  // 3-column grid: [Left controls] [Centered single toggle] [Spacer]
+  // Mobile header content: **ONLY** Map/Table toggle (remove Global/Return buttons)
   const mobileHeaderRight = (
-    <div
-      style={{
-        display:'grid',
-        gridTemplateColumns:'1fr auto 1fr',
-        alignItems:'center',
-        gap:8,
-        width:'100%'
-      }}
-    >
-      {/* LEFT: Global / Back to Chicago (only when Map view is selected) */}
-      <div style={{ display:'flex', gap:8, justifyContent:'flex-start' }}>
-        {mobileViewMode === 'map' && (
-          <>
-            <button className="btn-toggle btn-toggle--sm" onClick={goGlobal}>Global</button>
-            <button className="btn-toggle btn-toggle--sm" onClick={goChicagoZoomedOut}>Back to Chicago</button>
-          </>
-        )}
-      </div>
-
-      {/* CENTER: Single toggle button Map ⇄ Table */}
-      <div style={{ display:'flex', justifyContent:'center' }}>
-        <button
-          className="btn-toggle btn-toggle--sm"
-          onClick={() => setMobileViewMode(mobileViewMode === 'map' ? 'table' : 'map')}
-          aria-pressed={mobileViewMode === 'table'}
-          title={mobileViewMode === 'map' ? 'Switch to Table View' : 'Switch to Map View'}
-        >
-          {mobileViewMode === 'map' ? 'Table View' : 'Map View'}
-        </button>
-      </div>
-
-      {/* RIGHT: empty spacer to keep the center truly centered */}
-      <div />
+    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+      <span style={{ fontSize:12, color:'#a7b0b8' }}>View:</span>
+      <button
+        className="btn-toggle btn-toggle--sm"
+        aria-pressed={mobileViewMode === 'map'}
+        onClick={() => setMobileViewMode('map')}
+      >
+        Map
+      </button>
+      <button
+        className="btn-toggle btn-toggle--sm"
+        aria-pressed={mobileViewMode === 'table'}
+        onClick={() => setMobileViewMode('table')}
+      >
+        Table
+      </button>
     </div>
   )
 
@@ -583,58 +565,6 @@ export default function App() {
   }, [])
   /* ------------------------------------------------ */
 
-  // -------- Modal for mobile Table row selection --------
-  const [selectedPin, setSelectedPin] = useState(null)
-  const closeSelectedModal = () => setSelectedPin(null)
-
-  const PinDetailsModal = ({ pin, onClose }) => {
-    if (!pin) return null
-    return (
-      <div
-        className="glass"
-        style={{
-          position:'fixed', inset:0, zIndex:5000,
-          background:'rgba(0,0,0,0.55)',
-          display:'grid', placeItems:'center', padding:'16px'
-        }}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div
-          style={{
-            width:'min(560px, 96vw)',
-            border:'1px solid rgba(255,255,255,0.12)',
-            borderRadius:14,
-            background:'rgba(22,24,29,0.9)',
-            boxShadow:'0 12px 32px rgba(0,0,0,0.45)',
-            overflow:'hidden'
-          }}
-        >
-          <header style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 14px', borderBottom:'1px solid rgba(255,255,255,0.08)' }}>
-            <strong>Pin Details</strong>
-            <button className="btn-toggle btn-toggle--sm" onClick={onClose}>Close</button>
-          </header>
-          <div style={{ padding:14, display:'grid', gap:10 }}>
-            <div><small className="muted">Slug</small><div style={{ fontFamily:'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{pin.slug || '—'}</div></div>
-            <div><small className="muted">Name</small><div>{pin.name || '—'}</div></div>
-            {'neighborhood' in pin && (<div><small className="muted">Neighborhood</small><div>{pin.neighborhood || '—'}</div></div>)}
-            <div><small className="muted">Favorite Stand</small><div>{pin.hotdog || '—'}</div></div>
-            <div><small className="muted">Note</small><div style={{ whiteSpace:'pre-wrap' }}>{pin.note || '—'}</div></div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-              <div><small className="muted">Source</small><div>{pin.source || '—'}</div></div>
-              <div><small className="muted">Created</small><div>{pin.created_at ? new Date(pin.created_at).toLocaleString() : '—'}</div></div>
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-              <div><small className="muted">Lat</small><div>{Number.isFinite(pin.lat) ? pin.lat.toFixed(5) : '—'}</div></div>
-              <div><small className="muted">Lng</small><div>{Number.isFinite(pin.lng) ? pin.lng.toFixed(5) : '—'}</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // --------- MAIN RENDER ----------
   return (
     <div className="app">
       <HeaderBar
@@ -644,17 +574,14 @@ export default function App() {
         onChicago={goChicagoZoomedOut}
         logoSrc={logoUrl}
         onLogoClick={goChicagoZoomedOut}
-        titleOverride={isMobile ? "Chicago Mike's Guest Pins" : undefined}
+        titleOverride={isMobile ? "Chicago Mike's Guest Pins" : undefined}  // ← NEW
       >
         {isMobile ? mobileHeaderRight : desktopHeaderRight}
       </HeaderBar>
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
         {isMobile && mobileViewMode === 'table' ? (
-          <RecentPinsTable
-            pins={pinsDeduped}
-            onSelect={(pin) => setSelectedPin(pin)}   // ← open modal with details
-          />
+          <RecentPinsTable pins={pinsDeduped} />
         ) : (
           <MapShell
             mapMode={mapMode}
@@ -662,9 +589,6 @@ export default function App() {
             exploring={exploring}
             onPick={handlePick}
           >
-            {/* Popular labels:
-               - Desktop: as before when not drafting
-               - Mobile: only while exploring */}
             {showPopularSpots
               && mapMode === 'chicago'
               && !draft
@@ -672,7 +596,6 @@ export default function App() {
                 <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
             )}
 
-            {/* Zoomed OUT: bubbles (Chicago + Global) */}
             {showCommunityPins && !draft && (
               <PinBubbles
                 pins={pinsDeduped}
@@ -682,7 +605,6 @@ export default function App() {
               />
             )}
 
-            {/* Zoomed IN (Chicago only): real pins */}
             {showCommunityPins && !draft && mapMode === 'chicago' && (
               <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>
                 <SavedPins
@@ -696,7 +618,6 @@ export default function App() {
               </ZoomGate>
             )}
 
-            {/* Draft placement disabled on mobile */}
             {draft && !isMobile && (
               <DraftMarker
                 lat={draft.lat}
@@ -736,11 +657,10 @@ export default function App() {
         />
       )}
 
-      {/* Footer (unchanged; explore buttons hidden on mobile) */}
       <footer
         style={{ padding:'10px 14px' }}
-        onClick={(e) => { /* hidden admin tap area */ }}
-        onTouchStart={(e) => { /* hidden admin tap area */ }}
+        onClick={handleFooterClick}
+        onTouchStart={handleFooterTouch}
       >
         {!draft ? (
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
@@ -754,7 +674,7 @@ export default function App() {
               }
             </div>
 
-            {/* Hide on mobile */}
+            {/* Hide Explore buttons on mobile (always exploring) */}
             {!isMobile && !exploring && (
               <button data-no-admin-tap onClick={()=> { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
             )}
@@ -790,9 +710,6 @@ export default function App() {
 
       <KioskStartOverlay visible={!isMobile && autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
-
-      {/* Mobile details modal */}
-      {isMobile && <PinDetailsModal pin={selectedPin} onClose={closeSelectedModal} />}
     </div>
   )
 }
