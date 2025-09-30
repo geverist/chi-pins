@@ -24,7 +24,7 @@ L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
  * - Matches your .glass look
  * - Click/scroll propagation disabled so it never places pins while typing
  * - On select, flies to result (min zoom 13)
- * - Adds an “×” clear button that appears only when text exists
+ * - Adds an “×” clear button centered via flex
  */
 function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const map = useMap()
@@ -158,13 +158,14 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         })
       }
 
-      // --- Add a clear ("×") button ---
+      // --- Clear ("×") button (centered with flex) ---
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
       clearBtnRef.current = clearBtn
       clearBtn.type = 'button'
       clearBtn.title = 'Clear search'
       clearBtn.setAttribute('aria-label', 'Clear search')
-      clearBtn.innerHTML = '&times;' // ×
+      clearBtn.innerHTML = '&times;'
+
       Object.assign(clearBtn.style, {
         border: '1px solid rgba(255,255,255,0.18)',
         background: 'rgba(0,0,0,0.22)',
@@ -172,11 +173,14 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         width: '32px',
         height: '32px',
         borderRadius: '8px',
-        fontSize: '20px',
-        lineHeight: '28px',
-        textAlign: 'center',
+        // 👇 Center perfectly:
+        display: 'none',            // toggled to 'inline-flex' when there is text
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '18px',
+        lineHeight: '1',
+        padding: '0',
         cursor: 'pointer',
-        display: 'none', // hidden until input has text
       })
 
       // Prevent map from seeing clicks on the clear button
@@ -194,26 +198,24 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         } else if (altsRef.current) {
           altsRef.current.innerHTML = ''
           altsRef.current.style.display = 'none'
-          // briefly force reflow to reset; then show again when results populate
           requestAnimationFrame(() => { altsRef.current && (altsRef.current.style.display = '') })
         }
         // Hide the clear button
         clearBtn.style.display = 'none'
       })
 
-      // Show/hide the clear button based on input content
+      // Show/hide clear button based on input content
       const onInput = () => {
         if (!clearBtnRef.current || !inputRef.current) return
         clearBtnRef.current.style.display =
-          inputRef.current.value.trim() ? 'inline-block' : 'none'
+          inputRef.current.value.trim() ? 'inline-flex' : 'none'
       }
       if (inputRef.current) {
         inputRef.current.addEventListener('input', onInput)
-        // initialize visibility
-        onInput()
+        onInput() // initial state
       }
 
-      // cleanup listeners
+      // cleanup listeners for input
       return () => {
         if (inputRef.current) inputRef.current.removeEventListener('input', onInput)
       }
@@ -264,7 +266,7 @@ export default function MapShell({
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
 
-        {/* Glassy geocoder with clear button */}
+        {/* Glassy geocoder with centered clear button */}
         <GeocoderTopCenter />
 
         {/* Click handler for placing pins (unchanged) */}
