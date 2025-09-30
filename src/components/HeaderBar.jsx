@@ -1,4 +1,3 @@
-// src/components/HeaderBar.jsx
 const PIN_COLOR = {
   chicago:  '#0ea5e9',
   na:       '#3b82f6',
@@ -11,7 +10,6 @@ const PIN_COLOR = {
 function InlineCount({ color, label, count }) {
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
-      {/* tiny pin head swatch (bordered like TeamCount) */}
       <span
         aria-hidden
         style={{
@@ -38,8 +36,8 @@ export default function HeaderBar({
   logoSrc,
   onLogoClick,
   continentCounts = null,
+  titleOverride, // optional: lets mobile say "Chicago Mike's Guest Pins"
 }) {
-  // keep whatever 3D style func you had before if you want; here’s a minimal one
   const switchBtnStyle = (pressed) => ({
     padding:'10px 12px', borderRadius:12,
     border:'1px solid #2a2f37',
@@ -48,6 +46,12 @@ export default function HeaderBar({
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   })
+
+  const titleText =
+    titleOverride ??
+    (mapMode === 'global'
+      ? 'Where in the world are you from?'
+      : 'Where in Chicago(land) are you from?')
 
   return (
     <header
@@ -75,9 +79,7 @@ export default function HeaderBar({
         ) : null}
 
         <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap' }}>
-          {mapMode === 'global'
-            ? 'Where in the world are you from?'
-            : 'Where in Chicago(land) are you from?'}
+          {titleText}
         </h1>
 
         <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10 }}>
@@ -86,7 +88,7 @@ export default function HeaderBar({
         </span>
       </div>
 
-      {/* Right: continent counts (inline, no boxes) + children + switch */}
+      {/* Right: continent counts (inline) + children + view switch */}
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>

@@ -1,4 +1,3 @@
-// src/components/MapShell.jsx
 import { useEffect, useMemo, useRef } from 'react'
 import L from 'leaflet'
 import {
@@ -9,7 +8,7 @@ import {
 } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Geocoder (Option 1)
+// Geocoder (styled, Chicago-biased) + CSS
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css'
 import 'leaflet-control-geocoder'
 
@@ -20,11 +19,7 @@ import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
 
 /**
- * Glassy, Chicago-biased geocoder placed top-center.
- * - Matches your .glass look
- * - Click/scroll propagation disabled so it never places pins while typing
- * - On select, flies to result (min zoom 13)
- * - Adds an “×” clear button centered via flex
+ * Glassy, Chicago-biased geocoder placed top-center with a centered “×” clear button.
  */
 function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const map = useMap()
@@ -61,7 +56,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   useEffect(() => {
     if (!map || !hostRef.current) return
 
-    // Glass shell that will hold the geocoder control
+    // Glass shell
     const shell = L.DomUtil.create('div', 'map-search-wrap glass')
     Object.assign(shell.style, {
       display: 'flex',
@@ -82,7 +77,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
     const geocoder = L.Control.geocoder({
       geocoder: L.Control.Geocoder.nominatim({
         geocodingQueryParams: {
-          viewbox: '-88.5,42.6,-87.3,41.4', // Chicagoland
+          viewbox: '-88.5,42.6,-87.3,41.4',
           bounded: 1,
           countrycodes: 'us',
           addressdetails: 1,
@@ -107,21 +102,19 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
     const ctrlEl = geocoder._container
 
     if (ctrlEl) {
-      // move control into our glass shell
       shell.appendChild(ctrlEl)
 
-      // disable event propagation so it never places pins while typing/scrolling
+      // prevent map interactions
       L.DomEvent.disableClickPropagation(shell)
       L.DomEvent.disableScrollPropagation(shell)
 
-      // Neutralize default control UI so CSS takes over
+      // neutralize default control UI
       ctrlEl.style.background = 'transparent'
       ctrlEl.style.border = 'none'
       ctrlEl.style.boxShadow = 'none'
       ctrlEl.style.margin = '0'
       ctrlEl.style.padding = '0'
 
-      // Input tweaks for glass look
       const input = ctrlEl.querySelector('.leaflet-control-geocoder-form input')
       inputRef.current = input || null
       if (input) {
@@ -137,11 +130,9 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         input.placeholder = placeholder
       }
 
-      // Hide the default search icon button (we keep Enter-to-search)
       const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
       if (iconBtn) iconBtn.style.display = 'none'
 
-      // Results list becomes glass dropdown
       const alts = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
       altsRef.current = alts || null
       if (alts) {
@@ -158,14 +149,13 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         })
       }
 
-      // --- Clear ("×") button (centered with flex) ---
+      // Clear (“×”) button centered with flex
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
       clearBtnRef.current = clearBtn
       clearBtn.type = 'button'
       clearBtn.title = 'Clear search'
       clearBtn.setAttribute('aria-label', 'Clear search')
       clearBtn.innerHTML = '&times;'
-
       Object.assign(clearBtn.style, {
         border: '1px solid rgba(255,255,255,0.18)',
         background: 'rgba(0,0,0,0.22)',
@@ -173,8 +163,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         width: '32px',
         height: '32px',
         borderRadius: '8px',
-        // 👇 Center perfectly:
-        display: 'none',            // toggled to 'inline-flex' when there is text
+        display: 'none', // toggled by input listener
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '18px',
@@ -182,17 +171,13 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         padding: '0',
         cursor: 'pointer',
       })
-
-      // Prevent map from seeing clicks on the clear button
       L.DomEvent.disableClickPropagation(clearBtn)
       L.DomEvent.on(clearBtn, 'click', (ev) => {
-        ev.preventDefault()
-        ev.stopPropagation()
+        ev.preventDefault(); ev.stopPropagation()
         if (inputRef.current) {
           inputRef.current.value = ''
           inputRef.current.focus()
         }
-        // Hide results if method exists, else nuke the list
         if (geocoderRef.current?._clearResults) {
           geocoderRef.current._clearResults()
         } else if (altsRef.current) {
@@ -200,11 +185,9 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
           altsRef.current.style.display = 'none'
           requestAnimationFrame(() => { altsRef.current && (altsRef.current.style.display = '') })
         }
-        // Hide the clear button
         clearBtn.style.display = 'none'
       })
 
-      // Show/hide clear button based on input content
       const onInput = () => {
         if (!clearBtnRef.current || !inputRef.current) return
         clearBtnRef.current.style.display =
@@ -212,10 +195,10 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       }
       if (inputRef.current) {
         inputRef.current.addEventListener('input', onInput)
-        onInput() // initial state
+        onInput()
       }
 
-      // cleanup listeners for input
+      // cleanup input listener on unmount
       return () => {
         if (inputRef.current) inputRef.current.removeEventListener('input', onInput)
       }
@@ -269,10 +252,10 @@ export default function MapShell({
         {/* Glassy geocoder with centered clear button */}
         <GeocoderTopCenter />
 
-        {/* Click handler for placing pins (unchanged) */}
+        {/* Click handler for placing pins */}
         <ClickToPick onPick={onPick} />
 
-        {/* Overlays / children (unchanged) */}
+        {/* Overlays / children */}
         {children}
       </MapContainer>
     </div>
