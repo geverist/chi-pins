@@ -55,6 +55,7 @@ function ensureSearchCss() {
 function GeocoderTopCenter({
   placeholder = 'Search Chicago & nearby…',
   mode = 'chicago', // 'chicago' | 'global'
+  clearToken = 0,   // bump to clear the search field/results
 }) {
   const map = useMap()
   const hostRef = useRef(null)
@@ -116,7 +117,6 @@ function GeocoderTopCenter({
       geocoder: mode === 'global'
         ? L.Control.Geocoder.nominatim({
             geocodingQueryParams: {
-              // no viewbox, allow global search
               addressdetails: 1,
               limit: 10,
             }
@@ -273,6 +273,13 @@ function GeocoderTopCenter({
   // IMPORTANT: re-create when mode changes to update search bias
   }, [map, placeholder, mode])
 
+  // External clear: when clearToken changes, wipe input and results
+  useEffect(() => {
+    if (!geocoderRef.current) return
+    try { geocoderRef.current._clearResults?.() } catch {}
+    if (inputRef.current) inputRef.current.value = ''
+  }, [clearToken])
+
   return null
 }
 
@@ -349,9 +356,10 @@ export default function MapShell({
   exploring,
   onPick,
   children,
-  resetCameraToken, // optional: when incremented in Chicago mode, refits to CHI_BOUNDS
-  editing = false,   // NEW: hide geocoder while editing pins
-  showGeocoder = true, // NEW: allow explicit control (default keeps old behavior)
+  resetCameraToken,     // optional: when incremented in Chicago mode, refits to CHI_BOUNDS
+  editing = false,      // hide geocoder while editing pins
+  showGeocoder = true,  // explicit control (default keeps old behavior)
+  clearSearchToken = 0, // NEW: clear search on demand (e.g., idle)
 }) {
   // Initial mount center/zoom; MapModeController will take over on changes
   const center = useMemo(() => [CHI.lat, CHI.lng], [])
@@ -384,7 +392,10 @@ export default function MapShell({
 
         {/* Glassy, high-contrast geocoder */}
         {showGeocoder && !editing && (
-          <GeocoderTopCenter mode={mapMode === 'global' ? 'global' : 'chicago'} />
+          <GeocoderTopCenter
+            mode={mapMode === 'global' ? 'global' : 'chicago'}
+            clearToken={clearSearchToken}
+          />
         )}
 
         {/* Click handler for placing pins; disabled while exploring */}

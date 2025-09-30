@@ -255,6 +255,9 @@ export default function App() {
   // ✅ token that lets MapShell force a Chicago refit even if already in Chicago
   const [resetCameraToken, setResetCameraToken] = useState(0)
 
+  // ✅ NEW: token to tell MapShell's geocoder to clear input/results
+  const [clearSearchToken, setClearSearchToken] = useState(0)
+
   // idle attractor
   const { showAttractor, setShowAttractor } = useIdleAttractor({
     deps: [mapMode],
@@ -263,7 +266,11 @@ export default function App() {
     submapOpen: !!submapCenter,
     exploring,
     timeoutMs: 60 * 1000,
-    onIdle: () => { cancelEditing() },
+    onIdle: () => {
+      cancelEditing()
+      // also clear the geocoder search when idle fires
+      setClearSearchToken(t => t + 1)
+    },
   })
 
   // cancel helper
@@ -561,7 +568,8 @@ export default function App() {
           exploring={exploring}
           onPick={handlePick}
           resetCameraToken={resetCameraToken} // ensures zoomed-out Chicago refit
-          editing={!!draft}  
+          editing={!!draft}
+          clearSearchToken={clearSearchToken} // ✅ clear geocoder when idle fires
         >
           {/* Popular labels only when not placing a draft */}
           {showPopularSpots && mapMode === 'chicago' && !draft && (
