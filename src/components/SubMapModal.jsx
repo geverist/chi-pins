@@ -1,318 +1,264 @@
-// components/MapShell.jsx
-import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet'
-import { useEffect, useRef } from 'react'
+// src/components/SubMapModal.jsx
+import { useEffect, useRef, useState, useMemo } from 'react'
+import { MapContainer, TileLayer, useMap, Marker } from 'react-leaflet'
 import L from 'leaflet'
+import { boundsForMiles, squareMileDeltas, placingIconFor } from '../lib/mapUtils'
 
-// Geocoder (Nominatim) control
-import 'leaflet-control-geocoder/dist/Control.Geocoder.css'
-import 'leaflet-control-geocoder'
+/* ---- Zoom → granularity helpers ---- */
+function frameMilesForZoom(baseZoom) {
+  const z = Number.isFinite(baseZoom) ? baseZoom : 14
+  const anchorZoom = 15
+  const anchorMiles = 1.0
+  const miles = anchorMiles * Math.pow(0.5, z - anchorZoom)
+  return Math.min(16, Math.max(0.08, miles))
+}
+function pageStepMilesForZoom(baseZoom) {
+  return frameMilesForZoom(baseZoom) * 0.5
+}
 
-import {
-  CHI, CHI_BOUNDS, CHI_MIN_ZOOM, CHI_MAX_ZOOM,
-  USA, GLOBAL_ZOOM,
-} from '../lib/mapUtils'
-
-/* ------------------------ Chicago-biased glassy search ------------------------ */
-function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
+/* ---- Drag + edge paging controller ---- */
+function DragAndPageController({
+  pos,
+  setPos,
+  pageTile,
+  handoff,
+  onPointerUpCommit,
+  mainMapRef,                // ⬅️ let controller sync the main map during drag
+}) {
   const map = useMap()
-  const hostRef = useRef(null)
-  const shellRef = useRef(null)
-  const geocoderRef = useRef(null)
-  const clearBtnRef = useRef(null)
+  const posRef = useRef(pos)
+  const activeIdRef = useRef(null)
+  const cooldown = useRef(0)
+  const unsubRef = useRef({})
 
-  // Create a top-center host on mount
+  const setBoth = (ll) => { posRef.current = ll; setPos(ll) }
+  useEffect(() => { posRef.current = pos }, [pos])
+
+  const clientToLatLng = (clientX, clientY) => {
+    const rect = map.getContainer().getBoundingClientRect()
+    const pt = L.point(clientX - rect.left, clientY - rect.top)
+    return map.containerPointToLatLng(pt)
+  }
+
+  const maybePageAtEdges = (clientX, clientY) => {
+    const rect = map.getContainer().getBoundingClientRect()
+    const PAD = 12
+    const now = performance.now()
+    if (now < cooldown.current) return
+
+    if (clientY < rect.top + PAD)  { cooldown.current = now + 110; pageTile('N', { x: clientX, y: clientY }); return }
+    if (clientY > rect.bottom - PAD){ cooldown.current = now + 110; pageTile('S', { x: clientX, y: clientY }); return }
+    if (clientX > rect.right - PAD){ cooldown.current = now + 110; pageTile('E', { x: clientX, y: clientY }); return }
+    if (clientX < rect.left + PAD) { cooldown.current = now + 110; pageTile('W', { x: clientX, y: clientY }); return }
+  }
+
+  const endDrag = (commit = true) => {
+    const { move, up, cancel } = unsubRef.current
+    if (move) window.removeEventListener('pointermove', move, { passive: false })
+    if (up) window.removeEventListener('pointerup', up, { passive: false })
+    if (cancel) window.removeEventListener('pointercancel', cancel, { passive: false })
+    unsubRef.current = {}
+    const id = activeIdRef.current
+    activeIdRef.current = null
+    if (commit && id != null) onPointerUpCommit(posRef.current)
+  }
+
+  const startDrag = (clientX, clientY, id = -1) => {
+    activeIdRef.current = id
+    const startLL = clientToLatLng(clientX, clientY)
+    const start = { lat: startLL.lat, lng: startLL.lng }
+    setBoth(start)
+    // keep main map centered immediately on drag start
+    mainMapRef?.current?.panTo([start.lat, start.lng], { animate: false })
+
+    const onMove = (ev) => {
+      if (activeIdRef.current !== -1 && ev.pointerId !== activeIdRef.current) return
+      maybePageAtEdges(ev.clientX, ev.clientY)
+      const ll = clientToLatLng(ev.clientX, ev.clientY)
+      const next = { lat: ll.lat, lng: ll.lng }
+      setBoth(next)
+      // continuous follow while dragging
+      mainMapRef?.current?.panTo([next.lat, next.lng], { animate: false })
+      ev.preventDefault?.()
+    }
+
+    const onEnd = (ev) => {
+      if (activeIdRef.current !== -1 && ev.pointerId !== activeIdRef.current) return
+      endDrag(true)
+    }
+
+    window.addEventListener('pointermove', onMove, { passive: false })
+    window.addEventListener('pointerup', onEnd, { passive: false })
+    window.addEventListener('pointercancel', onEnd, { passive: false })
+    unsubRef.current = { move: onMove, up: onEnd, cancel: onEnd }
+  }
+
   useEffect(() => {
-    if (!map) return
-    const host = L.DomUtil.create('div', 'map-search-host')
-    Object.assign(host.style, {
-      position: 'absolute',
-      left: '50%',
-      top: '10px',
-      transform: 'translateX(-50%)',
-      zIndex: 3600,
-      pointerEvents: 'auto',
-      maxWidth: 'min(92vw, 720px)',
-      width: 'max-content',
-    })
-    map.getContainer().appendChild(host)
-    hostRef.current = host
+    if (!handoff || handoff.x == null || handoff.y == null) return
+    startDrag(handoff.x, handoff.y, handoff.id ?? -1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handoff])
+
+  useEffect(() => {
+    const container = map.getContainer()
+    const onPointerDown = (ev) => {
+      if (activeIdRef.current != null) endDrag(false)
+      startDrag(ev.clientX, ev.clientY, ev.pointerId ?? -1)
+      ev.preventDefault?.()
+    }
+    container.addEventListener('pointerdown', onPointerDown, { passive: false })
     return () => {
-      if (hostRef.current?.parentNode) hostRef.current.parentNode.removeChild(hostRef.current)
-      hostRef.current = null
+      container.removeEventListener('pointerdown', onPointerDown, { passive: false })
+      endDrag(false)
     }
   }, [map])
 
-  // Mount the geocoder control into a glassy shell
-  useEffect(() => {
-    if (!map || !hostRef.current) return
-
-    // outer glass shell
-    const shell = L.DomUtil.create('div', 'map-search-wrap glass')
-    Object.assign(shell.style, {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      padding: '8px 10px',
-      borderRadius: '12px',
-      backdropFilter: 'blur(6px) saturate(115%)',
-      WebkitBackdropFilter: 'blur(6px) saturate(115%)',
-      background: 'rgba(16,17,20,0.45)',
-      border: '1px solid rgba(255,255,255,0.14)',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.30)',
-      position: 'relative',
-    })
-    hostRef.current.appendChild(shell)
-    shellRef.current = shell
-
-    // Build geocoder, biased to Chicagoland
-    const geocoder = L.Control.geocoder({
-      geocoder: L.Control.Geocoder.nominatim({
-        geocodingQueryParams: {
-          viewbox: '-88.5,42.6,-87.3,41.4', // Chicagoland bbox
-          bounded: 1,
-          countrycodes: 'us',
-          addressdetails: 1,
-          limit: 10,
-        }
-      }),
-      defaultMarkGeocode: false,
-      collapsed: false,
-      placeholder,
-    })
-
-    geocoder.on('markgeocode', (e) => {
-      const center = e?.geocode?.center
-      if (center) {
-        const targetZoom = Math.max(map.getZoom() ?? 0, 13)
-        map.flyTo(center, targetZoom)
-      }
-    })
-
-    geocoder.addTo(map)
-    geocoderRef.current = geocoder
-    const ctrlEl = geocoder._container
-
-    if (ctrlEl) {
-      // move into our glass shell
-      shell.appendChild(ctrlEl)
-
-      // prevent search interactions from propagating to the map
-      L.DomEvent.disableClickPropagation(shell)
-      L.DomEvent.disableScrollPropagation(shell)
-
-      // neutralize default chrome
-      Object.assign(ctrlEl.style, {
-        background: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-        margin: '0',
-        padding: '0',
-      })
-
-      // style the input
-      const input = ctrlEl.querySelector('.leaflet-control-geocoder-form input')
-      if (input) {
-        Object.assign(input.style, {
-          background: 'rgba(0,0,0,0.22)',
-          border: '1px solid rgba(255,255,255,0.18)',
-          color: '#e9eef3',
-          padding: '10px 36px 10px 12px', // extra right padding for the clear "×"
-          borderRadius: '10px',
-          outline: 'none',
-          width: 'min(72vw, 520px)',
-        })
-        input.placeholder = placeholder
-      }
-
-      // hide default icon button (Enter/typing still works)
-      const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
-      if (iconBtn) iconBtn.style.display = 'none'
-
-      // style results dropdown
-      const alts = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
-      if (alts) {
-        Object.assign(alts.style, {
-          background: 'rgba(16,17,20,0.92)',
-          border: '1px solid rgba(255,255,255,0.14)',
-          color: '#e9eef3',
-          borderRadius: '10px',
-          marginTop: '8px',
-          boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
-          overflow: 'hidden',
-          maxHeight: '50vh',
-          overscrollBehavior: 'contain',
-        })
-      }
-
-      // Add a centered "×" clear button inside the shell
-      const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
-      Object.assign(clearBtn.style, {
-        position: 'absolute',
-        right: '16px',
-        // center the "×" vertically relative to the input line-box
-        top: '50%',
-        transform: 'translateY(-50%)',
-        width: '22px',
-        height: '22px',
-        borderRadius: '50%',
-        border: '1px solid rgba(255,255,255,0.25)',
-        background: 'rgba(0,0,0,0.35)',
-        color: '#e9eef3',
-        cursor: 'pointer',
-        fontSize: '14px',
-        lineHeight: '1',
-        display: 'none', // hidden until there’s text
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0',
-      })
-      clearBtn.textContent = '×'
-      clearBtn.title = 'Clear'
-      clearBtnRef.current = clearBtn
-
-      // ensure clear button doesn't interact with the map
-      L.DomEvent.disableClickPropagation(clearBtn)
-      clearBtn.addEventListener('click', (ev) => {
-        ev.preventDefault()
-        ev.stopPropagation()
-        if (input) {
-          input.value = ''
-          input.dispatchEvent(new Event('input', { bubbles: true }))
-          // hide results, if open
-          const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
-          if (list) list.style.display = 'none'
-          // refocus input
-          input.focus()
-        }
-        clearBtn.style.display = 'none'
-      })
-
-      // toggle clear button visibility on input
-      const onInput = () => {
-        const hasText = !!input?.value
-        clearBtn.style.display = hasText ? 'inline-flex' : 'none'
-      }
-      input?.addEventListener('input', onInput)
-      // initial state
-      onInput()
-
-      // cleanup listeners we attached
-      return () => {
-        input?.removeEventListener('input', onInput)
-      }
-    }
-
-    return () => {
-      if (geocoderRef.current) {
-        geocoderRef.current.remove()
-        geocoderRef.current = null
-      }
-      if (shellRef.current?.parentNode) shellRef.current.parentNode.removeChild(shellRef.current)
-      shellRef.current = null
-    }
-  }, [map, placeholder])
-
-  return null
-}
-/* --------------------------------------------------------------------------- */
-
-function MapModeController({ mode, onMapReady }) {
-  const map = useMap()
-
-  // Initial mount → Chicago view (no maxBounds)
-  useEffect(() => {
-    onMapReady?.(map)
-
-    // Chicago camera limits only (no pannable bounds)
-    map.setMinZoom(CHI_MIN_ZOOM)
-    map.setMaxZoom(CHI_MAX_ZOOM)
-    map.setMaxBounds(null) // ensure no residual bounds
-    map.fitBounds(CHI_BOUNDS, { animate: false })
-
-    // enable interactions
-    map.dragging?.enable()
-    map.scrollWheelZoom?.enable()
-    map.touchZoom?.enable()
-    map.boxZoom?.enable()
-    map.keyboard?.enable()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // mount only
-
-  // Respond to mode changes
-  useEffect(() => {
-    setTimeout(() => {
-      map.invalidateSize()
-
-      if (mode === 'global') {
-        // Global: totally free pan/zoom (no bounds)
-        map.setMaxBounds(null)
-        map.setMinZoom(2)
-        map.setMaxZoom(19)
-        map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true })
-
-        map.dragging?.enable()
-        map.scrollWheelZoom?.enable()
-        map.touchZoom?.enable()
-        map.boxZoom?.enable()
-        map.keyboard?.enable()
-      } else {
-        // Chicago: only min/max zoom; no bounds
-        map.setMaxBounds(null)
-        map.setMinZoom(CHI_MIN_ZOOM)
-        map.setMaxZoom(CHI_MAX_ZOOM)
-        map.fitBounds(CHI_BOUNDS, { animate: true })
-
-        map.dragging?.enable()
-        map.scrollWheelZoom?.enable()
-        map.touchZoom?.enable()
-        map.boxZoom?.enable()
-        map.keyboard?.enable()
-      }
-    }, 0)
-  }, [mode, map])
-
   return null
 }
 
-function TapToPlace({ onPick, disabled = false }) {
-  useMapEvents({
-    click(e) {
-      if (disabled) return
-      onPick?.({ lat: e.latlng.lat, lng: e.latlng.lng })
-    }
-  })
-  return null
-}
-
-export default function MapShell({
-  mapMode,
+/* ---- Modal ---- */
+export default function SubMapModal({
+  center,
+  team,
+  handoff,
+  onCommit,
   mainMapRef,
-  exploring,
-  onPick,
-  children
+  baseZoom,
 }) {
+  // Always create a valid center (final backstop here)
+  const safeCenter = useMemo(() => {
+    if (center && Number.isFinite(center.lat) && Number.isFinite(center.lng)) return center
+    const live = mainMapRef?.current?.getCenter?.()
+    if (live && Number.isFinite(live.lat) && Number.isFinite(live.lng)) {
+      return { lat: live.lat, lng: live.lng }
+    }
+    console.error('[SubMapModal] No valid center; falling back to CHI.', { center, live })
+    return { lat: 41.8781, lng: -87.6298 }
+  }, [center, mainMapRef])
+
+  if (!Number.isFinite(safeCenter.lat) || !Number.isFinite(safeCenter.lng)) {
+    console.error('[SubMapModal] Still no valid center; skip render.')
+    return null
+  }
+
+  const [pos, setPos] = useState(safeCenter)
+  const [viewCenter, setViewCenter] = useState(safeCenter)
+  const subMapRef = useRef(null)
+
+  // NEW: absolute safety—whenever pos changes, follow on the main map
+  useEffect(() => {
+    if (!pos || !Number.isFinite(pos.lat) || !Number.isFinite(pos.lng)) return
+    mainMapRef?.current?.panTo([pos.lat, pos.lng], { animate: false })
+  }, [pos, mainMapRef])
+
+  // Adopt new center from parent if it changes to a valid value
+  useEffect(() => {
+    if (center && Number.isFinite(center.lat) && Number.isFinite(center.lng)) {
+      setPos(center)
+      setViewCenter(center)
+    }
+  }, [center])
+
+  // Guarantee the modal is tighter than the main map by adding a zoom bias
+  const ZOOM_BIAS = 1.25
+
+  // frame/step derived from biased base zoom
+  const { frameMiles, stepMiles } = useMemo(() => {
+    const z = Number.isFinite(baseZoom) ? baseZoom + ZOOM_BIAS : 14 + ZOOM_BIAS
+    return {
+      frameMiles: frameMilesForZoom(z),
+      stepMiles: pageStepMilesForZoom(z),
+    }
+  }, [baseZoom])
+
+  function Boot() {
+    const map = useMap()
+    useEffect(() => {
+      subMapRef.current = map
+      map.fitBounds(boundsForMiles(viewCenter, frameMiles), { animate: false })
+      map.scrollWheelZoom.enable()
+      map.touchZoom.disable()
+      map.boxZoom.disable()
+      map.keyboard.disable()
+      setTimeout(() => map.invalidateSize(), 0)
+    }, [map])
+
+    useEffect(() => {
+      if (!subMapRef.current) return
+      subMapRef.current.fitBounds(boundsForMiles(viewCenter, frameMiles), { animate: false })
+    }, [viewCenter, frameMiles])
+
+    return null
+  }
+
+  const pageTile = (dir, clientPoint) => {
+    const { dLat, dLng } = squareMileDeltas(viewCenter.lat)
+    const dLatMiles = dLat * stepMiles
+    const dLngMiles = dLng * stepMiles
+
+    let next = viewCenter
+    if (dir === 'N') next = { lat: viewCenter.lat + dLatMiles, lng: viewCenter.lng }
+    if (dir === 'S') next = { lat: viewCenter.lat - dLatMiles, lng: viewCenter.lng }
+    if (dir === 'E') next = { lat: viewCenter.lat, lng: viewCenter.lng + dLngMiles }
+    if (dir === 'W') next = { lat: viewCenter.lat, lng: viewCenter.lng - dLngMiles }
+    setViewCenter(next)
+
+    // keep main map centered as we page
+    mainMapRef?.current?.panTo([next.lat, next.lng], { animate: false })
+
+    requestAnimationFrame(() => {
+      const map = subMapRef.current
+      if (!map || !clientPoint) return
+      const rect = map.getContainer().getBoundingClientRect()
+      const pt = L.point(clientPoint.x - rect.left, clientPoint.y - rect.top)
+      const ll = map.containerPointToLatLng(pt)
+      const updated = { lat: ll.lat, lng: ll.lng }
+      setPos(updated)
+      // also sync main map to the new pin position after paging snap
+      mainMapRef?.current?.panTo([updated.lat, updated.lng], { animate: false })
+    })
+  }
+
   return (
-    <MapContainer
-      center={[CHI.lat, CHI.lng]}
-      zoom={10}
-      style={{ height:'100%', width:'100%' }}
-      worldCopyJump={true}
-      scrollWheelZoom
-      wheelPxPerZoomLevel={90}
-      whenCreated={(m) => { if (mainMapRef) mainMapRef.current = m }}
-    >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <div className="submap-overlay" role="dialog" aria-modal="true">
+      <div className="submap-card">
+        <div className="submap-head">
+          <strong>Fine tune your pin</strong>
+          <button className="submap-close" onClick={() => onCommit(pos)} aria-label="Close">✕</button>
+        </div>
 
-      {/* Glassy Chicago-biased search (top/center) */}
-      <GeocoderTopCenter />
+        <div className="submap-map">
+          <MapContainer
+            style={{ height: '100%', width: '100%' }}
+            center={[viewCenter.lat, viewCenter.lng]}
+            zoom={16}                 // visual baseline; fitBounds controls actual span
+            dragging={false}          // move the pin, not the map
+            doubleClickZoom={false}
+            attributionControl={false}
+            closePopupOnClick={false}
+            scrollWheelZoom
+            wheelPxPerZoomLevel={90}
+          >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <Boot />
 
-      <MapModeController mode={mapMode} onMapReady={(m)=>{ if (mainMapRef) mainMapRef.current = m }} />
+            <Marker position={[pos.lat, pos.lng]} icon={placingIconFor(team)} />
 
-      {/* Disable click-to-place while exploring */}
-      <TapToPlace onPick={onPick} disabled={exploring} />
+            <DragAndPageController
+              pos={pos}
+              setPos={setPos}
+              pageTile={pageTile}
+              handoff={handoff}
+              onPointerUpCommit={(finalPos) => onCommit(finalPos)}
+              mainMapRef={mainMapRef} // live-sync main map on drag
+            />
+          </MapContainer>
+        </div>
 
-      {children}
-    </MapContainer>
+        <div className="submap-help">
+          Drag the pin; hover near edges to page; lift to place it.
+        </div>
+      </div>
+    </div>
   )
 }
-
