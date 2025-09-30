@@ -544,11 +544,6 @@ export default function App() {
         {headerRight}
       </HeaderBar>
 
-{!online && (
-  <div style={{padding:'8px 12px', textAlign:'center', background:'rgba(255,200,0,0.08)', borderBottom:'1px solid rgba(255,200,0,0.25)', color:'#ffd27f'}}>
-    You’re offline. Changes won’t sync until your connection returns.
-  </div>
-)}
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
         <MapShell
