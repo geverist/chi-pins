@@ -11,7 +11,6 @@ const PIN_COLOR = {
 function InlineCount({ color, label, count }) {
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
-      {/* tiny pin head swatch (bordered like TeamCount) */}
       <span
         aria-hidden
         style={{
@@ -29,6 +28,24 @@ function InlineCount({ color, label, count }) {
   )
 }
 
+function GlobeIcon({ size = 16 }) {
+  // emoji + SVG fallback (for environments where the emoji font is missing)
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
+      <span aria-hidden style={{ fontSize: size, lineHeight: 1 }}>🌎</span>
+      <svg
+        aria-hidden
+        width={size} height={size} viewBox="0 0 24 24" fill="none"
+        style={{ display:'none' }} // the emoji will show; SVG is here just in case
+      >
+        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+        <path d="M2 12h20M12 2c2.5 2.8 3.8 6.3 3.8 10S14.5 19.2 12 22M12 2C9.5 4.8 8.2 8.3 8.2 12S9.5 19.2 12 22"
+              stroke="currentColor" strokeWidth="2"/>
+      </svg>
+    </span>
+  )
+}
+
 /**
  * HeaderBar
  *
@@ -38,12 +55,11 @@ function InlineCount({ color, label, count }) {
  * - onGlobal(): go to global
  * - onChicago(): back to Chicago
  * - continentCounts: { chicago, na, sa, eu, af, as }
- * - logoSrc: string
- * - onLogoClick(): function
- * - children: ReactNode — if provided, it REPLACES the default right-side content
- * - titleOverride?: string — replaces the default question title
- * - isMobile?: boolean — lets the bar adapt for mobile layouts
- * - suppressDefaultNavOnMobile?: boolean — hides the built-in Global/Back buttons on mobile
+ * - logoSrc, onLogoClick
+ * - children: ReactNode — if provided, default nav buttons are hidden
+ * - titleOverride?: string
+ * - isMobile?: boolean
+ * - suppressDefaultNavOnMobile?: boolean
  */
 export default function HeaderBar({
   mapMode,
@@ -64,31 +80,51 @@ export default function HeaderBar({
       ? 'Where in the world are you from?'
       : 'Where in Chicago(land) are you from?')
 
-  // minimal 3D style
   const switchBtnStyle = (pressed) => ({
-    padding:'10px 12px', borderRadius:12,
+    padding:'10px 12px',
+    borderRadius:12,
     border:'1px solid #2a2f37',
     background: pressed ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-    color:'#f4f6f8', boxShadow: pressed
+    color:'#f4f6f8',
+    boxShadow: pressed
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    display:'inline-flex',
+    alignItems:'center',
+    gap:8,
   })
 
-  // Default right-side nav (hidden on mobile if suppressDefaultNavOnMobile=true)
-  const defaultRight = (
-    <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-      {mapMode === 'global' ? (
-        <button type="button" onClick={onChicago} style={switchBtnStyle(true)} title="Back to Chicago">
+  // Default nav: exactly ONE button based on mapMode.
+  const shouldShowDefaultNav =
+    !children && !(isMobile && suppressDefaultNavOnMobile)
+
+  let defaultNav = null
+  if (shouldShowDefaultNav) {
+    if (mapMode === 'chicago') {
+      defaultNav = (
+        <button
+          type="button"
+          onClick={onGlobal}
+          style={switchBtnStyle(false)}
+          title="Switch to Global map"
+        >
+          <GlobeIcon /> Global map
+        </button>
+      )
+    } else {
+      defaultNav = (
+        <button
+          type="button"
+          onClick={onChicago}
+          style={switchBtnStyle(true)}
+          title="Back to Chicago"
+        >
           🏙️ Back to Chicago
         </button>
-      ) : (
-        <button type="button" onClick={onGlobal} style={switchBtnStyle(false)} title="Switch to Global map">
-          🌎 Global map
-        </button>
-      )}
-    </div>
-  )
+      )
+    }
+  }
 
   return (
     <header
@@ -125,7 +161,7 @@ export default function HeaderBar({
         </span>
       </div>
 
-      {/* Right: continent counts (inline) + children OR default nav */}
+      {/* Right: continent counts + children OR default nav (never both) */}
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end', flex: '0 0 auto' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
@@ -138,8 +174,8 @@ export default function HeaderBar({
           </div>
         )}
 
-        {/* If parent supplies children, use them; otherwise show default nav (unless suppressed on mobile) */}
-        {children ?? (isMobile && suppressDefaultNavOnMobile ? null : defaultRight)}
+        {/* If children provided, we NEVER show the default nav */}
+        {children ? children : defaultNav}
       </div>
     </header>
   )
