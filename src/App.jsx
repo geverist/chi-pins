@@ -527,18 +527,16 @@ export default function App() {
 
   return (
     <div className="app">
-<HeaderBar
-  isMobile={isMobile}
-  mapMode={mapMode}
-  totalCount={pinsDeduped.length}
-  onGlobal={goGlobal}
-  onChicago={goChicagoZoomedOut}
-  logoSrc={logoUrl}
-  onLogoClick={goChicagoZoomedOut}
->
-  {isMobile ? null : desktopHeaderRight}
-</HeaderBar>
-
+      <HeaderBar
+        mapMode={mapMode}
+        totalCount={pinsDeduped.length}
+        onGlobal={goGlobal}
+        onChicago={goChicagoZoomedOut}
+        logoSrc={logoUrl}
+        onLogoClick={goChicagoZoomedOut}
+      >
+        {headerRight}
+      </HeaderBar>
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
         <MapShell
