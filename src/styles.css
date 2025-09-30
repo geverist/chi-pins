@@ -470,3 +470,61 @@ button[aria-pressed="true"] {
   background:#16181d; align-items:flex-start; justify-content:space-between;
 }
 .muted { color: var(--muted); }
+
+
+/* --- Glassy geocoder refinements --- */
+.map-search-wrap .leaflet-control-geocoder-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-search-wrap .leaflet-control-geocoder-form input::placeholder {
+  color: var(--muted);
+  opacity: 0.9;
+}
+
+.map-search-wrap .leaflet-control-geocoder-form input:focus-visible {
+  outline: 3px solid #3a7cf4;
+  outline-offset: 2px;
+  border-color: rgba(58,124,244,0.55);
+  background: rgba(0,0,0,0.26);
+}
+
+.map-search-wrap .leaflet-control-geocoder-alternatives {
+  backdrop-filter: blur(6px) saturate(115%);
+  -webkit-backdrop-filter: blur(6px) saturate(115%);
+}
+
+.map-search-wrap .leaflet-control-geocoder-alternatives li {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.map-search-wrap .leaflet-control-geocoder-alternatives li:last-child {
+  border-bottom: none;
+}
+
+.map-search-wrap .leaflet-control-geocoder-alternatives a {
+  display: block;
+  padding: 10px 12px;
+  color: #e9eef3;
+  text-decoration: none;
+}
+.map-search-wrap .leaflet-control-geocoder-alternatives a:hover,
+.map-search-wrap .leaflet-control-geocoder-alternatives a:focus {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Keep dropdown in front of pins/popups */
+.map-search-host,
+.map-search-wrap,
+.map-search-wrap .leaflet-control-geocoder-alternatives {
+  z-index: 4600;
+}
+
+/* Mobile sizing helpers */
+@media (max-width: 768px) {
+  .map-search-wrap .leaflet-control-geocoder-form input {
+    width: min(88vw, 520px);
+    font-size: 16px; /* prevent iOS zoom */
+  }
+}
