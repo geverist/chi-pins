@@ -507,32 +507,7 @@ export default function App() {
         <GlobalCounters counts={continentCounts} />
       )
 
-  // Mobile header content: Global / Return + Map/Table toggle
-  const mobileHeaderRight = (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:8, flexWrap:'wrap' }}>
-      <div style={{ display:'flex', gap:8 }}>
-        <button className="btn-toggle btn-toggle--sm" onClick={goGlobal}>Global</button>
-        <button className="btn-toggle btn-toggle--sm" onClick={goChicagoZoomedOut}>Return to Chicago</button>
-      </div>
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ fontSize:12, color:'#a7b0b8' }}>View:</span>
-        <button
-          className="btn-toggle btn-toggle--sm"
-          aria-pressed={mobileViewMode === 'map'}
-          onClick={() => setMobileViewMode('map')}
-        >
-          Map
-        </button>
-        <button
-          className="btn-toggle btn-toggle--sm"
-          aria-pressed={mobileViewMode === 'table'}
-          onClick={() => setMobileViewMode('table')}
-        >
-          Table
-        </button>
-      </div>
-    </div>
-  )
+
 
   /* ---------------- Admin (hidden) ---------------- */
   const [adminOpen, setAdminOpen] = useState(
