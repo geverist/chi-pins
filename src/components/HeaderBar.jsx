@@ -31,9 +31,9 @@ function InlineCount({ color, label, count }) {
 export default function HeaderBar({
   mapMode,
   totalCount = 0,
-  onGlobal,
-  onChicago,
-  children,            // If provided, built-in nav is hidden
+  onGlobal,        // kept for compatibility (ignored)
+  onChicago,       // kept for compatibility (ignored)
+  children,        // put your Map/Table toggle here
   logoSrc,
   onLogoClick,
   continentCounts = null,
@@ -45,96 +45,66 @@ export default function HeaderBar({
       ? 'Where in the world are you from?'
       : 'Where in Chicago(land) are you from?')
 
-  const switchBtnStyle = (pressed) => ({
-    padding:'10px 12px',
-    borderRadius:12,
-    border:'1px solid #2a2f37',
-    background: pressed ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-    color:'#f4f6f8',
-    boxShadow: pressed
-      ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
-      : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-    cursor: 'pointer',
-    display:'inline-flex',
-    alignItems:'center',
-    gap:8,
-  })
-
-  // Only show default nav when NO children are provided
-  const showDefaultNav = !children
-
-  let defaultNav = null
-  if (showDefaultNav) {
-    defaultNav = mapMode === 'chicago'
-      ? (
-        <button
-          type="button"
-          onClick={onGlobal}
-          style={switchBtnStyle(false)}
-          title="Switch to Global map"
-        >
-          🌎 Global map
-        </button>
-      )
-      : (
-        <button
-          type="button"
-          onClick={onChicago}
-          style={switchBtnStyle(true)}
-          title="Back to Chicago"
-        >
-          🏙️ Back to Chicago
-        </button>
-      )
-  }
-
   return (
     <header
       style={{
-        display:'flex', alignItems:'center', gap:12, justifyContent:'space-between',
-        flexWrap:'wrap', padding:'10px 14px', position:'relative',
+        display:'grid',
+        gridTemplateColumns:'1fr',
+        gridTemplateRows:'auto auto',
+        rowGap:8,
+        padding:'10px 14px',
+        position:'relative',
         borderBottom:'1px solid #222',
       }}
     >
-      {/* Left: logo + title + total */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0, flex: '1 1 auto' }}>
-        {logoSrc ? (
-          <button
-            onClick={onLogoClick}
-            title="Home"
-            aria-label="Home"
+      {/* Top row: logo + title + total + (optional) continent counts */}
+      <div
+        style={{
+          display:'flex',
+          alignItems:'center',
+          gap:12,
+          justifyContent:'space-between',
+          flexWrap:'wrap'
+        }}
+      >
+        {/* Left: logo + title + total */}
+        <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0, flex: '1 1 auto' }}>
+          {logoSrc ? (
+            <button
+              onClick={onLogoClick}
+              title="Home"
+              aria-label="Home"
+              style={{
+                display:'inline-flex', alignItems:'center', justifyContent:'center',
+                padding:6, borderRadius:10, border:'1px solid #ddd',
+                background:'#fff', boxShadow:'0 2px 8px rgba(0,0,0,0.08)', cursor:'pointer',
+              }}
+            >
+              <img src={logoSrc} alt="Logo" style={{ height:24, width:'auto', display:'block' }} />
+            </button>
+          ) : null}
+
+          <h1
             style={{
-              display:'inline-flex', alignItems:'center', justifyContent:'center',
-              padding:6, borderRadius:10, border:'1px solid #ddd',
-              background:'#fff', boxShadow:'0 2px 8px rgba(0,0,0,0.08)', cursor:'pointer',
+              margin:0,
+              fontSize:'clamp(16px, 2.2vw, 22px)',
+              whiteSpace:'nowrap',
+              overflow:'hidden',
+              textOverflow:'ellipsis'
             }}
           >
-            <img src={logoSrc} alt="Logo" style={{ height:24, width:'auto', display:'block' }} />
-          </button>
-        ) : null}
+            {title}
+          </h1>
 
-        <h1
-          style={{
-            margin:0,
-            fontSize:'clamp(16px, 2.2vw, 22px)',
-            whiteSpace:'nowrap',
-            overflow:'hidden',
-            textOverflow:'ellipsis'
-          }}
-        >
-          {title}
-        </h1>
+          <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10, whiteSpace:'nowrap' }}>
+            <span>📍</span>
+            <strong style={{ fontWeight:700 }}>{totalCount}</strong>
+          </span>
+        </div>
 
-        <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10, whiteSpace:'nowrap' }}>
-          <span>📍</span>
-          <strong style={{ fontWeight:700 }}>{totalCount}</strong>
-        </span>
-      </div>
-
-      {/* Right: continent counts + custom children OR default nav */}
-      <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end', flex: '0 0 auto' }}>
+        {/* Right: continent counts (only for global, optional) */}
         {mapMode === 'global' && continentCounts && (
-          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', flex:'0 0 auto' }}>
             <InlineCount color={PIN_COLOR.chicago} label="Chicago"       count={continentCounts.chicago} />
             <InlineCount color={PIN_COLOR.na}      label="North America" count={continentCounts.na} />
             <InlineCount color={PIN_COLOR.sa}      label="South America" count={continentCounts.sa} />
@@ -143,9 +113,14 @@ export default function HeaderBar({
             <InlineCount color={PIN_COLOR.af}      label="Africa"        count={continentCounts.af} />
           </div>
         )}
-
-        {children ?? defaultNav}
       </div>
+
+      {/* Second row: centered custom controls (Map/Table toggle) */}
+      {children && (
+        <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>
+          {children}
+        </div>
+      )}
     </header>
   )
 }
