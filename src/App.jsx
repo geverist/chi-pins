@@ -1,4 +1,3 @@
-// src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react'
 import logoUrl from './assets/logo.png'
 import { supabase } from './lib/supabase'
@@ -46,10 +45,6 @@ import AdminPanel from './components/AdminPanel'
 
 // Mobile table view
 import RecentPinsTable from './components/RecentPinsTable'
-
-// NEW: map search + mobile free-zoom
-import SearchControl from './components/SearchControl'
-import MobileFreeZoom from './components/MobileFreeZoom'
 
 /* ---------------- KIOSK HELPERS ---------------- */
 async function enterFullscreen(el) {
@@ -634,22 +629,24 @@ export default function App() {
   // --------- MAIN RENDER ----------
   return (
     <div className="app">
-      <HeaderBar
-        mapMode={mapMode}
-        totalCount={pinsDeduped.length}
-        logoSrc={logoUrl}
-        onLogoClick={goChicagoZoomedOut}
-        titleOverride={isMobile ? "Chicago Mike's Guest Pins" : undefined}
-      >
-        {/* Mobile: single centered Map/Table toggle */}
-        <button
-          className="btn-toggle btn-toggle--sm"
-          aria-pressed={mobileViewMode === 'map'}
-          onClick={() => setMobileViewMode(m => (m === 'map' ? 'table' : 'map'))}
-        >
-          {mobileViewMode === 'map' ? 'Table View' : 'Map View'}
-        </button>
-      </HeaderBar>
+<HeaderBar
+  mapMode={mapMode}
+  totalCount={pinsDeduped.length}
+  logoSrc={logoUrl}
+  onLogoClick={goChicagoZoomedOut} // optional
+  titleOverride={isMobile ? "Chicago Mike's Guest Pins" : undefined}
+>
+  {/* Centered on its own row */}
+  <button
+    className="btn-toggle btn-toggle--sm"
+    aria-pressed={mobileViewMode === 'map'}
+    onClick={() => setMobileViewMode(m => (m === 'map' ? 'table' : 'map'))}
+  >
+    {mobileViewMode === 'map' ? 'Table View' : 'Map View'}
+  </button>
+</HeaderBar>
+
+
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
         {isMobile && mobileViewMode === 'table' ? (
@@ -664,12 +661,6 @@ export default function App() {
             exploring={exploring}
             onPick={handlePick}
           >
-          {/* On-map typeahead search (top-centered, protected from map clicks) */}
-            <SearchControl mainMapRef={mainMapRef} />
-
-            {/* NEW: Mobile-only free zoom (remove bounds/minZoom on mobile only) */}
-            {isMobile && <MobileFreeZoom minZoom={1} maxBounds={null} />}
-
             {showPopularSpots
               && mapMode === 'chicago'
               && !draft
