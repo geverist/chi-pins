@@ -1,42 +1,35 @@
 // src/components/AdminPanel.jsx
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function AdminPanel({ open, onClose }) {
   const [tab, setTab] = useState('general')
 
-  // Example settings state (persisted locally; safe defaults)
+  // ---------- Defaults (kept same) ----------
+  const defaultSettings = {
+    idleAttractorSeconds: 60,
+    minZoomForPins: 13,
+    maxZoom: 19,
+    kioskAutoStart: true,
+    pinAgeMonths: 24,
+    showPopularSpots: true,
+    showCommunityPins: true,
+    clusterBubbleThreshold: 13,
+    showLabelsZoom: 13,
+    // new-but-safe toggles used elsewhere; default true/false won’t break anything
+    loyaltyEnabled: true,
+    enableGlobalBubbles: true,
+    attractorHintEnabled: true,
+    labelStyle: 'pill', // 'pill' | 'clean'
+  }
+
+  // ---------- State ----------
   const [settings, setSettings] = useState(() => {
     try {
       const raw = localStorage.getItem('adminSettings')
-      return raw ? JSON.parse(raw) : {
-        idleAttractorSeconds: 60,
-        minZoomForPins: 13,
-        maxZoom: 19,
-        kioskAutoStart: true,
-        pinAgeMonths: 24,
-        showPopularSpots: true,
-        showCommunityPins: true,
-        clusterBubbleThreshold: 13,
-        showLabelsZoom: 13,
-        // NEW:
-        clusterMode: 'bubbles', // 'bubbles' | 'heatmap'
-        heatmap: { minZoom: 10, radius: 25, blur: 15, maxOpacity: 0.6 }
-      }
+      return raw ? { ...defaultSettings, ...JSON.parse(raw) } : defaultSettings
     } catch {
-      return {
-        idleAttractorSeconds: 60,
-        minZoomForPins: 13,
-        maxZoom: 19,
-        kioskAutoStart: true,
-        pinAgeMonths: 24,
-        showPopularSpots: true,
-        showCommunityPins: true,
-        clusterBubbleThreshold: 13,
-        showLabelsZoom: 13,
-        // NEW:
-        clusterMode: 'bubbles',
-        heatmap: { minZoom: 10, radius: 25, blur: 15, maxOpacity: 0.6 }
-      }
+      return defaultSettings
     }
   })
 
@@ -50,9 +43,50 @@ export default function AdminPanel({ open, onClose }) {
     } catch { return [] }
   })
 
-  // simple local “pending delete” list for moderation demo
+  // Moderation – selected IDs for deletion
   const [pendingDeletes, setPendingDeletes] = useState(new Set())
+  const [modLoading, setModLoading] = useState(false)
+  const [modRows, setModRows] = useState([]) // live pins from supabase
+  const [search, setSearch] = useState('')
 
+  // ---------- Load from Supabase when panel opens ----------
+  const loadFromSupabase = useCallback(async () => {
+    if (!open) return
+    try {
+      // SETTINGS: single row table "admin_settings" (id=1)
+      const { data: sData, error: sErr } = await supabase
+        .from('admin_settings')
+        .select('*')
+        .eq('id', 1)
+        .limit(1)
+        .maybeSingle()
+
+      if (!sErr && sData) {
+        // Merge unknown keys so we can roll forward/back
+        const merged = { ...defaultSettings, ...sData.settings }
+        setSettings(merged)
+        localStorage.setItem('adminSettings', JSON.stringify(merged))
+      }
+
+      // POPULAR SPOTS: table "popular_spots" with columns {id, label, category, city?}
+      const { data: pData, error: pErr } = await supabase
+        .from('popular_spots')
+        .select('id,label,category')
+        .order('id', { ascending: true })
+
+      if (!pErr && Array.isArray(pData)) {
+        const rows = pData.map(({ id, label, category }) => ({ id, label, category }))
+        setPopularSpots(rows)
+        localStorage.setItem('adminPopularSpots', JSON.stringify(rows))
+      }
+    } catch {
+      // ignore – fallback to localStorage is already set
+    }
+  }, [open])
+
+  useEffect(() => { if (open) loadFromSupabase() }, [open, loadFromSupabase])
+
+  // ESC closes
   useEffect(() => {
     if (!open) return
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
@@ -60,34 +94,110 @@ export default function AdminPanel({ open, onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // ---------- Persist helpers ----------
   const saveLocal = () => {
     localStorage.setItem('adminSettings', JSON.stringify(settings))
     localStorage.setItem('adminPopularSpots', JSON.stringify(popularSpots))
-    // You can also POST these to an API / supabase if you want to sync
   }
 
-  const applyAndClose = () => {
+  const saveSupabase = useCallback(async () => {
+    try {
+      // Upsert admin_settings (single row id=1)
+      await supabase
+        .from('admin_settings')
+        .upsert({ id: 1, settings }, { onConflict: 'id' })
+
+      // Sync popular_spots:
+      // For simplicity, replace entire set: delete then insert (transactional-like pattern)
+      const { error: delErr } = await supabase.from('popular_spots').delete().neq('id', -1)
+      if (delErr) throw delErr
+
+      if (popularSpots.length) {
+        const payload = popularSpots.map((r) => ({
+          label: r.label || '',
+          category: r.category || 'other',
+        }))
+        const { error: insErr } = await supabase.from('popular_spots').insert(payload)
+        if (insErr) throw insErr
+      }
+    } catch (e) {
+      // Let local save still happen; surface a gentle message
+      console.warn('Supabase save failed; falling back to local only.', e)
+      return false
+    }
+    return true
+  }, [settings, popularSpots])
+
+  const saveLocalAndMaybeSupabase = async () => {
     saveLocal()
+    await saveSupabase()
+  }
+
+  const applyAndClose = async () => {
+    await saveLocalAndMaybeSupabase()
     onClose?.()
   }
 
-  const addSpot = () => {
-    setPopularSpots(s => [...s, { label: '', category: 'hotdog' }])
-  }
-  const updateSpot = (idx, patch) => {
-    setPopularSpots(s => s.map((row, i) => i === idx ? { ...row, ...patch } : row))
-  }
-  const removeSpot = (idx) => {
-    setPopularSpots(s => s.filter((_, i) => i !== idx))
-  }
+  // Popular spots CRUD
+  const addSpot = () => setPopularSpots((s) => [...s, { label: '', category: 'hotdog' }])
+  const updateSpot = (idx, patch) =>
+    setPopularSpots((s) => s.map((row, i) => (i === idx ? { ...row, ...patch } : row)))
+  const removeSpot = (idx) => setPopularSpots((s) => s.filter((_, i) => i !== idx))
+
+  // ---------- Moderation: load live pins ----------
+  const refreshModeration = useCallback(async () => {
+    setModLoading(true)
+    try {
+      const months = Number(settings.pinAgeMonths || 24)
+      const since = new Date()
+      since.setMonth(since.getMonth() - months)
+      let q = supabase
+        .from('pins')
+        .select('id,slug,note,created_at')
+        .gte('created_at', since.toISOString())
+        .order('created_at', { ascending: false })
+        .limit(500)
+
+      if (search && search.trim()) {
+        const sTerm = `%${search.trim()}%`
+        q = q.or(`slug.ilike.${sTerm},note.ilike.${sTerm}`)
+      }
+
+      const { data, error } = await q
+      if (!error && Array.isArray(data)) {
+        setModRows(data)
+      }
+    } catch {
+      // ignore; keep whatever was shown
+    } finally {
+      setModLoading(false)
+    }
+  }, [settings.pinAgeMonths, search])
+
+  useEffect(() => { if (open && tab === 'moderate') refreshModeration() }, [open, tab, refreshModeration])
 
   const togglePendingDelete = (id) => {
-    setPendingDeletes(s => {
+    setPendingDeletes((s) => {
       const next = new Set(s)
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
     })
+  }
+
+  const deleteSelected = async () => {
+    if (!pendingDeletes.size) return
+    try {
+      const ids = Array.from(pendingDeletes)
+      const { error } = await supabase.from('pins').delete().in('id', ids)
+      if (error) throw error
+      setPendingDeletes(new Set())
+      await refreshModeration()
+      alert('Deleted selected pins.')
+    } catch (e) {
+      alert('Failed to delete selected pins. Check console for details.')
+      console.warn(e)
+    }
   }
 
   if (!open) return null
@@ -96,25 +206,28 @@ export default function AdminPanel({ open, onClose }) {
     <div style={s.overlay}>
       <div style={s.backdrop} onClick={onClose} />
       <div style={s.panel}>
+        {/* Fixed header */}
         <div style={s.header}>
           <div style={s.titleWrap}>
             <span style={s.badge}>Admin</span>
             <h3 style={s.title}>Control Panel</h3>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button style={btn.secondary} onClick={saveLocal} title="Save without closing">Save</button>
+            <button style={btn.secondary} onClick={saveLocalAndMaybeSupabase} title="Save without closing">Save</button>
             <button style={btn.primary} onClick={applyAndClose} title="Save and close">Apply & Close</button>
             <button style={btn.ghost} onClick={onClose} aria-label="Close">✕</button>
           </div>
         </div>
 
+        {/* Fixed tabs bar */}
         <div style={s.tabs}>
           <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
           <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>Display</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
-          <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn}
+          <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
         </div>
 
+        {/* Scrollable body (consistent size across tabs) */}
         <div style={s.body}>
           {tab === 'general' && (
             <SectionGrid>
@@ -133,6 +246,12 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, kioskAutoStart: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Show 'pinch to zoom' hint">
+                  <Toggle
+                    checked={settings.attractorHintEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, attractorHintEnabled: v }))}
+                  />
+                </FieldRow>
               </Card>
 
               <Card title="Data window">
@@ -142,6 +261,15 @@ export default function AdminPanel({ open, onClose }) {
                     min={1}
                     max={120}
                     onChange={(v) => setSettings(s => ({ ...s, pinAgeMonths: v }))}
+                  />
+                </FieldRow>
+              </Card>
+
+              <Card title="Loyalty">
+                <FieldRow label="Enable loyalty phone in editor">
+                  <Toggle
+                    checked={settings.loyaltyEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, loyaltyEnabled: v }))}
                   />
                 </FieldRow>
               </Card>
@@ -157,14 +285,6 @@ export default function AdminPanel({ open, onClose }) {
                     min={2}
                     max={20}
                     onChange={(v) => setSettings(s => ({ ...s, minZoomForPins: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="Max zoom">
-                  <NumberInput
-                    value={settings.maxZoom}
-                    min={2}
-                    max={20}
-                    onChange={(v) => setSettings(s => ({ ...s, maxZoom: v }))}
                   />
                 </FieldRow>
                 <FieldRow label="Cluster → Pins (zoom)">
@@ -183,9 +303,17 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, showLabelsZoom: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Max zoom">
+                  <NumberInput
+                    value={settings.maxZoom}
+                    min={2}
+                    max={20}
+                    onChange={(v) => setSettings(s => ({ ...s, maxZoom: v }))}
+                  />
+                </FieldRow>
               </Card>
 
-              <Card title="Layers">
+              <Card title="Layers & style">
                 <FieldRow label="Popular spots">
                   <Toggle
                     checked={settings.showPopularSpots}
@@ -198,69 +326,22 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, showCommunityPins: v }))}
                   />
                 </FieldRow>
-              </Card>
-
-              {/* NEW: Cluster view mode + heatmap tuning */}
-              <Card title="Clusters View">
-                <FieldRow label="Mode">
-                  <div style={{ display:'flex', gap:8 }}>
-                    <button
-                      type="button"
-                      style={btnChoice(settings.clusterMode === 'bubbles')}
-                      onClick={() => setSettings(s => ({ ...s, clusterMode: 'bubbles' }))}
-                    >Bubbles</button>
-                    <button
-                      type="button"
-                      style={btnChoice(settings.clusterMode === 'heatmap')}
-                      onClick={() => setSettings(s => ({ ...s, clusterMode: 'heatmap' }))}
-                    >Heatmap</button>
-                  </div>
+                <FieldRow label="Global view uses bubbles">
+                  <Toggle
+                    checked={settings.enableGlobalBubbles}
+                    onChange={(v) => setSettings(s => ({ ...s, enableGlobalBubbles: v }))}
+                  />
                 </FieldRow>
-
-                {settings.clusterMode === 'heatmap' && (
-                  <>
-                    <FieldRow label="Heatmap min zoom">
-                      <NumberInput
-                        value={settings.heatmap?.minZoom ?? 10}
-                        min={2}
-                        max={20}
-                        onChange={(v) => setSettings(s => ({
-                          ...s, heatmap: { ...(s.heatmap||{}), minZoom: v }
-                        }))}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Radius">
-                      <NumberInput
-                        value={settings.heatmap?.radius ?? 25}
-                        min={5}
-                        max={80}
-                        onChange={(v) => setSettings(s => ({
-                          ...s, heatmap: { ...(s.heatmap||{}), radius: v }
-                        }))}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Blur">
-                      <NumberInput
-                        value={settings.heatmap?.blur ?? 15}
-                        min={0}
-                        max={80}
-                        onChange={(v) => setSettings(s => ({
-                          ...s, heatmap: { ...(s.heatmap||{}), blur: v }
-                        }))}
-                      />
-                    </FieldRow>
-                    <FieldRow label="Max opacity (0–1)">
-                      <NumberInput
-                        value={settings.heatmap?.maxOpacity ?? 0.6}
-                        min={0}
-                        max={1}
-                        onChange={(v) => setSettings(s => ({
-                          ...s, heatmap: { ...(s.heatmap||{}), maxOpacity: v }
-                        }))}
-                      />
-                    </FieldRow>
-                  </>
-                )}
+                <FieldRow label="Label style">
+                  <select
+                    value={settings.labelStyle}
+                    onChange={(e) => setSettings(s => ({ ...s, labelStyle: e.target.value }))}
+                    style={inp.select}
+                  >
+                    <option value="pill">Pill</option>
+                    <option value="clean">Clean</option>
+                  </select>
+                </FieldRow>
               </Card>
             </SectionGrid>
           )}
@@ -268,9 +349,9 @@ export default function AdminPanel({ open, onClose }) {
           {tab === 'content' && (
             <div style={{ display: 'grid', gap: 12 }}>
               <Card title="Popular spots (shown on Chicago map)">
-                <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ display: 'grid', gap: 8, maxHeight: 360, overflow: 'auto', paddingRight: 2 }}>
                   {popularSpots.map((row, i) => (
-                    <div key={i} style={s.row}>
+                    <div key={row.id ?? i} style={s.row}>
                       <select
                         value={row.category}
                         onChange={(e) => updateSpot(i, { category: e.target.value })}
@@ -289,9 +370,9 @@ export default function AdminPanel({ open, onClose }) {
                       <button style={btn.dangerMini} onClick={() => removeSpot(i)}>Remove</button>
                     </div>
                   ))}
-                  <div>
-                    <button style={btn.secondary} onClick={addSpot}>+ Add spot</button>
-                  </div>
+                </div>
+                <div>
+                  <button style={btn.secondary} onClick={addSpot}>+ Add spot</button>
                 </div>
               </Card>
             </div>
@@ -301,22 +382,30 @@ export default function AdminPanel({ open, onClose }) {
             <div style={{ display: 'grid', gap: 12 }}>
               <Card title="Moderate pins">
                 <p style={s.muted}>
-                  (Demo UI) Select pins to delete. In your app, wire this to Supabase
-                  with a protected RPC or delete mutation.
+                  Select pins to delete. This is wired to Supabase: filters respect your “Data window” months.
                 </p>
+
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                  <input
+                    style={{ ...inp.text, maxWidth: 320 }}
+                    placeholder="Search slug or note…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') refreshModeration() }}
+                  />
+                  <button style={btn.secondary} onClick={refreshModeration} disabled={modLoading}>
+                    {modLoading ? 'Loading…' : 'Refresh'}
+                  </button>
+                </div>
+
                 <ModerationTable
-                  onToggle={togglePendingDelete}
+                  rows={modRows}
                   selected={pendingDeletes}
+                  onToggle={togglePendingDelete}
                 />
+
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                  <button
-                    style={btn.danger}
-                    onClick={() => {
-                      // TODO: call Supabase delete for ids in pendingDeletes
-                      setPendingDeletes(new Set())
-                      alert('Deleted selected pins (demo).')
-                    }}
-                  >
+                  <button style={btn.danger} onClick={deleteSelected} disabled={!pendingDeletes.size}>
                     Delete selected
                   </button>
                 </div>
@@ -408,17 +497,9 @@ function NumberInput({ value, min, max, onChange }) {
   )
 }
 
-/** Demo table for moderation; replace with live data if desired */
-function ModerationTable({ selected, onToggle }) {
-  // Fake rows (replace with real pins you fetch)
-  const rows = useMemo(() => ([
-    { id: 'pin-001', slug: 'bridgeport-jordan', note: 'First Sox game with dad!', created_at: '2024-06-10' },
-    { id: 'pin-002', slug: 'pilsen-ditka', note: 'Maxwell St Polish > *chef’s kiss*', created_at: '2024-08-01' },
-    { id: 'pin-003', slug: 'hydepark-addison', note: 'Vienna red hots forever', created_at: '2025-01-02' },
-  ]), [])
-
+function ModerationTable({ rows = [], selected, onToggle }) {
   return (
-    <div style={{ overflow: 'auto', border: '1px solid #2b3037', borderRadius: 12 }}>
+    <div style={{ overflow: 'auto', maxHeight: 420, border: '1px solid #2b3037', borderRadius: 12 }}>
       <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
         <thead>
           <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
@@ -429,7 +510,7 @@ function ModerationTable({ selected, onToggle }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map(r => {
+          {rows.map((r) => {
             const isSel = selected.has(r.id)
             return (
               <tr key={r.id} style={{ background: isSel ? 'rgba(56,189,248,0.08)' : 'transparent' }}>
@@ -442,10 +523,17 @@ function ModerationTable({ selected, onToggle }) {
                 </td>
                 <td style={t.tdMono}>{r.slug}</td>
                 <td style={t.td}>{r.note}</td>
-                <td style={t.td}>{r.created_at}</td>
+                <td style={t.td}>{new Date(r.created_at).toLocaleString()}</td>
               </tr>
             )
           })}
+          {!rows.length && (
+            <tr>
+              <td colSpan={4} style={{ ...t.td, color: '#98a4af' }}>
+                No pins in range.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -468,7 +556,7 @@ const s = {
   panel: {
     position: 'relative',
     width: 'min(980px, 92vw)',
-    maxHeight: '88vh',
+    height: 'min(720px, 92vh)',   // ← fixed visual size so tabs don’t jump
     overflow: 'hidden',
     borderRadius: 16,
     border: '1px solid rgba(255,255,255,0.08)',
@@ -479,6 +567,7 @@ const s = {
     flexDirection: 'column'
   },
   header: {
+    flex: '0 0 auto',
     padding: '14px 16px',
     display: 'flex',
     alignItems: 'center',
@@ -498,10 +587,12 @@ const s = {
   },
   title: { margin: 0, fontSize: 18, letterSpacing: 0.2 },
   tabs: {
+    flex: '0 0 auto',
     display: 'flex', gap: 6, padding: '8px 10px',
     borderBottom: '1px solid rgba(255,255,255,0.04)'
   },
   body: {
+    flex: '1 1 auto',            // ← fixed outer; this scrolls
     padding: 12,
     overflow: 'auto'
   },
@@ -594,14 +685,6 @@ const btn = {
   }
 }
 
-const btnChoice = (active) => ({
-  padding:'8px 12px',
-  borderRadius:10,
-  border: active ? '1px solid rgba(56,189,248,0.6)' : '1px solid rgba(148,163,184,0.4)',
-  background: active ? 'rgba(56,189,248,0.20)' : 'rgba(148,163,184,0.12)',
-  color:'#e9eef3', cursor:'pointer'
-})
-
 const inp = {
   number: {
     width: 120,
@@ -635,7 +718,7 @@ const t = {
     fontWeight: 600,
     color: '#cbd6e1',
     borderBottom: '1px solid rgba(255,255,255,0.06)',
-    position: 'sticky', top: 0
+    position: 'sticky', top: 0, background: 'rgba(21,27,35,0.9)'
   },
   td: {
     padding: '10px 12px',
