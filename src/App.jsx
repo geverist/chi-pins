@@ -44,9 +44,6 @@ import ZoomGate from './components/ZoomGate'
 // Admin panel
 import AdminPanel from './components/AdminPanel'
 
-// NEW: mobile table view
-import RecentPinsTable from './components/RecentPinsTable'
-
 /* ---------------- KIOSK HELPERS ---------------- */
 async function enterFullscreen(el) {
   const root = el || (typeof document !== 'undefined' ? document.documentElement : null)
@@ -70,11 +67,8 @@ async function exitFullscreenAndWake() {
 }
 function onFullscreenChange(cb) {
   const handler = () => cb?.(!!document.fullscreenElement)
-  if (typeof document !== 'undefined') {
-    document.addEventListener('fullscreenchange', handler)
-    return () => document.removeEventListener('fullscreenchange', handler)
-  }
-  return () => {}
+  document.addEventListener('fullscreenchange', handler)
+  return () => document.removeEventListener('fullscreenchange', handler)
 }
 function KioskStartOverlay({ visible, onStart }) {
   if (!visible) return null
@@ -117,18 +111,6 @@ const DEFAULT_FUN_FACTS = {
   aurora: "Second-largest city in Illinois and an early adopter of electric streetlights.",
   joliet: "Famous for the Old Joliet Prison (yes, the Blues Brothers one!).",
   waukegan: "Ray Bradbury’s hometown; see the annual Ray Bradbury Days."
-}
-
-/* --- NEW: reliable world jump --- */
-function goToWorld(map) {
-  if (!map) return
-  // A neutral global view that shows continents clearly
-  const WORLD_CENTER = { lat: 20, lng: 0 }
-  const WORLD_ZOOM = 3
-  try {
-    // setView avoids long fly animations on kiosk
-    map.setView([WORLD_CENTER.lat, WORLD_CENTER.lng], WORLD_ZOOM, { animate: false })
-  } catch {}
 }
 
 export default function App() {
@@ -178,34 +160,23 @@ export default function App() {
     note: ''
   })
 
-  // ---------- Detect mobile ----------
-  const [isMobile, setIsMobile] = useState(false)
+  /* ---------------- MOBILE MODE DETECTION ---------------- */
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 640px)').matches : false
+  )
   useEffect(() => {
-    const check = () => {
-      const mq = typeof window !== 'undefined'
-        ? window.matchMedia('(max-width: 768px)').matches
-        : false
-      const touch = typeof window !== 'undefined' && 'ontouchstart' in window
-      setIsMobile(mq || (touch && window.innerWidth < 1024))
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 640px)')
+    const handler = (e) => {
+      setIsMobile(e.matches)
+      if (e.matches) setExploring(true) // auto-explore on mobile
     }
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
+    // initial
+    if (mq.matches) setExploring(true)
+    mq.addEventListener?.('change', handler)
+    return () => mq.removeEventListener?.('change', handler)
   }, [])
-
-  // Mobile: auto-explore & hide popular spots by default
-  useEffect(() => {
-    if (isMobile) {
-      setExploring(true)
-      setShowPopularSpots(false)
-    }
-  }, [isMobile])
-
-  // Mobile View Mode: 'map' | 'table'
-  const [mobileViewMode, setMobileViewMode] = useState('map')
-  useEffect(() => {
-    if (!isMobile) setMobileViewMode('map')
-  }, [isMobile])
+  /* ------------------------------------------------------ */
 
   /* ---------------- KIOSK STATE ---------------- */
   const [needsKioskStart, setNeedsKioskStart] = useState(false)
@@ -220,7 +191,7 @@ export default function App() {
     if (typeof document === 'undefined') return
     const off = onFullscreenChange(setIsFullscreen)
     ;(async () => {
-      if (autoKiosk && !isMobile) {
+      if (autoKiosk) {
         await enterFullscreen()
         await ensureWakeLock()
         setNeedsKioskStart(!document.fullscreenElement)
@@ -229,44 +200,14 @@ export default function App() {
       }
     })()
     return () => off?.()
-  }, [autoKiosk, isMobile])
-
-  // HIDDEN kiosk toggle: Shift + K pressed 3 times within 3s
-  useEffect(() => {
-    if (isMobile) return
-    let count = 0
-    let timer = null
-    const onKey = async (e) => {
-      if (!e.shiftKey) return
-      const k = e.key?.toLowerCase()
-      if (k !== 'k') return
-      count += 1
-      clearTimeout(timer)
-      timer = setTimeout(() => { count = 0 }, 3000)
-      if (count >= 3) {
-        count = 0
-        clearTimeout(timer)
-        // toggle kiosk
-        if (document.fullscreenElement) {
-          await exitFullscreenAndWake()
-        } else {
-          await enterFullscreen()
-          await ensureWakeLock()
-        }
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => { window.removeEventListener('keydown', onKey); clearTimeout(timer) }
-  }, [isMobile])
+  }, [autoKiosk])
 
   const startKioskNow = async () => {
-    if (isMobile) return
     await enterFullscreen()
     await ensureWakeLock()
     setNeedsKioskStart(false)
   }
   const exitKioskNow = async () => {
-    if (isMobile) return
     await exitFullscreenAndWake()
     setNeedsKioskStart(false)
   }
@@ -325,7 +266,6 @@ export default function App() {
     setExploring(isMobile ? true : false)
     clearHighlight()
     setMapMode('chicago')
-    // always snap the map back to the Chicago overview
     goToChicago(mainMapRef.current)
     setForm(f => ({ ...f, name:'', neighborhood:'', hotdog:'', note:'' }))
   }
@@ -348,9 +288,7 @@ export default function App() {
 
   // map click
   const handlePick = async (ll) => {
-    // READ-ONLY on mobile: do not create pins
-    if (isMobile) return
-
+    if (isMobile) return // Mobile: no pin placement; stay in Explore
     focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES)
     setDraft(ll)
 
@@ -390,6 +328,8 @@ export default function App() {
       source: isChicago ? 'kiosk' : 'global',
       created_at: new Date().toISOString(),
       device_id: 'kiosk-1',
+
+      // NEW fields (nullable)
       loyalty_phone: loyaltyPhoneNormalized,
       loyalty_opt_in: loyaltyOptIn,
     }
@@ -424,7 +364,6 @@ export default function App() {
 
   /* ---------------- Fine-tune modal ---------------- */
   const openSubmap = (center, pointer) => {
-    if (isMobile) return // read-only on mobile
     const live = mainMapRef.current?.getCenter?.()
     const safeCenter =
       (center && Number.isFinite(center.lat) && Number.isFinite(center.lng)) ? center :
@@ -451,33 +390,26 @@ export default function App() {
     setMapMode('global')
     setDraft(null); setSlug(null); setSubmapCenter(null); setHandoff(null)
     setSubmapBaseZoom(null)
-    setShowAttractor(false); setExploring(isMobile ? true : false)
+    setShowAttractor(false)
+    setExploring(isMobile ? true : false)
     setToast(null)
-    // <<< ensure the map actually jumps to a world view
-    setTimeout(() => goToWorld(mainMapRef.current), 0)
   }
 
   const goChicagoZoomedOut = () => {
     const needsReset = !!(draft || submapCenter || shareOpen)
     if (needsReset) {
-      cancelEditing() // closes editor, submap, share, resets state
+      cancelEditing()
       setTimeout(() => {
-        setShowAttractor(!isMobile) // no attractor on mobile
-        goToChicago(mainMapRef.current) // center on Chicago overview
+        setShowAttractor(!isMobile)
+        setExploring(isMobile ? true : false)
+        goToChicago(mainMapRef.current)
       }, 0)
       return
     }
-
-    // simple case (no editor open)
     setMapMode('chicago')
     setShowAttractor(!isMobile)
     setExploring(isMobile ? true : false)
-    // always enforce the Chicago overview
-    setTimeout(() => {
-      goToChicago(mainMapRef.current)
-      // defensive: if a plugin blocks goToChicago’s zoom, nudge it
-      try { mainMapRef.current?.setZoom?.(11, { animate: false }) } catch {}
-    }, 0)
+    goToChicago(mainMapRef.current)
   }
 
   // button style helper
@@ -502,12 +434,13 @@ export default function App() {
     gap: 8,
   })
 
-  // Desktop header content (no visible kiosk buttons)
-  const desktopHeaderRight =
+  const headerRight =
     mapMode === 'chicago'
       ? (
         <div style={{display:'flex', alignItems:'center', gap:16, flexWrap:'wrap'}}>
           <TeamCount pins={pinsDeduped} />
+
+          {/* Layer toggles visible on all devices */}
           <button
             type="button"
             aria-pressed={showPopularSpots}
@@ -524,34 +457,32 @@ export default function App() {
           >
             📍 {showCommunityPins ? 'Hide pins' : 'Show pins'}
           </button>
+
+          {/* Kiosk toggle — hidden on mobile */}
+          {!isMobile && (!isFullscreen ? (
+            <button
+              type="button"
+              onClick={startKioskNow}
+              style={btn3d(false)}
+              title="Enter fullscreen & keep screen awake"
+            >
+              🖥️ Enter Kiosk Mode
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={exitKioskNow}
+              style={btn3d(true)}
+              title="Exit fullscreen and release wake lock"
+            >
+              ⤴️ Exit Kiosk Mode
+            </button>
+          ))}
         </div>
       )
       : (
         <GlobalCounters counts={continentCounts} />
       )
-
-  // Mobile header content: Map/Table toggle only
-  const mobileHeaderRight = (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:8, flexWrap:'wrap' }}>
-      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <span style={{ fontSize:12, color:'#a7b0b8' }}></span>
-        <button
-          className="btn-toggle btn-toggle--sm"
-          aria-pressed={mobileViewMode === 'map'}
-          onClick={() => setMobileViewMode('map')}
-        >
-          Map
-        </button>
-        <button
-          className="btn-toggle btn-toggle--sm"
-          aria-pressed={mobileViewMode === 'table'}
-          onClick={() => setMobileViewMode('table')}
-        >
-          Table
-        </button>
-      </div>
-    </div>
-  )
 
   /* ---------------- Admin (hidden) ---------------- */
   const [adminOpen, setAdminOpen] = useState(
@@ -594,7 +525,6 @@ export default function App() {
   }, [])
   /* ------------------------------------------------ */
 
-  // --------- MAIN RENDER ----------
   return (
     <div className="app">
       <HeaderBar
@@ -605,67 +535,57 @@ export default function App() {
         logoSrc={logoUrl}
         onLogoClick={goChicagoZoomedOut}
       >
-        {isMobile ? mobileHeaderRight : desktopHeaderRight}
+        {headerRight}
       </HeaderBar>
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
-        {isMobile && mobileViewMode === 'table' ? (
-          <RecentPinsTable pins={pinsDeduped} />
-        ) : (
-          <MapShell
-            mapMode={mapMode}
-            mainMapRef={mainMapRef}
-            exploring={exploring}
-            onPick={handlePick}
-          >
-            {/* Popular labels:
-               - Desktop: as before when not drafting
-               - Mobile: only while exploring */}
-            {showPopularSpots
-              && mapMode === 'chicago'
-              && !draft
-              && (!isMobile || (isMobile && exploring)) && (
-                <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
-            )}
+        <MapShell
+          mapMode={mapMode}
+          mainMapRef={mainMapRef}
+          exploring={exploring}
+          onPick={handlePick}
+        >
+          {/* Popular labels only when not placing a draft */}
+          {showPopularSpots && mapMode === 'chicago' && !draft && (
+            <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
+          )}
 
-            {/* Zoomed OUT: show clustering bubbles (Chicago + Global) */}
-            {showCommunityPins && !draft && (
-              <PinBubbles
-                pins={pinsDeduped}
-                enabled={true}
-                minZoomForPins={13}
-                maxZoom={19}
+          {/* Zoomed OUT: show clustering bubbles (Chicago + Global) */}
+          {showCommunityPins && !draft && (
+            <PinBubbles
+              pins={pinsDeduped}
+              enabled={true}
+              minZoomForPins={13}
+              maxZoom={19}
+            />
+          )}
+
+          {/* Zoomed IN (Chicago only): show real pins with explore-only interactivity & highlight-after-save */}
+          {showCommunityPins && !draft && mapMode === 'chicago' && (
+            <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>
+              <SavedPins
+                key={`pins-${exploring ? 'on' : 'off'}`}
+                pins={pinsForRender}
+                exploring={exploring}
+                highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
+                highlightMs={15000}
+                onHighlightEnd={clearHighlight}
               />
-            )}
+            </ZoomGate>
+          )}
 
-            {/* Zoomed IN (Chicago only): show real pins with explore-only interactivity & highlight-after-save */}
-            {showCommunityPins && !draft && mapMode === 'chicago' && (
-              <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>
-                <SavedPins
-                  key={`pins-${exploring ? 'on' : 'off'}`}
-                  pins={pinsForRender}
-                  exploring={exploring}
-                  highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
-                  highlightMs={15000}
-                  onHighlightEnd={clearHighlight}
-                />
-              </ZoomGate>
-            )}
-
-            {/* Draft placement disabled on mobile (read-only) */}
-            {draft && !isMobile && (
-              <DraftMarker
-                lat={draft.lat}
-                lng={draft.lng}
-                team={form.team}
-                onOpenModal={(center, pointer) => openSubmap(center, pointer)}
-                tipToken={tipToken}
-                setDraft={setDraft}
-                modalOpen={!!submapCenter}
-              />
-            )}
-          </MapShell>
-        )}
+          {draft && (
+            <DraftMarker
+              lat={draft.lat}
+              lng={draft.lng}
+              team={form.team}
+              onOpenModal={(center, pointer) => openSubmap(center, pointer)}
+              tipToken={tipToken}
+              setDraft={setDraft}
+              modalOpen={!!submapCenter}
+            />
+          )}
+        </MapShell>
 
         {showAttractor && !draft && !submapCenter && !exploring && (
           <AttractorOverlay onDismiss={() => setShowAttractor(false)} />
@@ -692,7 +612,7 @@ export default function App() {
         />
       )}
 
-      {/* -------- Footer -------- */}
+      {/* -------- FOOTER -------- */}
       <footer
         style={{ padding:'10px 14px' }}
         onClick={handleFooterClick}
@@ -701,16 +621,17 @@ export default function App() {
         {!draft ? (
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
             <div className="hint" style={{ color:'#a7b0b8', margin:'0 auto', textAlign:'center', flex:1 }}>
-              {exploring
-                ? 'Click any pin to see details.'
-                : (mapMode === 'global'
-                    ? 'Click the map to place your pin anywhere in the world.'
-                    : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                  )
+              {isMobile
+                ? 'Browse pins near you.'
+                : exploring
+                  ? 'Click any pin to see details.'
+                  : (mapMode === 'global'
+                      ? 'Click the map to place your pin anywhere in the world.'
+                      : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+                    )
               }
             </div>
-
-            {/* Hide Explore buttons entirely on mobile (always exploring) */}
+            {/* Explore buttons hidden on mobile */}
             {!isMobile && !exploring && (
               <button data-no-admin-tap onClick={()=> { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
             )}
@@ -719,20 +640,18 @@ export default function App() {
             )}
           </div>
         ) : (
-          // Editor never shows on mobile because draft cannot be created
-          !isMobile && (
-            <Editor
-              mapMode={mapMode}
-              slug={slug}
-              form={form}
-              setForm={setForm}
-              hotdogSuggestions={hotdogSuggestions}
-              onCancel={cancelEditing}
-              onOpenShare={() => setShareOpen(true)}
-            />
-          )
+          <Editor
+            mapMode={mapMode}
+            slug={slug}
+            form={form}
+            setForm={setForm}
+            hotdogSuggestions={hotdogSuggestions}
+            onCancel={cancelEditing}
+            onOpenShare={() => setShareOpen(true)}
+          />
         )}
       </footer>
+      {/* ------------------------ */}
 
       <ShareConfirmModal
         open={shareOpen}
@@ -746,7 +665,7 @@ export default function App() {
       />
 
       {/* Overlay only if launched with ?kiosk=1 and fullscreen was blocked */}
-      <KioskStartOverlay visible={!isMobile && autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
+      <KioskStartOverlay visible={autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
 
       {/* Hidden Admin (triple-tap footer background to open; also ?admin=1) */}
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
