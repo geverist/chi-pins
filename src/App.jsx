@@ -11,12 +11,12 @@ import { useHighlightPin } from './hooks/useHighlightPin'
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo'
 import {
-  CHI,
+  CHI,                         // assumed center or helper constant from your mapUtils
   INITIAL_RADIUS_MILES,
   enableMainMapInteractions,
   disableMainMapInteractions
 } from './lib/mapUtils'
-import { focusDraft, goToChicago } from './lib/mapActions'
+import { focusDraft, goToChicago } from './lib/mapActions' // keeps your canonical Chicago view
 
 // pin helpers
 import { ensureUniqueSlug, makeChiSlug } from './lib/pinsUtils'
@@ -60,7 +60,7 @@ async function ensureWakeLock() {
       wakeLockRef = await navigator.wakeLock.request('screen')
       wakeLockRef.addEventListener?.('release', () => { wakeLockRef = null })
     }
-  } catch {/* ignore */}
+  } catch {}
 }
 async function exitFullscreenAndWake() {
   try { await document.exitFullscreen?.() } catch {}
@@ -118,6 +118,12 @@ const DEFAULT_FUN_FACTS = {
   waukegan: "Ray Bradbury’s hometown; see the annual Ray Bradbury Days."
 }
 
+// World view constants (pleasant framing)
+const GLOBAL_CENTER = [20, 0]
+const GLOBAL_ZOOM = 3
+// Reasonable fallback Chicago zoom if your goToChicago doesn’t override zoom
+const CHICAGO_ZOOM_OUT = 11
+
 export default function App() {
   const mainMapRef = useRef(null)
 
@@ -127,11 +133,11 @@ export default function App() {
   // map mode
   const [mapMode, setMapMode] = useState('chicago') // 'chicago' | 'global'
 
-  // fun facts (DB-backed with fallback)
+  // fun facts
   const funFacts = useFunFacts(DEFAULT_FUN_FACTS)
 
   // draft pin
-  const [draft, setDraft] = useState(null) // {lat,lng}
+  const [draft, setDraft] = useState(null)
   const [slug, setSlug] = useState(null)
   const [tipToken, setTipToken] = useState(0)
 
@@ -307,11 +313,12 @@ export default function App() {
     setExploring(isMobile ? true : false)
     clearHighlight()
     setMapMode('chicago')
-    goToChicago(mainMapRef.current)
+    // snap map back
+    const map = mainMapRef.current
+    if (map) goToChicago(map)
     setForm(f => ({ ...f, name:'', neighborhood:'', hotdog:'', note:'' }))
   }
 
-  // fun-fact toast
   async function showNearestTownFact(lat, lng) {
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
@@ -398,25 +405,66 @@ export default function App() {
   }
 
   /* ---------------- View helpers ---------------- */
-  const flyToGlobal = () => {
-    const map = mainMapRef.current
-    if (!map) return
+  const applyConstraintsForMode = (map, mode, isMobileFlag) => {
     try {
-      // Slightly north of equator for a pleasant framing
-      map.flyTo([20, 0], 3, { animate: true })
+      if (mode === 'global') {
+        // global: allow wide zooming
+        map.setMinZoom(2)
+        map.setMaxBounds(null)
+      } else {
+        // chicago:
+        if (isMobileFlag) {
+          // per your earlier request: remove zoom-out restrictions on mobile
+          map.setMinZoom(2)
+          map.setMaxBounds(null)
+        } else {
+          // kiosk/desktop: keep things constrained so Chicago remains the focus
+          // Give a reasonable min zoom (no hard bounds to avoid tile drag issues)
+          map.setMinZoom(CHICAGO_ZOOM_OUT)
+          map.setMaxBounds(null)
+        }
+      }
     } catch {}
   }
 
-  // Keep the Leaflet view in sync with mapMode changes
+  const flyToGlobal = () => {
+    const map = mainMapRef.current
+    if (!map) return
+    applyConstraintsForMode(map, 'global', isMobile)
+    try {
+      map.stop()
+      map.flyTo(GLOBAL_CENTER, GLOBAL_ZOOM, { animate: true })
+      setTimeout(() => map.invalidateSize?.(), 50)
+    } catch {}
+  }
+
+  const snapToChicago = () => {
+    const map = mainMapRef.current
+    if (!map) return
+    applyConstraintsForMode(map, 'chicago', isMobile)
+    try {
+      map.stop()
+      // Prefer your canonical helper:
+      goToChicago(map)
+      // Fallback if goToChicago is a no-op:
+      const c = Array.isArray(CHI) ? CHI : [41.8781, -87.6298]
+      if (map.getZoom() < 3) {
+        map.setView(c, CHICAGO_ZOOM_OUT, { animate: false })
+      }
+      setTimeout(() => map.invalidateSize?.(), 50)
+    } catch {}
+  }
+
+  // Keep the Leaflet view + constraints in sync with mapMode and device
   useEffect(() => {
     const map = mainMapRef.current
     if (!map) return
     if (mapMode === 'global') {
       flyToGlobal()
     } else {
-      goToChicago(map) // your existing helper
+      snapToChicago()
     }
-  }, [mapMode])
+  }, [mapMode, isMobile])
 
   /* ---------------- Fine-tune modal ---------------- */
   const openSubmap = (center, pointer) => {
@@ -442,14 +490,13 @@ export default function App() {
     setSubmapBaseZoom(null)
   }
 
-  // mode switches
+  // mode switches (trigger view immediately too)
   const goGlobal = () => {
     setMapMode('global')
     setDraft(null); setSlug(null); setSubmapCenter(null); setHandoff(null)
     setSubmapBaseZoom(null)
     setShowAttractor(false); setExploring(isMobile ? true : false)
     setToast(null)
-    // proactively move view if the map already exists
     flyToGlobal()
   }
 
@@ -459,14 +506,14 @@ export default function App() {
       cancelEditing()
       setTimeout(() => {
         setShowAttractor(!isMobile)
-        goToChicago(mainMapRef.current)
+        snapToChicago()
       }, 0)
       return
     }
     setMapMode('chicago')
     setShowAttractor(!isMobile)
     setExploring(isMobile ? true : false)
-    goToChicago(mainMapRef.current)
+    snapToChicago()
   }
 
   // style helper
@@ -519,7 +566,7 @@ export default function App() {
         <GlobalCounters counts={continentCounts} />
       )
 
-  // Mobile header content: Map/Table toggle only (per your latest)
+  // Mobile header content: map/table toggle only
   const mobileHeaderRight = (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:8, flexWrap:'wrap' }}>
       <div />
@@ -598,6 +645,7 @@ export default function App() {
         ) : (
           <MapShell
             mapMode={mapMode}
+            isMobile={isMobile}           
             mainMapRef={mainMapRef}
             exploring={exploring}
             onPick={handlePick}

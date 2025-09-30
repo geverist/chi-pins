@@ -8,7 +8,7 @@ import {
 } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Geocoder (styled, Chicago-biased) + CSS
+// Geocoder (styled, Chicago-biased)
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css'
 import 'leaflet-control-geocoder'
 
@@ -19,7 +19,7 @@ import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
 
 /**
- * Glassy, Chicago-biased geocoder placed top-center with a centered “×” clear button.
+ * Glassy, Chicago-biased geocoder placed top-center, with centered clear “×”.
  */
 function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const map = useMap()
@@ -104,7 +104,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
     if (ctrlEl) {
       shell.appendChild(ctrlEl)
 
-      // prevent map interactions
+      // prevent map interactions while using the control
       L.DomEvent.disableClickPropagation(shell)
       L.DomEvent.disableScrollPropagation(shell)
 
@@ -149,7 +149,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         })
       }
 
-      // Clear (“×”) button centered with flex
+      // Clear (“×”) button
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
       clearBtnRef.current = clearBtn
       clearBtn.type = 'button'
@@ -223,21 +223,39 @@ function ClickToPick({ onPick }) {
 
 export default function MapShell({
   mapMode,
+  isMobile,          // <-- NEW: initial constraints depend on device
   mainMapRef,
   exploring,
   onPick,
   children
 }) {
   const center = useMemo(() => [41.8781, -87.6298], [])
-  const zoom = useMemo(() => (mapMode === 'global' ? 3 : 11), [mapMode])
+  const initialZoom = useMemo(() => (mapMode === 'global' ? 3 : 11), [mapMode])
 
-  const whenCreated = (map) => { if (mainMapRef) mainMapRef.current = map }
+  const whenCreated = (map) => {
+    if (mainMapRef) mainMapRef.current = map
+    // Apply initial constraints at mount
+    try {
+      if (mapMode === 'global') {
+        map.setMinZoom(2)
+        map.setMaxBounds(null)
+      } else {
+        if (isMobile) {
+          map.setMinZoom(2)      // mobile can freely zoom
+          map.setMaxBounds(null)
+        } else {
+          map.setMinZoom(11)     // desktop/kiosk keep Chicago framed
+          map.setMaxBounds(null)
+        }
+      }
+    } catch {}
+  }
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <MapContainer
         center={center}
-        zoom={zoom}
+        zoom={initialZoom}
         minZoom={2}
         maxZoom={19}
         zoomControl={true}
