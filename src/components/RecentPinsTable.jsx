@@ -1,5 +1,5 @@
 // src/components/RecentPinsTable.jsx
-import { useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 
 export default function RecentPinsTable({ pins = [], onSelect }) {
   // Sort newest first (tolerate missing created_at)
