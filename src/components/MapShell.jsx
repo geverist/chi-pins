@@ -62,7 +62,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
     hostRef.current.appendChild(shell)
     shellRef.current = shell
 
-    // Build geocoder (collapsed false helps, but we’ll force expand anyway)
     const geocoder = L.Control.geocoder({
       geocoder: L.Control.Geocoder.nominatim({
         geocodingQueryParams: {
@@ -108,12 +107,12 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       padding: 0,
     })
 
-    // Ensure EXPANDED before hiding the icon (this fixes “tiny square”)
+    // Ensure EXPANDED before hiding the icon (fixes “tiny square”)
     const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
     try {
-      iconBtn?.click()                          // preferred: simulate user expand
-      geocoder._expand?.()                      // fallback: explicit expand
-      ctrlEl.classList.add('leaflet-control-geocoder-expanded') // class hint
+      iconBtn?.click()
+      geocoder._expand?.()
+      ctrlEl.classList.add('leaflet-control-geocoder-expanded')
     } catch {}
 
     // Style input
@@ -150,7 +149,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       })
     }
 
-    // Clear “×” button
+    // Clear “×” button — fully wired
     const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
     Object.assign(clearBtn.style, {
       position: 'absolute',
@@ -173,7 +172,11 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
     })
     clearBtn.textContent = '×'
     clearBtn.title = 'Clear'
-    L.DomEvent.disableClickPropagation(clearBtn)
+
+    const stopAll = (ev) => { ev.preventDefault(); ev.stopPropagation() }
+    clearBtn.addEventListener('mousedown', stopAll)
+    clearBtn.addEventListener('mouseup', stopAll)
+    clearBtn.addEventListener('click', stopAll)
 
     const hideResults = () => {
       const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
@@ -182,8 +185,8 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         list.style.display = 'none'
       }
       try { geocoderRef.current?._clearResults?.() } catch {}
-      try { geocoderRef.current?._collapse?.() } catch {}
-      ctrlEl.classList.add('leaflet-control-geocoder-expanded') // keep input visible
+      // ❗ FIX: optional chaining cannot be on assignment target
+      if (geocoderRef.current) geocoderRef.current._lastGeocode = null
     }
 
     const updateClearVis = () => {
@@ -192,28 +195,24 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       if (!hasText) hideResults()
     }
 
-    const clearSearch = (focus = true) => {
+    const clearSearch = () => {
       if (!input) return
       input.value = ''
       input.dispatchEvent(new Event('input', { bubbles: true }))
       input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'Escape' }))
       hideResults()
       updateClearVis()
-      if (focus) input.focus()
+      input.focus()
     }
 
-    clearBtn.addEventListener('click', (ev) => {
-      ev.preventDefault()
-      ev.stopPropagation()
-      clearSearch(true)
-    })
-
+    clearBtn.addEventListener('click', clearSearch)
     input?.addEventListener('input', updateClearVis)
     updateClearVis()
 
     // Cleanup
     return () => {
       input?.removeEventListener('input', updateClearVis)
+      clearBtn.removeEventListener?.('click', clearSearch)
       clearBtn.remove?.()
       geocoderRef.current?.remove?.()
       geocoderRef.current = null
