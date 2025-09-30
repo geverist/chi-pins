@@ -24,12 +24,16 @@ L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
  * - Matches your .glass look
  * - Click/scroll propagation disabled so it never places pins while typing
  * - On select, flies to result (min zoom 13)
+ * - Adds an “×” clear button that appears only when text exists
  */
 function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const map = useMap()
   const hostRef = useRef(null)
   const shellRef = useRef(null)
   const geocoderRef = useRef(null)
+  const clearBtnRef = useRef(null)
+  const inputRef = useRef(null)
+  const altsRef = useRef(null)
 
   // Create a top-center host
   useEffect(() => {
@@ -42,7 +46,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       transform: 'translateX(-50%)',
       zIndex: 3600,
       pointerEvents: 'auto',
-      // full-width safe tap target on mobile while keeping it centered
       maxWidth: 'min(92vw, 720px)',
       width: 'max-content',
     })
@@ -60,7 +63,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
 
     // Glass shell that will hold the geocoder control
     const shell = L.DomUtil.create('div', 'map-search-wrap glass')
-    // base look aligns with your overlays
     Object.assign(shell.style, {
       display: 'flex',
       alignItems: 'center',
@@ -112,7 +114,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       L.DomEvent.disableClickPropagation(shell)
       L.DomEvent.disableScrollPropagation(shell)
 
-      // Minimal neutralize of default control UI so CSS takes over
+      // Neutralize default control UI so CSS takes over
       ctrlEl.style.background = 'transparent'
       ctrlEl.style.border = 'none'
       ctrlEl.style.boxShadow = 'none'
@@ -121,6 +123,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
 
       // Input tweaks for glass look
       const input = ctrlEl.querySelector('.leaflet-control-geocoder-form input')
+      inputRef.current = input || null
       if (input) {
         Object.assign(input.style, {
           background: 'rgba(0,0,0,0.22)',
@@ -136,12 +139,11 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
 
       // Hide the default search icon button (we keep Enter-to-search)
       const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
-      if (iconBtn) {
-        iconBtn.style.display = 'none'
-      }
+      if (iconBtn) iconBtn.style.display = 'none'
 
       // Results list becomes glass dropdown
       const alts = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
+      altsRef.current = alts || null
       if (alts) {
         Object.assign(alts.style, {
           background: 'rgba(16,17,20,0.92)',
@@ -155,24 +157,69 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
           overscrollBehavior: 'contain'
         })
       }
+
+      // --- Add a clear ("×") button ---
+      const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
+      clearBtnRef.current = clearBtn
+      clearBtn.type = 'button'
+      clearBtn.title = 'Clear search'
+      clearBtn.setAttribute('aria-label', 'Clear search')
+      clearBtn.innerHTML = '&times;' // ×
+      Object.assign(clearBtn.style, {
+        border: '1px solid rgba(255,255,255,0.18)',
+        background: 'rgba(0,0,0,0.22)',
+        color: '#e9eef3',
+        width: '32px',
+        height: '32px',
+        borderRadius: '8px',
+        fontSize: '20px',
+        lineHeight: '28px',
+        textAlign: 'center',
+        cursor: 'pointer',
+        display: 'none', // hidden until input has text
+      })
+
+      // Prevent map from seeing clicks on the clear button
+      L.DomEvent.disableClickPropagation(clearBtn)
+      L.DomEvent.on(clearBtn, 'click', (ev) => {
+        ev.preventDefault()
+        ev.stopPropagation()
+        if (inputRef.current) {
+          inputRef.current.value = ''
+          inputRef.current.focus()
+        }
+        // Hide results if method exists, else nuke the list
+        if (geocoderRef.current?._clearResults) {
+          geocoderRef.current._clearResults()
+        } else if (altsRef.current) {
+          altsRef.current.innerHTML = ''
+          altsRef.current.style.display = 'none'
+          // briefly force reflow to reset; then show again when results populate
+          requestAnimationFrame(() => { altsRef.current && (altsRef.current.style.display = '') })
+        }
+        // Hide the clear button
+        clearBtn.style.display = 'none'
+      })
+
+      // Show/hide the clear button based on input content
+      const onInput = () => {
+        if (!clearBtnRef.current || !inputRef.current) return
+        clearBtnRef.current.style.display =
+          inputRef.current.value.trim() ? 'inline-block' : 'none'
+      }
+      if (inputRef.current) {
+        inputRef.current.addEventListener('input', onInput)
+        // initialize visibility
+        onInput()
+      }
+
+      // cleanup listeners
+      return () => {
+        if (inputRef.current) inputRef.current.removeEventListener('input', onInput)
+      }
     }
 
-    return () => {
-      try {
-        const ctrlEl = geocoderRef.current?._container
-        if (ctrlEl && shellRef.current && ctrlEl.parentNode === shellRef.current) {
-          shellRef.current.removeChild(ctrlEl)
-        }
-      } catch {}
-      if (geocoderRef.current) {
-        geocoderRef.current.remove()
-        geocoderRef.current = null
-      }
-      if (shellRef.current?.parentNode) {
-        shellRef.current.parentNode.removeChild(shellRef.current)
-      }
-      shellRef.current = null
-    }
+    return () => {}
   }, [map, placeholder])
 
   return null
@@ -217,7 +264,7 @@ export default function MapShell({
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
 
-        {/* Glassy geocoder */}
+        {/* Glassy geocoder with clear button */}
         <GeocoderTopCenter />
 
         {/* Click handler for placing pins (unchanged) */}
