@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react'
 import logoUrl from './assets/logo.png'
 import { supabase } from './lib/supabase'
@@ -116,6 +117,18 @@ const DEFAULT_FUN_FACTS = {
   aurora: "Second-largest city in Illinois and an early adopter of electric streetlights.",
   joliet: "Famous for the Old Joliet Prison (yes, the Blues Brothers one!).",
   waukegan: "Ray Bradbury’s hometown; see the annual Ray Bradbury Days."
+}
+
+/* --- NEW: reliable world jump --- */
+function goToWorld(map) {
+  if (!map) return
+  // A neutral global view that shows continents clearly
+  const WORLD_CENTER = { lat: 20, lng: 0 }
+  const WORLD_ZOOM = 3
+  try {
+    // setView avoids long fly animations on kiosk
+    map.setView([WORLD_CENTER.lat, WORLD_CENTER.lng], WORLD_ZOOM, { animate: false })
+  } catch {}
 }
 
 export default function App() {
@@ -312,6 +325,7 @@ export default function App() {
     setExploring(isMobile ? true : false)
     clearHighlight()
     setMapMode('chicago')
+    // always snap the map back to the Chicago overview
     goToChicago(mainMapRef.current)
     setForm(f => ({ ...f, name:'', neighborhood:'', hotdog:'', note:'' }))
   }
@@ -439,22 +453,31 @@ export default function App() {
     setSubmapBaseZoom(null)
     setShowAttractor(false); setExploring(isMobile ? true : false)
     setToast(null)
+    // <<< ensure the map actually jumps to a world view
+    setTimeout(() => goToWorld(mainMapRef.current), 0)
   }
 
   const goChicagoZoomedOut = () => {
     const needsReset = !!(draft || submapCenter || shareOpen)
     if (needsReset) {
-      cancelEditing()
+      cancelEditing() // closes editor, submap, share, resets state
       setTimeout(() => {
         setShowAttractor(!isMobile) // no attractor on mobile
-        goToChicago(mainMapRef.current)
+        goToChicago(mainMapRef.current) // center on Chicago overview
       }, 0)
       return
     }
+
+    // simple case (no editor open)
     setMapMode('chicago')
     setShowAttractor(!isMobile)
     setExploring(isMobile ? true : false)
-    goToChicago(mainMapRef.current)
+    // always enforce the Chicago overview
+    setTimeout(() => {
+      goToChicago(mainMapRef.current)
+      // defensive: if a plugin blocks goToChicago’s zoom, nudge it
+      try { mainMapRef.current?.setZoom?.(11, { animate: false }) } catch {}
+    }, 0)
   }
 
   // button style helper
@@ -507,10 +530,9 @@ export default function App() {
         <GlobalCounters counts={continentCounts} />
       )
 
-  // Mobile header content: Global / Return + Map/Table toggle
+  // Mobile header content: Map/Table toggle only
   const mobileHeaderRight = (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', gap:8, flexWrap:'wrap' }}>
-
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
         <span style={{ fontSize:12, color:'#a7b0b8' }}></span>
         <button
