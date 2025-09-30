@@ -56,9 +56,9 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       borderRadius: '12px',
       backdropFilter: 'blur(6px) saturate(115%)',
       WebkitBackdropFilter: 'blur(6px) saturate(115%)',
-      background: 'rgba(16,17,20,0.45)',
-      border: '1px solid rgba(255,255,255,0.14)',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.30)',
+      background: 'rgba(12,13,16,0.55)',
+      border: '1px solid rgba(255,255,255,0.20)',
+      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
       position: 'relative',
     })
     hostRef.current.appendChild(shell)
@@ -109,55 +109,72 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         padding: '0',
       })
 
-      // style the input
+      // style the input (higher contrast)
       const input = ctrlEl.querySelector('.leaflet-control-geocoder-form input')
       if (input) {
         Object.assign(input.style, {
-          background: 'rgba(0,0,0,0.22)',
-          border: '1px solid rgba(255,255,255,0.18)',
-          color: '#e9eef3',
-          padding: '10px 36px 10px 12px', // extra right padding for the clear "×"
+          background: 'rgba(0,0,0,0.30)',
+          border: '1px solid rgba(255,255,255,0.28)',
+          color: '#ffffff',
+          padding: '10px 36px 10px 12px', // space for clear "×"
           borderRadius: '10px',
           outline: 'none',
           width: 'min(72vw, 520px)',
+          fontWeight: 600,
         })
         input.placeholder = placeholder
+
+        // placeholder contrast
+        input.addEventListener('focus', () => {
+          input.style.border = '1px solid #7fb1ff'
+          input.style.boxShadow = '0 0 0 2px rgba(127,177,255,0.25)'
+        })
+        input.addEventListener('blur', () => {
+          input.style.border = '1px solid rgba(255,255,255,0.28)'
+          input.style.boxShadow = 'none'
+        })
       }
 
       // hide default icon button (Enter/typing still works)
       const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
       if (iconBtn) iconBtn.style.display = 'none'
 
-      // style results dropdown
+      // style results dropdown (higher contrast)
       const alts = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
       if (alts) {
         Object.assign(alts.style, {
-          background: 'rgba(16,17,20,0.92)',
-          border: '1px solid rgba(255,255,255,0.14)',
-          color: '#e9eef3',
+          background: 'rgba(12,13,16,0.98)',
+          border: '1px solid rgba(255,255,255,0.20)',
+          color: '#ffffff',
           borderRadius: '10px',
           marginTop: '8px',
-          boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
-          overflow: 'hidden',
+          boxShadow: '0 12px 28px rgba(0,0,0,0.45)',
+          overflow: 'auto',
           maxHeight: '50vh',
           overscrollBehavior: 'contain',
         })
+        // make each item higher contrast & full-width hit area
+        alts.querySelectorAll('a').forEach(a => {
+          a.style.color = '#ffffff'
+          a.style.textDecoration = 'none'
+          a.style.display = 'block'
+          a.style.padding = '8px 10px'
+        })
       }
 
-      // Add a centered "×" clear button inside the shell
+      // Add a centered "×" clear button inside the shell (fully functional)
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
       Object.assign(clearBtn.style, {
         position: 'absolute',
-        right: '16px',
-        // center the "×" vertically relative to the input line-box
+        right: '12px',
         top: '50%',
         transform: 'translateY(-50%)',
         width: '22px',
         height: '22px',
         borderRadius: '50%',
-        border: '1px solid rgba(255,255,255,0.25)',
-        background: 'rgba(0,0,0,0.35)',
-        color: '#e9eef3',
+        border: '1px solid rgba(255,255,255,0.30)',
+        background: 'rgba(255,255,255,0.12)',
+        color: '#ffffff',
         cursor: 'pointer',
         fontSize: '14px',
         lineHeight: '1',
@@ -168,6 +185,8 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       })
       clearBtn.textContent = '×'
       clearBtn.title = 'Clear'
+      clearBtn.setAttribute('type', 'button')
+      clearBtn.setAttribute('aria-label', 'Clear search')
       clearBtnRef.current = clearBtn
 
       // ensure clear button doesn't interact with the map
@@ -181,7 +200,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
           // hide results, if open
           const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
           if (list) list.style.display = 'none'
-          // refocus input
           input.focus()
         }
         clearBtn.style.display = 'none'
@@ -191,10 +209,12 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       const onInput = () => {
         const hasText = !!input?.value
         clearBtn.style.display = hasText ? 'inline-flex' : 'none'
+        // if user typed again, ensure results container can re-show
+        const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
+        if (list && hasText) list.style.display = ''
       }
       input?.addEventListener('input', onInput)
-      // initial state
-      onInput()
+      onInput() // initialize
 
       // cleanup listeners we attached
       return () => {
@@ -315,4 +335,3 @@ export default function MapShell({
     </MapContainer>
   )
 }
-
