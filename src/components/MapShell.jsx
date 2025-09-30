@@ -18,11 +18,6 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
 
-const CHICAGO_CENTER = [41.8781, -87.6298]
-const CHICAGO_ZOOM = 11
-const GLOBAL_CENTER = [20, 0]
-const GLOBAL_ZOOM = 3
-
 /**
  * Glassy, Chicago-biased geocoder placed top-center, with centered clear “×”.
  */
@@ -154,7 +149,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         })
       }
 
-      // Clear (“×”) button — vertically centered with input by using the same height
+      // Clear (“×”) button
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
       clearBtnRef.current = clearBtn
       clearBtn.type = 'button'
@@ -166,7 +161,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         background: 'rgba(0,0,0,0.22)',
         color: '#e9eef3',
         width: '32px',
-        height: '36px',
+        height: '32px',
         borderRadius: '8px',
         display: 'none', // toggled by input listener
         alignItems: 'center',
@@ -228,62 +223,33 @@ function ClickToPick({ onPick }) {
 
 export default function MapShell({
   mapMode,
-  isMobile,          // controls constraints
+  isMobile,          // <-- NEW: initial constraints depend on device
   mainMapRef,
   exploring,
   onPick,
   children
 }) {
-  const center = useMemo(() => CHICAGO_CENTER, [])
-  const initialZoom = useMemo(() => (mapMode === 'global' ? GLOBAL_ZOOM : CHICAGO_ZOOM), [mapMode])
-
-  // keep a ref to map for internal effects
-  const mapRef = useRef(null)
+  const center = useMemo(() => [41.8781, -87.6298], [])
+  const initialZoom = useMemo(() => (mapMode === 'global' ? 3 : 11), [mapMode])
 
   const whenCreated = (map) => {
-    mapRef.current = map
     if (mainMapRef) mainMapRef.current = map
-
-    // Initial constraints at mount
+    // Apply initial constraints at mount
     try {
       if (mapMode === 'global') {
         map.setMinZoom(2)
         map.setMaxBounds(null)
       } else {
         if (isMobile) {
-          map.setMinZoom(2)      // mobile free zoom
+          map.setMinZoom(2)      // mobile can freely zoom
           map.setMaxBounds(null)
         } else {
-          map.setMinZoom(CHICAGO_ZOOM) // desktop/kiosk: keep Chicago framed
+          map.setMinZoom(11)     // desktop/kiosk keep Chicago framed
           map.setMaxBounds(null)
         }
       }
     } catch {}
   }
-
-  // 🔁 React to mapMode/device changes and actively move the map
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
-    try {
-      map.stop()
-      if (mapMode === 'global') {
-        map.setMinZoom(2)
-        map.setMaxBounds(null)
-        map.flyTo(GLOBAL_CENTER, GLOBAL_ZOOM, { animate: true })
-      } else {
-        if (isMobile) {
-          map.setMinZoom(2)
-          map.setMaxBounds(null)
-        } else {
-          map.setMinZoom(CHICAGO_ZOOM)
-          map.setMaxBounds(null)
-        }
-        map.flyTo(CHICAGO_CENTER, CHICAGO_ZOOM, { animate: true })
-      }
-      setTimeout(() => map.invalidateSize?.(), 50)
-    } catch {}
-  }, [mapMode, isMobile])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
