@@ -11,7 +11,6 @@ const PIN_COLOR = {
 function InlineCount({ color, label, count }) {
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
-      {/* tiny pin head swatch (bordered like TeamCount) */}
       <span
         aria-hidden
         style={{
@@ -29,22 +28,6 @@ function InlineCount({ color, label, count }) {
   )
 }
 
-/**
- * HeaderBar
- *
- * Props:
- * - mapMode: 'chicago' | 'global'
- * - totalCount: number
- * - onGlobal(): go to global
- * - onChicago(): back to Chicago
- * - continentCounts: { chicago, na, sa, eu, af, as }
- * - logoSrc: string
- * - onLogoClick(): function
- * - children: ReactNode — if provided, it REPLACES the default right-side content
- * - titleOverride?: string — replaces the default question title
- * - isMobile?: boolean — lets the bar adapt for mobile layouts
- * - suppressDefaultNavOnMobile?: boolean — hides the built-in Global/Back buttons on mobile
- */
 export default function HeaderBar({
   mapMode,
   totalCount = 0,
@@ -64,31 +47,46 @@ export default function HeaderBar({
       ? 'Where in the world are you from?'
       : 'Where in Chicago(land) are you from?')
 
-  // minimal 3D style
   const switchBtnStyle = (pressed) => ({
-    padding:'10px 12px', borderRadius:12,
+    padding:'10px 12px',
+    borderRadius:12,
     border:'1px solid #2a2f37',
     background: pressed ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-    color:'#f4f6f8', boxShadow: pressed
+    color:'#f4f6f8',
+    boxShadow: pressed
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    display:'inline-flex',
+    alignItems:'center',
+    gap:8,
   })
 
-  // Default right-side nav (hidden on mobile if suppressDefaultNavOnMobile=true)
-  const defaultRight = (
-    <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-      {mapMode === 'global' ? (
-        <button type="button" onClick={onChicago} style={switchBtnStyle(true)} title="Back to Chicago">
-          🏙️ Back to Chicago
-        </button>
-      ) : (
-        <button type="button" onClick={onGlobal} style={switchBtnStyle(false)} title="Switch to Global map">
-          🌎 Global map
-        </button>
-      )}
-    </div>
-  )
+  // Only show default nav if no custom children AND (not suppressed on mobile)
+  const showDefaultNav = !children && !(isMobile && suppressDefaultNavOnMobile)
+
+  let defaultNav = null
+  if (showDefaultNav) {
+    defaultNav = mapMode === 'chicago' ? (
+      <button
+        type="button"
+        onClick={onGlobal}
+        style={switchBtnStyle(false)}
+        title="Switch to Global map"
+      >
+        🌎 Global map
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={onChicago}
+        style={switchBtnStyle(true)}
+        title="Back to Chicago"
+      >
+        🏙️ Back to Chicago
+      </button>
+    )
+  }
 
   return (
     <header
@@ -115,7 +113,15 @@ export default function HeaderBar({
           </button>
         ) : null}
 
-        <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+        <h1
+          style={{
+            margin:0,
+            fontSize:'clamp(16px, 2.2vw, 22px)',
+            whiteSpace:'nowrap',
+            overflow:'hidden',
+            textOverflow:'ellipsis'
+          }}
+        >
           {title}
         </h1>
 
@@ -125,7 +131,7 @@ export default function HeaderBar({
         </span>
       </div>
 
-      {/* Right: continent counts (inline) + children OR default nav */}
+      {/* Right: continent counts + children OR default nav */}
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end', flex: '0 0 auto' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
@@ -138,8 +144,7 @@ export default function HeaderBar({
           </div>
         )}
 
-        {/* If parent supplies children, use them; otherwise show default nav (unless suppressed on mobile) */}
-        {children ?? (isMobile && suppressDefaultNavOnMobile ? null : defaultRight)}
+        {children ? children : defaultNav}
       </div>
     </header>
   )
