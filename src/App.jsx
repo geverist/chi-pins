@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react'
 import logoUrl from './assets/logo.png'
 import { supabase } from './lib/supabase'
@@ -233,7 +234,6 @@ export default function App() {
       if (count >= 3) {
         count = 0
         clearTimeout(timer)
-        // toggle kiosk
         if (document.fullscreenElement) {
           await exitFullscreenAndWake()
         } else {
@@ -682,12 +682,14 @@ export default function App() {
         {!draft ? (
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
             <div className="hint" style={{ color:'#a7b0b8', margin:'0 auto', textAlign:'center', flex:1 }}>
-              {exploring
-                ? 'Click any pin to see details.'
-                : (mapMode === 'global'
-                    ? 'Click the map to place your pin anywhere in the world.'
-                    : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                  )
+              {isMobile
+                ? 'Browse pins and tap a bubble to see details.'
+                : exploring
+                  ? 'Click any pin to see details.'
+                  : (mapMode === 'global'
+                      ? 'Click the map to place your pin anywhere in the world.'
+                      : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+                    )
               }
             </div>
 
