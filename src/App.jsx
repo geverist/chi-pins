@@ -218,14 +218,15 @@ export default function App() {
     return () => off?.()
   }, [autoKiosk, isMobile])
 
-  // Hidden kiosk toggle (desktop/kiosk only)
+  // HIDDEN kiosk toggle: Shift + K pressed 3 times within 3s (desktop/kiosk only)
   useEffect(() => {
     if (isMobile) return
     let count = 0
     let timer = null
     const onKey = async (e) => {
       if (!e.shiftKey) return
-      if ((e.key || '').toLowerCase() !== 'k') return
+      const k = e.key?.toLowerCase()
+      if (k !== 'k') return
       count += 1
       clearTimeout(timer)
       timer = setTimeout(() => { count = 0 }, 3000)
@@ -255,8 +256,9 @@ export default function App() {
     await exitFullscreenAndWake()
     setNeedsKioskStart(false)
   }
+  /* ---------------------------------------------------------------------- */
 
-  /* ------------------ DEDUPE PINS ------------------ */
+  /* ------------------ DEDUPE PINS (avoid double render) ------------------ */
   const pinsDeduped = useMemo(() => {
     const seen = new Set()
     const out = []
@@ -269,8 +271,10 @@ export default function App() {
     return out
   }, [pins])
 
+  // continent counters for Global header chips (use deduped)
   const continentCounts = useMemo(() => countByContinent(pinsDeduped), [pinsDeduped])
 
+  // Render-only mapping: color global pins by continent (use deduped)
   const pinsForRender = useMemo(() => {
     return (pinsDeduped || []).map(p => {
       if (p?.source === 'global') {
@@ -311,6 +315,7 @@ export default function App() {
     setForm(f => ({ ...f, name:'', neighborhood:'', hotdog:'', note:'' }))
   }
 
+  // fun-fact toast
   async function showNearestTownFact(lat, lng) {
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`
@@ -329,11 +334,14 @@ export default function App() {
   // map click (disabled on mobile — read-only)
   const handlePick = async (ll) => {
     if (isMobile) return
+
     focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES)
     setDraft(ll)
+
     if (mapMode === 'chicago') {
       showNearestTownFact(ll.lat, ll.lng)
     }
+
     if (!slug) {
       const fresh = await ensureUniqueSlug(makeChiSlug())
       setSlug(fresh)
@@ -393,6 +401,7 @@ export default function App() {
     } else {
       clearHighlight()
     }
+
     setTipToken(t => t + 1)
   }
 
@@ -445,7 +454,7 @@ export default function App() {
     goToChicago(mainMapRef.current)
   }
 
-  // style helper
+  // button style helper
   const btn3d = (pressed) => ({
     padding: '10px 12px',
     borderRadius: 12,
@@ -467,7 +476,7 @@ export default function App() {
     gap: 8,
   })
 
-  // Desktop header content (unchanged)
+  // Desktop header content (unchanged; no visible kiosk buttons)
   const desktopHeaderRight =
     mapMode === 'chicago'
       ? (
@@ -496,6 +505,7 @@ export default function App() {
       )
 
   // ---------- Mobile header row ----------
+  // 3-column grid: [Left controls] [Centered single toggle] [Spacer]
   const mobileHeaderRight = (
     <div
       style={{
@@ -528,7 +538,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* RIGHT: spacer to keep center truly centered */}
+      {/* RIGHT: empty spacer to keep the center truly centered */}
       <div />
     </div>
   )
@@ -571,6 +581,7 @@ export default function App() {
   useEffect(() => {
     return () => { if (tapTimerRef.current) clearTimeout(tapTimerRef.current) }
   }, [])
+  /* ------------------------------------------------ */
 
   // -------- Modal for mobile Table row selection --------
   const [selectedPin, setSelectedPin] = useState(null)
@@ -578,12 +589,11 @@ export default function App() {
 
   const PinDetailsModal = ({ pin, onClose }) => {
     if (!pin) return null
-    const stop = (e) => e.stopPropagation()
     return (
       <div
-        onClick={onClose}
+        className="glass"
         style={{
-          position:'fixed', inset:0, zIndex:6000,
+          position:'fixed', inset:0, zIndex:5000,
           background:'rgba(0,0,0,0.55)',
           display:'grid', placeItems:'center', padding:'16px'
         }}
@@ -591,13 +601,11 @@ export default function App() {
         aria-modal="true"
       >
         <div
-          onClick={stop}
-          className="glass"
           style={{
             width:'min(560px, 96vw)',
             border:'1px solid rgba(255,255,255,0.12)',
             borderRadius:14,
-            background:'rgba(22,24,29,0.95)',
+            background:'rgba(22,24,29,0.9)',
             boxShadow:'0 12px 32px rgba(0,0,0,0.45)',
             overflow:'hidden'
           }}
@@ -629,27 +637,23 @@ export default function App() {
   // --------- MAIN RENDER ----------
   return (
     <div className="app">
-<HeaderBar
-  mapMode={mapMode}
-  totalCount={pinsDeduped.length}
-  onGlobal={goGlobal}
-  onChicago={goChicagoZoomedOut}
-  logoSrc={logoUrl}
-  onLogoClick={goChicagoZoomedOut}
-  continentCounts={continentCounts}
-  titleOverride={isMobile ? "Chicago Mike's Guest Pins" : undefined}
-  isMobile={isMobile}
-  suppressDefaultNavOnMobile={true}
->
-  {isMobile ? mobileHeaderRight : desktopHeaderRight}
-</HeaderBar>
-
+      <HeaderBar
+        mapMode={mapMode}
+        totalCount={pinsDeduped.length}
+        onGlobal={goGlobal}
+        onChicago={goChicagoZoomedOut}
+        logoSrc={logoUrl}
+        onLogoClick={goChicagoZoomedOut}
+        titleOverride={isMobile ? "Chicago Mike's Guest Pins" : undefined}
+      >
+        {isMobile ? mobileHeaderRight : desktopHeaderRight}
+      </HeaderBar>
 
       <div className="map-wrap" style={{ position:'relative', flex:1, minHeight:'60vh', borderTop:'1px solid #222', borderBottom:'1px solid #222' }}>
         {isMobile && mobileViewMode === 'table' ? (
           <RecentPinsTable
             pins={pinsDeduped}
-            onSelect={(pin) => setSelectedPin(pin)}
+            onSelect={(pin) => setSelectedPin(pin)}   // ← open modal with details
           />
         ) : (
           <MapShell
@@ -658,6 +662,9 @@ export default function App() {
             exploring={exploring}
             onPick={handlePick}
           >
+            {/* Popular labels:
+               - Desktop: as before when not drafting
+               - Mobile: only while exploring */}
             {showPopularSpots
               && mapMode === 'chicago'
               && !draft
@@ -665,6 +672,7 @@ export default function App() {
                 <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
             )}
 
+            {/* Zoomed OUT: bubbles (Chicago + Global) */}
             {showCommunityPins && !draft && (
               <PinBubbles
                 pins={pinsDeduped}
@@ -674,6 +682,7 @@ export default function App() {
               />
             )}
 
+            {/* Zoomed IN (Chicago only): real pins */}
             {showCommunityPins && !draft && mapMode === 'chicago' && (
               <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>
                 <SavedPins
@@ -687,6 +696,7 @@ export default function App() {
               </ZoomGate>
             )}
 
+            {/* Draft placement disabled on mobile */}
             {draft && !isMobile && (
               <DraftMarker
                 lat={draft.lat}
@@ -726,7 +736,12 @@ export default function App() {
         />
       )}
 
-      <footer style={{ padding:'10px 14px' }}>
+      {/* Footer (unchanged; explore buttons hidden on mobile) */}
+      <footer
+        style={{ padding:'10px 14px' }}
+        onClick={(e) => { /* hidden admin tap area */ }}
+        onTouchStart={(e) => { /* hidden admin tap area */ }}
+      >
         {!draft ? (
           <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center', justifyContent:'space-between' }}>
             <div className="hint" style={{ color:'#a7b0b8', margin:'0 auto', textAlign:'center', flex:1 }}>
@@ -738,6 +753,14 @@ export default function App() {
                   )
               }
             </div>
+
+            {/* Hide on mobile */}
+            {!isMobile && !exploring && (
+              <button data-no-admin-tap onClick={()=> { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
+            )}
+            {!isMobile && exploring && (
+              <button data-no-admin-tap onClick={()=> setExploring(false)}>✖ Close explore</button>
+            )}
           </div>
         ) : (
           !isMobile && (
