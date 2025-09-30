@@ -11,7 +11,6 @@ const PIN_COLOR = {
 function InlineCount({ color, label, count }) {
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
-      {/* tiny pin head swatch (bordered like TeamCount) */}
       <span
         aria-hidden
         style={{
@@ -38,16 +37,56 @@ export default function HeaderBar({
   logoSrc,
   onLogoClick,
   continentCounts = null,
+  titleOverride,
+  isMobile = false,
+  suppressDefaultNavOnMobile = false,
 }) {
-  // keep whatever 3D style func you had before if you want; here’s a minimal one
+  const title =
+    titleOverride ||
+    (mapMode === 'global'
+      ? 'Where in the world are you from?'
+      : 'Where in Chicago(land) are you from?')
+
   const switchBtnStyle = (pressed) => ({
-    padding:'10px 12px', borderRadius:12,
+    padding:'10px 12px',
+    borderRadius:12,
     border:'1px solid #2a2f37',
     background: pressed ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-    color:'#f4f6f8', boxShadow: pressed
+    color:'#f4f6f8',
+    boxShadow: pressed
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
+    cursor: 'pointer',
+    display:'inline-flex',
+    alignItems:'center',
+    gap:8,
   })
+
+  // Only show default nav if no custom children AND (not suppressed on mobile)
+  const showDefaultNav = !children && !(isMobile && suppressDefaultNavOnMobile)
+
+  let defaultNav = null
+  if (showDefaultNav) {
+    defaultNav = mapMode === 'chicago' ? (
+      <button
+        type="button"
+        onClick={onGlobal}
+        style={switchBtnStyle(false)}
+        title="Switch to Global map"
+      >
+        🌎 Global map
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={onChicago}
+        style={switchBtnStyle(true)}
+        title="Back to Chicago"
+      >
+        🏙️ Back to Chicago
+      </button>
+    )
+  }
 
   return (
     <header
@@ -58,7 +97,7 @@ export default function HeaderBar({
       }}
     >
       {/* Left: logo + title + total */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0, flex: '1 1 auto' }}>
         {logoSrc ? (
           <button
             onClick={onLogoClick}
@@ -74,20 +113,26 @@ export default function HeaderBar({
           </button>
         ) : null}
 
-        <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap' }}>
-          {mapMode === 'global'
-            ? 'Where in the world are you from?'
-            : 'Where in Chicago(land) are you from?'}
+        <h1
+          style={{
+            margin:0,
+            fontSize:'clamp(16px, 2.2vw, 22px)',
+            whiteSpace:'nowrap',
+            overflow:'hidden',
+            textOverflow:'ellipsis'
+          }}
+        >
+          {title}
         </h1>
 
-        <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10 }}>
+        <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10, whiteSpace:'nowrap' }}>
           <span>📍</span>
           <strong style={{ fontWeight:700 }}>{totalCount}</strong>
         </span>
       </div>
 
-      {/* Right: continent counts (inline, no boxes) + children + switch */}
-      <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+      {/* Right: continent counts + children OR default nav */}
+      <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end', flex: '0 0 auto' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
             <InlineCount color={PIN_COLOR.chicago} label="Chicago"       count={continentCounts.chicago} />
@@ -99,17 +144,7 @@ export default function HeaderBar({
           </div>
         )}
 
-        {children}
-
-        {mapMode === 'chicago' ? (
-          <button type="button" onClick={onGlobal} style={switchBtnStyle(false)} title="Switch to Global map">
-            🌎 Global map
-          </button>
-        ) : (
-          <button type="button" onClick={onChicago} style={switchBtnStyle(true)} title="Back to Chicago">
-            🏙️ Back to Chicago
-          </button>
-        )}
+        {children ? children : defaultNav}
       </div>
     </header>
   )
