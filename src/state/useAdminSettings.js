@@ -1,0 +1,113 @@
+// src/state/useAdminSettings.js
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { supabase } from '../lib/supabase'
+
+/**
+ * Settings live under table "settings" with schema:
+ *   id: uuid (default)
+ *   key: text (unique)
+ *   value: jsonb
+ *
+ * Row: { key: 'app', value: { ...settings } }
+ */
+const DEFAULTS = {
+  // Timers
+  idleTimeoutMs: 60_000,
+  highlightMs: 30_000,
+  exploreDismissMs: 12_000,
+
+  // Map thresholds
+  minZoomForPins: 13,
+  maxZoom: 19,
+
+  // Kiosk defaults
+  autoKiosk: false,
+
+  // UI defaults
+  showPopularSpotsDefault: true,
+  showCommunityPinsDefault: true,
+
+  // Content filters
+  showPinsSinceMonths: 999,    // all
+  allowedTeams: ['cubs', 'whitesox', 'other'],
+  allowedSources: ['kiosk', 'global'],
+
+  // Popular spots seed (editable)
+  popularSpots: [
+    { name: 'Portillo’s (Clark & Ontario)', type: 'hotdog', lat: 41.8922, lng: -87.6305 },
+    { name: 'Gene & Jude’s', type: 'hotdog', lat: 41.9099, lng: -87.8847 },
+  ],
+}
+
+const LS_KEY = 'adminSettings_v1'
+
+export function useAdminSettings() {
+  const [settings, setSettings] = useState(DEFAULTS)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  // Load from Supabase → fallback to LocalStorage → defaults
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const { data, error } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'app')
+          .maybeSingle()
+
+        if (error) throw error
+        if (mounted) {
+          if (data?.value) {
+            setSettings(s => ({ ...DEFAULTS, ...s, ...data.value }))
+          } else {
+            // Local fallback
+            try {
+              const raw = localStorage.getItem(LS_KEY)
+              if (raw) setSettings(s => ({ ...DEFAULTS, ...s, ...JSON.parse(raw) }))
+            } catch {}
+          }
+        }
+      } catch (e) {
+        // Fallback to LS if table missing / not provisioned
+        try {
+          const raw = localStorage.getItem(LS_KEY)
+          if (raw) setSettings(s => ({ ...DEFAULTS, ...s, ...JSON.parse(raw) }))
+        } catch {}
+        setError(e?.message || 'Failed to load settings')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const save = useCallback(async (next) => {
+    setSaving(true)
+    setError(null)
+    const merged = { ...settings, ...next }
+    setSettings(merged)
+    // Always save to LocalStorage as well
+    try { localStorage.setItem(LS_KEY, JSON.stringify(merged)) } catch {}
+
+    // Try Supabase upsert
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ key: 'app', value: merged }, { onConflict: 'key' })
+      if (error) throw error
+    } catch (e) {
+      setError(e?.message || 'Failed to save settings (using local fallback).')
+    } finally {
+      setSaving(false)
+    }
+  }, [settings])
+
+  return useMemo(() => ({
+    settings, setSettings, save, loading, saving, error, DEFAULTS
+  }), [settings, save, loading, saving, error])
+}
