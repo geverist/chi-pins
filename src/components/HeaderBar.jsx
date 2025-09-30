@@ -38,8 +38,11 @@ export default function HeaderBar({
   logoSrc,
   onLogoClick,
   continentCounts = null,
+  /** NEW: override the title text (e.g., mobile: "Chicago Mike's Guest Pins") */
+  titleOverride,
+  /** NEW: hide the Global/Back mode switch entirely (e.g., on mobile) */
+  hideModeSwitch = false,
 }) {
-  // keep whatever 3D style func you had before if you want; here’s a minimal one
   const switchBtnStyle = (pressed) => ({
     padding:'10px 12px', borderRadius:12,
     border:'1px solid #2a2f37',
@@ -48,6 +51,12 @@ export default function HeaderBar({
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   })
+
+  const titleText =
+    titleOverride ??
+    (mapMode === 'global'
+      ? 'Where in the world are you from?'
+      : 'Where in Chicago(land) are you from?')
 
   return (
     <header
@@ -75,9 +84,7 @@ export default function HeaderBar({
         ) : null}
 
         <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap' }}>
-          {mapMode === 'global'
-            ? 'Where in the world are you from?'
-            : 'Where in Chicago(land) are you from?'}
+          {titleText}
         </h1>
 
         <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10 }}>
@@ -86,7 +93,7 @@ export default function HeaderBar({
         </span>
       </div>
 
-      {/* Right: continent counts (inline, no boxes) + children + switch */}
+      {/* Right: continent counts (inline, no boxes) + children + (optional) switch */}
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
@@ -101,14 +108,28 @@ export default function HeaderBar({
 
         {children}
 
-        {mapMode === 'chicago' ? (
-          <button type="button" onClick={onGlobal} style={switchBtnStyle(false)} title="Switch to Global map">
-            🌎 Global map
-          </button>
-        ) : (
-          <button type="button" onClick={onChicago} style={switchBtnStyle(true)} title="Back to Chicago">
-            🏙️ Back to Chicago
-          </button>
+        {!hideModeSwitch && (
+          mapMode === 'chicago'
+            ? (typeof onGlobal === 'function' && (
+                <button
+                  type="button"
+                  onClick={onGlobal}
+                  style={switchBtnStyle(false)}
+                  title="Switch to Global map"
+                >
+                  🌎 Global map
+                </button>
+              ))
+            : (typeof onChicago === 'function' && (
+                <button
+                  type="button"
+                  onClick={onChicago}
+                  style={switchBtnStyle(true)}
+                  title="Back to Chicago"
+                >
+                  🏙️ Back to Chicago
+                </button>
+              ))
         )}
       </div>
     </header>
