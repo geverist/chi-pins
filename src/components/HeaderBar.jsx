@@ -1,4 +1,6 @@
 // src/components/HeaderBar.jsx
+import { useEffect, useState } from 'react'
+
 const PIN_COLOR = {
   chicago:  '#0ea5e9',
   na:       '#3b82f6',
@@ -11,7 +13,6 @@ const PIN_COLOR = {
 function InlineCount({ color, label, count }) {
   return (
     <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
-      {/* tiny pin head swatch (bordered like TeamCount) */}
       <span
         aria-hidden
         style={{
@@ -38,8 +39,24 @@ export default function HeaderBar({
   logoSrc,
   onLogoClick,
   continentCounts = null,
+  /** Optional: force mobile mode from parent. If omitted, we detect by width. */
+  isMobile: isMobileProp,
 }) {
-  // keep whatever 3D style func you had before if you want; here’s a minimal one
+  // If isMobile not provided, detect via media query
+  const [isMobileDetected, setIsMobileDetected] = useState(false)
+  useEffect(() => {
+    if (typeof isMobileProp === 'boolean') return
+    const mq = () =>
+      typeof window !== 'undefined'
+        ? window.matchMedia('(max-width: 768px)').matches
+        : false
+    const update = () => setIsMobileDetected(mq())
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [isMobileProp])
+  const isMobile = typeof isMobileProp === 'boolean' ? isMobileProp : isMobileDetected
+
   const switchBtnStyle = (pressed) => ({
     padding:'10px 12px', borderRadius:12,
     border:'1px solid #2a2f37',
@@ -49,6 +66,51 @@ export default function HeaderBar({
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   })
 
+  // ---------- Mobile header: title only ----------
+  if (isMobile) {
+    return (
+      <header
+        style={{
+          display:'flex', alignItems:'center', gap:12, justifyContent:'space-between',
+          flexWrap:'nowrap', padding:'10px 14px', position:'relative',
+          borderBottom:'1px solid #222',
+        }}
+      >
+        {/* Optional logo button keeps the same behavior but is not required */}
+        {logoSrc ? (
+          <button
+            onClick={onLogoClick}
+            title="Home"
+            aria-label="Home"
+            style={{
+              display:'inline-flex', alignItems:'center', justifyContent:'center',
+              padding:6, borderRadius:10, border:'1px solid #ddd',
+              background:'#fff', boxShadow:'0 2px 8px rgba(0,0,0,0.08)', cursor:'pointer',
+            }}
+          >
+            <img src={logoSrc} alt="Logo" style={{ height:24, width:'auto', display:'block' }} />
+          </button>
+        ) : <span />}
+
+        <h1
+          style={{
+            margin:0,
+            fontSize:'clamp(16px, 4.5vw, 22px)',
+            whiteSpace:'nowrap',
+            textAlign:'center',
+            flex:1
+          }}
+        >
+          Chicago Mike&apos;s Pin Entries
+        </h1>
+
+        {/* Right spacer to keep title centered */}
+        <span style={{ width:logoSrc ? 36 : 0 }} />
+      </header>
+    )
+  }
+
+  // ---------- Desktop/kiosk header (unchanged) ----------
   return (
     <header
       style={{
