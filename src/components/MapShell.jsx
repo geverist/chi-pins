@@ -240,76 +240,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   return null
 }
 
-/* --------------------------------------------------------------------------- */
-
-function MapModeController({ mode, onMapReady }) {
-  const map = useMap()
-
-  // Initial mount → Chicago view (no maxBounds)
-  useEffect(() => {
-    onMapReady?.(map)
-
-    // Chicago camera limits only (no pannable bounds)
-    map.setMinZoom(CHI_MIN_ZOOM)
-    map.setMaxZoom(CHI_MAX_ZOOM)
-    map.setMaxBounds(null) // ensure no residual bounds
-    map.fitBounds(CHI_BOUNDS, { animate: false })
-
-    // enable interactions
-    map.dragging?.enable()
-    map.scrollWheelZoom?.enable()
-    map.touchZoom?.enable()
-    map.boxZoom?.enable()
-    map.keyboard?.enable()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // mount only
-
-  // Respond to mode changes
-  useEffect(() => {
-    setTimeout(() => {
-      map.invalidateSize()
-
-      if (mode === 'global') {
-        // Global: totally free pan/zoom (no bounds)
-        map.setMaxBounds(null)
-        map.setMinZoom(2)
-        map.setMaxZoom(19)
-        map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true })
-
-        map.dragging?.enable()
-        map.scrollWheelZoom?.enable()
-        map.touchZoom?.enable()
-        map.boxZoom?.enable()
-        map.keyboard?.enable()
-      } else {
-        // Chicago: only min/max zoom; no bounds
-        map.setMaxBounds(null)
-        map.setMinZoom(CHI_MIN_ZOOM)
-        map.setMaxZoom(CHI_MAX_ZOOM)
-        map.fitBounds(CHI_BOUNDS, { animate: true })
-
-        map.dragging?.enable()
-        map.scrollWheelZoom?.enable()
-        map.touchZoom?.enable()
-        map.boxZoom?.enable()
-        map.keyboard?.enable()
-      }
-    }, 0)
-  }, [mode, map])
-
-  return null
-}
-
-function TapToPlace({ onPick, disabled = false }) {
-  useMapEvents({
-    click(e) {
-      if (disabled) return
-      onPick?.({ lat: e.latlng.lat, lng: e.latlng.lng })
-    }
-  })
-  return null
-}
-
 export default function MapShell({
   mapMode,
   mainMapRef,
@@ -331,6 +261,7 @@ export default function MapShell({
 
       {/* Glassy Chicago-biased search (top/center) */}
       <GeocoderTopCenter />
+
 
       <MapModeController mode={mapMode} onMapReady={(m)=>{ if (mainMapRef) mainMapRef.current = m }} />
 
