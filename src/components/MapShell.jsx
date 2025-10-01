@@ -302,25 +302,8 @@ function MapModeController({ mode }) {
   return null
 }
 
-/** Let App force a camera reset to full-Chicago even if already in Chicago. */
-function CameraReset({ mapMode, resetCameraToken }) {
-  const map = useMap()
-  useEffect(() => {
-    if (!map) return
-    if (mapMode !== 'chicago') return
-    setTimeout(() => {
-      try {
-        map.invalidateSize()
-        map.fitBounds(CHI_BOUNDS, { animate: true })
-      } catch {}
-    }, 0)
-  }, [resetCameraToken, mapMode, map])
-  return null
-}
-
-function ClickToPick({ onPick, disabled = false }) {
+function ClickToPick({ onPick }) {
   useMapEvent('click', (e) => {
-    if (disabled) return
     if (!onPick) return
     const { lat, lng } = e.latlng || {}
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
@@ -335,8 +318,7 @@ export default function MapShell({
   mainMapRef,
   exploring,
   onPick,
-  children,
-  resetCameraToken, // optional: when incremented in Chicago mode, refits to CHI_BOUNDS
+  children
 }) {
   // Initial mount center/zoom; MapModeController will take over on changes
   const center = useMemo(() => [CHI.lat, CHI.lng], [])
@@ -364,14 +346,11 @@ export default function MapShell({
         {/* React to mapMode changes */}
         <MapModeController mode={mapMode} />
 
-        {/* Allow App to force a Chicago refit without changing mode */}
-        <CameraReset mapMode={mapMode} resetCameraToken={resetCameraToken} />
-
         {/* Glassy, high-contrast geocoder */}
         <GeocoderTopCenter />
 
-        {/* Click handler for placing pins; disabled while exploring */}
-        <ClickToPick onPick={onPick} disabled={!!exploring} />
+        {/* Click handler for placing pins */}
+        <ClickToPick onPick={onPick} />
 
         {/* Overlays / children */}
         {children}
