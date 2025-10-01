@@ -625,7 +625,6 @@ export default function App() {
   )}
 </footer>
 
-
       <ShareConfirmModal
         open={shareOpen}
         onCancel={() => { setShareOpen(false) }}
