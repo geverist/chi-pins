@@ -29,6 +29,7 @@ L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
 let __searchCssInjected = false
 function ensureSearchCss() {
   if (__searchCssInjected) return
+  if (typeof document === 'undefined') return // SSR guard
   const css = `
     .map-search-wrap input::placeholder { color: #cfd6de; opacity: 0.95; }
     .map-search-wrap .leaflet-control-geocoder-alternatives a {
@@ -51,17 +52,18 @@ function ensureSearchCss() {
   __searchCssInjected = true
 }
 
-/** High-contrast, glassy geocoder placed top-center. */
-function GeocoderTopCenter({
-  placeholder = 'Search Chicago & nearby…',
-  mode = 'chicago', // 'chicago' | 'global'
-}) {
+/** High-contrast, glassy, Chicago-biased geocoder placed top-center. */
+function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const map = useMap()
   const hostRef = useRef(null)
   const shellRef = useRef(null)
   const geocoderRef = useRef(null)
   const inputRef = useRef(null)
   const clearBtnRef = useRef(null)
+
+  // keep references to listeners so we can remove them on cleanup
+  const onFocusRef = useRef(null)
+  const onBlurRef = useRef(null)
 
   useEffect(() => { ensureSearchCss() }, [])
 
@@ -109,30 +111,20 @@ function GeocoderTopCenter({
     hostRef.current.appendChild(shell)
     shellRef.current = shell
 
-    // Geocoder config:
-    // - Chicago mode: Chicagoland-bounded, US-only
-    // - Global mode: no viewbox, no bounds, worldwide
+    // Chicago-biased Nominatim
     const geocoder = L.Control.geocoder({
-      geocoder: mode === 'global'
-        ? L.Control.Geocoder.nominatim({
-            geocodingQueryParams: {
-              // no viewbox, allow global search
-              addressdetails: 1,
-              limit: 10,
-            }
-          })
-        : L.Control.Geocoder.nominatim({
-            geocodingQueryParams: {
-              viewbox: '-88.5,42.6,-87.3,41.4', // Chicagoland
-              bounded: 1,
-              countrycodes: 'us',
-              addressdetails: 1,
-              limit: 10
-            }
-          }),
+      geocoder: L.Control.Geocoder.nominatim({
+        geocodingQueryParams: {
+          viewbox: '-88.5,42.6,-87.3,41.4', // Chicagoland
+          bounded: 1,
+          countrycodes: 'us',
+          addressdetails: 1,
+          limit: 10
+        }
+      }),
       defaultMarkGeocode: false,
       collapsed: false,
-      placeholder: mode === 'global' ? 'Search places worldwide…' : placeholder,
+      placeholder
     })
 
     geocoder.on('markgeocode', (e) => {
@@ -179,17 +171,21 @@ function GeocoderTopCenter({
           fontSize: '14px',
           fontWeight: 600,
         })
-        input.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder
+        input.placeholder = placeholder
 
         // focus ring
-        input.addEventListener('focus', () => {
+        const onFocus = () => {
           input.style.border = '1px solid #7fb1ff'
           input.style.boxShadow = '0 0 0 2px rgba(127,177,255,0.25)'
-        })
-        input.addEventListener('blur', () => {
+        }
+        const onBlur = () => {
           input.style.border = '1px solid rgba(255,255,255,0.32)'
           input.style.boxShadow = 'none'
-        })
+        }
+        input.addEventListener('focus', onFocus)
+        input.addEventListener('blur', onBlur)
+        onFocusRef.current = onFocus
+        onBlurRef.current = onBlur
       }
 
       // Hide default icon button
@@ -257,6 +253,17 @@ function GeocoderTopCenter({
           shellRef.current.removeChild(ctrlEl2)
         }
       } catch {}
+      // remove input listeners if we attached them
+      try {
+        const i = inputRef.current
+        const onF = onFocusRef.current
+        const onB = onBlurRef.current
+        if (i && onF) i.removeEventListener('focus', onF)
+        if (i && onB) i.removeEventListener('blur', onB)
+      } catch {}
+      onFocusRef.current = null
+      onBlurRef.current = null
+
       if (geocoderRef.current) {
         geocoderRef.current.remove()
         geocoderRef.current = null
@@ -269,9 +276,9 @@ function GeocoderTopCenter({
         shellRef.current.parentNode.removeChild(shellRef.current)
       }
       shellRef.current = null
+      inputRef.current = null
     }
-  // IMPORTANT: re-create when mode changes to update search bias
-  }, [map, placeholder, mode])
+  }, [map, placeholder])
 
   return null
 }
@@ -281,6 +288,7 @@ function MapModeController({ mode }) {
   const map = useMap()
 
   useEffect(() => {
+    // allow layout settle, then apply changes + refresh map size
     setTimeout(() => {
       map.invalidateSize()
 
@@ -350,8 +358,6 @@ export default function MapShell({
   onPick,
   children,
   resetCameraToken, // optional: when incremented in Chicago mode, refits to CHI_BOUNDS
-  editing = false,   // NEW: hide geocoder while editing pins
-  showGeocoder = true, // NEW: allow explicit control (default keeps old behavior)
 }) {
   // Initial mount center/zoom; MapModeController will take over on changes
   const center = useMemo(() => [CHI.lat, CHI.lng], [])
@@ -383,9 +389,7 @@ export default function MapShell({
         <CameraReset mapMode={mapMode} resetCameraToken={resetCameraToken} />
 
         {/* Glassy, high-contrast geocoder */}
-        {showGeocoder && !editing && (
-          <GeocoderTopCenter mode={mapMode === 'global' ? 'global' : 'chicago'} />
-        )}
+        <GeocoderTopCenter />
 
         {/* Click handler for placing pins; disabled while exploring */}
         <ClickToPick onPick={onPick} disabled={!!exploring} />
