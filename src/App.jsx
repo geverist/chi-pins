@@ -631,7 +631,6 @@ export default function App() {
         <MapShell
           mapMode={mapMode}
           mainMapRef={mainMapRef}
-          setMapReady={setMapReady} // Add this line
           exploring={exploring}
           onPick={handlePick}
           resetCameraToken={resetCameraToken}
@@ -792,3 +791,4 @@ export default function App() {
     </div>
   );
 }
+
