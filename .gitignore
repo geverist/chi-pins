@@ -39,3 +39,4 @@ coverage/
 # Local development
 *.local
 EOF
+.vercel
