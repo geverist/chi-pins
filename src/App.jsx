@@ -144,6 +144,7 @@ const DEFAULT_FUN_FACTS = {
 
 export default function App() {
   const mainMapRef = useRef(null);
+  const [mapReady, setMapReady] = useState(false); // Track map initialization
 
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
@@ -235,6 +236,13 @@ export default function App() {
     return () => off?.();
   }, [autoKiosk]);
 
+  // Set mapReady when mainMapRef is initialized
+  useEffect(() => {
+    if (mainMapRef.current) {
+      setMapReady(true);
+    }
+  }, []);
+
   const startKioskNow = async () => {
     await enterFullscreen();
     await ensureWakeLock();
@@ -325,15 +333,16 @@ export default function App() {
 
   // map click
   async function handlePick(ll) {
-    if (isMobile) return;
+    if (isMobile || !mapReady) return; // Prevent clicks until map is ready
     try {
       const map = mainMapRef.current;
-      const cz = map?.getZoom?.() ?? 10;
+      if (!map) return; // Defensive check
+      const cz = map.getZoom() ?? 10;
       const tenMileBounds = boundsForMiles(ll, 10);
       // Get zoom level for 10-mile radius
       map.fitBounds(tenMileBounds, { animate: false });
       const tenMileZoom = map.getZoom();
-      map.setZoom(cz, { animate: false }); // Restore original zoom to compare
+      map.setZoom(cz, { animate: false }); // Restore original zoom
       // If current zoom is less than 10-mile zoom, use 10-mile bounds; else use 75% rule
       if (cz < tenMileZoom) {
         map.fitBounds(tenMileBounds, { animate: true });
@@ -341,7 +350,10 @@ export default function App() {
         const nz = Math.min(cz + 0.5, 19);
         map.setView([ll.lat, ll.lng], nz, { animate: true });
       }
-    } catch {}
+    } catch (err) {
+      console.error('Pin placement failed:', err);
+      return;
+    }
     focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES);
     setDraft(ll);
     if (mapMode === 'chicago') {
@@ -357,14 +369,14 @@ export default function App() {
 
   // keep draft pin centered
   useEffect(() => {
-    if (!draft || submapCenter) return;
+    if (!draft || submapCenter || !mapReady) return;
     const { lat, lng } = draft;
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       try {
         mainMapRef.current?.panTo([lat, lng], { animate: false });
       } catch {}
     }
-  }, [draft?.lat, draft?.lng, submapCenter]);
+  }, [draft?.lat, draft?.lng, submapCenter, mapReady]);
 
   // save
   async function savePin() {
@@ -616,6 +628,7 @@ export default function App() {
           resetCameraToken={resetCameraToken}
           editing={!!draft}
           clearSearchToken={clearSearchToken}
+          mapReady={mapReady} // Pass mapReady to control TapToPlace
         >
           {showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
@@ -666,9 +679,10 @@ export default function App() {
             setDraft(ll);
             try {
               const map = mainMapRef.current;
-              const cz = map?.getZoom?.() ?? 10;
+              if (!map) return;
+              const cz = map.getZoom() ?? 10;
               const nz = Math.min(cz + 0.5, 19);
-              map?.setView([ll.lat, ll.lng], nz, { animate: true });
+              map.setView([ll.lat, ll.lng], nz, { animate: true });
             } catch {}
             closeSubmap();
             setTipToken((t) => t + 1);
@@ -709,7 +723,9 @@ export default function App() {
                 ? 'Click any pin to see details.'
                 : mapMode === 'global'
                 ? 'Click the map to place your pin anywhere in the world.'
-                : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'}
+                : mapReady
+                ? 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+                : 'Loading map, please wait...'}
             </div>
             {!isMobile && (
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }} data-no-admin-tap>
