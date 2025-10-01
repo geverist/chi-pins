@@ -510,7 +510,7 @@ export default function App() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <TeamCount pins={pinsDeduped} />
         <button
-          type="button"
+          type="type"
           aria-pressed={showPopularSpots}
           onClick={() => setShowPopularSpots((v) => !v)}
           style={btn3d(showPopularSpots)}
