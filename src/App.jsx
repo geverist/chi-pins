@@ -310,6 +310,16 @@ export default function App() {
   // map click
   const handlePick = async (ll) => {
     if (isMobile) return // Mobile: no pin placement; stay in Explore
+
+    // 🔎 Recenter + zoom in by ~0.5 level (≈ 75% view extent) on first drop
+    try {
+      const map = mainMapRef.current
+      const cz = map?.getZoom?.() ?? 10
+      const nz = Math.min(cz + 0.5, 19)
+      map?.setView([ll.lat, ll.lng], nz, { animate: true })
+    } catch {}
+
+    // Keep your existing draft-focus behavior
     focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES)
     setDraft(ll)
 
@@ -643,7 +653,12 @@ export default function App() {
           baseZoom={submapBaseZoom}
           onCommit={(ll) => {
             setDraft(ll)
-            mainMapRef.current?.panTo([ll.lat, ll.lng], { animate: false })
+            try {
+              const map = mainMapRef.current
+              const cz = map?.getZoom?.() ?? 10
+              const nz = Math.min(cz + 0.5, 19)
+              map?.setView([ll.lat, ll.lng], nz, { animate: true })
+            } catch {}
             closeSubmap()
             setTipToken(t => t + 1)
           }}
@@ -722,7 +737,7 @@ export default function App() {
   )}
 </footer>
 {/* ------------------------ */}
- 
+
       {/* ------------------------ */}
 
       <ShareConfirmModal
@@ -744,5 +759,3 @@ export default function App() {
     </div>
   )
 }
-
-
