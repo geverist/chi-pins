@@ -182,7 +182,7 @@ export default function App() {
   const { trigger: triggerHighlight, clear: clearHighlight } = useHighlightPin(setHighlightSlug);
 
   // editor form
-  const [form, setForm ] = useState({
+  const [form, setForm] = useState({
     team: 'cubs',
     name: '',
     neighborhood: '',
