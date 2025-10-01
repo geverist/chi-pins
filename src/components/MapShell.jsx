@@ -13,7 +13,7 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css'
 import 'leaflet-control-geocoder'
 
-// Map utils for camera presets
+// Map utils
 import {
   CHI, CHI_BOUNDS, CHI_MIN_ZOOM, CHI_MAX_ZOOM,
   USA, GLOBAL_ZOOM,
@@ -24,6 +24,53 @@ import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
+
+/** One-time CSS injector for search input/placeholder/results text */
+let __searchCssInjected = false
+function ensureSearchCss() {
+  if (__searchCssInjected) return
+  const css = `
+    /* Input text + placeholder */
+    .map-search-wrap .leaflet-control-geocoder-form input {
+      color: #e9eef3 !important;
+      background: rgba(0,0,0,0.22) !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      font-weight: 600;
+    }
+    .map-search-wrap .leaflet-control-geocoder-form input::placeholder {
+      color: #cfd6de !important;
+      opacity: 0.95;
+    }
+    /* Results text/links */
+    .map-search-wrap .leaflet-control-geocoder-alternatives {
+      background: rgba(16,17,20,0.92) !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      color: #e9eef3 !important;
+      border-radius: 10px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+      overflow: hidden;
+      max-height: 50vh;
+      overscroll-behavior: contain;
+    }
+    .map-search-wrap .leaflet-control-geocoder-alternatives a {
+      color: #e9eef3 !important;
+      text-decoration: none;
+      display: block;
+      padding: 8px 10px;
+    }
+    .map-search-wrap .leaflet-control-geocoder-alternatives li + li a {
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+    .map-search-wrap .leaflet-control-geocoder-alternatives a:hover {
+      background: rgba(255,255,255,0.06);
+    }
+  `
+  const style = document.createElement('style')
+  style.setAttribute('data-map-search-css', '1')
+  style.textContent = css
+  document.head.appendChild(style)
+  __searchCssInjected = true
+}
 
 /* ------------------------ Chicago/global glassy search ------------------------ */
 function GeocoderTopCenter({
@@ -39,6 +86,8 @@ function GeocoderTopCenter({
   const clearBtnRef = useRef(null)
   const clearBtnHandlerRef = useRef(null)
   const inputHandlerRef = useRef(null)
+
+  useEffect(() => { ensureSearchCss() }, [])
 
   // Create a top-center host on mount
   useEffect(() => {
@@ -137,42 +186,20 @@ function GeocoderTopCenter({
         padding: '0',
       })
 
-      // style the input (lighter text for contrast)
       const input = ctrlEl.querySelector('.leaflet-control-geocoder-form input')
       inputRef.current = input
       if (input) {
-        Object.assign(input.style, {
-          background: 'rgba(0,0,0,0.22)',
-          border: '1px solid rgba(255,255,255,0.18)',
-          color: '#e9eef3',                         // higher contrast
-          padding: '10px 36px 10px 12px',           // room for clear “×”
-          borderRadius: '10px',
-          outline: 'none',
-          width: 'min(72vw, 520px)',
-          fontWeight: 600,
-        })
+        // padding gives room for the ×
+        input.style.padding = '10px 36px 10px 12px'
+        input.style.borderRadius = '10px'
+        input.style.outline = 'none'
+        input.style.width = 'min(72vw, 520px)'
         input.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder
       }
 
       // hide default icon button
       const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
       if (iconBtn) iconBtn.style.display = 'none'
-
-      // style results dropdown
-      const alts = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
-      if (alts) {
-        Object.assign(alts.style, {
-          background: 'rgba(16,17,20,0.92)',
-          border: '1px solid rgba(255,255,255,0.14)',
-          color: '#e9eef3',
-          borderRadius: '10px',
-          marginTop: '8px',
-          boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
-          overflow: 'hidden',
-          maxHeight: '50vh',
-          overscrollBehavior: 'contain',
-        })
-      }
 
       // Add a centered "×" clear button inside the shell
       const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
@@ -198,9 +225,8 @@ function GeocoderTopCenter({
       clearBtn.textContent = '×'
       clearBtn.title = 'Clear'
       clearBtnRef.current = clearBtn
-
-      // ensure clear button doesn't interact with the map
       L.DomEvent.disableClickPropagation(clearBtn)
+
       const onClearClick = (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
@@ -230,16 +256,14 @@ function GeocoderTopCenter({
       onInput() // initial state
     }
 
-    // UNIFIED CLEANUP: remove listeners, control, and shell
+    // CLEANUP: remove listeners, control, and shell
     return () => {
       try {
-        // input listener
         if (inputRef.current && inputHandlerRef.current) {
           inputRef.current.removeEventListener('input', inputHandlerRef.current)
         }
         inputHandlerRef.current = null
 
-        // clear button listener + dom
         if (clearBtnRef.current && clearBtnHandlerRef.current) {
           clearBtnRef.current.removeEventListener('click', clearBtnHandlerRef.current)
         }
@@ -249,13 +273,10 @@ function GeocoderTopCenter({
         }
         clearBtnRef.current = null
 
-        // remove geocoder control
         if (geocoderRef.current) {
           geocoderRef.current.remove()
           geocoderRef.current = null
         }
-
-        // remove shell
         if (shellRef.current?.parentNode) {
           shellRef.current.parentNode.removeChild(shellRef.current)
         }
@@ -275,7 +296,6 @@ function GeocoderTopCenter({
     }
     if (g && g._input) g._input.value = ''
     try { g?._clearResults?.() } catch {}
-    // hide dropdown if present
     const ctrlEl = g?._container
     if (ctrlEl) {
       const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
@@ -291,21 +311,17 @@ function GeocoderTopCenter({
 function MapModeController({ mode }) {
   const map = useMap()
 
-  // Initial mount → Chicago view (no maxBounds)
+  // Initial mount → Chicago view
   useEffect(() => {
-    // Chicago camera limits only (no pannable bounds)
     map.setMinZoom(CHI_MIN_ZOOM)
     map.setMaxZoom(CHI_MAX_ZOOM)
     map.setMaxBounds(null)
     map.fitBounds(CHI_BOUNDS, { animate: false })
-
-    // enable interactions
     map.dragging?.enable()
     map.scrollWheelZoom?.enable()
     map.touchZoom?.enable()
     map.boxZoom?.enable()
     map.keyboard?.enable()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // mount only
 
   // Respond to mode changes
@@ -314,24 +330,20 @@ function MapModeController({ mode }) {
       map.invalidateSize()
 
       if (mode === 'global') {
-        // Global: totally free pan/zoom (no bounds)
         map.setMaxBounds(null)
         map.setMinZoom(2)
         map.setMaxZoom(19)
         map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true })
-
         map.dragging?.enable()
         map.scrollWheelZoom?.enable()
         map.touchZoom?.enable()
         map.boxZoom?.enable()
         map.keyboard?.enable()
       } else {
-        // Chicago: only min/max zoom; no bounds
         map.setMaxBounds(null)
         map.setMinZoom(CHI_MIN_ZOOM)
         map.setMaxZoom(CHI_MAX_ZOOM)
         map.fitBounds(CHI_BOUNDS, { animate: true })
-
         map.dragging?.enable()
         map.scrollWheelZoom?.enable()
         map.touchZoom?.enable()
@@ -344,7 +356,6 @@ function MapModeController({ mode }) {
   return null
 }
 
-/** Let App force a camera reset to full-Chicago even if already in Chicago. */
 function CameraReset({ mapMode, resetCameraToken }) {
   const map = useMap()
   useEffect(() => {
@@ -378,11 +389,10 @@ export default function MapShell({
   exploring,
   onPick,
   children,
-  resetCameraToken,         // optional: token to force Chicago refit
-  editing = false,          // optional: hide search while editing
-  clearSearchToken = 0,     // bump this (e.g., on idle) to clear geocoder text/results
+  resetCameraToken,
+  editing = false,
+  clearSearchToken = 0,
 }) {
-  // Initial mount center/zoom; MapModeController will take over on changes
   const center = useMemo(() => [CHI.lat, CHI.lng], [])
   const zoom = useMemo(() => 10, [])
   const whenCreated = (map) => { if (mainMapRef) mainMapRef.current = map }
@@ -406,13 +416,10 @@ export default function MapShell({
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
 
-        {/* Chicago/global camera behavior */}
         <MapModeController mode={mapMode} />
-
-        {/* Allow App to force a Chicago refit without changing mode */}
         <CameraReset mapMode={mapMode} resetCameraToken={resetCameraToken} />
 
-        {/* Glassy, high-contrast geocoder (hidden while editing) */}
+        {/* Search hidden while editing pins */}
         {!editing && (
           <GeocoderTopCenter
             mode={mapMode === 'global' ? 'global' : 'chicago'}
@@ -420,10 +427,7 @@ export default function MapShell({
           />
         )}
 
-        {/* Click handler for placing pins; disabled while exploring */}
         <TapToPlace onPick={onPick} disabled={!!exploring} />
-
-        {/* Overlays / children */}
         {children}
       </MapContainer>
     </div>
