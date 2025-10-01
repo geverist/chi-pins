@@ -25,12 +25,12 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
 
-/** One-time CSS injector for search input/placeholder/results text */
+/* ---------- one-time CSS injector so ALL text is consistently styled ---------- */
 let __searchCssInjected = false
 function ensureSearchCss() {
   if (__searchCssInjected || typeof document === 'undefined') return
   const css = `
-    /* Input text + placeholder */
+    /* Input text + placeholder (high contrast) */
     .map-search-wrap .leaflet-control-geocoder-form input {
       color: #e9eef3 !important;
       background: rgba(0,0,0,0.22) !important;
@@ -41,6 +41,11 @@ function ensureSearchCss() {
       color: #cfd6de !important;
       opacity: 0.95 !important;
     }
+    /* Extra placeholder vendor selectors for stubborn browsers */
+    .map-search-wrap .leaflet-control-geocoder-form input::-webkit-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; }
+    .map-search-wrap .leaflet-control-geocoder-form input:-ms-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; }
+    .map-search-wrap .leaflet-control-geocoder-form input::-ms-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; }
+
     /* Results text/links */
     .map-search-wrap .leaflet-control-geocoder-alternatives {
       background: rgba(16,17,20,0.92) !important;
@@ -75,25 +80,21 @@ function ensureSearchCss() {
 /* ------------------------ Chicago/global glassy search ------------------------ */
 function GeocoderTopCenter({
   placeholder = 'Search Chicago & nearby…',
-  mode = 'chicago',                  // 'chicago' | 'global'
-  clearToken = 0,                     // bump to clear input/results (e.g., on idle)
+  mode = 'chicago',      // 'chicago' | 'global'
+  clearToken = 0,        // bump to clear input/results (e.g., on idle)
 }) {
   const map = useMap()
   const hostRef = useRef(null)
   const shellRef = useRef(null)
   const geocoderRef = useRef(null)
-  const inputRef = useRef(null)            // canonical input
+  const inputRef = useRef(null)     // bind to geocoder._input (canonical)
   const clearBtnRef = useRef(null)
 
   useEffect(() => { ensureSearchCss() }, [])
 
-  // Create a top-center host on mount (and purge stale ones from HMR)
+  // Create a top-center host on mount
   useEffect(() => {
     if (!map) return
-    const container = map.getContainer()
-    // Purge any stale hosts from prior mounts/HMR
-    container.querySelectorAll('.map-search-host').forEach(n => n.remove())
-
     const host = L.DomUtil.create('div', 'map-search-host')
     Object.assign(host.style, {
       position: 'absolute',
@@ -105,10 +106,10 @@ function GeocoderTopCenter({
       maxWidth: 'min(92vw, 720px)',
       width: 'max-content',
     })
-    container.appendChild(host)
+    map.getContainer().appendChild(host)
     hostRef.current = host
     return () => {
-      host.remove()
+      hostRef.current?.parentNode?.removeChild(hostRef.current)
       hostRef.current = null
     }
   }, [map])
@@ -117,8 +118,7 @@ function GeocoderTopCenter({
   useEffect(() => {
     if (!map || !hostRef.current) return
 
-    // outer glass shell (purge stale shells first)
-    hostRef.current.querySelectorAll('.map-search-wrap').forEach(n => n.remove())
+    // outer glass shell
     const shell = L.DomUtil.create('div', 'map-search-wrap glass')
     Object.assign(shell.style, {
       display: 'flex',
@@ -132,7 +132,6 @@ function GeocoderTopCenter({
       border: '1px solid rgba(255,255,255,0.14)',
       boxShadow: '0 8px 24px rgba(0,0,0,0.30)',
       position: 'relative',
-      zIndex: 1,
     })
     hostRef.current.appendChild(shell)
     shellRef.current = shell
@@ -141,11 +140,15 @@ function GeocoderTopCenter({
     const geocoder = L.Control.geocoder({
       geocoder: mode === 'global'
         ? L.Control.Geocoder.nominatim({
-            geocodingQueryParams: { addressdetails: 1, limit: 10 }
+            geocodingQueryParams: {
+              // no viewbox; worldwide
+              addressdetails: 1,
+              limit: 10,
+            }
           })
         : L.Control.Geocoder.nominatim({
             geocodingQueryParams: {
-              viewbox: '-88.5,42.6,-87.3,41.4',
+              viewbox: '-88.5,42.6,-87.3,41.4', // Chicagoland bbox
               bounded: 1,
               countrycodes: 'us',
               addressdetails: 1,
@@ -185,22 +188,34 @@ function GeocoderTopCenter({
       padding: '0',
     })
 
-    // IMPORTANT: canonical plugin input with fallback
-    const canonicalInput = geocoder._input || ctrlEl.querySelector('.leaflet-control-geocoder-form input')
-    inputRef.current = canonicalInput
-    if (canonicalInput) {
-      canonicalInput.style.padding = '10px 36px 10px 12px'
-      canonicalInput.style.borderRadius = '10px'
-      canonicalInput.style.outline = 'none'
-      canonicalInput.style.width = 'min(72vw, 520px)'
-      canonicalInput.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder
+    // 🔑 Use the plugin-owned input — stable across versions
+    const input =
+      geocoder._input ||
+      ctrlEl.querySelector('input') ||
+      ctrlEl.querySelector('.leaflet-control-geocoder-form input')
+    inputRef.current = input
+    if (input) {
+      input.style.padding = '10px 36px 10px 12px' // room for ×
+      input.style.borderRadius = '10px'
+      input.style.outline = 'none'
+      input.style.width = 'min(72vw, 520px)'
+      input.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder
+      // also clear on Escape
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+          ev.stopPropagation()
+          clearAll()
+        }
+      })
     }
 
-    // hide default icon button
+    // hide default icon button (typing/enter still works)
     const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
     if (iconBtn) iconBtn.style.display = 'none'
 
-    // Clear button that can’t be obscured by stale shells
+    // results dropdown (styled by CSS injector)
+
+    // Clear button
     const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
     Object.assign(clearBtn.style, {
       position: 'absolute',
@@ -220,8 +235,7 @@ function GeocoderTopCenter({
       alignItems: 'center',
       justifyContent: 'center',
       padding: '0',
-      zIndex: 2,
-      pointerEvents: 'auto',
+      zIndex: 3700, // make sure it’s over the map UI
     })
     clearBtn.textContent = '×'
     clearBtn.title = 'Clear'
@@ -229,16 +243,18 @@ function GeocoderTopCenter({
     L.DomEvent.disableClickPropagation(clearBtn)
 
     const showHideClear = () => {
-      const hasText = !!inputRef.current?.value
-      clearBtn.style.display = hasText ? 'inline-flex' : 'none'
+      const v = inputRef.current?.value ?? ''
+      clearBtn.style.display = v ? 'inline-flex' : 'none'
     }
 
-    const clearAll = () => {
+    function clearAll() {
       const g = geocoderRef.current
       const i = inputRef.current
       if (i) {
         i.value = ''
+        // fire both input & change to catch all listeners
         i.dispatchEvent(new Event('input', { bubbles: true }))
+        i.dispatchEvent(new Event('change', { bubbles: true }))
       }
       if (g && g._input) g._input.value = ''
       try { g?._clearResults?.() } catch {}
@@ -254,15 +270,25 @@ function GeocoderTopCenter({
       inputRef.current?.focus()
     })
 
-    canonicalInput?.addEventListener('input', showHideClear)
-    canonicalInput?.addEventListener('keyup', showHideClear)
-    showHideClear()
+    // Robust visibility updates (type, paste, IME, programmatic)
+    input?.addEventListener('input', showHideClear)
+    input?.addEventListener('keyup', showHideClear)
+    input?.addEventListener('change', showHideClear)
+    // MutationObserver in case plugin writes value programmatically
+    const mo = input
+      ? new MutationObserver(showHideClear)
+      : null
+    if (mo && input) mo.observe(input, { attributes: true, attributeFilter: ['value'] })
+
+    showHideClear() // initial state
 
     // CLEANUP
     return () => {
       try {
-        canonicalInput?.removeEventListener('input', showHideClear)
-        canonicalInput?.removeEventListener('keyup', showHideClear)
+        input?.removeEventListener('input', showHideClear)
+        input?.removeEventListener('keyup', showHideClear)
+        input?.removeEventListener('change', showHideClear)
+        mo?.disconnect()
         clearBtn?.remove()
         geocoder.remove()
       } catch {}
@@ -282,6 +308,7 @@ function GeocoderTopCenter({
     if (i) {
       i.value = ''
       i.dispatchEvent(new Event('input', { bubbles: true }))
+      i.dispatchEvent(new Event('change', { bubbles: true }))
     }
     if (g && g._input) g._input.value = ''
     try { g?._clearResults?.() } catch {}
