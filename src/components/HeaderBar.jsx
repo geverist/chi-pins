@@ -139,7 +139,7 @@ export default function HeaderBar({
         <h1 style={{ margin:0, fontSize:'clamp(16px, 2.2vw, 22px)', whiteSpace:'nowrap' }}>
           {mapMode === 'global'
             ? 'Where in the world are you from?'
-            : 'Where in Chicago(land) are you from?'}
+            : 'Where in Chicago are you from?'}
         </h1>
 
         <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10 }}>
