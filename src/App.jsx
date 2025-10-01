@@ -200,9 +200,12 @@ export default function App() {
     const mq = window.matchMedia('(max-width: 640px)');
     const handler = (e) => {
       setIsMobile(e.matches);
-      if (e.matches) setExploring(true);
+      setExploring(e.matches ? true : false);
+      console.log('App: isMobile=', e.matches, 'exploring=', e.matches ? true : false);
     };
     if (mq.matches) setExploring(true);
+    else setExploring(false);
+    console.log('App: Initial isMobile=', mq.matches, 'exploring=', mq.matches ? true : false);
     mq.addEventListener?.('change', handler);
     return () => mq.removeEventListener?.('change', handler);
   }, []);
@@ -239,9 +242,12 @@ export default function App() {
   // Set mapReady when mainMapRef is initialized
   useEffect(() => {
     if (mainMapRef.current) {
+      console.log('App: mainMapRef set, enabling mapReady');
       setMapReady(true);
+    } else {
+      console.warn('App: mainMapRef not set yet');
     }
-  }, []);
+  }, [mainMapRef.current]);
 
   const startKioskNow = async () => {
     await enterFullscreen();
@@ -333,10 +339,14 @@ export default function App() {
 
   // map click
   async function handlePick(ll) {
+    console.log('App: handlePick called with latlng=', ll, 'mapReady=', mapReady, 'isMobile=', isMobile);
     if (isMobile || !mapReady) return;
     try {
       const map = mainMapRef.current;
-      if (!map) return;
+      if (!map) {
+        console.warn('App: mainMapRef.current is null in handlePick');
+        return;
+      }
       const cz = map.getZoom() ?? 10;
       const tenMileBounds = boundsForMiles(ll, 10);
       map.fitBounds(tenMileBounds, { animate: false });
