@@ -37,6 +37,8 @@ function GeocoderTopCenter({
   const geocoderRef = useRef(null)
   const inputRef = useRef(null)
   const clearBtnRef = useRef(null)
+  const clearBtnHandlerRef = useRef(null)
+  const inputHandlerRef = useRef(null)
 
   // Create a top-center host on mount
   useEffect(() => {
@@ -199,7 +201,7 @@ function GeocoderTopCenter({
 
       // ensure clear button doesn't interact with the map
       L.DomEvent.disableClickPropagation(clearBtn)
-      clearBtn.addEventListener('click', (ev) => {
+      const onClearClick = (ev) => {
         ev.preventDefault()
         ev.stopPropagation()
         const g = geocoderRef.current
@@ -214,7 +216,9 @@ function GeocoderTopCenter({
         if (list) list.style.display = 'none'
         clearBtn.style.display = 'none'
         i?.focus()
-      })
+      }
+      clearBtn.addEventListener('click', onClearClick)
+      clearBtnHandlerRef.current = onClearClick
 
       // toggle clear button visibility on input
       const onInput = () => {
@@ -222,21 +226,41 @@ function GeocoderTopCenter({
         clearBtn.style.display = hasText ? 'inline-flex' : 'none'
       }
       input?.addEventListener('input', onInput)
+      inputHandlerRef.current = onInput
       onInput() // initial state
-
-      // cleanup listeners we attached
-      return () => {
-        input?.removeEventListener('input', onInput)
-      }
     }
 
+    // UNIFIED CLEANUP: remove listeners, control, and shell
     return () => {
-      if (geocoderRef.current) {
-        geocoderRef.current.remove()
-        geocoderRef.current = null
-      }
-      if (shellRef.current?.parentNode) shellRef.current.parentNode.removeChild(shellRef.current)
-      shellRef.current = null
+      try {
+        // input listener
+        if (inputRef.current && inputHandlerRef.current) {
+          inputRef.current.removeEventListener('input', inputHandlerRef.current)
+        }
+        inputHandlerRef.current = null
+
+        // clear button listener + dom
+        if (clearBtnRef.current && clearBtnHandlerRef.current) {
+          clearBtnRef.current.removeEventListener('click', clearBtnHandlerRef.current)
+        }
+        clearBtnHandlerRef.current = null
+        if (clearBtnRef.current?.parentNode) {
+          clearBtnRef.current.parentNode.removeChild(clearBtnRef.current)
+        }
+        clearBtnRef.current = null
+
+        // remove geocoder control
+        if (geocoderRef.current) {
+          geocoderRef.current.remove()
+          geocoderRef.current = null
+        }
+
+        // remove shell
+        if (shellRef.current?.parentNode) {
+          shellRef.current.parentNode.removeChild(shellRef.current)
+        }
+        shellRef.current = null
+      } catch {}
     }
   }, [map, placeholder, mode])
 
