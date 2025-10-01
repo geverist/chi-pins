@@ -16,6 +16,13 @@ function pageStepMilesForZoom(baseZoom) {
   return frameMilesForZoom(baseZoom) * 0.5
 }
 
+// In Boot or new component
+useEffect(() => {
+  map.on('zoom', () => {
+    // Incremental zoom logic (your existing)
+  });
+}, [map]);
+
 /* ---- Drag + edge paging controller ---- */
 function DragAndPageController({
   pos,
