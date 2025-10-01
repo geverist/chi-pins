@@ -651,44 +651,7 @@ export default function App() {
       )}
 
       {/* -------- FOOTER -------- */}
-      <footer
-        style={{ padding: '10px 14px' }}
-        onClick={handleFooterClick}
-        onTouchStart={handleFooterTouch}
-      >
-        {!draft ? (
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div className="hint" style={{ color: '#a7b0b8', margin: '0 auto', textAlign: 'center', flex: 1 }}>
-              {isMobile
-                ? 'Browse pins near you.'
-                : exploring
-                  ? 'Click any pin to see details.'
-                  : (mapMode === 'global'
-                    ? 'Click the map to place your pin anywhere in the world.'
-                    : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                  )
-              }
-            </div>
-            {/* Explore buttons hidden on mobile */}
-            {!isMobile && !exploring && (
-              <button data-no-admin-tap onClick={() => { setExploring(true); setShowAttractor(false) }}>🔎 Explore pins</button>
-            )}
-            {!isMobile && exploring && (
-              <button data-no-admin-tap onClick={() => setExploring(false)}>✖ Close explore</button>
-            )}
-          </div>
-        ) : (
-          <Editor
-            mapMode={mapMode}
-            slug={slug}
-            form={form}
-            setForm={setForm}
-            hotdogSuggestions={hotdogSuggestions}
-            onCancel={cancelEditing}
-            onOpenShare={() => setShareOpen(true)}
-          />
-        )}
-      </footer>
+ 
       {/* ------------------------ */}
 
       <ShareConfirmModal
