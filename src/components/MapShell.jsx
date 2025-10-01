@@ -29,7 +29,6 @@ L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
 let __searchCssInjected = false
 function ensureSearchCss() {
   if (__searchCssInjected) return
-  if (typeof document === 'undefined') return // SSR guard
   const css = `
     .map-search-wrap input::placeholder { color: #cfd6de; opacity: 0.95; }
     .map-search-wrap .leaflet-control-geocoder-alternatives a {
@@ -60,10 +59,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const geocoderRef = useRef(null)
   const inputRef = useRef(null)
   const clearBtnRef = useRef(null)
-
-  // keep references to listeners so we can remove them on cleanup
-  const onFocusRef = useRef(null)
-  const onBlurRef = useRef(null)
 
   useEffect(() => { ensureSearchCss() }, [])
 
@@ -174,18 +169,14 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         input.placeholder = placeholder
 
         // focus ring
-        const onFocus = () => {
+        input.addEventListener('focus', () => {
           input.style.border = '1px solid #7fb1ff'
           input.style.boxShadow = '0 0 0 2px rgba(127,177,255,0.25)'
-        }
-        const onBlur = () => {
+        })
+        input.addEventListener('blur', () => {
           input.style.border = '1px solid rgba(255,255,255,0.32)'
           input.style.boxShadow = 'none'
-        }
-        input.addEventListener('focus', onFocus)
-        input.addEventListener('blur', onBlur)
-        onFocusRef.current = onFocus
-        onBlurRef.current = onBlur
+        })
       }
 
       // Hide default icon button
@@ -253,17 +244,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
           shellRef.current.removeChild(ctrlEl2)
         }
       } catch {}
-      // remove input listeners if we attached them
-      try {
-        const i = inputRef.current
-        const onF = onFocusRef.current
-        const onB = onBlurRef.current
-        if (i && onF) i.removeEventListener('focus', onF)
-        if (i && onB) i.removeEventListener('blur', onB)
-      } catch {}
-      onFocusRef.current = null
-      onBlurRef.current = null
-
       if (geocoderRef.current) {
         geocoderRef.current.remove()
         geocoderRef.current = null
@@ -276,7 +256,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         shellRef.current.parentNode.removeChild(shellRef.current)
       }
       shellRef.current = null
-      inputRef.current = null
     }
   }, [map, placeholder])
 
