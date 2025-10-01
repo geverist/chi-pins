@@ -1,4 +1,3 @@
-
 // src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react';
 import logoUrl from './assets/logo.png';
@@ -145,7 +144,7 @@ const DEFAULT_FUN_FACTS = {
 
 export default function App() {
   const mainMapRef = useRef(null);
-  const [mapReady, setMapReady] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
 
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
@@ -183,7 +182,7 @@ export default function App() {
   const { trigger: triggerHighlight, clear: clearHighlight } = useHighlightPin(setHighlightSlug);
 
   // editor form
-  const [form, setForm] = useState({
+  const [form, setForm ] = useState({
     team: 'cubs',
     name: '',
     neighborhood: '',
