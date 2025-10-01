@@ -28,41 +28,41 @@ L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
 /** One-time CSS injector for search input/placeholder/results text */
 let __searchCssInjected = false
 function ensureSearchCss() {
-  if (__searchCssInjected) return
+  if (__searchCssInjected || typeof document === 'undefined') return
   const css = `
     /* Input text + placeholder */
     .map-search-wrap .leaflet-control-geocoder-form input {
       color: #e9eef3 !important;
       background: rgba(0,0,0,0.22) !important;
       border: 1px solid rgba(255,255,255,0.18) !important;
-      font-weight: 600;
+      font-weight: 600 !important;
     }
     .map-search-wrap .leaflet-control-geocoder-form input::placeholder {
       color: #cfd6de !important;
-      opacity: 0.95;
+      opacity: 0.95 !important;
     }
     /* Results text/links */
     .map-search-wrap .leaflet-control-geocoder-alternatives {
       background: rgba(16,17,20,0.92) !important;
       border: 1px solid rgba(255,255,255,0.14) !important;
       color: #e9eef3 !important;
-      border-radius: 10px;
-      box-shadow: 0 12px 28px rgba(0,0,0,0.35);
-      overflow: hidden;
-      max-height: 50vh;
-      overscroll-behavior: contain;
+      border-radius: 10px !important;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35) !important;
+      overflow: hidden !important;
+      max-height: 50vh !important;
+      overscroll-behavior: contain !important;
     }
     .map-search-wrap .leaflet-control-geocoder-alternatives a {
       color: #e9eef3 !important;
-      text-decoration: none;
-      display: block;
-      padding: 8px 10px;
+      text-decoration: none !important;
+      display: block !important;
+      padding: 8px 10px !important;
     }
     .map-search-wrap .leaflet-control-geocoder-alternatives li + li a {
-      border-top: 1px solid rgba(255,255,255,0.10);
+      border-top: 1px solid rgba(255,255,255,0.10) !important;
     }
     .map-search-wrap .leaflet-control-geocoder-alternatives a:hover {
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.06) !important;
     }
   `
   const style = document.createElement('style')
@@ -82,9 +82,8 @@ function GeocoderTopCenter({
   const hostRef = useRef(null)
   const shellRef = useRef(null)
   const geocoderRef = useRef(null)
-  const inputRef = useRef(null)
+  const inputRef = useRef(null)            // will point at geocoder._input
   const clearBtnRef = useRef(null)
-  const clearBtnHandlerRef = useRef(null)
   const inputHandlerRef = useRef(null)
 
   useEffect(() => { ensureSearchCss() }, [])
@@ -169,119 +168,108 @@ function GeocoderTopCenter({
     geocoderRef.current = geocoder
     const ctrlEl = geocoder._container
 
-    if (ctrlEl) {
-      // move into our glass shell
-      shell.appendChild(ctrlEl)
+    // move into our glass shell
+    shell.appendChild(ctrlEl)
 
-      // prevent search interactions from propagating to the map
-      L.DomEvent.disableClickPropagation(shell)
-      L.DomEvent.disableScrollPropagation(shell)
+    // prevent search interactions from propagating to the map
+    L.DomEvent.disableClickPropagation(shell)
+    L.DomEvent.disableScrollPropagation(shell)
 
-      // neutralize default chrome
-      Object.assign(ctrlEl.style, {
-        background: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-        margin: '0',
-        padding: '0',
-      })
+    // neutralize default chrome
+    Object.assign(ctrlEl.style, {
+      background: 'transparent',
+      border: 'none',
+      boxShadow: 'none',
+      margin: '0',
+      padding: '0',
+    })
 
-      const input = ctrlEl.querySelector('.leaflet-control-geocoder-form input')
-      inputRef.current = input
-      if (input) {
-        // padding gives room for the ×
-        input.style.padding = '10px 36px 10px 12px'
-        input.style.borderRadius = '10px'
-        input.style.outline = 'none'
-        input.style.width = 'min(72vw, 520px)'
-        input.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder
-      }
-
-      // hide default icon button
-      const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
-      if (iconBtn) iconBtn.style.display = 'none'
-
-      // Add a centered "×" clear button inside the shell
-      const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
-      Object.assign(clearBtn.style, {
-        position: 'absolute',
-        right: '16px',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        width: '22px',
-        height: '22px',
-        borderRadius: '50%',
-        border: '1px solid rgba(255,255,255,0.25)',
-        background: 'rgba(0,0,0,0.35)',
-        color: '#e9eef3',
-        cursor: 'pointer',
-        fontSize: '14px',
-        lineHeight: '1',
-        display: 'none', // hidden until there’s text
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0',
-      })
-      clearBtn.textContent = '×'
-      clearBtn.title = 'Clear'
-      clearBtnRef.current = clearBtn
-      L.DomEvent.disableClickPropagation(clearBtn)
-
-      const onClearClick = (ev) => {
-        ev.preventDefault()
-        ev.stopPropagation()
-        const g = geocoderRef.current
-        const i = inputRef.current
-        if (i) {
-          i.value = ''
-          i.dispatchEvent(new Event('input', { bubbles: true }))
-        }
-        if (g && g._input) g._input.value = ''
-        try { g?._clearResults?.() } catch {}
-        const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
-        if (list) list.style.display = 'none'
-        clearBtn.style.display = 'none'
-        i?.focus()
-      }
-      clearBtn.addEventListener('click', onClearClick)
-      clearBtnHandlerRef.current = onClearClick
-
-      // toggle clear button visibility on input
-      const onInput = () => {
-        const hasText = !!input?.value
-        clearBtn.style.display = hasText ? 'inline-flex' : 'none'
-      }
-      input?.addEventListener('input', onInput)
-      inputHandlerRef.current = onInput
-      onInput() // initial state
+    // IMPORTANT: bind to the canonical input the plugin owns
+    const input = geocoder._input
+    inputRef.current = input
+    if (input) {
+      // padding gives room for the ×
+      input.style.padding = '10px 36px 10px 12px'
+      input.style.borderRadius = '10px'
+      input.style.outline = 'none'
+      input.style.width = 'min(72vw, 520px)'
+      input.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder
     }
+
+    // hide default icon button
+    const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon')
+    if (iconBtn) iconBtn.style.display = 'none'
+
+    // results dropdown gets styled by ensureSearchCss()
+
+    // Clear button
+    const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell)
+    Object.assign(clearBtn.style, {
+      position: 'absolute',
+      right: '16px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: '22px',
+      height: '22px',
+      borderRadius: '50%',
+      border: '1px solid rgba(255,255,255,0.25)',
+      background: 'rgba(0,0,0,0.35)',
+      color: '#e9eef3',
+      cursor: 'pointer',
+      fontSize: '14px',
+      lineHeight: '1',
+      display: 'none', // hidden until there’s text
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0',
+    })
+    clearBtn.textContent = '×'
+    clearBtn.title = 'Clear'
+    clearBtnRef.current = clearBtn
+    L.DomEvent.disableClickPropagation(clearBtn)
+
+    const showHideClear = () => {
+      clearBtn.style.display = inputRef.current && inputRef.current.value ? 'inline-flex' : 'none'
+    }
+
+    const clearAll = () => {
+      const g = geocoderRef.current
+      const i = inputRef.current
+      if (i) {
+        i.value = ''
+        i.dispatchEvent(new Event('input', { bubbles: true }))
+      }
+      if (g && g._input) g._input.value = ''
+      try { g?._clearResults?.() } catch {}
+      const list = ctrlEl.querySelector('.leaflet-control-geocoder-alternatives')
+      if (list) list.style.display = 'none'
+      clearBtn.style.display = 'none'
+    }
+
+    clearBtn.addEventListener('click', (ev) => {
+      ev.preventDefault()
+      ev.stopPropagation()
+      clearAll()
+      inputRef.current?.focus()
+    })
+
+    input?.addEventListener('input', showHideClear)
+    input?.addEventListener('keyup', showHideClear)
+    showHideClear() // initial state
 
     // CLEANUP: remove listeners, control, and shell
     return () => {
       try {
-        if (inputRef.current && inputHandlerRef.current) {
-          inputRef.current.removeEventListener('input', inputHandlerRef.current)
-        }
-        inputHandlerRef.current = null
-
-        if (clearBtnRef.current && clearBtnHandlerRef.current) {
-          clearBtnRef.current.removeEventListener('click', clearBtnHandlerRef.current)
-        }
-        clearBtnHandlerRef.current = null
-        if (clearBtnRef.current?.parentNode) {
-          clearBtnRef.current.parentNode.removeChild(clearBtnRef.current)
-        }
-        clearBtnRef.current = null
-
-        if (geocoderRef.current) {
-          geocoderRef.current.remove()
-          geocoderRef.current = null
-        }
-        if (shellRef.current?.parentNode) {
-          shellRef.current.parentNode.removeChild(shellRef.current)
-        }
-        shellRef.current = null
+        input?.removeEventListener('input', showHideClear)
+        input?.removeEventListener('keyup', showHideClear)
+        clearBtn?.remove()
+        geocoder.remove()
       } catch {}
+      geocoderRef.current = null
+      inputRef.current = null
+      clearBtnRef.current = null
+      shellRef.current?.parentNode?.removeChild(shellRef.current)
+      shellRef.current = null
     }
   }, [map, placeholder, mode])
 
@@ -322,6 +310,7 @@ function MapModeController({ mode }) {
     map.touchZoom?.enable()
     map.boxZoom?.enable()
     map.keyboard?.enable()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // mount only
 
   // Respond to mode changes
