@@ -424,7 +424,7 @@ function CameraReset({ mapMode, resetCameraToken }) {
   return null;
 }
 
-function TapToPlace({ onPick, disabled = false, mapReady }) {
+function TapToPlace({ onPick, disabled = true, mapReady }) {
   useMapEvent('click', (e) => {
     console.log('TapToPlace: Click event, disabled=', disabled, 'mapReady=', mapReady);
     if (disabled || !mapReady) return;
