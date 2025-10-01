@@ -427,6 +427,9 @@ export default function MapShell({
         worldCopyJump={true}
         scrollWheelZoom
         wheelPxPerZoomLevel={90}
+        /* ⬇️ minimal additions for smooth fractional zooms */
+        zoomSnap={0}
+        zoomDelta={0.25}
       >
         <TileLayer
           attribution='&copy; OpenStreetMap contributors'
