@@ -13,12 +13,6 @@ import 'leaflet/dist/leaflet.css'
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css'
 import 'leaflet-control-geocoder'
 
-// Map utils for camera presets
-import {
-  CHI, CHI_BOUNDS, CHI_MIN_ZOOM, CHI_MAX_ZOOM,
-  USA, GLOBAL_ZOOM,
-} from '../lib/mapUtils'
-
 // Fix default marker icon paths (vite)
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
@@ -32,7 +26,8 @@ function ensureSearchCss() {
   const css = `
     .map-search-wrap input::placeholder { color: #cfd6de; opacity: 0.95; }
     .map-search-wrap .leaflet-control-geocoder-alternatives a {
-      color: #fff; text-decoration: none; display: block; padding: 8px 10px;
+      color: #fff; text-decoration: none; display: block;
+      padding: 8px 10px;
     }
     .map-search-wrap .leaflet-control-geocoder-alternatives a:hover {
       background: rgba(255,255,255,0.06);
@@ -51,7 +46,9 @@ function ensureSearchCss() {
   __searchCssInjected = true
 }
 
-/** High-contrast, glassy, Chicago-biased geocoder placed top-center. */
+/**
+ * High-contrast, glassy, Chicago-biased geocoder placed top-center.
+ */
 function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   const map = useMap()
   const hostRef = useRef(null)
@@ -156,10 +153,10 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       inputRef.current = input
       if (input) {
         Object.assign(input.style, {
-          background: 'rgba(8,9,11,0.66)',
-          border: '1px solid rgba(255,255,255,0.32)',
-          color: '#ffffff',
-          padding: '10px 36px 10px 12px', // room for clear “X”
+          background: 'rgba(8,9,11,0.66)',           // darker for contrast
+          border: '1px solid rgba(255,255,255,0.32)',// stronger border
+          color: '#ffffff',                          // high contrast text
+          padding: '10px 36px 10px 12px',            // leave room for clear "X"
           borderRadius: '10px',
           outline: 'none',
           width: 'min(72vw, 520px)',
@@ -208,6 +205,7 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
       Object.assign(clearBtn.style, {
         position: 'absolute',
         right: '12px',
+        // vertically center relative to input (10px padding + ~24px line)
         top: '50%',
         transform: 'translateY(-50%)',
         width: '22px',
@@ -222,6 +220,8 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         fontSize: '14px',
         padding: '0',
       })
+
+      // Keep “X” above input but inside the shell
       shell.style.paddingRight = '40px'
 
       L.DomEvent.disableClickPropagation(clearBtn)
@@ -231,7 +231,9 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
         const i = inputRef.current
         if (i) {
           i.value = ''
+          // attempt to collapse results if present
           try { geocoderRef.current?._clearResults?.() } catch {}
+          // move focus back to input
           i.focus()
         }
       })
@@ -262,46 +264,6 @@ function GeocoderTopCenter({ placeholder = 'Search Chicago & nearby…' }) {
   return null
 }
 
-/** React to mapMode changes and set camera/limits accordingly. */
-function MapModeController({ mode }) {
-  const map = useMap()
-
-  useEffect(() => {
-    // allow layout settle, then apply changes + refresh map size
-    setTimeout(() => {
-      map.invalidateSize()
-
-      if (mode === 'global') {
-        // Fully free navigation
-        map.setMaxBounds(null)
-        map.setMinZoom(2)
-        map.setMaxZoom(19)
-        map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true })
-
-        map.dragging?.enable()
-        map.scrollWheelZoom?.enable()
-        map.touchZoom?.enable()
-        map.boxZoom?.enable()
-        map.keyboard?.enable()
-      } else {
-        // Chicago preset
-        map.setMaxBounds(null) // we only enforce min/max zoom
-        map.setMinZoom(CHI_MIN_ZOOM)
-        map.setMaxZoom(CHI_MAX_ZOOM)
-        map.fitBounds(CHI_BOUNDS, { animate: true })
-
-        map.dragging?.enable()
-        map.scrollWheelZoom?.enable()
-        map.touchZoom?.enable()
-        map.boxZoom?.enable()
-        map.keyboard?.enable()
-      }
-    }, 0)
-  }, [mode, map])
-
-  return null
-}
-
 function ClickToPick({ onPick }) {
   useMapEvent('click', (e) => {
     if (!onPick) return
@@ -320,9 +282,8 @@ export default function MapShell({
   onPick,
   children
 }) {
-  // Initial mount center/zoom; MapModeController will take over on changes
-  const center = useMemo(() => [CHI.lat, CHI.lng], [])
-  const zoom = useMemo(() => 10, [])
+  const center = useMemo(() => [41.8781, -87.6298], [])
+  const zoom = useMemo(() => (mapMode === 'global' ? 3 : 11), [mapMode])
 
   const whenCreated = (map) => { if (mainMapRef) mainMapRef.current = map }
 
@@ -336,23 +297,19 @@ export default function MapShell({
         zoomControl={true}
         whenCreated={whenCreated}
         style={{ width: '100%', height: '100%' }}
-        worldCopyJump={true}
       >
         <TileLayer
           attribution='&copy; OpenStreetMap contributors'
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
         />
 
-        {/* React to mapMode changes */}
-        <MapModeController mode={mapMode} />
-
         {/* Glassy, high-contrast geocoder */}
         <GeocoderTopCenter />
 
-        {/* Click handler for placing pins */}
+        {/* Click handler for placing pins (unchanged) */}
         <ClickToPick onPick={onPick} />
 
-        {/* Overlays / children */}
+        {/* Overlays / children (unchanged) */}
         {children}
       </MapContainer>
     </div>
