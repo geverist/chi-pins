@@ -144,7 +144,7 @@ const DEFAULT_FUN_FACTS = {
 
 export default function App() {
   const mainMapRef = useRef(null);
-  const [mapReady, setMapReady] = useState(false); // Track map initialization
+  const [mapReady, setMapReady] = useState(false);
 
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
@@ -333,17 +333,15 @@ export default function App() {
 
   // map click
   async function handlePick(ll) {
-    if (isMobile || !mapReady) return; // Prevent clicks until map is ready
+    if (isMobile || !mapReady) return;
     try {
       const map = mainMapRef.current;
-      if (!map) return; // Defensive check
+      if (!map) return;
       const cz = map.getZoom() ?? 10;
       const tenMileBounds = boundsForMiles(ll, 10);
-      // Get zoom level for 10-mile radius
       map.fitBounds(tenMileBounds, { animate: false });
       const tenMileZoom = map.getZoom();
-      map.setZoom(cz, { animate: false }); // Restore original zoom
-      // If current zoom is less than 10-mile zoom, use 10-mile bounds; else use 75% rule
+      map.setZoom(cz, { animate: false });
       if (cz < tenMileZoom) {
         map.fitBounds(tenMileBounds, { animate: true });
       } else {
@@ -628,7 +626,7 @@ export default function App() {
           resetCameraToken={resetCameraToken}
           editing={!!draft}
           clearSearchToken={clearSearchToken}
-          mapReady={mapReady} // Pass mapReady to control TapToPlace
+          mapReady={mapReady}
         >
           {showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
@@ -687,6 +685,7 @@ export default function App() {
             closeSubmap();
             setTipToken((t) => t + 1);
           }}
+          mapReady={mapReady}
         />
       )}
 

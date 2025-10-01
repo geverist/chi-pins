@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
 import 'leaflet-control-geocoder';
 import { CHI, CHI_BOUNDS, CHI_MIN_ZOOM, CHI_MAX_ZOOM, USA, GLOBAL_ZOOM } from '../lib/mapUtils';
-import debounce from 'lodash/debounce'; // Added for debouncing
+import debounce from 'lodash/debounce';
 
 // Fix default marker icon paths (vite)
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -82,17 +82,16 @@ function ensureSearchCss() {
 /* ------------------------ Chicago/global glassy search ------------------------ */
 function GeocoderTopCenter({
   placeholder = 'Search Chicago & nearby…',
-  mode = 'chicago', // 'chicago' | 'global'
-  clearToken = 0, // bump to clear input/results (e.g., on idle)
+  mode = 'chicago',
+  clearToken = 0,
 }) {
   const map = useMap();
   const hostRef = useRef(null);
   const shellRef = useRef(null);
   const geocoderRef = useRef(null);
-  const inputRef = useRef(null); // bind to geocoder._input (canonical)
+  const inputRef = useRef(null);
   const clearBtnRef = useRef(null);
 
-  // Debounce geocoder to reduce API calls
   const debouncedGeocode = useMemo(
     () =>
       debounce((text) => {
@@ -107,7 +106,6 @@ function GeocoderTopCenter({
     ensureSearchCss();
   }, []);
 
-  // Create a top-center host on mount
   useEffect(() => {
     if (!map) return;
     const host = L.DomUtil.create('div', 'map-search-host');
@@ -129,11 +127,9 @@ function GeocoderTopCenter({
     };
   }, [map]);
 
-  // Build (or rebuild) the geocoder when mode changes
   useEffect(() => {
     if (!map || !hostRef.current) return;
 
-    // outer glass shell
     const shell = L.DomUtil.create('div', 'map-search-wrap glass');
     Object.assign(shell.style, {
       display: 'flex',
@@ -151,7 +147,6 @@ function GeocoderTopCenter({
     hostRef.current.appendChild(shell);
     shellRef.current = shell;
 
-    // Chicago-biased vs Global geocoder
     const geocoder = L.Control.geocoder({
       geocoder: mode === 'global'
         ? L.Control.Geocoder.nominatim({
@@ -162,7 +157,7 @@ function GeocoderTopCenter({
           })
         : L.Control.Geocoder.nominatim({
             geocodingQueryParams: {
-              viewbox: '-88.5,42.6,-87.3,41.4', // Chicagoland bbox
+              viewbox: '-88.5,42.6,-87.3,41.4',
               bounded: 1,
               countrycodes: 'us',
               addressdetails: 1,
@@ -186,14 +181,10 @@ function GeocoderTopCenter({
     geocoderRef.current = geocoder;
     const ctrlEl = geocoder._container;
 
-    // move into our glass shell
     shell.appendChild(ctrlEl);
-
-    // prevent search interactions from propagating to the map
     L.DomEvent.disableClickPropagation(shell);
     L.DomEvent.disableScrollPropagation(shell);
 
-    // neutralize default chrome
     Object.assign(ctrlEl.style, {
       background: 'transparent',
       border: 'none',
@@ -202,33 +193,30 @@ function GeocoderTopCenter({
       padding: '0',
     });
 
-    // 🔑 Use the plugin-owned input — stable across versions
     const input =
       geocoder._input ||
       ctrlEl.querySelector('input') ||
       ctrlEl.querySelector('.leaflet-control-geocoder-form input');
     inputRef.current = input;
     if (input) {
-      input.style.padding = '10px 36px 10px 12px'; // room for ×
+      input.style.padding = '10px 36px 10px 12px';
       input.style.borderRadius = '10px';
       input.style.outline = 'none';
       input.style.width = 'min(72vw, 520px)';
       input.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder;
       input.setAttribute('aria-label', mode === 'global' ? 'Search places worldwide' : 'Search Chicago and nearby');
-      // also clear on Escape
       input.addEventListener('keydown', (ev) => {
         if (ev.key === 'Escape') {
           ev.stopPropagation();
           clearAll();
         }
       });
+      input.focus();
     }
 
-    // hide default icon button (typing/enter still works)
     const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon');
     if (iconBtn) iconBtn.style.display = 'none';
 
-    // Clear button
     const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell);
     Object.assign(clearBtn.style, {
       position: 'absolute',
@@ -285,7 +273,6 @@ function GeocoderTopCenter({
       inputRef.current?.focus();
     });
 
-    // Robust visibility updates with debounced geocoding
     if (input) {
       const handleInput = (e) => {
         showHideClear();
@@ -294,12 +281,8 @@ function GeocoderTopCenter({
       input.addEventListener('input', handleInput);
       input.addEventListener('keyup', showHideClear);
       input.addEventListener('change', showHideClear);
-      // MutationObserver for programmatic value changes
       const mo = new MutationObserver(showHideClear);
       mo.observe(input, { attributes: true, attributeFilter: ['value'] });
-
-      // Auto-focus on mount
-      input.focus();
 
       return () => {
         input.removeEventListener('input', handleInput);
@@ -309,9 +292,8 @@ function GeocoderTopCenter({
       };
     }
 
-    showHideClear(); // initial state
+    showHideClear();
 
-    // CLEANUP
     return () => {
       try {
         clearBtn?.remove();
@@ -325,7 +307,6 @@ function GeocoderTopCenter({
     };
   }, [map, placeholder, mode, debouncedGeocode]);
 
-  // Clear on demand (e.g., idle timer)
   useEffect(() => {
     const g = geocoderRef.current;
     const i = inputRef.current;
@@ -355,7 +336,6 @@ function GeocoderTopCenter({
 function MapModeController({ mode }) {
   const map = useMap();
 
-  // Initial mount → Chicago view
   useEffect(() => {
     map.setMinZoom(CHI_MIN_ZOOM);
     map.setMaxZoom(CHI_MAX_ZOOM);
@@ -366,10 +346,8 @@ function MapModeController({ mode }) {
     map.touchZoom?.enable();
     map.boxZoom?.enable();
     map.keyboard?.enable();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // mount only
+  }, []);
 
-  // Respond to mode changes
   useEffect(() => {
     setTimeout(() => {
       map.invalidateSize();
@@ -415,9 +393,9 @@ function CameraReset({ mapMode, resetCameraToken }) {
   return null;
 }
 
-function TapToPlace({ onPick, disabled = false }) {
+function TapToPlace({ onPick, disabled = false, mapReady }) {
   useMapEvent('click', (e) => {
-    if (disabled) return;
+    if (disabled || !mapReady) return; // Disable clicks until map is ready
     if (!onPick) return;
     const { lat, lng } = e.latlng || {};
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
@@ -436,6 +414,7 @@ export default function MapShell({
   resetCameraToken,
   editing = false,
   clearSearchToken = 0,
+  mapReady,
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   const zoom = useMemo(() => 10, []);
@@ -470,7 +449,7 @@ export default function MapShell({
             clearToken={clearSearchToken}
           />
         )}
-        <TapToPlace onPick={onPick} disabled={!!exploring} />
+        <TapToPlace onPick={onPick} disabled={!!exploring} mapReady={mapReady} />
         {children}
       </MapContainer>
     </div>
