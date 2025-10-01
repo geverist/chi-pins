@@ -145,7 +145,7 @@ const DEFAULT_FUN_FACTS = {
 
 export default function App() {
   const mainMapRef = useRef(null);
-  const [mapReady, setMapReady] = useState(false);
+  const [mapReady, setMapReady] = useState(true);
 
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
