@@ -144,7 +144,7 @@ const DEFAULT_FUN_FACTS = {
 
 export default function App() {
   const mainMapRef = useRef(null);
-  const [mapReady, setMapReady] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
 
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
@@ -631,6 +631,7 @@ export default function App() {
         <MapShell
           mapMode={mapMode}
           mainMapRef={mainMapRef}
+          setMapReady={setMapReady} // Add this line
           exploring={exploring}
           onPick={handlePick}
           resetCameraToken={resetCameraToken}

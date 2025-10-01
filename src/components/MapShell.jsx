@@ -440,6 +440,7 @@ function TapToPlace({ onPick, disabled = false, mapReady }) {
 export default function MapShell({
   mapMode,
   mainMapRef,
+  setMapReady,
   exploring,
   onPick,
   children,
@@ -454,6 +455,7 @@ export default function MapShell({
     if (mainMapRef) {
       console.log('MapShell: Map initialized, setting mainMapRef');
       mainMapRef.current = map;
+      setMapReady(true); // Set mapReady here
     } else {
       console.warn('MapShell: mainMapRef is undefined');
     }
