@@ -651,7 +651,78 @@ export default function App() {
       )}
 
       {/* -------- FOOTER -------- */}
- 
+ {/* -------- FOOTER -------- */}
+<footer
+  style={{ padding: '10px 14px' }}
+  onClick={handleFooterClick}
+  onTouchStart={handleFooterTouch}
+>
+  {!draft ? (
+    <div
+      /* keep it tiny + safe */
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        minHeight: 44
+      }}
+    >
+      {/* Absolutely centered hint that ignores pointer events */}
+      <div
+        className="hint"
+        style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center',
+          color: '#a7b0b8',
+          pointerEvents: 'none',
+          width: '100%',
+        }}
+      >
+        {isMobile
+          ? 'Browse pins near you.'
+          : exploring
+            ? 'Click any pin to see details.'
+            : (mapMode === 'global'
+              ? 'Click the map to place your pin anywhere in the world.'
+              : 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+            )
+        }
+      </div>
+
+      {/* Right-aligned Explore controls (desktop only) */}
+      {!isMobile && (
+        <div
+          style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}
+          data-no-admin-tap
+        >
+          {!exploring ? (
+            <button onClick={() => { setExploring(true); setShowAttractor(false) }}>
+              🔎 Explore pins
+            </button>
+          ) : (
+            <button onClick={() => setExploring(false)}>
+              ✖ Close explore
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  ) : (
+    <Editor
+      mapMode={mapMode}
+      slug={slug}
+      form={form}
+      setForm={setForm}
+      hotdogSuggestions={hotdogSuggestions}
+      onCancel={cancelEditing}
+      onOpenShare={() => setShareOpen(true)}
+    />
+  )}
+</footer>
+{/* ------------------------ */}
+
       {/* ------------------------ */}
 
       <ShareConfirmModal
