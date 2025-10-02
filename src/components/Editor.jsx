@@ -184,6 +184,7 @@ export default function Editor({
         overflow: 'auto',
         paddingTop: 2,
       }}>
+        {IdAndActionsRow}
         {/* Header row: Teams | ID badge | Actions */}
         <div style={{
           gridColumn: '1 / -1',
@@ -198,7 +199,6 @@ export default function Editor({
             </button>
           ))}
         </div>
-        {IdAndActionsRow}
         {InlineFieldsChicago}
         {PhotoSection} /* New: Add here */
         /* ⭐ Loyalty phone (optional) */
