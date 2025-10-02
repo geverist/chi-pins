@@ -1,6 +1,6 @@
 // src/components/Editor.jsx (updated full component)
-import { useState, useRef, useEffect } from 'react'; // Add useRef, useEffect if not present
-import { supabase } from '../lib/supabase'; // Assume imported or add
+import { useState, useRef, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function Editor({
   mapMode,
@@ -15,7 +15,7 @@ export default function Editor({
   const digitsOnly = String(form.loyaltyPhone || '').replace(/\D+/g, '');
   const phoneLooksValid = digitsOnly.length >= 10 && digitsOnly.length <= 15;
 
-  // New: Camera state
+  // Camera state
   const [photoPreview, setPhotoPreview] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const videoRef = useRef(null);
@@ -38,7 +38,7 @@ export default function Editor({
         .upload(fileName, blob, { contentType: 'image/jpeg' });
       if (error) throw error;
       const publicUrl = supabase.storage.from('pin-photos').getPublicUrl(fileName).data.publicUrl;
-      update({ photoUrl: publicUrl }); // Save URL to form for pin insert
+      update({ photoUrl: publicUrl });
       track.stop();
     } catch (e) {
       setCameraError('Camera access failed. Allow permissions or upload a file.');
@@ -112,7 +112,6 @@ export default function Editor({
       gridColumn: '1 / -1',
       display: 'grid',
       gap: 10,
-      // Make the last track (notes) wider to fill the row
       gridTemplateColumns: 'minmax(180px,1fr) minmax(180px,1fr) minmax(200px,1fr) minmax(260px,2fr)',
     }}>
       <input placeholder="Your name (optional)" value={form.name || ''} onChange={(e) => update({ name: e.target.value })} aria-label="Your name" />
@@ -146,7 +145,7 @@ export default function Editor({
     </div>
   );
 
-  // New: Photo section (add after inline fields in both modes)
+  // Photo section
   const PhotoSection = (
     <div style={{
       gridColumn: '1 / -1',
@@ -174,6 +173,38 @@ export default function Editor({
     </div>
   );
 
+  // Loyalty phone section
+  const LoyaltyPhoneSection = (
+    <div style={{
+      gridColumn: '1 / -1',
+      border: '1px solid #2a2f37',
+      borderRadius: 12,
+      padding: 12,
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02))',
+      display: 'grid',
+      gap: 8,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 18 }}>⭐</span>
+        <strong>Link your loyalty phone (optional)</strong>
+      </div>
+      <div style={{ color: '#a7b0b8', fontSize: 13 }}>
+        Add the phone number tied to your loyalty account to earn a star with this pin.
+      </div>
+      <div style={{
+        display: 'grid',
+        gap: 8,
+        gridTemplateColumns: 'minmax(220px, 1fr) auto',
+        alignItems: 'center',
+      }}>
+        <input type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} aria-label="Loyalty phone number" />
+        <span style={{ fontSize: 13, color: phoneLooksValid ? '#9AE6B4' : '#a7b0b8' }}>
+          {phoneLooksValid ? '⭐ You’ll earn a star for linking' : 'Enter at least 10 digits'}
+        </span>
+      </div>
+    </div>
+  );
+
   if (mapMode === 'chicago') {
     return (
       <div className="form" style={{
@@ -185,7 +216,7 @@ export default function Editor({
         paddingTop: 2,
       }}>
         {IdAndActionsRow}
-        {/* Header row: Teams | ID badge | Actions */}
+        {/* Team selector */}
         <div style={{
           gridColumn: '1 / -1',
           display: 'grid',
@@ -200,36 +231,8 @@ export default function Editor({
           ))}
         </div>
         {InlineFieldsChicago}
-        {PhotoSection} /* New: Add here */
-        /* ⭐ Loyalty phone (optional) */
-        <div style={{
-          gridColumn: '1 / -1',
-          border: '1px solid #2a2f37',
-          borderRadius: 12,
-          padding: 12,
-          background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02))',
-          display: 'grid',
-          gap: 8,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18 }}>⭐</span>
-            <strong>Link your loyalty phone (optional)</strong>
-          </div>
-          <div style={{ color: '#a7b0b8', fontSize: 13 }}>
-            Add the phone number tied to your loyalty account to earn a star with this pin.
-          </div>
-          <div style={{
-            display: 'grid',
-            gap: 8,
-            gridTemplateColumns: 'minmax(220px, 1fr) auto',
-            alignItems: 'center',
-          }}>
-            <input type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} aria-label="Loyalty phone number" />
-            <span style={{ fontSize: 13, color: phoneLooksValid ? '#9AE6B4' : '#a7b0b8' }}>
-              {phoneLooksValid ? '⭐ You’ll earn a star for linking' : 'Enter at least 10 digits'}
-            </span>
-          </div>
-        </div>
+        {PhotoSection}
+        {LoyaltyPhoneSection}
       </div>
     );
   }
@@ -246,36 +249,8 @@ export default function Editor({
     }}>
       {IdAndActionsRow}
       {InlineFieldsGlobal}
-      {PhotoSection} /* New: Add here */
-      /* ⭐ Loyalty phone (optional) */
-      <div style={{
-        gridColumn: '1 / -1',
-        border: '1px solid #2a2f37',
-        borderRadius: 12,
-        padding: 12,
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02))',
-        display: 'grid',
-        gap: 8,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 18 }}>⭐</span>
-          <strong>Link your loyalty phone (optional)</strong>
-        </div>
-        <div style={{ color: '#a7b0b8', fontSize: 13 }}>
-          Add the phone number tied to your loyalty account to earn a star with this pin.
-        </div>
-        <div style={{
-          display: 'grid',
-          gap: 8,
-          gridTemplateColumns: 'minmax(220px, 1fr) auto',
-          alignItems: 'center',
-        }}>
-          <input type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} aria-label="Loyalty phone number" />
-          <span style={{ fontSize: 13, color: phoneLooksValid ? '#9AE6B4' : '#a7b0b8' }}>
-            {phoneLooksValid ? '⭐ You’ll earn a star for linking' : 'Enter at least 10 digits'}
-          </span>
-        </div>
-      </div>
+      {PhotoSection}
+      {LoyaltyPhoneSection}
     </div>
   );
 }
