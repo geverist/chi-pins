@@ -20,7 +20,7 @@ import {
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
-// pin helpers sdafs
+// pin helpers 
 import { ensureUniqueSlug, makeChiSlug } from './lib/pinsUtils';
 import { postToFacebook } from './lib/facebookShare';
 
