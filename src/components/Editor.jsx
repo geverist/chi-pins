@@ -187,8 +187,8 @@ export default function Editor({
         {commonSlugBadge}
         {ActionButtons}
         {InlineFieldsChicago}
-        {PhotoSection} {/* New: Add here */}
-        {/* ⭐ Loyalty phone (optional) */}
+        {PhotoSection} /* New: Add here */
+        /* ⭐ Loyalty phone (optional) */
         <div style={{
           gridColumn: '1 / -1',
           border: '1px solid #2a2f37',
@@ -243,8 +243,8 @@ export default function Editor({
         {ActionButtons}
       </div>
       {InlineFieldsGlobal}
-      {PhotoSection} {/* New: Add here */}
-      {/* ⭐ Loyalty phone (optional) */}
+      {PhotoSection} /* New: Add here */
+      /* ⭐ Loyalty phone (optional) */
       <div style={{
         gridColumn: '1 / -1',
         border: '1px solid #2a2f37',

@@ -83,6 +83,19 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit, mainMapRef, m
   return <DragTip pos={pos} />;
 }
 
+function SetSubMapRef({ submapRef }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map) {
+      submapRef.current = map;
+      console.log('SetSubMapRef: submapRef.current set to', map);
+    } else {
+      console.warn('SetSubMapRef: map is not available');
+    }
+  }, [map, submapRef]);
+  return null;
+}
+
 export default function SubMapModal({
   center,
   team = 'cubs',
@@ -127,12 +140,10 @@ export default function SubMapModal({
           zoom={baseZoom || 15}
           style={{ width: '100%', height: '100%' }}
           zoomControl={false}
-          whenCreated={(map) => {
-            submapRef.current = map;
-          }}
           scrollWheelZoom={false}
           aria-label="Fine-tune map"
         >
+          <SetSubMapRef submapRef={submapRef} />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
