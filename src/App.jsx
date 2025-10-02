@@ -20,7 +20,7 @@ import {
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
-// pin helpers 
+// pin helpers
 import { ensureUniqueSlug, makeChiSlug } from './lib/pinsUtils';
 import { postToFacebook } from './lib/facebookShare';
 
@@ -126,51 +126,6 @@ function normalizePhoneToE164ish(raw) {
   if (digits.length >= 10 && digits.length <= 15) return `+${digits}`;
   return null;
 }
-
-/* ---------------- Navigation Links for Additional Apps ---------------- */
-const navLinks = [
-  { name: 'Jukebox', href: '#jukebox', icon: '🎵', onClick: () => console.log('Jukebox placeholder clicked') },
-  { name: 'Order Now', href: '#order-now', icon: '🍔', onClick: () => console.log('Order Now placeholder clicked') },
-  { name: 'Games', href: '#games', icon: '🎮', onClick: () => console.log('Games placeholder clicked') },
-];
-
-const NavigationLinks = () => (
-  <div style={{
-    display: 'flex',
-    gap: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  }}>
-    {navLinks.map((link) => (
-      <a
-        key={link.name}
-        href={link.href}
-        onClick={(e) => {
-          e.preventDefault(); // Prevent default navigation for placeholders
-          link.onClick();
-        }}
-        style={{
-          padding: '10px 14px',
-          borderRadius: 12,
-          border: '1px solid #2a2f37',
-          background: 'linear-gradient(#1f242b, #171b20)',
-          color: '#f4f6f8',
-          boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-          cursor: 'pointer',
-          fontSize: 14,
-          lineHeight: 1,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          textDecoration: 'none',
-        }}
-        aria-label={link.name}
-      >
-        {link.icon} {link.name}
-      </a>
-    ))}
-  </div>
-);
 
 /* ------------------------------------------------------------------------ */
 
