@@ -96,7 +96,14 @@ function GeocoderTopCenter({
     () =>
       debounce((text) => {
         if (geocoderRef.current && text) {
-          geocoderRef.current.geocode(text);
+          console.log('GeocoderTopCenter: Attempting to geocode', text);
+          if (typeof geocoderRef.current.geocode === 'function') {
+            geocoderRef.current.geocode(text);
+          } else {
+            console.error('GeocoderTopCenter: geocode is not a function on geocoderRef.current', geocoderRef.current);
+          }
+        } else {
+          console.warn('GeocoderTopCenter: geocoderRef.current is', geocoderRef.current, 'text=', text);
         }
       }, 300),
     []
@@ -107,7 +114,10 @@ function GeocoderTopCenter({
   }, []);
 
   useEffect(() => {
-    if (!map) return;
+    if (!map) {
+      console.warn('GeocoderTopCenter: Map not available');
+      return;
+    }
 
     // Clean up any existing geocoder to prevent duplicates
     if (hostRef.current) {
@@ -175,6 +185,7 @@ function GeocoderTopCenter({
       collapsed: false,
       placeholder: mode === 'global' ? 'Search places worldwide…' : placeholder,
     });
+    console.log('GeocoderTopCenter: Geocoder initialized', geocoder);
 
     geocoder.on('markgeocode', (e) => {
       const center = e?.geocode?.center;
@@ -219,6 +230,8 @@ function GeocoderTopCenter({
         }
       });
       input.focus();
+    } else {
+      console.warn('GeocoderTopCenter: Input not found');
     }
 
     const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon');
@@ -344,6 +357,10 @@ function MapModeController({ mode }) {
   const map = useMap();
 
   useEffect(() => {
+    if (!map) {
+      console.warn('MapModeController: Map not available');
+      return;
+    }
     map.setMinZoom(CHI_MIN_ZOOM);
     map.setMaxZoom(CHI_MAX_ZOOM);
     map.setMaxBounds(null);
@@ -353,9 +370,13 @@ function MapModeController({ mode }) {
     map.touchZoom?.enable();
     map.boxZoom?.enable();
     map.keyboard?.enable();
-  }, []);
+  }, [map]);
 
   useEffect(() => {
+    if (!map) {
+      console.warn('MapModeController: Map not available');
+      return;
+    }
     setTimeout(() => {
       map.invalidateSize();
       if (mode === 'global') {
@@ -388,7 +409,10 @@ function MapModeController({ mode }) {
 function CameraReset({ mapMode, resetCameraToken }) {
   const map = useMap();
   useEffect(() => {
-    if (!map) return;
+    if (!map) {
+      console.warn('CameraReset: Map not available');
+      return;
+    }
     if (mapMode !== 'chicago') return;
     setTimeout(() => {
       try {
@@ -402,7 +426,8 @@ function CameraReset({ mapMode, resetCameraToken }) {
 
 function TapToPlace({ onPick, disabled = false, mapReady }) {
   useMapEvent('click', (e) => {
-    if (disabled || !mapReady) return; // Disable clicks until map is ready
+    console.log('TapToPlace: Click event, disabled=', disabled, 'mapReady=', mapReady);
+    if (disabled || !mapReady) return;
     if (!onPick) return;
     const { lat, lng } = e.latlng || {};
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
@@ -412,9 +437,22 @@ function TapToPlace({ onPick, disabled = false, mapReady }) {
   return null;
 }
 
+function SetMapRef({ mainMapRef, setMapReady }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map) {
+      mainMapRef.current = map;
+      setMapReady(true);
+      console.log('SetMapRef: mainMapRef.current set to', map);
+    }
+  }, [map, mainMapRef, setMapReady]);
+  return null;
+}
+
 export default function MapShell({
   mapMode,
   mainMapRef,
+  setMapReady,
   exploring,
   onPick,
   children,
@@ -425,9 +463,6 @@ export default function MapShell({
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   const zoom = useMemo(() => 10, []);
-  const whenCreated = (map) => {
-    if (mainMapRef) mainMapRef.current = map;
-  };
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }} className="map-container">
@@ -437,16 +472,16 @@ export default function MapShell({
         minZoom={2}
         maxZoom={19}
         zoomControl={true}
-        whenCreated={whenCreated}
         style={{ width: '100%', height: '100%' }}
         worldCopyJump={true}
         scrollWheelZoom
         wheelPxPerZoomLevel={60}
         aria-label="Interactive map"
       >
+        <SetMapRef mainMapRef={mainMapRef} setMapReady={setMapReady} />
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MapModeController mode={mapMode} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} />
