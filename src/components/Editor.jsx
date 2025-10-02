@@ -211,7 +211,6 @@ export default function Editor({
           ))}
         </div>
         {InlineFieldsChicago}
-        {PhotoSection}
         {LoyaltySection}
       </div>
     );
