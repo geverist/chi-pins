@@ -358,21 +358,21 @@ export default function App() {
         const nz = Math.min(cz + 0.5, 19);
         map.setView([ll.lat, ll.lng], nz, { animate: true });
       }
-      focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES);
-      setDraft(ll);
-      if (mapMode === 'chicago') {
-        showNearestTownFact(ll.lat, ll.lng);
-      }
-      if (!slug) {
-        const fresh = await ensureUniqueSlug(makeChiSlug());
-        setSlug(fresh);
-      }
-      setExploring(false);
-      setShowAttractor(false);
     } catch (err) {
       console.error('Pin placement failed:', err);
-      setToast({ title: 'Error', text: 'Failed to place pin. Please try again.' });
+      return;
     }
+    focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES);
+    setDraft(ll);
+    if (mapMode === 'chicago') {
+      showNearestTownFact(ll.lat, ll.lng);
+    }
+    if (!slug) {
+      const fresh = await ensureUniqueSlug(makeChiSlug());
+      setSlug(fresh);
+    }
+    setExploring(false);
+    setShowAttractor(false);
   }
 
   // keep draft pin centered
@@ -631,7 +631,6 @@ export default function App() {
         <MapShell
           mapMode={mapMode}
           mainMapRef={mainMapRef}
-          setMapReady={setMapReady}
           exploring={exploring}
           onPick={handlePick}
           resetCameraToken={resetCameraToken}
@@ -639,7 +638,7 @@ export default function App() {
           clearSearchToken={clearSearchToken}
           mapReady={mapReady}
         >
-          {!isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (
+          {showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
           )}
           {showCommunityPins && !draft && (
