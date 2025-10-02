@@ -92,6 +92,20 @@ export default function Editor({
     </div>
   );
 
+  const IdAndActionsRow = (
+    <div style={{
+      gridColumn: '1 / -1',
+      display: 'grid',
+      gridTemplateColumns: '1fr auto 1fr',
+      alignItems: 'center',
+      gap: 10,
+    }}>
+      <div style={{ visibility: 'hidden' }} /> {/* Invisible placeholder to balance the center */}
+      {commonSlugBadge}
+      {ActionButtons}
+    </div>
+  );
+
   // Single row for name / neighborhood / hotdog / notes (with notes given more width)
   const InlineFieldsChicago = (
     <div style={{
@@ -184,8 +198,7 @@ export default function Editor({
             </button>
           ))}
         </div>
-        {commonSlugBadge}
-        {ActionButtons}
+        {IdAndActionsRow}
         {InlineFieldsChicago}
         {PhotoSection} /* New: Add here */
         /* ⭐ Loyalty phone (optional) */
@@ -231,17 +244,7 @@ export default function Editor({
       overflow: 'auto',
       paddingTop: 2,
     }}>
-      {/* Header row (global): ID badge | Actions */}
-      <div style={{
-        gridColumn: '1 / -1',
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        alignItems: 'center',
-        gap: 10,
-      }}>
-        {commonSlugBadge}
-        {ActionButtons}
-      </div>
+      {IdAndActionsRow}
       {InlineFieldsGlobal}
       {PhotoSection} /* New: Add here */
       /* ⭐ Loyalty phone (optional) */
