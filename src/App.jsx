@@ -638,7 +638,7 @@ export default function App() {
           clearSearchToken={clearSearchToken}
           mapReady={mapReady}
         >
-          {!isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (
+          {showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
           )}
           {showCommunityPins && !draft && (
