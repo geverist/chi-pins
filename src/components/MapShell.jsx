@@ -363,7 +363,7 @@ function MapModeController({ mode }) {
     }
     map.setMinZoom(CHI_MIN_ZOOM);
     map.setMaxZoom(CHI_MAX_ZOOM);
-    map.setMaxBounds(null);
+    map.setMaxBounds(CHI_BOUNDS);
     map.fitBounds(CHI_BOUNDS, { animate: false });
     map.dragging?.enable();
     map.scrollWheelZoom?.enable();
@@ -390,7 +390,7 @@ function MapModeController({ mode }) {
         map.boxZoom?.enable();
         map.keyboard?.enable();
       } else {
-        map.setMaxBounds(null);
+        map.setMaxBounds(CHI_BOUNDS);
         map.setMinZoom(CHI_MIN_ZOOM);
         map.setMaxZoom(CHI_MAX_ZOOM);
         map.fitBounds(CHI_BOUNDS, { animate: true });
@@ -417,7 +417,7 @@ function CameraReset({ mapMode, resetCameraToken }) {
     setTimeout(() => {
       try {
         map.invalidateSize();
-        map.fitBounds(CHI_BOUNDS, { animate: true });
+        map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MAX_ZOOM });
       } catch {}
     }, 0);
   }, [resetCameraToken, mapMode, map]);
@@ -440,10 +440,12 @@ function TapToPlace({ onPick, disabled = false, mapReady }) {
 function SetMapRef({ mainMapRef, setMapReady }) {
   const map = useMap();
   useEffect(() => {
-    if (map) {
+    if (map && mainMapRef && typeof setMapReady === 'function') {
       mainMapRef.current = map;
       setMapReady(true);
       console.log('SetMapRef: mainMapRef.current set to', map);
+    } else {
+      console.warn('SetMapRef: map, mainMapRef, or setMapReady is invalid', { map, mainMapRef, setMapReady });
     }
   }, [map, mainMapRef, setMapReady]);
   return null;
@@ -464,6 +466,16 @@ export default function MapShell({
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   const zoom = useMemo(() => 10, []);
 
+  const whenCreated = (map) => {
+    if (mainMapRef && typeof setMapReady === 'function') {
+      mainMapRef.current = map;
+      setMapReady(true);
+      console.log('MapShell: Map initialized, setting mainMapRef to', map);
+    } else {
+      console.warn('MapShell: mainMapRef or setMapReady is invalid', { mainMapRef, setMapReady });
+    }
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }} className="map-container">
       <MapContainer
@@ -472,6 +484,7 @@ export default function MapShell({
         minZoom={2}
         maxZoom={19}
         zoomControl={true}
+        whenCreated={whenCreated}
         style={{ width: '100%', height: '100%' }}
         worldCopyJump={true}
         scrollWheelZoom
