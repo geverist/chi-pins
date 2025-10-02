@@ -424,7 +424,7 @@ function CameraReset({ mapMode, resetCameraToken }) {
   return null;
 }
 
-function TapToPlace({ onPick, disabled = true, mapReady }) {
+function TapToPlace({ onPick, disabled = false, mapReady }) {
   useMapEvent('click', (e) => {
     console.log('TapToPlace: Click event, disabled=', disabled, 'mapReady=', mapReady);
     if (disabled || !mapReady) return;
@@ -434,6 +434,18 @@ function TapToPlace({ onPick, disabled = true, mapReady }) {
       onPick({ lat, lng });
     }
   });
+  return null;
+}
+
+function SetMapRef({ mainMapRef, setMapReady }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map) {
+      mainMapRef.current = map;
+      setMapReady(true);
+      console.log('SetMapRef: mainMapRef.current set to', map);
+    }
+  }, [map, mainMapRef, setMapReady]);
   return null;
 }
 
@@ -451,15 +463,6 @@ export default function MapShell({
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   const zoom = useMemo(() => 10, []);
-  const whenCreated = (map) => {
-    if (mainMapRef) {
-      console.log('MapShell: Map initialized, setting mainMapRef');
-      mainMapRef.current = map;
-      setMapReady(true); // Set mapReady here
-    } else {
-      console.warn('MapShell: mainMapRef is undefined');
-    }
-  };
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }} className="map-container">
@@ -469,13 +472,13 @@ export default function MapShell({
         minZoom={2}
         maxZoom={19}
         zoomControl={true}
-        whenCreated={whenCreated}
         style={{ width: '100%', height: '100%' }}
         worldCopyJump={true}
         scrollWheelZoom
         wheelPxPerZoomLevel={60}
         aria-label="Interactive map"
       >
+        <SetMapRef mainMapRef={mainMapRef} setMapReady={setMapReady} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
