@@ -169,9 +169,7 @@ export default function Editor({
         <span style={{ fontSize: 18 }}>⭐</span>
         <strong>Link your loyalty phone (optional)</strong>
       </div>
-      <div style={{ color: '#a7b0b8', fontSize: 13 }}>
-        Add the phone number tied to your loyalty account to earn a star with this pin.
-      </div>
+
       <div style={{
         display: 'grid',
         gap: 8,
