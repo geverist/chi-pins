@@ -76,21 +76,15 @@ export default function Editor({
     </div>
   );
 
-  const PhotoButton = (
-    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-start', alignItems: 'center' }}>
-      <button onClick={capturePhoto} aria-label="Take photo with camera">Take Photo</button>
-    </div>
-  );
-
   const IdAndActionsRow = (
     <div style={{
       gridColumn: '1 / -1',
       display: 'grid',
-      gridTemplateColumns: 'auto 1fr auto',
+      gridTemplateColumns: '1fr auto 1fr',
       alignItems: 'center',
       gap: 10,
     }}>
-      {PhotoButton}
+      <div style={{ visibility: 'hidden' }} /> {/* Invisible placeholder to balance the center */}
       {commonSlugBadge}
       {ActionButtons}
     </div>
@@ -204,6 +198,7 @@ export default function Editor({
         overflow: 'visible',
         paddingTop: 2,
       }}>
+        {IdAndActionsRow}
         {/* Header row: Teams | ID badge | Actions */}
         <div style={{
           gridColumn: '1 / -1',
@@ -218,7 +213,6 @@ export default function Editor({
             </button>
           ))}
         </div>
-        {IdAndActionsRow}
         {InlineFieldsChicago}
         {PhotoSection}
         {LoyaltySection}
