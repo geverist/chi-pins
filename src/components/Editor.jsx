@@ -76,15 +76,21 @@ export default function Editor({
     </div>
   );
 
+  const PhotoButton = (
+    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-start', alignItems: 'center' }}>
+      <button onClick={capturePhoto} aria-label="Take photo with camera">Take Photo</button>
+    </div>
+  );
+
   const IdAndActionsRow = (
     <div style={{
       gridColumn: '1 / -1',
       display: 'grid',
-      gridTemplateColumns: '1fr auto 1fr',
+      gridTemplateColumns: 'auto 1fr auto',
       alignItems: 'center',
       gap: 10,
     }}>
-      <div style={{ visibility: 'hidden' }} /> {/* Invisible placeholder to balance the center */}
+      {PhotoButton}
       {commonSlugBadge}
       {ActionButtons}
     </div>
