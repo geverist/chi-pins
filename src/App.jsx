@@ -17,6 +17,7 @@ import {
   enableMainMapInteractions,
   disableMainMapInteractions,
   boundsForMiles,
+  CHI_BOUNDS, // Ensure this is imported
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
@@ -141,51 +142,6 @@ const DEFAULT_FUN_FACTS = {
   joliet: 'Famous for the Old Joliet Prison (yes, the Blues Brothers one!).',
   waukegan: 'Ray Bradbury’s hometown; see the annual Ray Bradbury Days.',
 };
-
-/* ---------------- Navigation Links for Additional Apps ---------------- */
-const navLinks = [
-  { name: 'Jukebox', href: '#jukebox', icon: '🎵', onClick: () => console.log('Jukebox placeholder clicked') },
-  { name: 'Order Now', href: '#order-now', icon: '🍔', onClick: () => console.log('Order Now placeholder clicked') },
-  { name: 'Games', href: '#games', icon: '🎮', onClick: () => console.log('Games placeholder clicked') },
-];
-
-const NavigationLinks = () => (
-  <div style={{
-    display: 'flex',
-    gap: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  }}>
-    {navLinks.map((link) => (
-      <a
-        key={link.name}
-        href={link.href}
-        onClick={(e) => {
-          e.preventDefault(); // Prevent default navigation for placeholders
-          link.onClick();
-        }}
-        style={{
-          padding: '10px 14px',
-          borderRadius: 12,
-          border: '1px solid #2a2f37',
-          background: 'linear-gradient(#1f242b, #171b20)',
-          color: '#f4f6f8',
-          boxShadow: '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-          cursor: 'pointer',
-          fontSize: 14,
-          lineHeight: 1,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 8,
-          textDecoration: 'none',
-        }}
-        aria-label={link.name}
-      >
-        {link.icon} {link.name}
-      </a>
-    ))}
-  </div>
-);
 
 export default function App() {
   const mainMapRef = useRef(null);
@@ -419,22 +375,6 @@ export default function App() {
       setToast({ title: 'Error', text: 'Failed to place pin. Please try again.' });
     }
   }
-
-  // New: Handle pin click to center map
-  const handlePinClick = (ll) => {
-    try {
-      const map = mainMapRef.current;
-      if (!map) {
-        console.warn('App: mainMapRef.current is null in handlePinClick');
-        return;
-      }
-      const cz = map.getZoom() ?? 10;
-      const nz = Math.min(cz + 0.5, 19);
-      map.setView([ll.lat, ll.lng], nz, { animate: true });
-    } catch (err) {
-      console.error('Centering map on pin failed:', err);
-    }
-  };
 
   // keep draft pin centered
   useEffect(() => {
@@ -699,6 +639,7 @@ export default function App() {
           editing={!!draft}
           clearSearchToken={clearSearchToken}
           mapReady={mapReady}
+          isMobile={isMobile} // Pass isMobile here
         >
           {!isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
@@ -715,7 +656,6 @@ export default function App() {
                 highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
                 highlightMs={15000}
                 onHighlightEnd={clearHighlight}
-                onPinClick={handlePinClick} // New prop
               />
             </ZoomGate>
           )}
@@ -773,16 +713,16 @@ export default function App() {
             style={{
               position: 'relative',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: 10,
               minHeight: 44,
             }}
           >
             <div
               className="hint"
               style={{
-                position: 'relative',
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
                 textAlign: 'center',
                 color: '#a7b0b8',
                 pointerEvents: 'none',
@@ -800,7 +740,7 @@ export default function App() {
                 : 'Loading map, please wait...'}
             </div>
             {!isMobile && (
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} data-no-admin-tap>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }} data-no-admin-tap>
                 {!exploring ? (
                   <button
                     onClick={() => {
@@ -823,7 +763,6 @@ export default function App() {
                 )}
               </div>
             )}
-            <NavigationLinks />
           </div>
         ) : (
           <Editor
