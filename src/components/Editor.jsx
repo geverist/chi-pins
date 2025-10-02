@@ -80,11 +80,11 @@ export default function Editor({
     <div style={{
       gridColumn: '1 / -1',
       display: 'grid',
-      gridTemplateColumns: '1fr auto 1fr',
+      gridTemplateColumns: 'auto 1fr auto',
       alignItems: 'center',
       gap: 10,
     }}>
-      <div style={{ visibility: 'hidden' }} /> {/* Invisible placeholder to balance the center */}
+      <button onClick={capturePhoto} aria-label="Take photo with camera">📸 Take Photo</button>
       {commonSlugBadge}
       {ActionButtons}
     </div>
@@ -151,9 +151,6 @@ export default function Editor({
       {cameraError && <div style={{ color: '#ef4444' }} role="alert">{cameraError}</div>}
       <video ref={videoRef} style={{ display: photoPreview ? 'none' : 'block', maxWidth: '300px', maxHeight: '200px' }} aria-hidden="true" />
       {photoPreview && <img src={photoPreview} alt="Photo preview" style={{ maxWidth: '300px', maxHeight: '200px' }} />}
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={capturePhoto} aria-label="Take photo with camera">Take Photo</button>
-      </div>
     </div>
   );
 
