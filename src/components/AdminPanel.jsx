@@ -44,6 +44,12 @@ export default function AdminPanel({ open, onClose }) {
     facebookShareEnabled: false,
     photoBackgroundsEnabled: true,
 
+    // Restaurant Info (for share modal)
+    restaurantName: 'Chicago Mike\'s',
+    restaurantYelpUrl: '',
+    restaurantGoogleUrl: '',
+    restaurantWebsiteUrl: '',
+
     // Map constants (rarely changed)
     initialRadiusMiles: 0.5,
     chiMinZoom: 10,
