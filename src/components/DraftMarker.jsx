@@ -45,6 +45,8 @@ export default function DraftMarker({
       if (modalZoom <= currentZoom) {
         console.log('[DraftMarker] Modal cannot zoom further, enabling direct drag on main map')
         isDraggingRef.current = true
+        // Disable map dragging while dragging pin
+        map.dragging?.disable()
         ev.preventDefault?.()
         ev.stopPropagation?.()
         return
@@ -98,11 +100,13 @@ export default function DraftMarker({
       if (!isDraggingRef.current) return
       isDraggingRef.current = false
 
+      // Re-enable map dragging
+      map.dragging?.enable()
+
       const ll = m.getLatLng()
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
         setDraft?.({ lat: ll.lat, lng: ll.lng })
-        // Center map on final position
-        map.panTo([ll.lat, ll.lng], { animate: true })
+        // Don't pan - keep the view stable
       }
     }
 
