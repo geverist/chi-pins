@@ -17,7 +17,6 @@ import {
   enableMainMapInteractions,
   disableMainMapInteractions,
   boundsForMiles,
-  CHI_BOUNDS, // Ensure this is imported
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
@@ -376,6 +375,22 @@ export default function App() {
     }
   }
 
+  // New: Handle pin click to center map
+  const handlePinClick = (ll) => {
+    try {
+      const map = mainMapRef.current;
+      if (!map) {
+        console.warn('App: mainMapRef.current is null in handlePinClick');
+        return;
+      }
+      const cz = map.getZoom() ?? 10;
+      const nz = Math.min(cz + 0.5, 19);
+      map.setView([ll.lat, ll.lng], nz, { animate: true });
+    } catch (err) {
+      console.error('Centering map on pin failed:', err);
+    }
+  };
+
   // keep draft pin centered
   useEffect(() => {
     if (!draft || submapCenter || !mapReady) return;
@@ -639,7 +654,6 @@ export default function App() {
           editing={!!draft}
           clearSearchToken={clearSearchToken}
           mapReady={mapReady}
-          isMobile={isMobile} // Pass isMobile here
         >
           {!isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
@@ -656,6 +670,7 @@ export default function App() {
                 highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
                 highlightMs={15000}
                 onHighlightEnd={clearHighlight}
+                onPinClick={handlePinClick} // New prop
               />
             </ZoomGate>
           )}
@@ -713,16 +728,16 @@ export default function App() {
             style={{
               position: 'relative',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
+              gap: 10,
               minHeight: 44,
             }}
           >
             <div
               className="hint"
               style={{
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
+                position: 'relative',
                 textAlign: 'center',
                 color: '#a7b0b8',
                 pointerEvents: 'none',
@@ -740,7 +755,7 @@ export default function App() {
                 : 'Loading map, please wait...'}
             </div>
             {!isMobile && (
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }} data-no-admin-tap>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} data-no-admin-tap>
                 {!exploring ? (
                   <button
                     onClick={() => {
@@ -763,6 +778,7 @@ export default function App() {
                 )}
               </div>
             )}
+            <NavigationLinks />
           </div>
         ) : (
           <Editor
