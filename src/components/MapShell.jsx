@@ -14,7 +14,7 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
-/* ---------- one-time CSS injector so ALL text is consistently styled -----d----- */
+/* ---------- one-time CSS injector so ALL text is consistently styled ---------- */
 let __searchCssInjected = false;
 function ensureSearchCss() {
   if (__searchCssInjected || typeof document === 'undefined') return;
@@ -444,6 +444,7 @@ function SetMapRef({ mainMapRef, setMapReady }) {
       mainMapRef.current = map;
       setMapReady(true);
       console.log('SetMapRef: mainMapRef.current set to', map);
+      setTimeout(() => map.invalidateSize(), 100); // Ensure initial render
     } else {
       console.warn('SetMapRef: map, mainMapRef, or setMapReady is invalid', { map, mainMapRef, setMapReady });
     }
@@ -472,6 +473,7 @@ export default function MapShell({
       mainMapRef.current = map;
       setMapReady(true);
       console.log('MapShell: Map initialized, setting mainMapRef to', map);
+      setTimeout(() => map.invalidateSize(), 100); // Ensure initial render
     } else {
       console.warn('MapShell: mainMapRef or setMapReady is invalid', { mainMapRef, setMapReady });
     }
@@ -490,6 +492,8 @@ export default function MapShell({
         worldCopyJump={true}
         scrollWheelZoom
         wheelPxPerZoomLevel={60}
+        renderer={L.svg()}
+        fullscreenControl={false}
         aria-label="Interactive map"
       >
         <SetMapRef mainMapRef={mainMapRef} setMapReady={setMapReady} />
