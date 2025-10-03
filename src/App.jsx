@@ -50,6 +50,7 @@ import ZoomGate from './components/ZoomGate';
 
 // Admin panel
 import AdminPanel from './components/AdminPanel';
+import PinCodeModal from './components/PinCodeModal';
 import MobilePinsList from './components/MobilePinsList';
 import OrderMenu from './components/OrderMenu';
 import Jukebox from './components/Jukebox';
@@ -312,7 +313,8 @@ export default function App() {
         if (keyPresses.length >= SEQUENCE_LENGTH) {
           keyPresses = [];
           if (isFullscreen) {
-            exitKioskNow();
+            // Show PIN modal to exit kiosk mode
+            setShowKioskExitPin(true);
           } else {
             startKioskNow();
           }
@@ -664,6 +666,9 @@ export default function App() {
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef(null);
 
+  // kiosk exit PIN modal
+  const [showKioskExitPin, setShowKioskExitPin] = useState(false);
+
   const shouldCountTap = (e) => {
     const target = e.target;
     if (!target) return false;
@@ -874,6 +879,16 @@ export default function App() {
       />
 
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
+
+      <PinCodeModal
+        open={showKioskExitPin}
+        onSuccess={() => {
+          exitKioskNow();
+          setShowKioskExitPin(false);
+        }}
+        onCancel={() => setShowKioskExitPin(false)}
+        title="Exit Kiosk Mode"
+      />
 
       {isMobile && showMobileList && (
         <MobilePinsList

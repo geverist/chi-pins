@@ -5,9 +5,18 @@ import { useBackgroundImages } from '../hooks/useBackgroundImages'
 import { useNavigationSettings } from '../hooks/useNavigationSettings'
 import { useLogo } from '../hooks/useLogo'
 import { useAdminSettings } from '../state/useAdminSettings'
+import PinCodeModal from './PinCodeModal'
 
 export default function AdminPanel({ open, onClose }) {
+  const [authenticated, setAuthenticated] = useState(false)
   const [tab, setTab] = useState('general')
+
+  // Reset authentication when panel closes
+  useEffect(() => {
+    if (!open) {
+      setAuthenticated(false)
+    }
+  }, [open])
 
   // Background images hook
   const { backgrounds, loading: bgLoading, addBackground, deleteBackground } = useBackgroundImages()
@@ -221,9 +230,18 @@ export default function AdminPanel({ open, onClose }) {
   if (!open) return null
 
   return (
-    <div style={s.overlay}>
-      <div style={s.backdrop} onClick={onClose} />
-      <div style={s.panel}>
+    <>
+      <PinCodeModal
+        open={open && !authenticated}
+        onSuccess={() => setAuthenticated(true)}
+        onCancel={onClose}
+        title="Admin Panel Access"
+      />
+
+      {authenticated && (
+        <div style={s.overlay}>
+          <div style={s.backdrop} onClick={onClose} />
+          <div style={s.panel}>
         {/* Fixed header */}
         <div style={s.header}>
           <div style={s.titleWrap}>
@@ -1019,6 +1037,9 @@ function ModerationTable({ rows = [], selected, onToggle }) {
         </tbody>
       </table>
     </div>
+        </div>
+      )}
+    </>
   )
 }
 
