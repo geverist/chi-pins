@@ -17,8 +17,6 @@ import {
   enableMainMapInteractions,
   disableMainMapInteractions,
   boundsForMiles,
-  CHI_BOUNDS,
-  CHI_MIN_ZOOM,
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
@@ -646,8 +644,8 @@ export default function App() {
     <div className="app" style={{
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh', // Ensure full viewport height
-      height: '-webkit-fill-available', // Handle mobile browser UI bars
+      minHeight: '100vh',
+      height: '-webkit-fill-available',
     }}>
       <HeaderBar
         mapMode={mapMode}
