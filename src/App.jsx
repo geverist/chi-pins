@@ -2,7 +2,6 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import logoUrl from './assets/logo.png';
 import { supabase } from './lib/supabase';
-import L from 'leaflet'; // Add Leaflet import for L.latLng
 
 // hooks
 import { usePins } from './hooks/usePins';
@@ -18,8 +17,6 @@ import {
   enableMainMapInteractions,
   disableMainMapInteractions,
   boundsForMiles,
-  CHI_BOUNDS,
-  CHI_MIN_ZOOM,
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
@@ -205,9 +202,6 @@ export default function App() {
       setIsMobile(e.matches);
       setExploring(e.matches ? true : false);
       console.log('App: isMobile=', e.matches, 'exploring=', e.matches ? true : false);
-      if (mainMapRef.current) {
-        mainMapRef.current.invalidateSize();
-      }
     };
     if (mq.matches) setExploring(true);
     else setExploring(false);
@@ -232,9 +226,6 @@ export default function App() {
       if (autoKiosk && !isFull) {
         setTimeout(() => enterFullscreen(), 500);
       }
-      if (mainMapRef.current) {
-        mainMapRef.current.invalidateSize();
-      }
     });
     (async () => {
       if (autoKiosk) {
@@ -248,52 +239,15 @@ export default function App() {
     return () => off?.();
   }, [autoKiosk]);
 
-  // Handle resize for Safari
-  useEffect(() => {
-    const handleResize = () => {
-      if (mainMapRef.current) {
-        mainMapRef.current.invalidateSize();
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   // Set mapReady when mainMapRef is initialized
   useEffect(() => {
     if (mainMapRef.current) {
       console.log('App: mainMapRef set, enabling mapReady');
       setMapReady(true);
-      mainMapRef.current.invalidateSize();
     } else {
       console.warn('App: mainMapRef not set yet');
     }
   }, [mainMapRef.current]);
-
-  // Mobile mode zoom and mode switching
-  useEffect(() => {
-    if (!mainMapRef.current || !isMobile) return;
-
-    const map = mainMapRef.current;
-
-    const switchMode = () => {
-      const currentZoom = map.getZoom();
-      const currentBounds = map.getBounds();
-      if (mapMode === 'chicago' && currentZoom < CHI_MIN_ZOOM) {
-        setMapMode('global');
-      } else if (mapMode === 'global' && currentZoom >= CHI_MIN_ZOOM && currentBounds.intersects(CHI_BOUNDS)) {
-        setMapMode('chicago');
-      }
-    };
-
-    map.on('zoomend', switchMode);
-    map.on('moveend', switchMode);
-
-    return () => {
-      map.off('zoomend', switchMode);
-      map.off('moveend', switchMode);
-    };
-  }, [isMobile, mapMode, mainMapRef]);
 
   const startKioskNow = async () => {
     await enterFullscreen();
@@ -363,9 +317,7 @@ export default function App() {
     setExploring(isMobile ? true : false);
     clearHighlight();
     setMapMode('chicago');
-    if (mainMapRef.current) {
-      goToChicago(mainMapRef.current, isMobile);
-    }
+    goToChicago(mainMapRef.current);
     setResetCameraToken((t) => t + 1);
     setForm((f) => ({ ...f, name: '', neighborhood: '', hotdog: '', note: '', photoUrl: null }));
   };
@@ -395,7 +347,6 @@ export default function App() {
         console.warn('App: mainMapRef.current is null in handlePick');
         return;
       }
-      const latlng = L.latLng(ll.lat, ll.lng); // Convert to L.LatLng
       const cz = map.getZoom() ?? 10;
       const tenMileBounds = boundsForMiles(ll, 10);
       map.fitBounds(tenMileBounds, { animate: false });
@@ -407,7 +358,7 @@ export default function App() {
         const nz = Math.min(cz + 0.5, 19);
         map.setView([ll.lat, ll.lng], nz, { animate: true });
       }
-      focusDraft(mainMapRef.current, latlng, INITIAL_RADIUS_MILES); // Pass L.LatLng
+      focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES);
       setDraft(ll);
       if (mapMode === 'chicago') {
         showNearestTownFact(ll.lat, ll.lng);
@@ -423,6 +374,22 @@ export default function App() {
       setToast({ title: 'Error', text: 'Failed to place pin. Please try again.' });
     }
   }
+
+  // New: Handle pin click to center map
+  const handlePinClick = (ll) => {
+    try {
+      const map = mainMapRef.current;
+      if (!map) {
+        console.warn('App: mainMapRef.current is null in handlePinClick');
+        return;
+      }
+      const cz = map.getZoom() ?? 10;
+      const nz = Math.min(cz + 0.5, 19);
+      map.setView([ll.lat, ll.lng], nz, { animate: true });
+    } catch (err) {
+      console.error('Centering map on pin failed:', err);
+    }
+  };
 
   // keep draft pin centered
   useEffect(() => {
@@ -532,7 +499,7 @@ export default function App() {
       setTimeout(() => {
         setShowAttractor(!isMobile);
         setExploring(isMobile ? true : false);
-        goToChicago(mainMapRef.current, isMobile);
+        goToChicago(mainMapRef.current);
         setResetCameraToken((t) => t + 1);
       }, 0);
       return;
@@ -540,9 +507,7 @@ export default function App() {
     setMapMode('chicago');
     setShowAttractor(!isMobile);
     setExploring(isMobile ? true : false);
-    if (mainMapRef.current) {
-      goToChicago(mainMapRef.current, isMobile);
-    }
+    goToChicago(mainMapRef.current);
     setResetCameraToken((t) => t + 1);
   };
 
@@ -663,12 +628,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app" style={{
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      height: '-webkit-fill-available',
-    }}>
+    <div className="app">
       <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
@@ -682,7 +642,7 @@ export default function App() {
 
       <div
         className="map-wrap"
-        style={{ position: 'relative', flex: 1, minHeight: 0, height: '100%', width: '100%', borderTop: '1px solid #222', borderBottom: '1px solid #222' }}
+        style={{ position: 'relative', flex: 1, minHeight: '60vh', borderTop: '1px solid #222', borderBottom: '1px solid #222' }}
       >
         <MapShell
           mapMode={mapMode}
@@ -694,7 +654,6 @@ export default function App() {
           editing={!!draft}
           clearSearchToken={clearSearchToken}
           mapReady={mapReady}
-          isMobile={isMobile}
         >
           {!isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
@@ -711,6 +670,7 @@ export default function App() {
                 highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
                 highlightMs={15000}
                 onHighlightEnd={clearHighlight}
+                onPinClick={handlePinClick} // New prop
               />
             </ZoomGate>
           )}
@@ -768,16 +728,16 @@ export default function App() {
             style={{
               position: 'relative',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
+              gap: 10,
               minHeight: 44,
             }}
           >
             <div
               className="hint"
               style={{
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
+                position: 'relative',
                 textAlign: 'center',
                 color: '#a7b0b8',
                 pointerEvents: 'none',
@@ -795,7 +755,7 @@ export default function App() {
                 : 'Loading map, please wait...'}
             </div>
             {!isMobile && (
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }} data-no-admin-tap>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} data-no-admin-tap>
                 {!exploring ? (
                   <button
                     onClick={() => {
@@ -818,6 +778,7 @@ export default function App() {
                 )}
               </div>
             )}
+            <NavigationLinks />
           </div>
         ) : (
           <Editor

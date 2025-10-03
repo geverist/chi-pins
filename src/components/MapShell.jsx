@@ -391,11 +391,7 @@ function MapModeController({ mode, isMobile }) {
         map.keyboard?.enable();
       } else {
         map.setMaxBounds(null);
-        if (isMobile) {
-          map.setMinZoom(1);
-        } else {
-          map.setMinZoom(CHI_MIN_ZOOM);
-        }
+        map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
         map.setMaxZoom(CHI_MAX_ZOOM);
         map.fitBounds(CHI_BOUNDS, { animate: true });
         map.dragging?.enable();
@@ -448,6 +444,7 @@ function SetMapRef({ mainMapRef, setMapReady }) {
       mainMapRef.current = map;
       setMapReady(true);
       console.log('SetMapRef: mainMapRef.current set to', map);
+      setTimeout(() => map.invalidateSize(), 100); // Ensure initial render
     } else {
       console.warn('SetMapRef: map, mainMapRef, or setMapReady is invalid', { map, mainMapRef, setMapReady });
     }
@@ -476,6 +473,7 @@ export default function MapShell({
       mainMapRef.current = map;
       setMapReady(true);
       console.log('MapShell: Map initialized, setting mainMapRef to', map);
+      setTimeout(() => map.invalidateSize(), 100); // Ensure initial render
     } else {
       console.warn('MapShell: mainMapRef or setMapReady is invalid', { mainMapRef, setMapReady });
     }
@@ -494,6 +492,8 @@ export default function MapShell({
         worldCopyJump={true}
         scrollWheelZoom
         wheelPxPerZoomLevel={60}
+        renderer={L.svg()}
+        fullscreenControl={false}
         aria-label="Interactive map"
       >
         <SetMapRef mainMapRef={mainMapRef} setMapReady={setMapReady} />
