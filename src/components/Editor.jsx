@@ -79,7 +79,7 @@ export default function Editor({
       // Upload to Supabase
       const fileName = `pin-${slug || (typeof uuidv4 === 'function' ? uuidv4() : Date.now())}.jpg`;
       const blob = await (await fetch(dataUrl)).blob();
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('pin-photos')
         .upload(fileName, blob, { contentType: 'image/jpeg' });
       if (error) throw error;

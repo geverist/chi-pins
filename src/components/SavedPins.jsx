@@ -1,3 +1,4 @@
+// src/components/SavedPins.jsx
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { LayerGroup, Marker, Tooltip, Popup, useMap } from 'react-leaflet'
 import { iconFor } from '../lib/mapUtils'
@@ -50,7 +51,7 @@ export default function SavedPins({
     [pins]
   )
 
-  // Robust “open after save” by slug, without dragging the map
+  // Robust "open after save" by slug, without dragging the map
   useEffect(() => {
     if (highlightTimerRef.current) {
       clearTimeout(highlightTimerRef.current)

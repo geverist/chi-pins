@@ -240,7 +240,6 @@ small.muted { color: var(--muted); }
 .submap-overlay .leaflet-tile,
 .submap-overlay img {
   -webkit-user-drag: none;
-  user-drag: none;
   pointer-events: none;
 }
 .submap-card, .submap-overlay, .leaflet-container, .leaflet-marker-icon {

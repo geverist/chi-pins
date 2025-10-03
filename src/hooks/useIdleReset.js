@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { CHI_BOUNDS } from '../lib/mapUtils';
 
 /**
  * Resets the UI after `idleMs` of no input:
@@ -26,9 +27,8 @@ export function useIdleReset({
   setMapMode,
   setShowAttractor,
 
-  // map + bounds
+  // map
   mainMapRef,
-  CHI_BOUNDS,
 
   // config
   idleMs = 60_000,
@@ -84,7 +84,7 @@ export function useIdleReset({
       clearTimeout(idleTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, submapCenter, exploring, shareOpen, idleMs, CHI_BOUNDS]);
+  }, [draft, submapCenter, exploring, shareOpen, idleMs]);
 
   // expose manual bump/reset if you ever need it
   return { bump, doIdleReset };

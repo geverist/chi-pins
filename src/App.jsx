@@ -1,7 +1,6 @@
 // src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react';
 import logoUrl from './assets/logo.png';
-import { supabase } from './lib/supabase';
 
 // hooks
 import { usePins } from './hooks/usePins';

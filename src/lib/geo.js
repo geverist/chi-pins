@@ -3,7 +3,10 @@ import { CHI_BOUNDS } from './mapUtils'
 
 // coarse continent bucketing (good enough for counters + colors)
 export function continentFor(lat, lng) {
-  const [[sWLat, sWLng], [nELat, nELng]] = CHI_BOUNDS
+  const sw = CHI_BOUNDS.getSouthWest()
+  const ne = CHI_BOUNDS.getNorthEast()
+  const sWLat = sw.lat, sWLng = sw.lng
+  const nELat = ne.lat, nELng = ne.lng
   if (lat >= sWLat && lat <= nELat && lng >= sWLng && lng <= nELng) return 'chicago'
 
   // North America (incl. Central America & Caribbean)

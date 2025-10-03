@@ -1,5 +1,5 @@
 // src/components/AdminPanel.jsx
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function AdminPanel({ open, onClose }) {

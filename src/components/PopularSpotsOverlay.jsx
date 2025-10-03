@@ -114,7 +114,7 @@ export default function PopularSpotsOverlay({
     pizza: makeBizIcon('pizza'),
   }), [])
 
-  const bounds = useMemo(() => L.latLngBounds(CHI_BOUNDS), [])
+  const bounds = useMemo(() => CHI_BOUNDS, [])
   const visible = useMemo(() => {
     if (!rows) return []
     return rows
