@@ -720,7 +720,7 @@ export default function App() {
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
           )}
           {showCommunityPins && !draft && (
-            <PinBubbles pins={pinsDeduped} enabled={true} minZoomForPins={13} maxZoom={19} />
+            <PinBubbles pins={pinsDeduped} enabled={true} minZoomForPins={13} maxZoom={18} />
           )}
           {showCommunityPins && !draft && mapMode === 'chicago' && (
             <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>

@@ -490,7 +490,7 @@ export default function MapShell({
         center={center}
         zoom={zoom}
         minZoom={isMobile ? 1 : 2}
-        maxZoom={19}
+        maxZoom={18}
         zoomControl={true}
         whenCreated={whenCreated}
         style={{ width: '100%', height: '100%' }}
@@ -505,8 +505,7 @@ export default function MapShell({
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={19}
-          maxNativeZoom={18}
+          maxZoom={18}
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />
