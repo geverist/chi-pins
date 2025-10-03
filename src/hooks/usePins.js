@@ -2,10 +2,12 @@
 // src/hooks/usePins.js
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 const MAX_ROWS = 1000;
 
 export function usePins(mainMapRef) {
+  const { settings } = useAdminSettings();
   const [pins, setPins] = useState([]);
   const newest = useRef(null); // ISO timestamp string of latest row (created_at)
   const seen = useRef(new Set()); // de-dupe guard
@@ -71,16 +73,14 @@ export function usePins(mainMapRef) {
           .from('pins')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(200);
+          .limit(1000);
 
-        // Apply bounds filtering if map is available
-        if (mainMapRef?.current) {
-          const bounds = mainMapRef.current.getBounds();
-          query = query
-            .gte('lat', bounds.getSouth())
-            .lte('lat', bounds.getNorth())
-            .gte('lng', bounds.getWest())
-            .lte('lng', bounds.getEast());
+        // Apply date filtering based on admin settings
+        const monthsBack = settings?.showPinsSinceMonths ?? 999;
+        if (monthsBack < 999) {
+          const cutoffDate = new Date();
+          cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
+          query = query.gte('created_at', cutoffDate.toISOString());
         }
 
         const { data, error } = await query;
@@ -103,6 +103,13 @@ export function usePins(mainMapRef) {
 
       // Realtime: INSERT / UPDATE / DELETE
       try {
+        const monthsBack = settings?.showPinsSinceMonths ?? 999;
+        let cutoffDate;
+        if (monthsBack < 999) {
+          cutoffDate = new Date();
+          cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
+        }
+
         channelRef.current = supabase
           .channel('public:pins')
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pins' }, (payload) => {
@@ -114,18 +121,10 @@ export function usePins(mainMapRef) {
               seen.current.add(k);
               return;
             }
-            // Filter by bounds for real-time updates
-            if (mainMapRef?.current) {
-              const bounds = mainMapRef.current.getBounds();
-              if (
-                row.lat < bounds.getSouth() ||
-                row.lat > bounds.getNorth() ||
-                row.lng < bounds.getWest() ||
-                row.lng > bounds.getEast()
-              ) {
-                seen.current.add(k);
-                return;
-              }
+            // Filter by date if configured
+            if (cutoffDate && row.created_at < cutoffDate.toISOString()) {
+              seen.current.add(k);
+              return;
             }
             bumpNewest(row);
             setPins((prev) => mergeRows(prev, [row]));
@@ -134,17 +133,9 @@ export function usePins(mainMapRef) {
             const row = payload?.new;
             const k = keyFor(row);
             if (!k) return;
-            // Filter by bounds for updates
-            if (mainMapRef?.current) {
-              const bounds = mainMapRef.current.getBounds();
-              if (
-                row.lat < bounds.getSouth() ||
-                row.lat > bounds.getNorth() ||
-                row.lng < bounds.getWest() ||
-                row.lng > bounds.getEast()
-              ) {
-                return;
-              }
+            // Filter by date if configured
+            if (cutoffDate && row.created_at < cutoffDate.toISOString()) {
+              return;
             }
             setPins((prev) => mergeRows(prev, [row]));
           })
@@ -166,7 +157,7 @@ export function usePins(mainMapRef) {
       if (channelRef.current) supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     };
-  }, [mainMapRef]);
+  }, [mainMapRef, settings?.showPinsSinceMonths]);
 
   // Poll for new rows
   useEffect(() => {
@@ -191,13 +182,13 @@ export function usePins(mainMapRef) {
           .order('created_at', { ascending: false })
           .limit(100);
         if (newest.current) q = q.gt('created_at', newest.current);
-        if (mainMapRef?.current) {
-          const bounds = mainMapRef.current.getBounds();
-          q = q
-            .gte('lat', bounds.getSouth())
-            .lte('lat', bounds.getNorth())
-            .gte('lng', bounds.getWest())
-            .lte('lng', bounds.getEast());
+
+        // Apply date filtering based on admin settings
+        const monthsBack = settings?.showPinsSinceMonths ?? 999;
+        if (monthsBack < 999) {
+          const cutoffDate = new Date();
+          cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
+          q = q.gte('created_at', cutoffDate.toISOString());
         }
 
         const { data, error } = await q;

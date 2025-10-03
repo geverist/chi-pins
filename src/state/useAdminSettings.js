@@ -28,7 +28,7 @@ const DEFAULTS = {
   showCommunityPinsDefault: true,
 
   // Content filters
-  showPinsSinceMonths: 999,    // all
+  showPinsSinceMonths: 24,    // default: last 24 months
   allowedTeams: ['cubs', 'whitesox', 'other'],
   allowedSources: ['kiosk', 'global'],
 

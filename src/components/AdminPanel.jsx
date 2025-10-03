@@ -11,12 +11,12 @@ export default function AdminPanel({ open, onClose }) {
     minZoomForPins: 13,
     maxZoom: 17,
     kioskAutoStart: true,
-    pinAgeMonths: 24,
+    showPinsSinceMonths: 24,  // Changed from pinAgeMonths to match useAdminSettings
     showPopularSpots: true,
     showCommunityPins: true,
     clusterBubbleThreshold: 13,
     showLabelsZoom: 13,
-    // new-but-safe toggles used elsewhere; default true/false won’t break anything
+    // new-but-safe toggles used elsewhere; default true/false won't break anything
     loyaltyEnabled: true,
     enableGlobalBubbles: true,
     attractorHintEnabled: true,
@@ -53,17 +53,16 @@ export default function AdminPanel({ open, onClose }) {
   const loadFromSupabase = useCallback(async () => {
     if (!open) return
     try {
-      // SETTINGS: single row table "admin_settings" (id=1)
+      // SETTINGS: table "settings" with key='app', value=jsonb
       const { data: sData, error: sErr } = await supabase
-        .from('admin_settings')
-        .select('*')
-        .eq('id', 1)
-        .limit(1)
+        .from('settings')
+        .select('value')
+        .eq('key', 'app')
         .maybeSingle()
 
-      if (!sErr && sData) {
+      if (!sErr && sData?.value) {
         // Merge unknown keys so we can roll forward/back
-        const merged = { ...defaultSettings, ...sData.settings }
+        const merged = { ...defaultSettings, ...sData.value }
         setSettings(merged)
         localStorage.setItem('adminSettings', JSON.stringify(merged))
       }
@@ -102,10 +101,10 @@ export default function AdminPanel({ open, onClose }) {
 
   const saveSupabase = useCallback(async () => {
     try {
-      // Upsert admin_settings (single row id=1)
+      // Upsert settings table (key='app')
       await supabase
-        .from('admin_settings')
-        .upsert({ id: 1, settings }, { onConflict: 'id' })
+        .from('settings')
+        .upsert({ key: 'app', value: settings }, { onConflict: 'key' })
 
       // Sync popular_spots:
       // For simplicity, replace entire set: delete then insert (transactional-like pattern)
@@ -148,7 +147,7 @@ export default function AdminPanel({ open, onClose }) {
   const refreshModeration = useCallback(async () => {
     setModLoading(true)
     try {
-      const months = Number(settings.pinAgeMonths || 24)
+      const months = Number(settings.showPinsSinceMonths || 24)
       const since = new Date()
       since.setMonth(since.getMonth() - months)
       let q = supabase
@@ -172,7 +171,7 @@ export default function AdminPanel({ open, onClose }) {
     } finally {
       setModLoading(false)
     }
-  }, [settings.pinAgeMonths, search])
+  }, [settings.showPinsSinceMonths, search])
 
   useEffect(() => { if (open && tab === 'moderate') refreshModeration() }, [open, tab, refreshModeration])
 
@@ -257,12 +256,15 @@ export default function AdminPanel({ open, onClose }) {
               <Card title="Data window">
                 <FieldRow label="Show pins from last (months)">
                   <NumberInput
-                    value={settings.pinAgeMonths}
+                    value={settings.showPinsSinceMonths}
                     min={1}
-                    max={120}
-                    onChange={(v) => setSettings(s => ({ ...s, pinAgeMonths: v }))}
+                    max={999}
+                    onChange={(v) => setSettings(s => ({ ...s, showPinsSinceMonths: v }))}
                   />
                 </FieldRow>
+                <p style={{ ...s.muted, margin: 0, fontSize: 12 }}>
+                  Set to 999 to show all pins regardless of age
+                </p>
               </Card>
 
               <Card title="Loyalty">

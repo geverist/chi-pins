@@ -84,6 +84,7 @@ function GeocoderTopCenter({
   placeholder = 'Search Chicago & nearby…',
   mode = 'chicago',
   clearToken = 0,
+  isMobile = false,
 }) {
   const map = useMap();
   const hostRef = useRef(null);
@@ -91,6 +92,8 @@ function GeocoderTopCenter({
   const geocoderRef = useRef(null);
   const inputRef = useRef(null);
   const clearBtnRef = useRef(null);
+  const [dynamicMode, setDynamicMode] = useState(mode);
+  const [dynamicPlaceholder, setDynamicPlaceholder] = useState(placeholder);
 
   const debouncedGeocode = useMemo(
     () =>
@@ -115,6 +118,43 @@ function GeocoderTopCenter({
   useEffect(() => {
     ensureSearchCss();
   }, []);
+
+  // Mobile: dynamically switch between chicago/global search based on map bounds
+  useEffect(() => {
+    if (!isMobile || !map) return;
+
+    const checkBounds = () => {
+      const mapBounds = map.getBounds();
+      const chicagoBounds = CHI_BOUNDS;
+
+      // Check if current view intersects with Chicago bounds
+      const isInChicago = chicagoBounds.intersects(mapBounds);
+
+      const newMode = isInChicago ? 'chicago' : 'global';
+      const newPlaceholder = isInChicago ? 'Search Chicago & nearby…' : 'Search places worldwide…';
+
+      if (newMode !== dynamicMode) {
+        console.log('GeocoderTopCenter: Switching to', newMode, 'mode');
+        setDynamicMode(newMode);
+        setDynamicPlaceholder(newPlaceholder);
+
+        // Update placeholder in the input
+        if (inputRef.current) {
+          inputRef.current.placeholder = newPlaceholder;
+        }
+      }
+    };
+
+    // Check on zoom/move
+    map.on('zoomend', checkBounds);
+    map.on('moveend', checkBounds);
+    checkBounds(); // Initial check
+
+    return () => {
+      map.off('zoomend', checkBounds);
+      map.off('moveend', checkBounds);
+    };
+  }, [isMobile, map, dynamicMode]);
 
   useEffect(() => {
     if (!map) {
@@ -167,8 +207,11 @@ function GeocoderTopCenter({
     hostRef.current.appendChild(shell);
     shellRef.current = shell;
 
+    const effectiveMode = isMobile ? dynamicMode : mode;
+    const effectivePlaceholder = isMobile ? dynamicPlaceholder : (mode === 'global' ? 'Search places worldwide…' : placeholder);
+
     const geocoder = L.Control.geocoder({
-      geocoder: mode === 'global'
+      geocoder: effectiveMode === 'global'
         ? L.Control.Geocoder.nominatim({
             geocodingQueryParams: {
               addressdetails: 1,
@@ -186,7 +229,7 @@ function GeocoderTopCenter({
           }),
       defaultMarkGeocode: false,
       collapsed: false,
-      placeholder: mode === 'global' ? 'Search places worldwide…' : placeholder,
+      placeholder: effectivePlaceholder,
     });
     console.log('GeocoderTopCenter: Geocoder initialized', geocoder);
 
@@ -224,8 +267,8 @@ function GeocoderTopCenter({
       input.style.borderRadius = '10px';
       input.style.outline = 'none';
       input.style.width = 'min(72vw, 520px)';
-      input.placeholder = mode === 'global' ? 'Search places worldwide…' : placeholder;
-      input.setAttribute('aria-label', mode === 'global' ? 'Search places worldwide' : 'Search Chicago and nearby');
+      input.placeholder = effectivePlaceholder;
+      input.setAttribute('aria-label', effectiveMode === 'global' ? 'Search places worldwide' : 'Search Chicago and nearby');
       input.addEventListener('keydown', (ev) => {
         if (ev.key === 'Escape') {
           ev.stopPropagation();
@@ -328,7 +371,7 @@ function GeocoderTopCenter({
       shellRef.current?.parentNode?.removeChild(shellRef.current);
       shellRef.current = null;
     };
-  }, [map, mode, debouncedGeocode]);
+  }, [map, mode, debouncedGeocode, dynamicMode, dynamicPlaceholder]);
 
   useEffect(() => {
     const g = geocoderRef.current;
@@ -513,6 +556,7 @@ export default function MapShell({
           <GeocoderTopCenter
             mode={mapMode === 'global' ? 'global' : 'chicago'}
             clearToken={clearSearchToken}
+            isMobile={isMobile}
           />
         )}
         <TapToPlace onPick={onPick} disabled={exploring} mapReady={mapReady} />
