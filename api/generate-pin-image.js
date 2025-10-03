@@ -128,6 +128,21 @@ export default async function handler(req, res) {
               font-weight: bold;
               color: #3b82f6;
             }
+            .share-btn {
+              display: inline-block;
+              background: #3b82f6;
+              color: white;
+              padding: 12px 24px;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              font-size: 16px;
+              margin: 16px 0;
+              transition: background 0.2s;
+            }
+            .share-btn:hover {
+              background: #2563eb;
+            }
           </style>
         </head>
         <body>
@@ -145,6 +160,11 @@ export default async function handler(req, res) {
               </div>
             </div>
             <div class="footer">
+              <div style="text-align: center; margin-bottom: 12px;">
+                <a href="sms:&body=${encodeURIComponent(`Check out this pin from Chi-Pins!\n\n${pin.note || pin.name || ''}\n\n${req.headers.host}/api/generate-pin-image?slug=${slug}`)}" class="share-btn">
+                  💬 Share via Text
+                </a>
+              </div>
               <div class="branding">
                 <span class="logo">Chi-Pins</span> • Share your Chicago moments
               </div>

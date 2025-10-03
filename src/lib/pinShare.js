@@ -41,12 +41,15 @@ export function getSmsDeeplink(slug, pin = {}) {
   // iOS and Android SMS URL format
   const encodedMessage = encodeURIComponent(message);
 
-  // Use sms: protocol (works on both iOS and Android)
-  return `sms:?&body=${encodedMessage}`;
+  // Use sms: protocol with body parameter
+  // iOS: sms:&body=... or sms://&body=...
+  // Android: sms:?body=...
+  // Using // to avoid vCard interpretation on iOS
+  return `sms://&body=${encodedMessage}`;
 }
 
 /**
- * Generate QR code as data URL for a pin (creates SMS deeplink QR)
+ * Generate QR code as data URL for a pin (creates pin image URL QR)
  * @param {string} slug - The pin's unique slug
  * @param {Object} options - QR code options
  * @param {number} options.width - QR code width in pixels (default: 256)
@@ -63,11 +66,11 @@ export async function generatePinQRCode(slug, options = {}) {
     pin = {},
   } = options;
 
-  // Generate SMS deeplink instead of direct URL
-  const smsUrl = getSmsDeeplink(slug, pin);
+  // Use direct pin image URL - when scanned, user can tap to open and share
+  const imageUrl = getPinImageUrl(slug);
 
   try {
-    const dataUrl = await QRCode.toDataURL(smsUrl, {
+    const dataUrl = await QRCode.toDataURL(imageUrl, {
       width,
       color: {
         dark: color,

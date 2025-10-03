@@ -235,7 +235,7 @@ export default function PinShareModal({ open, onClose, pin }) {
             </div>
 
             <div style={instructionStyle}>
-              Scan this QR code with your phone to open SMS with a link to your pin card image!
+              Scan this QR code with your phone to view your pin card, then tap "Share via Text" to send it!
             </div>
 
             {qrCode && (
