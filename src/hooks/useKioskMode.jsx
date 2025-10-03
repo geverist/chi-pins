@@ -1,68 +1,6 @@
 // src/hooks/useKioskMode.js
 import { useState, useEffect } from 'react'
-
-/* ---------------- KIOSK UTILITIES ---------------- */
-
-/**
- * Enter fullscreen mode
- */
-async function enterFullscreen(el) {
-  const root = el || (typeof document !== 'undefined' ? document.documentElement : null)
-  if (root && !document.fullscreenElement && root.requestFullscreen) {
-    try {
-      await root.requestFullscreen()
-    } catch (err) {
-      console.warn('Fullscreen failed:', err)
-    }
-  }
-}
-
-/**
- * Wake lock reference
- */
-let wakeLockRef = null
-
-/**
- * Ensure wake lock is active (prevent screen from sleeping)
- */
-async function ensureWakeLock() {
-  try {
-    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef) {
-      wakeLockRef = await navigator.wakeLock.request('screen')
-      wakeLockRef.addEventListener('release', () => {
-        wakeLockRef = null
-        if (typeof document !== 'undefined' && new URLSearchParams(window.location.search).get('kiosk') === '1') {
-          setTimeout(ensureWakeLock, 1000)
-        }
-      })
-    }
-  } catch (err) {
-    console.warn('Wake lock failed:', err)
-  }
-}
-
-/**
- * Exit fullscreen and release wake lock
- */
-async function exitFullscreenAndWake() {
-  try {
-    await document.exitFullscreen?.()
-  } catch {}
-  try {
-    await wakeLockRef?.release?.()
-  } catch {}
-  wakeLockRef = null
-}
-
-/**
- * Listen for fullscreen changes
- */
-function onFullscreenChange(cb) {
-  if (typeof document === 'undefined') return () => {}
-  const handler = () => cb?.(!!document.fullscreenElement)
-  document.addEventListener('fullscreenchange', handler)
-  return () => document.removeEventListener('fullscreenchange', handler)
-}
+import { enterFullscreen, ensureWakeLock, exitFullscreenAndWake, onFullscreenChange } from '../lib/kiosk'
 
 /* ---------------- HOOK ---------------- */
 

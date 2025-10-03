@@ -9,7 +9,12 @@
       "Bash(vercel:*)",
       "Bash(git ls-tree:*)",
       "Bash(git reset:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(test:*)",
+      "Bash(for func in \"getPinShareUrl\" \"copyPinUrlToClipboard\" \"downloadPinQRCode\" \"sharePin\" \"isWebShareSupported\" \"getSocialShareUrls\")",
+      "Bash(do echo \"=== $func ===\")",
+      "Bash(grep:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
