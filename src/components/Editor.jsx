@@ -1,7 +1,7 @@
 // src/components/Editor.jsx
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'; // Requires npm install uuid@9.0.1
 
 export default function Editor({
   mapMode,
@@ -77,7 +77,7 @@ export default function Editor({
       setPhotoPreview(dataUrl);
 
       // Upload to Supabase
-      const fileName = `pin-${slug || uuidv4()}.jpg`;
+      const fileName = `pin-${slug || (typeof uuidv4 === 'function' ? uuidv4() : Date.now())}.jpg`;
       const blob = await (await fetch(dataUrl)).blob();
       const { data, error } = await supabase.storage
         .from('pin-photos')

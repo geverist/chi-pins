@@ -102,6 +102,9 @@ function GeocoderTopCenter({
           } else {
             console.error('GeocoderTopCenter: geocode is not a function on geocoderRef.current', geocoderRef.current);
           }
+        } else if (!text) {
+          // Skip warning for empty text to reduce log clutter
+          return;
         } else {
           console.warn('GeocoderTopCenter: geocoderRef.current is', geocoderRef.current, 'text=', text);
         }
@@ -370,7 +373,7 @@ function MapModeController({ mode, isMobile }) {
     map.touchZoom?.enable();
     map.boxZoom?.enable();
     map.keyboard?.enable();
-    setTimeout(() => map.invalidateSize(), 100);
+    setTimeout(() => map.invalidateSize(), 300);
   }, [map, isMobile]);
 
   useEffect(() => {
@@ -401,7 +404,7 @@ function MapModeController({ mode, isMobile }) {
         map.boxZoom?.enable();
         map.keyboard?.enable();
       }
-    }, 0);
+    }, 300);
   }, [mode, map, isMobile]);
 
   return null;
@@ -421,7 +424,7 @@ function CameraReset({ mapMode, resetCameraToken, isMobile }) {
         map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MAX_ZOOM });
         map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
       } catch {}
-    }, 0);
+    }, 300);
   }, [resetCameraToken, mapMode, map, isMobile]);
   return null;
 }
@@ -446,7 +449,7 @@ function SetMapRef({ mainMapRef, setMapReady }) {
       mainMapRef.current = map;
       setMapReady(true);
       console.log('SetMapRef: mainMapRef.current set to', map);
-      setTimeout(() => map.invalidateSize(), 100); // Ensure initial render
+      setTimeout(() => map.invalidateSize(), 300); // Ensure initial render
     } else {
       console.warn('SetMapRef: map, mainMapRef, or setMapReady is invalid', { map, mainMapRef, setMapReady });
     }
@@ -475,14 +478,14 @@ export default function MapShell({
       mainMapRef.current = map;
       setMapReady(true);
       console.log('MapShell: Map initialized, setting mainMapRef to', map);
-      setTimeout(() => map.invalidateSize(), 100); // Ensure initial render
+      setTimeout(() => map.invalidateSize(), 300); // Ensure initial render
     } else {
       console.warn('MapShell: mainMapRef or setMapReady is invalid', { mainMapRef, setMapReady });
     }
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }} className="map-container">
+    <div style={{ position: 'relative', width: '100%', height: '100%', willChange: 'transform' }} className="map-container">
       <MapContainer
         center={center}
         zoom={zoom}
