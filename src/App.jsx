@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import logoUrl from './assets/logo.png';
 import { supabase } from './lib/supabase';
-import L from 'leaflet'; // Add Leaflet import for L.latLng
+import L from 'leaflet'; // Add Leaflet import for L.latLng 
 
 // hooks
 import { usePins } from './hooks/usePins';
