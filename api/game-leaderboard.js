@@ -13,9 +13,10 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
+  const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
     return res.status(500).json({ error: 'Database not configured' });
   }
 
@@ -32,8 +33,8 @@ export default async function handler(req, res) {
         `${SUPABASE_URL}/rest/v1/game_scores?game=eq.${game}&order=score.desc,created_at.asc&limit=${limit}`,
         {
           headers: {
-            'apikey': SUPABASE_SERVICE_KEY,
-            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
             'Content-Type': 'application/json',
           },
         }
@@ -71,8 +72,8 @@ export default async function handler(req, res) {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/game_scores`, {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_SERVICE_KEY,
-          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=representation',
         },
@@ -91,8 +92,8 @@ export default async function handler(req, res) {
         `${SUPABASE_URL}/rest/v1/game_scores?game=eq.${game}&score=gt.${score}&select=id`,
         {
           headers: {
-            'apikey': SUPABASE_SERVICE_KEY,
-            'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
           },
         }
       );
