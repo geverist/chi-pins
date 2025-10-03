@@ -793,44 +793,42 @@ export default function App() {
         />
       )}
 
-      <footer
-        style={{ padding: '10px 14px' }}
-        onClick={handleFooterClick}
-        onTouchStart={handleFooterTouch}
-        aria-label="Footer controls"
-      >
-        {!draft ? (
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              minHeight: 44,
-            }}
-          >
+      {!isMobile && (
+        <footer
+          style={{ padding: '10px 14px' }}
+          onClick={handleFooterClick}
+          onTouchStart={handleFooterTouch}
+          aria-label="Footer controls"
+        >
+          {!draft ? (
             <div
-              className="hint"
               style={{
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                textAlign: 'center',
-                color: '#a7b0b8',
-                pointerEvents: 'none',
-                width: '100%',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: 44,
               }}
             >
-              {isMobile
-                ? 'Browse pins near you.'
-                : exploring
-                ? 'Click any pin to see details.'
-                : mapMode === 'global'
-                ? 'Click the map to place your pin anywhere in the world.'
-                : mapReady
-                ? 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                : 'Loading map, please wait...'}
-            </div>
-            {!isMobile && (
+              <div
+                className="hint"
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  textAlign: 'center',
+                  color: '#a7b0b8',
+                  pointerEvents: 'none',
+                  width: '100%',
+                }}
+              >
+                {exploring
+                  ? 'Click any pin to see details.'
+                  : mapMode === 'global'
+                  ? 'Click the map to place your pin anywhere in the world.'
+                  : mapReady
+                  ? 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
+                  : 'Loading map, please wait...'}
+              </div>
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }} data-no-admin-tap>
                 {!exploring ? (
                   <button
@@ -853,20 +851,20 @@ export default function App() {
                   </button>
                 )}
               </div>
-            )}
-          </div>
-        ) : (
-          <Editor
-            mapMode={mapMode}
-            slug={slug}
-            form={form}
-            setForm={setForm}
-            hotdogSuggestions={hotdogSuggestions}
-            onCancel={cancelEditing}
-            onOpenShare={() => setShareOpen(true)}
-          />
-        )}
-      </footer>
+            </div>
+          ) : (
+            <Editor
+              mapMode={mapMode}
+              slug={slug}
+              form={form}
+              setForm={setForm}
+              hotdogSuggestions={hotdogSuggestions}
+              onCancel={cancelEditing}
+              onOpenShare={() => setShareOpen(true)}
+            />
+          )}
+        </footer>
+      )}
 
       <ShareConfirmModal
         open={shareOpen}
