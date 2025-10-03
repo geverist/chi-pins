@@ -57,10 +57,21 @@ export default function DraftMarker({
         map.scrollWheelZoom?.disable()
         map.boxZoom?.disable()
         map.keyboard?.disable()
+        map.tap?.disable()
 
-        // Prevent pointer events on map container
+        // Prevent any touch/pointer actions on map container
         if (mapContainerRef.current) {
-          mapContainerRef.current.style.pointerEvents = 'none'
+          mapContainerRef.current.style.touchAction = 'none'
+          mapContainerRef.current.style.userSelect = 'none'
+        }
+
+        // Capture pointer on the marker element to prevent map from receiving events
+        if (el.setPointerCapture && ev.pointerId) {
+          try {
+            el.setPointerCapture(ev.pointerId)
+          } catch (e) {
+            console.warn('Could not capture pointer:', e)
+          }
         }
 
         ev.preventDefault?.()
@@ -121,9 +132,20 @@ export default function DraftMarker({
       if (!isDraggingRef.current) return
       isDraggingRef.current = false
 
-      // Re-enable pointer events on map container
+      // Release pointer capture
+      if (el && el.releasePointerCapture && ev.pointerId) {
+        try {
+          el.releasePointerCapture(ev.pointerId)
+        } catch (e) {
+          console.warn('Could not release pointer:', e)
+        }
+      }
+
+      // Re-enable pointer events and touch actions on map container
       if (mapContainerRef.current) {
         mapContainerRef.current.style.pointerEvents = ''
+        mapContainerRef.current.style.touchAction = ''
+        mapContainerRef.current.style.userSelect = ''
         mapContainerRef.current = null
       }
 
@@ -134,6 +156,7 @@ export default function DraftMarker({
       map.scrollWheelZoom?.enable()
       map.boxZoom?.enable()
       map.keyboard?.enable()
+      map.tap?.enable()
 
       const ll = m.getLatLng()
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
