@@ -1,6 +1,7 @@
-// src/components/Editor.jsx (updated full component)
-import { useState, useRef, useEffect } from 'react'; // Add useRef, useEffect if not present
-import { supabase } from '../lib/supabase'; // Assume imported or add
+// src/components/Editor.jsx
+import { useState, useRef, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Editor({
   mapMode,
@@ -15,43 +16,85 @@ export default function Editor({
   const digitsOnly = String(form.loyaltyPhone || '').replace(/\D+/g, '');
   const phoneLooksValid = digitsOnly.length >= 10 && digitsOnly.length <= 15;
 
-  // New: Camera state
   const [photoPreview, setPhotoPreview] = useState(null);
   const [cameraError, setCameraError] = useState(null);
+  const [isCameraReady, setIsCameraReady] = useState(false);
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
 
-  const capturePhoto = async () => {
+  // Start camera on user interaction
+  const startCamera = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraError('Camera not supported in this browser');
+      return;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      videoRef.current.srcObject = stream;
-      videoRef.current.play();
-      const track = stream.getVideoTracks()[0];
-      const imageCapture = new ImageCapture(track);
-      const blob = await imageCapture.takePhoto();
-      const previewUrl = URL.createObjectURL(blob);
-      setPhotoPreview(previewUrl);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current.play().catch((e) => setCameraError(`Failed to play video: ${e.message}`));
+          setIsCameraReady(true);
+        };
+        streamRef.current = stream;
+      } else {
+        setCameraError('Video element not available');
+        stream.getTracks().forEach(track => track.stop());
+      }
+    } catch (e) {
+      setCameraError('Camera access failed. Please allow permissions or try again.');
+      console.error('Camera error:', e);
+    }
+  };
+
+  // Stop camera
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraReady(false);
+    setPhotoPreview(null);
+  };
+
+  // Capture photo and upload to Supabase
+  const capturePhoto = async () => {
+    if (!videoRef.current || !canvasRef.current || !isCameraReady) {
+      setCameraError('Camera not ready. Please try again.');
+      return;
+    }
+    try {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      setPhotoPreview(dataUrl);
 
       // Upload to Supabase
-      const fileName = `pin-${slug || Date.now()}.jpg`;
+      const fileName = `pin-${slug || uuidv4()}.jpg`;
+      const blob = await (await fetch(dataUrl)).blob();
       const { data, error } = await supabase.storage
         .from('pin-photos')
         .upload(fileName, blob, { contentType: 'image/jpeg' });
       if (error) throw error;
       const publicUrl = supabase.storage.from('pin-photos').getPublicUrl(fileName).data.publicUrl;
-      update({ photoUrl: publicUrl }); // Save URL to form for pin insert
-      track.stop();
+      update({ photoUrl: publicUrl });
+      stopCamera();
     } catch (e) {
-      setCameraError('Camera access failed. Allow permissions or upload a file.');
-      console.error('Camera error:', e);
+      setCameraError(`Failed to upload photo: ${e.message}`);
+      console.error('Photo upload error:', e);
     }
   };
 
+  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-      }
-    };
+    return () => stopCamera();
   }, []);
 
   const commonSlugBadge = (
@@ -84,19 +127,17 @@ export default function Editor({
       alignItems: 'center',
       gap: 10,
     }}>
-      <button onClick={capturePhoto} aria-label="Take photo with camera">📸 Take Photo</button>
+      <button onClick={startCamera} disabled={isCameraReady || !!photoPreview} aria-label="Start camera">📸 Start Camera</button>
       {commonSlugBadge}
       {ActionButtons}
     </div>
   );
 
-  // Single row for name / neighborhood / hotdog / notes (with notes given more width)
   const InlineFieldsChicago = (
     <div style={{
       gridColumn: '1 / -1',
       display: 'grid',
       gap: 10,
-      // Make the last track (notes) wider to fill the row
       gridTemplateColumns: 'minmax(180px,1fr) minmax(180px,1fr) minmax(200px,1fr) minmax(260px,2fr)',
     }}>
       <input placeholder="Your name (optional)" value={form.name || ''} onChange={(e) => update({ name: e.target.value })} aria-label="Your name" />
@@ -111,7 +152,6 @@ export default function Editor({
     </div>
   );
 
-  // Global: no neighborhood, so just 3 columns with the last (notes) wider
   const InlineFieldsGlobal = (
     <div style={{
       gridColumn: '1 / -1',
@@ -130,7 +170,6 @@ export default function Editor({
     </div>
   );
 
-  // New: Photo section (add after inline fields in both modes)
   const PhotoSection = (
     <div style={{
       gridColumn: '1 / -1',
@@ -149,12 +188,20 @@ export default function Editor({
         Snap a photo of your hot dog spot or upload one.
       </div>
       {cameraError && <div style={{ color: '#ef4444' }} role="alert">{cameraError}</div>}
-      <video ref={videoRef} style={{ display: photoPreview ? 'none' : 'block', maxWidth: '300px', maxHeight: '200px' }} aria-hidden="true" />
+      {isCameraReady && !photoPreview && (
+        <video ref={videoRef} style={{ maxWidth: '300px', maxHeight: '200px' }} aria-hidden="true" />
+      )}
       {photoPreview && <img src={photoPreview} alt="Photo preview" style={{ maxWidth: '300px', maxHeight: '200px' }} />}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      {isCameraReady && !photoPreview && (
+        <button onClick={capturePhoto} aria-label="Capture photo">Take Photo</button>
+      )}
+      {photoPreview && (
+        <button onClick={() => { setPhotoPreview(null); startCamera(); }} aria-label="Retake photo">Retake Photo</button>
+      )}
     </div>
   );
 
-  // New: Loyalty phone (optional)
   const LoyaltySection = (
     <div style={{
       gridColumn: '1 / -1',
@@ -169,7 +216,6 @@ export default function Editor({
         <span style={{ fontSize: 18 }}>⭐</span>
         <strong>Link your loyalty phone (optional)</strong>
       </div>
-
       <div style={{
         display: 'grid',
         gap: 8,
@@ -194,7 +240,6 @@ export default function Editor({
         paddingTop: 2,
       }}>
         {IdAndActionsRow}
-        {/* Header row: Teams | ID badge | Actions */}
         <div style={{
           gridColumn: '1 / -1',
           display: 'grid',
@@ -209,12 +254,12 @@ export default function Editor({
           ))}
         </div>
         {InlineFieldsChicago}
+        {PhotoSection}
         {LoyaltySection}
       </div>
     );
   }
 
-  // GLOBAL (no team, no neighborhood)
   return (
     <div className="form" style={{
       display: 'grid',
