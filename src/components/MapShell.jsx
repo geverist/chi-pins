@@ -429,7 +429,7 @@ function MapModeController({ mode, isMobile }) {
       if (mode === 'global') {
         map.setMaxBounds(null);
         map.setMinZoom(2);
-        map.setMaxZoom(19);
+        map.setMaxZoom(GLOBAL_MAX_ZOOM);
         map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true });
         map.dragging?.enable();
         map.scrollWheelZoom?.enable();
