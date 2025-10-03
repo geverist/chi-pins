@@ -18,7 +18,12 @@
       "Bash(npm install:*)",
       "Bash(cat:*)",
       "Bash(git rev-parse:*)",
-      "Bash(git remote get-url:*)"
+      "Bash(git remote get-url:*)",
+      "WebSearch",
+      "WebFetch(domain:www.illinois-demographics.com)",
+      "WebFetch(domain:worldpopulationreview.com)",
+      "WebFetch(domain:federalcos.com)",
+      "WebFetch(domain:en.wikipedia.org)"
     ],
     "deny": [],
     "ask": []
