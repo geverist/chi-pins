@@ -8,6 +8,7 @@ export const CHI_MIN_ZOOM = 10;
 export const CHI_MAX_ZOOM = 17;
 export const USA = { lat: 37.0902, lng: -95.7129 };
 export const GLOBAL_ZOOM = 4;
+export const GLOBAL_MAX_ZOOM = 16; // Limit to prevent gray tiles in areas with limited OSM coverage
 export const INITIAL_RADIUS_MILES = 0.5;
 
 // Lake Michigan shoreline polygon (western boundary)
@@ -285,6 +286,6 @@ export function setGlobalMode(map) {
   if (!map) return;
   map.setMaxBounds(null);
   map.setMinZoom(2);
-  map.setMaxZoom(19);
+  map.setMaxZoom(GLOBAL_MAX_ZOOM);
   setTimeout(() => map.invalidateSize(), 300);
 }

@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, useMapEvent, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
 import 'leaflet-control-geocoder';
-import { CHI, CHI_BOUNDS, CHI_MIN_ZOOM, CHI_MAX_ZOOM, USA, GLOBAL_ZOOM } from '../lib/mapUtils';
+import { CHI, CHI_BOUNDS, CHI_MIN_ZOOM, CHI_MAX_ZOOM, USA, GLOBAL_ZOOM, GLOBAL_MAX_ZOOM } from '../lib/mapUtils';
 import debounce from 'lodash/debounce';
 
 // Fix default marker icon paths (vite)
@@ -527,13 +527,16 @@ export default function MapShell({
     }
   };
 
+  // Dynamic maxZoom based on map mode
+  const maxZoom = mapMode === 'global' ? GLOBAL_MAX_ZOOM : CHI_MAX_ZOOM;
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', willChange: 'transform' }} className="map-container">
       <MapContainer
         center={center}
         zoom={zoom}
         minZoom={isMobile ? 1 : 2}
-        maxZoom={17}
+        maxZoom={maxZoom}
         zoomControl={true}
         whenCreated={whenCreated}
         style={{ width: '100%', height: '100%' }}
@@ -548,7 +551,7 @@ export default function MapShell({
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          maxZoom={17}
+          maxZoom={maxZoom}
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />
