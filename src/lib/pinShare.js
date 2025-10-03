@@ -18,12 +18,41 @@ export function getPinShareUrl(slug, { absolute = true } = {}) {
 }
 
 /**
- * Generate QR code as data URL for a pin
+ * Generate pin image URL
+ * @param {string} slug - The pin's unique slug
+ * @returns {string} Pin image URL
+ */
+export function getPinImageUrl(slug) {
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/api/generate-pin-image?slug=${encodeURIComponent(slug)}`;
+}
+
+/**
+ * Generate SMS deeplink with pin image URL
+ * @param {string} slug - The pin's unique slug
+ * @param {Object} pin - Pin data for message content
+ * @returns {string} SMS deeplink URL
+ */
+export function getSmsDeeplink(slug, pin = {}) {
+  const imageUrl = getPinImageUrl(slug);
+  const pinName = pin.name || slug;
+  const message = `Check out my pin "${pinName}" on Chi-Pins!\n\n${imageUrl}`;
+
+  // iOS and Android SMS URL format
+  const encodedMessage = encodeURIComponent(message);
+
+  // Use sms: protocol (works on both iOS and Android)
+  return `sms:?&body=${encodedMessage}`;
+}
+
+/**
+ * Generate QR code as data URL for a pin (creates SMS deeplink QR)
  * @param {string} slug - The pin's unique slug
  * @param {Object} options - QR code options
  * @param {number} options.width - QR code width in pixels (default: 256)
  * @param {string} options.color - QR code color (default: '#000000')
  * @param {string} options.background - Background color (default: '#ffffff')
+ * @param {Object} options.pin - Pin data for SMS message
  * @returns {Promise<string>} Data URL of the QR code image
  */
 export async function generatePinQRCode(slug, options = {}) {
@@ -31,12 +60,14 @@ export async function generatePinQRCode(slug, options = {}) {
     width = 256,
     color = '#000000',
     background = '#ffffff',
+    pin = {},
   } = options;
 
-  const url = getPinShareUrl(slug);
+  // Generate SMS deeplink instead of direct URL
+  const smsUrl = getSmsDeeplink(slug, pin);
 
   try {
-    const dataUrl = await QRCode.toDataURL(url, {
+    const dataUrl = await QRCode.toDataURL(smsUrl, {
       width,
       color: {
         dark: color,

@@ -11,7 +11,7 @@ export default function PinShareModal({ open, onClose, pin }) {
   useEffect(() => {
     if (open && pin?.slug) {
       setShareUrl(getPinShareUrl(pin.slug));
-      generatePinQRCode(pin.slug)
+      generatePinQRCode(pin.slug, { pin })
         .then(setQrCode)
         .catch(err => console.error('QR generation failed:', err));
     }
@@ -235,7 +235,7 @@ export default function PinShareModal({ open, onClose, pin }) {
             </div>
 
             <div style={instructionStyle}>
-              Scan this QR code with your phone to access your pin and share it with friends!
+              Scan this QR code with your phone to open SMS with a link to your pin card image!
             </div>
 
             {qrCode && (
