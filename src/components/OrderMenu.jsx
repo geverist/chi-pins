@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useOrderCart } from '../hooks/useOrderCart';
 import CheckoutModal from './CheckoutModal';
 import OrderConfirmation from './OrderConfirmation';
+import { useFeatureIdleTimeout } from '../hooks/useFeatureIdleTimeout';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function OrderMenu({ onClose }) {
   const [menu, setMenu] = useState([]);
@@ -11,8 +13,16 @@ export default function OrderMenu({ onClose }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showCheckout, setShowCheckout] = useState(false);
   const [orderConfirmation, setOrderConfirmation] = useState(null);
+  const { settings: adminSettings } = useAdminSettings();
 
   const { cart, addToCart, removeFromCart, updateQuantity, clearCart, getTotalPrice, getTotalItems } = useOrderCart();
+
+  // Idle timeout - close ordering and return to map
+  useFeatureIdleTimeout(
+    true, // Always active when OrderMenu is open
+    onClose,
+    adminSettings.orderingIdleTimeout || 300
+  );
 
   useEffect(() => {
     fetchMenu();

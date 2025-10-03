@@ -32,6 +32,11 @@ export default function AdminPanel({ open, onClose }) {
     lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
     labelStyle: 'pill', // 'pill' | 'clean'
 
+    // Feature idle timeouts (seconds)
+    gamesIdleTimeout: 180,      // 3 minutes
+    jukeboxIdleTimeout: 120,    // 2 minutes
+    orderingIdleTimeout: 300,   // 5 minutes
+
     // Content layers
     showPinsSinceMonths: 24,
     showPopularSpots: true,
@@ -316,6 +321,39 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, attractorHintEnabled: v }))}
                   />
                 </FieldRow>
+              </Card>
+
+              <Card title="Feature Idle Timeouts">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Automatically close features after inactivity and return to map view
+                </p>
+                <FieldRow label="Games timeout (seconds)">
+                  <NumberInput
+                    value={settings.gamesIdleTimeout}
+                    min={30}
+                    max={600}
+                    onChange={(v) => setSettings(s => ({ ...s, gamesIdleTimeout: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Jukebox timeout (seconds)">
+                  <NumberInput
+                    value={settings.jukeboxIdleTimeout}
+                    min={30}
+                    max={600}
+                    onChange={(v) => setSettings(s => ({ ...s, jukeboxIdleTimeout: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Ordering timeout (seconds)">
+                  <NumberInput
+                    value={settings.orderingIdleTimeout}
+                    min={60}
+                    max={900}
+                    onChange={(v) => setSettings(s => ({ ...s, orderingIdleTimeout: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Set to 0 to disable timeout for a feature
+                </p>
               </Card>
 
               <Card title="Data window">

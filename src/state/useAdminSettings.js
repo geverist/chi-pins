@@ -21,6 +21,11 @@ const DEFAULTS = {
   highlightMs: 30_000,
   exploreDismissMs: 12_000,
 
+  // Feature idle timeouts (seconds)
+  gamesIdleTimeout: 180,      // 3 minutes
+  jukeboxIdleTimeout: 120,    // 2 minutes
+  orderingIdleTimeout: 300,   // 5 minutes
+
   // Map display
   minZoomForPins: 13,
   maxZoom: 17,

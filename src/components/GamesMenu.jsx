@@ -4,6 +4,8 @@ import HotdogGame from './HotdogGame';
 import TriviaGame from './TriviaGame';
 import DeepDishGame from './DeepDishGame';
 import WindGame from './WindGame';
+import { useFeatureIdleTimeout } from '../hooks/useFeatureIdleTimeout';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 const GAMES = [
   {
@@ -42,6 +44,14 @@ const GAMES = [
 
 export default function GamesMenu({ onClose }) {
   const [selectedGame, setSelectedGame] = useState(null);
+  const { settings: adminSettings } = useAdminSettings();
+
+  // Idle timeout - close games and return to map
+  useFeatureIdleTimeout(
+    true, // Always active when GamesMenu is open
+    onClose,
+    adminSettings.gamesIdleTimeout || 180
+  );
 
   if (selectedGame === 'hotdog-assembly') {
     return (

@@ -1,6 +1,8 @@
 // src/components/Jukebox.jsx
 import { useState, useEffect } from 'react';
 import NowPlaying from './NowPlaying';
+import { useFeatureIdleTimeout } from '../hooks/useFeatureIdleTimeout';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function Jukebox({ onClose }) {
   const [library, setLibrary] = useState([]);
@@ -9,6 +11,14 @@ export default function Jukebox({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [playbackStatus, setPlaybackStatus] = useState(null);
+  const { settings: adminSettings } = useAdminSettings();
+
+  // Idle timeout - close jukebox and return to map
+  useFeatureIdleTimeout(
+    true, // Always active when Jukebox is open
+    onClose,
+    adminSettings.jukeboxIdleTimeout || 120
+  );
 
   useEffect(() => {
     fetchLibrary();
