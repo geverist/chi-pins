@@ -505,6 +505,8 @@ export default function MapShell({
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
+          maxNativeZoom={18}
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />
