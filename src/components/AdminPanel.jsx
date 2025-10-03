@@ -994,6 +994,8 @@ export default function AdminPanel({ open, onClose }) {
         </div>
       </div>
     </div>
+      )}
+    </>
   )
 }
 
@@ -1116,9 +1118,6 @@ function ModerationTable({ rows = [], selected, onToggle }) {
         </tbody>
       </table>
     </div>
-        </div>
-      )}
-    </>
   )
 }
 

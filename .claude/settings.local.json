@@ -16,7 +16,9 @@
       "Bash(grep:*)",
       "Bash(done)",
       "Bash(npm install:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git remote get-url:*)"
     ],
     "deny": [],
     "ask": []
