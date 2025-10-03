@@ -56,8 +56,8 @@ const DEFAULTS = {
 
   // Popular spots seed (editable)
   popularSpots: [
-    { name: 'Portillo's (Clark & Ontario)', type: 'hotdog', lat: 41.8922, lng: -87.6305 },
-    { name: 'Gene & Jude's', type: 'hotdog', lat: 41.9099, lng: -87.8847 },
+    { name: 'Portillo\'s (Clark & Ontario)', type: 'hotdog', lat: 41.8922, lng: -87.6305 },
+    { name: 'Gene & Jude\'s', type: 'hotdog', lat: 41.9099, lng: -87.8847 },
   ],
 }
 
