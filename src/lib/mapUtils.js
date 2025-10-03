@@ -10,6 +10,63 @@ export const USA = { lat: 37.0902, lng: -95.7129 };
 export const GLOBAL_ZOOM = 4;
 export const INITIAL_RADIUS_MILES = 0.5;
 
+// Lake Michigan shoreline polygon (western boundary)
+// Traced from south to north along the Chicago lakefront
+export const LAKE_MICHIGAN_SHORELINE = [
+  // Indiana border (south)
+  [41.60, -87.52],
+  // South Chicago
+  [41.65, -87.53],
+  [41.70, -87.54],
+  [41.73, -87.55],
+  // Hyde Park
+  [41.78, -87.58],
+  [41.79, -87.59],
+  // Museum Campus
+  [41.86, -87.61],
+  // Streeterville / Navy Pier
+  [41.88, -87.61],
+  [41.89, -87.61],
+  // Gold Coast
+  [41.90, -87.62],
+  [41.91, -87.63],
+  // Lincoln Park
+  [41.92, -87.64],
+  [41.93, -87.64],
+  [41.94, -87.65],
+  // Uptown
+  [41.96, -87.65],
+  [41.97, -87.65],
+  // Edgewater
+  [41.98, -87.66],
+  [41.99, -87.66],
+  // Rogers Park
+  [42.00, -87.66],
+  [42.01, -87.66],
+  // Evanston
+  [42.04, -87.67],
+  [42.05, -87.67],
+  // Wilmette
+  [42.07, -87.68],
+  [42.08, -87.69],
+  // Winnetka
+  [42.10, -87.69],
+  // Glencoe
+  [42.13, -87.70],
+  // Highland Park
+  [42.18, -87.70],
+  // Lake Forest
+  [42.24, -87.68],
+  // Waukegan
+  [42.35, -87.82],
+  [42.40, -87.82],
+  // Zion / Illinois Beach
+  [42.45, -87.81],
+  [42.48, -87.81],
+  // Wisconsin border (north)
+  [42.50, -87.80],
+];
+
 /* ---------- Utility: geographic helpers ---------- */
 export function squareMileDeltas(centerLat) {
   const mileKm = 1.609344;
@@ -19,6 +76,43 @@ export function squareMileDeltas(centerLat) {
   const lonDegPerKm = 1 / (111.32 * Math.cos(latRad) || 1);
   const dLng = mileKm * lonDegPerKm;
   return { dLat, dLng };
+}
+
+/**
+ * Point-in-polygon test using ray casting algorithm
+ */
+function pointInPolygon(lat, lng, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][1], yi = polygon[i][0];
+    const xj = polygon[j][1], yj = polygon[j][0];
+
+    const intersect = ((yi > lat) !== (yj > lat))
+        && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Check if a location is in Lake Michigan
+ * Uses polygon boundary traced along the Chicago lakefront
+ */
+export function isInLakeMichigan(lat, lng) {
+  // Quick bounds check first
+  if (lat < 41.6 || lat > 42.5 || lng < -87.9 || lng > -87.5) {
+    return false;
+  }
+
+  // Create polygon: shoreline + eastern boundary box
+  const polygon = [
+    ...LAKE_MICHIGAN_SHORELINE,
+    // Close polygon with eastern boundary (far into the lake)
+    [42.50, -86.0],  // NE corner
+    [41.60, -86.0],  // SE corner
+  ];
+
+  return pointInPolygon(lat, lng, polygon);
 }
 
 export function boundsForMiles(center, miles) {

@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid'; // s Requires npm install uuid@9.0.1
+import { useBackgroundImages } from '../hooks/useBackgroundImages';
 
 export default function Editor({
   mapMode,
@@ -22,6 +23,10 @@ export default function Editor({
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
+
+  // Background images
+  const { backgrounds } = useBackgroundImages();
+  const [selectedBg, setSelectedBg] = useState(null);
 
   // Start camera on user interaction
   const startCamera = async () => {
@@ -70,9 +75,35 @@ export default function Editor({
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // If a background is selected, composite it
+      if (selectedBg) {
+        // Load background image
+        const bgImage = new Image();
+        bgImage.crossOrigin = 'anonymous';
+
+        await new Promise((resolve, reject) => {
+          bgImage.onload = resolve;
+          bgImage.onerror = reject;
+          bgImage.src = selectedBg.url;
+        });
+
+        // Draw background first (scaled to canvas size)
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+        // Draw video on top with some transparency or use CSS blend mode
+        ctx.globalAlpha = 0.7; // Make video slightly transparent
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+      } else {
+        // No background - just draw the video
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
+
       const dataUrl = canvas.toDataURL('image/jpeg');
       setPhotoPreview(dataUrl);
 
@@ -188,6 +219,75 @@ export default function Editor({
         Snap a photo of your hot dog spot or upload one.
       </div>
       {cameraError && <div style={{ color: '#ef4444' }} role="alert">{cameraError}</div>}
+
+      {/* Background Carousel */}
+      {isCameraReady && !photoPreview && backgrounds.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 13, color: '#a7b0b8', marginBottom: 8 }}>
+            Select a background (optional):
+          </div>
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            overflowX: 'auto',
+            padding: 8,
+            background: '#0f1115',
+            borderRadius: 8,
+          }}>
+            <button
+              onClick={() => setSelectedBg(null)}
+              style={{
+                minWidth: 80,
+                height: 60,
+                border: selectedBg === null ? '2px solid #0ea5e9' : '1px solid #2a2f37',
+                borderRadius: 6,
+                background: '#1a1d23',
+                color: '#fff',
+                fontSize: 11,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              None
+            </button>
+            {backgrounds.map((bg) => (
+              <button
+                key={bg.id}
+                onClick={() => setSelectedBg(bg)}
+                style={{
+                  minWidth: 80,
+                  height: 60,
+                  border: selectedBg?.id === bg.id ? '2px solid #0ea5e9' : '1px solid #2a2f37',
+                  borderRadius: 6,
+                  padding: 0,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                }}
+              >
+                <img
+                  src={bg.url}
+                  alt={bg.name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+          {selectedBg && (
+            <div style={{ fontSize: 11, color: '#0ea5e9', marginTop: 4 }}>
+              Background: {selectedBg.name}
+            </div>
+          )}
+        </div>
+      )}
+
       {isCameraReady && !photoPreview && (
         <video ref={videoRef} style={{ maxWidth: '300px', maxHeight: '200px' }} aria-hidden="true" />
       )}
@@ -254,7 +354,6 @@ export default function Editor({
           ))}
         </div>
         {InlineFieldsChicago}
-        {PhotoSection}
         {LoyaltySection}
       </div>
     );
@@ -270,7 +369,6 @@ export default function Editor({
     }}>
       {IdAndActionsRow}
       {InlineFieldsGlobal}
-      {PhotoSection}
       {LoyaltySection}
     </div>
   );

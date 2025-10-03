@@ -1,9 +1,13 @@
 // src/components/AdminPanel.jsx
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useBackgroundImages } from '../hooks/useBackgroundImages'
 
 export default function AdminPanel({ open, onClose }) {
   const [tab, setTab] = useState('general')
+
+  // Background images hook
+  const { backgrounds, loading: bgLoading, addBackground, deleteBackground } = useBackgroundImages()
 
   // ---------- Defaults (kept same) ----------
   const defaultSettings = {
@@ -16,6 +20,7 @@ export default function AdminPanel({ open, onClose }) {
     showCommunityPins: true,
     clusterBubbleThreshold: 13,
     showLabelsZoom: 13,
+    lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
     // new-but-safe toggles used elsewhere; default true/false won't break anything
     loyaltyEnabled: true,
     enableGlobalBubbles: true,
@@ -37,11 +42,16 @@ export default function AdminPanel({ open, onClose }) {
     try {
       const raw = localStorage.getItem('adminPopularSpots')
       return raw ? JSON.parse(raw) : [
-        { label: 'Portillo’s – River North', category: 'hotdog' },
-        { label: 'Al’s #1 Italian Beef – Little Italy', category: 'beef' },
+        { label: 'Portillo's – River North', category: 'hotdog' },
+        { label: 'Al's #1 Italian Beef – Little Italy', category: 'beef' },
       ]
     } catch { return [] }
   })
+
+  // Track initial state to detect changes
+  const [initialSettings, setInitialSettings] = useState(null)
+  const [initialPopularSpots, setInitialPopularSpots] = useState(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Moderation – selected IDs for deletion
   const [pendingDeletes, setPendingDeletes] = useState(new Set())
@@ -64,7 +74,10 @@ export default function AdminPanel({ open, onClose }) {
         // Merge unknown keys so we can roll forward/back
         const merged = { ...defaultSettings, ...sData.value }
         setSettings(merged)
+        setInitialSettings(merged)
         localStorage.setItem('adminSettings', JSON.stringify(merged))
+      } else {
+        setInitialSettings(settings)
       }
 
       // POPULAR SPOTS: table "popular_spots" with columns {id, label, category, city?}
@@ -76,14 +89,31 @@ export default function AdminPanel({ open, onClose }) {
       if (!pErr && Array.isArray(pData)) {
         const rows = pData.map(({ id, label, category }) => ({ id, label, category }))
         setPopularSpots(rows)
+        setInitialPopularSpots(rows)
         localStorage.setItem('adminPopularSpots', JSON.stringify(rows))
+      } else {
+        setInitialPopularSpots(popularSpots)
       }
+
+      setHasUnsavedChanges(false)
     } catch {
       // ignore – fallback to localStorage is already set
+      setInitialSettings(settings)
+      setInitialPopularSpots(popularSpots)
     }
   }, [open])
 
   useEffect(() => { if (open) loadFromSupabase() }, [open, loadFromSupabase])
+
+  // Detect changes
+  useEffect(() => {
+    if (!initialSettings || !initialPopularSpots) return
+
+    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(initialSettings)
+    const spotsChanged = JSON.stringify(popularSpots) !== JSON.stringify(initialPopularSpots)
+
+    setHasUnsavedChanges(settingsChanged || spotsChanged)
+  }, [settings, popularSpots, initialSettings, initialPopularSpots])
 
   // ESC closes
   useEffect(() => {
@@ -127,13 +157,12 @@ export default function AdminPanel({ open, onClose }) {
     return true
   }, [settings, popularSpots])
 
-  const saveLocalAndMaybeSupabase = async () => {
+  const saveAndClose = async () => {
     saveLocal()
     await saveSupabase()
-  }
-
-  const applyAndClose = async () => {
-    await saveLocalAndMaybeSupabase()
+    setInitialSettings(settings)
+    setInitialPopularSpots(popularSpots)
+    setHasUnsavedChanges(false)
     onClose?.()
   }
 
@@ -212,8 +241,14 @@ export default function AdminPanel({ open, onClose }) {
             <h3 style={s.title}>Control Panel</h3>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button style={btn.secondary} onClick={saveLocalAndMaybeSupabase} title="Save without closing">Save</button>
-            <button style={btn.primary} onClick={applyAndClose} title="Save and close">Apply & Close</button>
+            <button
+              style={{ ...btn.primary, opacity: hasUnsavedChanges ? 1 : 0.5 }}
+              onClick={saveAndClose}
+              disabled={!hasUnsavedChanges}
+              title={hasUnsavedChanges ? "Save changes and close" : "No changes to save"}
+            >
+              {hasUnsavedChanges ? '💾 Save & Close' : '✓ Saved'}
+            </button>
             <button style={btn.ghost} onClick={onClose} aria-label="Close">✕</button>
           </div>
         </div>
@@ -223,6 +258,7 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
           <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>Display</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
+          <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
           <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
         </div>
 
@@ -421,6 +457,130 @@ export default function AdminPanel({ open, onClose }) {
                     Delete selected
                   </button>
                 </div>
+              </Card>
+            </div>
+          )}
+
+          {tab === 'backgrounds' && (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="Photo Capture Backgrounds">
+                <p style={s.muted}>
+                  Upload background images that users can select when taking photos. Images will appear in a carousel.
+                </p>
+
+                {/* Upload Section */}
+                <div style={{ marginTop: 16 }}>
+                  <input
+                    type="file"
+                    id="bg-upload"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      try {
+                        const name = prompt('Enter a name for this background:', file.name);
+                        if (!name) return;
+
+                        await addBackground(file, name);
+                        e.target.value = ''; // Reset input
+                      } catch (err) {
+                        alert(`Failed to upload: ${err.message}`);
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => document.getElementById('bg-upload').click()}
+                    style={{
+                      ...btn.primary,
+                      width: '100%',
+                      marginBottom: 16,
+                    }}
+                  >
+                    + Upload Background Image
+                  </button>
+                </div>
+
+                {/* Loading State */}
+                {bgLoading && (
+                  <p style={{ textAlign: 'center', color: '#888' }}>Loading backgrounds...</p>
+                )}
+
+                {/* Background Grid */}
+                {!bgLoading && backgrounds.length === 0 && (
+                  <p style={{ textAlign: 'center', color: '#888', fontStyle: 'italic' }}>
+                    No backgrounds yet. Upload your first one!
+                  </p>
+                )}
+
+                {!bgLoading && backgrounds.length > 0 && (
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                    gap: 12,
+                    marginTop: 16,
+                  }}>
+                    {backgrounds.map((bg) => (
+                      <div
+                        key={bg.id}
+                        style={{
+                          position: 'relative',
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          border: '1px solid #2a2f37',
+                          background: '#0f1115',
+                        }}
+                      >
+                        <img
+                          src={bg.url}
+                          alt={bg.name}
+                          style={{
+                            width: '100%',
+                            height: 120,
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+                        <div style={{
+                          padding: 8,
+                          fontSize: 12,
+                          color: '#fff',
+                          background: '#1a1d23',
+                        }}>
+                          <div style={{
+                            fontWeight: '600',
+                            marginBottom: 4,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}>
+                            {bg.name}
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (confirm(`Delete "${bg.name}"?`)) {
+                                try {
+                                  await deleteBackground(bg.id, bg.url);
+                                } catch (err) {
+                                  alert(`Failed to delete: ${err.message}`);
+                                }
+                              }
+                            }}
+                            style={{
+                              ...btn.danger,
+                              width: '100%',
+                              padding: '4px 8px',
+                              fontSize: 11,
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
           )}

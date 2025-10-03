@@ -18,12 +18,15 @@ import {
   boundsForMiles,
   CHI_BOUNDS,
   CHI_MIN_ZOOM,
+  isInLakeMichigan,
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
 // pin helpers
 import { ensureUniqueSlug, makeChiSlug } from './lib/pinsUtils';
 import { postToFacebook } from './lib/facebookShare';
+import { notifyPinPlacement, isVestaboardConfigured } from './lib/vestaboard';
+import { getPinSlugFromUrl } from './lib/pinShare';
 
 // components
 import HeaderBar from './components/HeaderBar';
@@ -38,6 +41,7 @@ import Editor from './components/Editor';
 import Toast from './components/Toast';
 import AttractorOverlay from './components/AttractorOverlay';
 import GlobalCounters from './components/GlobalCounters';
+import PinShareModal from './components/PinShareModal';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -48,78 +52,7 @@ import ZoomGate from './components/ZoomGate';
 import AdminPanel from './components/AdminPanel';
 import MobilePinsList from './components/MobilePinsList';
 import { useAdminSettings } from './state/useAdminSettings';
-
-/* ---------------- KIOSK HELPERS ---------------- */
-async function enterFullscreen(el) {
-  const root = el || (typeof document !== 'undefined' ? document.documentElement : null);
-  if (root && !document.fullscreenElement && root.requestFullscreen) {
-    try {
-      await root.requestFullscreen();
-    } catch (err) {
-      console.warn('Fullscreen failed:', err);
-    }
-  }
-}
-
-let wakeLockRef = null;
-async function ensureWakeLock() {
-  try {
-    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && !wakeLockRef) {
-      wakeLockRef = await navigator.wakeLock.request('screen');
-      wakeLockRef.addEventListener('release', () => {
-        wakeLockRef = null;
-        if (typeof document !== 'undefined' && new URLSearchParams(window.location.search).get('kiosk') === '1') {
-          setTimeout(ensureWakeLock, 1000);
-        }
-      });
-    }
-  } catch (err) {
-    console.warn('Wake lock failed:', err);
-  }
-}
-
-async function exitFullscreenAndWake() {
-  try {
-    await document.exitFullscreen?.();
-  } catch {}
-  try {
-    await wakeLockRef?.release?.();
-  } catch {}
-  wakeLockRef = null;
-}
-
-function onFullscreenChange(cb) {
-  if (typeof document === 'undefined') return () => {};
-  const handler = () => cb?.(!!document.fullscreenElement);
-  document.addEventListener('fullscreenchange', handler);
-  return () => document.removeEventListener('fullscreenchange', handler);
-}
-
-function KioskStartOverlay({ visible, onStart }) {
-  if (!visible) return null;
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 5000,
-        display: 'grid',
-        placeItems: 'center',
-        background: 'rgba(0,0,0,0.6)',
-      }}
-      className="kiosk-overlay"
-    >
-      <button
-        onClick={onStart}
-        className="btn-toggle btn-kiosk"
-        style={{ fontSize: 18, padding: '16px 22px' }}
-        aria-label="Start kiosk mode"
-      >
-        Start Kiosk
-      </button>
-    </div>
-  );
-}
+import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode';
 
 function normalizePhoneToE164ish(raw) {
   if (!raw) return null;
@@ -134,16 +67,36 @@ function normalizePhoneToE164ish(raw) {
 /* ------------------------------------------------------------------------ */
 
 const DEFAULT_FUN_FACTS = {
-  chicago: 'Home of the first skyscraper (1885) and deep-dish pizza debates.',
-  evanston: 'Evanston once had over 100 churches—hence the old nickname “Heavenston.”',
-  oakpark: 'Frank Lloyd Wright designed dozens of buildings here.',
-  cicero: 'Once Al Capone’s base of operations in the 1920s.',
-  skokie: 'Hosts the Illinois Holocaust Museum & Education Center.',
-  schaumburg: 'Woodfield Mall was one of the largest in the U.S. for decades.',
-  naperville: 'Its Riverwalk was built to celebrate the city’s 150th anniversary.',
-  aurora: 'Second-largest city in Illinois and an early adopter of electric streetlights.',
-  joliet: 'Famous for the Old Joliet Prison (yes, the Blues Brothers one!).',
-  waukegan: 'Ray Bradbury’s hometown; see the annual Ray Bradbury Days.',
+  chicago: 'The Chicago River flows backwards! Engineers reversed it in 1900 to improve sanitation.',
+  evanston: 'Home to Northwestern University and birthplace of the ice cream sundae (1890s).',
+  oakpark: 'Frank Lloyd Wright's architectural playground—25 buildings still stand here.',
+  cicero: 'Al Capone ran his empire from the Hawthorne Hotel, still standing on Ogden Ave.',
+  skokie: 'The "World's Largest Village" was called Niles Center until 1940.',
+  schaumburg: 'Went from 130 residents (1956) to 75,000+ today—one of America's fastest-growing suburbs.',
+  naperville: 'Named "Best Place to Live in America" twice by Money magazine.',
+  aurora: 'First U.S. city to illuminate its streets entirely with electric lights (1881).',
+  joliet: 'The Old Joliet Prison hosted Jake and Elwood in The Blues Brothers opening scene.',
+  waukegan: 'Ray Bradbury grew up here—Green Town in his novels is based on Waukegan.',
+  'oak lawn': 'The Hilltop restaurant's iconic neon sign has been a Route 66 landmark since 1961.',
+  'des plaines': 'Home of the first McDonald's franchise opened by Ray Kroc in 1955.',
+  wilmette: 'The Bahá'í House of Worship is the oldest surviving Bahá'í temple in the world.',
+  berwyn: 'Features the world's largest laundromat and Cermak Plaza's iconic "Spindle" car sculpture.',
+  'park ridge': 'Hillary Clinton's hometown—she graduated from Maine South High School.',
+  'glen ellyn': 'Lake Ellyn was created in 1889 by damming a creek to power a mill.',
+  wheaton: 'Red Grange, "The Galloping Ghost," played football at Wheaton College.',
+  'orland park': 'Named after the town's founder, John Orland, who arrived in the 1840s.',
+  'tinley park': 'Home to the Hollywood Casino Amphitheatre, one of the Midwest's premier concert venues.',
+  'oak brook': 'McDonald's global headquarters moved here in 2018 to a sprawling campus.',
+  lombard: 'The Lilac Village celebrates Lilacia Park's 1,200+ lilac bushes each May.',
+  'downers grove': 'The Pierce Downer cabin (1832) is one of the oldest structures in the area.',
+  elmhurst: 'York Theatre, built in 1924, is one of the few remaining atmospheric movie palaces.',
+  palatine: 'Named after Palatine, New York, by early settlers from that region.',
+  'arlington heights': 'Arlington Park racetrack hosted the first million-dollar horse race in 1981.',
+  'buffalo grove': 'Named after the buffalo that once roamed the prairie groves here.',
+  'mount prospect': 'The Busse-Biermann mansion (1910) is now a historical museum.',
+  hoffman: 'Hoffman Estates was farmland until the 1950s when Sam Hoffman built planned suburbs.',
+  bolingbrook: 'Incorporated in 1965, it's one of Illinois's youngest and fastest-growing towns.',
+  'crystal lake': 'The lake itself was formed by a glacier and is spring-fed—hence the crystal-clear water.',
 };
 
 export default function App() {
@@ -178,6 +131,10 @@ export default function App() {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareToFb, setShareToFb] = useState(false);
 
+  // pin share modal
+  const [pinShareOpen, setPinShareOpen] = useState(false);
+  const [pinToShare, setPinToShare] = useState(null);
+
   // layer toggles
   const [showPopularSpots, setShowPopularSpots] = useState(true);
   const [showCommunityPins, setShowCommunityPins] = useState(true);
@@ -186,6 +143,26 @@ export default function App() {
   // highlight
   const [highlightSlug, setHighlightSlug] = useState(null);
   const { trigger: triggerHighlight, clear: clearHighlight } = useHighlightPin(setHighlightSlug);
+
+  // Handle shared pin URLs (e.g., ?pin=deep-dish-delight)
+  useEffect(() => {
+    const sharedSlug = getPinSlugFromUrl();
+    if (sharedSlug && pins.length > 0 && mapReady) {
+      const sharedPin = pins.find(p => p.slug === sharedSlug);
+      if (sharedPin) {
+        // Zoom to and highlight the shared pin
+        triggerHighlight(sharedSlug, 5000); // Highlight for 5 seconds
+        setTimeout(() => {
+          if (mainMapRef.current) {
+            mainMapRef.current.flyTo([sharedPin.lat, sharedPin.lng], 16, {
+              animate: true,
+              duration: 1.5,
+            });
+          }
+        }, 300);
+      }
+    }
+  }, [pins, mapReady]);
 
   // editor form
   const [form, setForm] = useState({
@@ -329,6 +306,39 @@ export default function App() {
     setNeedsKioskStart(false);
   };
 
+  // Hidden key sequence to toggle kiosk mode (press 'k' 3 times within 1 second)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let keyPresses = [];
+    const SEQUENCE_KEY = 'k';
+    const SEQUENCE_LENGTH = 3;
+    const TIMEOUT_MS = 1000;
+
+    const handleKeyPress = (e) => {
+      if (e.key.toLowerCase() === SEQUENCE_KEY) {
+        const now = Date.now();
+        keyPresses.push(now);
+
+        // Remove old presses outside the timeout window
+        keyPresses = keyPresses.filter(time => now - time < TIMEOUT_MS);
+
+        // Check if we have the right number of presses
+        if (keyPresses.length >= SEQUENCE_LENGTH) {
+          keyPresses = [];
+          if (isFullscreen) {
+            exitKioskNow();
+          } else {
+            startKioskNow();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isFullscreen]);
+
   // dedupe pins
   const pinsDeduped = useMemo(() => {
     const seen = new Map();
@@ -412,6 +422,17 @@ export default function App() {
   async function handlePick(ll) {
     console.log('App: handlePick called with latlng=', ll, 'mapReady=', mapReady, 'isMobile=', isMobile);
     if (isMobile || !mapReady) return;
+
+    // Prevent placing pins in Lake Michigan
+    if (isInLakeMichigan(ll.lat, ll.lng)) {
+      setToast({
+        title: 'Invalid Location',
+        text: 'Cannot place a pin in Lake Michigan! Please select a location on land.'
+      });
+      setTimeout(() => setToast(null), 5000);
+      return;
+    }
+
     try {
       const map = mainMapRef.current;
       if (!map) {
@@ -485,6 +506,8 @@ export default function App() {
 
     try {
       const inserted = await setPins(rec);
+
+      // Facebook share
       if (shareToFb && rec.note) {
         postToFacebook({
           lat: rec.lat,
@@ -494,6 +517,16 @@ export default function App() {
           slug: rec.slug,
         });
       }
+
+      // Vestaboard notification (fire and forget - don't block on errors)
+      if (isVestaboardConfigured()) {
+        notifyPinPlacement({
+          slug: rec.slug,
+          team: rec.team || rec.continent,
+          notes: rec.note,
+        }).catch(err => console.warn('Vestaboard notification failed:', err));
+      }
+
       setShowCommunityPins(true);
       cancelEditing();
       if (isChicago) {
@@ -626,28 +659,6 @@ export default function App() {
             </button>
           </>
         )}
-        {!isMobile &&
-          (!isFullscreen ? (
-            <button
-              type="button"
-              onClick={startKioskNow}
-              style={btn3d(false)}
-              className="btn-kiosk"
-              aria-label="Enter kiosk mode"
-            >
-              🖥️ Enter Kiosk Mode
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={exitKioskNow}
-              style={btn3d(true)}
-              className="btn-kiosk"
-              aria-label="Exit kiosk mode"
-            >
-              ⤴️ Exit Kiosk Mode
-            </button>
-          ))}
       </div>
     ) : (
       <GlobalCounters counts={continentCounts} />
@@ -763,7 +774,7 @@ export default function App() {
               )}
             </>
           )}
-          {showCommunityPins && !draft && mapMode === 'chicago' && (
+          {showCommunityPins && !draft && (
             <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>
               <SavedPins
                 key={`pins-${exploring ? 'on' : 'off'}`}
@@ -772,6 +783,10 @@ export default function App() {
                 highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
                 highlightMs={15000}
                 onHighlightEnd={clearHighlight}
+                onShare={(pin) => {
+                  setPinToShare(pin);
+                  setPinShareOpen(true);
+                }}
               />
             </ZoomGate>
           )}
@@ -903,6 +918,15 @@ export default function App() {
       />
 
       <KioskStartOverlay visible={autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
+
+      <PinShareModal
+        open={pinShareOpen}
+        onClose={() => {
+          setPinShareOpen(false);
+          setPinToShare(null);
+        }}
+        pin={pinToShare}
+      />
 
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
 
