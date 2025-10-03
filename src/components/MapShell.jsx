@@ -67,7 +67,7 @@ function ensureSearchCss() {
       .map-search-clear {
         min-width: 48px !important;
         min-height: 48px !important;
-        fontSize: 1.5rem !important;
+        font-size: 1.5rem !important;
         right: 8px !important;
       }
     }
