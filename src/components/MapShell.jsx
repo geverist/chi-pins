@@ -14,7 +14,7 @@ import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
-/* ---------- one-time CSS injector so ALL text is consistently styled ---------- */
+/* ---------- one-time CSS injector so ALL text is consistently styled -----d----- */
 let __searchCssInjected = false;
 function ensureSearchCss() {
   if (__searchCssInjected || typeof document === 'undefined') return;
