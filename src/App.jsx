@@ -45,6 +45,7 @@ import ZoomGate from './components/ZoomGate';
 
 // Admin panel
 import AdminPanel from './components/AdminPanel';
+import MobilePinsList from './components/MobilePinsList';
 
 /* ---------------- KIOSK HELPERS ---------------- */
 async function enterFullscreen(el) {
@@ -177,6 +178,7 @@ export default function App() {
   // layer toggles
   const [showPopularSpots, setShowPopularSpots] = useState(true);
   const [showCommunityPins, setShowCommunityPins] = useState(true);
+  const [showMobileList, setShowMobileList] = useState(false);
 
   // highlight
   const [highlightSlug, setHighlightSlug] = useState(null);
@@ -586,27 +588,41 @@ export default function App() {
   const headerRight =
     mapMode === 'chicago' ? (
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-        <TeamCount pins={pinsDeduped} />
-        <button
-          type="button"
-          aria-pressed={showPopularSpots}
-          onClick={() => setShowPopularSpots((v) => !v)}
-          style={btn3d(showPopularSpots)}
-          className="btn-kiosk"
-          aria-label={showPopularSpots ? 'Hide popular spots' : 'Show popular spots'}
-        >
-          🌟 {showPopularSpots ? 'Popular spots ON' : 'Popular spots OFF'}
-        </button>
-        <button
-          type="button"
-          aria-pressed={showCommunityPins}
-          onClick={() => setShowCommunityPins((v) => !v)}
-          style={btn3d(showCommunityPins)}
-          className="btn-kiosk"
-          aria-label={showCommunityPins ? 'Hide community pins' : 'Show community pins'}
-        >
-          📍 {showCommunityPins ? 'Hide pins' : 'Show pins'}
-        </button>
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={() => setShowMobileList(true)}
+            style={btn3d(false)}
+            className="btn-kiosk"
+            aria-label="View pins list"
+          >
+            📋 Pins List
+          </button>
+        ) : (
+          <>
+            <TeamCount pins={pinsDeduped} />
+            <button
+              type="button"
+              aria-pressed={showPopularSpots}
+              onClick={() => setShowPopularSpots((v) => !v)}
+              style={btn3d(showPopularSpots)}
+              className="btn-kiosk"
+              aria-label={showPopularSpots ? 'Hide popular spots' : 'Show popular spots'}
+            >
+              🌟 {showPopularSpots ? 'Popular spots ON' : 'Popular spots OFF'}
+            </button>
+            <button
+              type="button"
+              aria-pressed={showCommunityPins}
+              onClick={() => setShowCommunityPins((v) => !v)}
+              style={btn3d(showCommunityPins)}
+              className="btn-kiosk"
+              aria-label={showCommunityPins ? 'Hide community pins' : 'Show community pins'}
+            >
+              📍 {showCommunityPins ? 'Hide pins' : 'Show pins'}
+            </button>
+          </>
+        )}
         {!isMobile &&
           (!isFullscreen ? (
             <button
@@ -880,6 +896,13 @@ export default function App() {
       <KioskStartOverlay visible={autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
 
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
+
+      {isMobile && showMobileList && (
+        <MobilePinsList
+          pins={pinsForRender}
+          onClose={() => setShowMobileList(false)}
+        />
+      )}
     </div>
   );
 }
