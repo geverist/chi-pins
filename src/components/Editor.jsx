@@ -1,7 +1,7 @@
 // src/components/Editor.jsx
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { v4 as uuidv4 } from 'uuid'; // Requires npm install uuid@9.0.1
+import { v4 as uuidv4 } from 'uuid'; // s Requires npm install uuid@9.0.1
 
 export default function Editor({
   mapMode,
