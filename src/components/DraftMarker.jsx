@@ -7,7 +7,8 @@ import { placingIconFor } from '../lib/mapUtils'
 /**
  * DraftMarker
  * - Renders the temporary "placing" pin.
- * - On pointer down, always opens the SubMapModal and hands off the drag.
+ * - If map zoom < max (18), opens SubMapModal for fine-tuning.
+ * - If map zoom >= max (18), enables direct dragging on main map.
  */
 export default function DraftMarker({
   lat,
@@ -15,11 +16,12 @@ export default function DraftMarker({
   team = 'other',
   onOpenModal,      // (center, handoff) => void
   tipToken,         // used to force-refresh tooltip / icon if needed
-  setDraft,         // not used here, but kept for API parity
+  setDraft,         // (pos) => void - update draft position
   modalOpen = false // if modal is open, ignore extra pointer starts
 }) {
   const map = useMap()
   const markerRef = useRef(null)
+  const isDraggingRef = useRef(false)
 
   // Attach pointer handler directly to the pin's DOM element
   useEffect(() => {
@@ -27,12 +29,27 @@ export default function DraftMarker({
     const el = m?.getElement?.()
     if (!el || !map) return
 
+    const MAX_ZOOM = 18
+    const MODAL_ZOOM_BOOST = 2 // SubMapModal zooms in 2 levels
+
     const handlePointerDown = (ev) => {
       console.log('[DraftMarker] pointerdown detected, modalOpen=', modalOpen)
 
       // Avoid re-entrancy if the modal is already open
       if (modalOpen) return
 
+      const currentZoom = map.getZoom()
+
+      // If zoom is too high for modal to provide benefit, enable direct dragging on main map
+      if (currentZoom >= MAX_ZOOM - MODAL_ZOOM_BOOST + 1) {
+        console.log('[DraftMarker] Zoom too high for modal, enabling direct drag on main map')
+        isDraggingRef.current = true
+        ev.preventDefault?.()
+        ev.stopPropagation?.()
+        return
+      }
+
+      // Otherwise, open modal for fine-tuning
       const center = { lat, lng }
       const handoff = {
         x: ev.clientX,
@@ -54,11 +71,52 @@ export default function DraftMarker({
       ev.stopPropagation?.()
     }
 
-    el.addEventListener('pointerdown', handlePointerDown, { passive: false })
-    return () => {
-      el.removeEventListener('pointerdown', handlePointerDown, { passive: false })
+    const handlePointerMove = (ev) => {
+      if (!isDraggingRef.current || !m) return
+
+      // Get map container position
+      const mapContainer = map.getContainer()
+      const rect = mapContainer.getBoundingClientRect()
+
+      // Calculate coordinates relative to map container
+      const containerX = ev.clientX - rect.left
+      const containerY = ev.clientY - rect.top
+
+      // Convert to lat/lng
+      const point = map.containerPointToLatLng([containerX, containerY])
+
+      if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
+        // Move marker to cursor position
+        m.setLatLng(point)
+        // Update draft position
+        setDraft?.({ lat: point.lat, lng: point.lng })
+      }
     }
-  }, [map, lat, lng, onOpenModal, modalOpen, tipToken])
+
+    const handlePointerUp = (ev) => {
+      if (!isDraggingRef.current) return
+      isDraggingRef.current = false
+
+      const ll = m.getLatLng()
+      if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
+        setDraft?.({ lat: ll.lat, lng: ll.lng })
+        // Center map on final position
+        map.panTo([ll.lat, ll.lng], { animate: true })
+      }
+    }
+
+    el.addEventListener('pointerdown', handlePointerDown, { passive: false })
+    window.addEventListener('pointermove', handlePointerMove, { passive: true })
+    window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerUp)
+
+    return () => {
+      el.removeEventListener('pointerdown', handlePointerDown)
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerUp)
+    }
+  }, [map, lat, lng, onOpenModal, modalOpen, tipToken, setDraft])
 
   // If lat/lng are invalid, render nothing (safety)
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null

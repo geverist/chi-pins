@@ -251,7 +251,7 @@ export default function SubMapModal({
           )}
           <MapContainer
             center={center && Number.isFinite(center.lat) && Number.isFinite(center.lng) ? [center.lat, center.lng] : [41.8781, -87.6298]}
-            zoom={baseZoom || 15}
+            zoom={Math.min(18, (baseZoom || 15) + 2)}
             maxZoom={18}
             style={{ width: '100%', height: '100%' }}
             zoomControl={false}
