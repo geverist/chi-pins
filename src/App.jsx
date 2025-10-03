@@ -344,7 +344,9 @@ export default function App() {
     setExploring(isMobile ? true : false);
     clearHighlight();
     setMapMode('chicago');
-    goToChicago(mainMapRef.current);
+    if (mainMapRef.current) {
+      goToChicago(mainMapRef.current, isMobile); // Pass isMobile to preserve zoom settings
+    }
     setResetCameraToken((t) => t + 1);
     setForm((f) => ({ ...f, name: '', neighborhood: '', hotdog: '', note: '', photoUrl: null }));
   };
@@ -510,7 +512,7 @@ export default function App() {
       setTimeout(() => {
         setShowAttractor(!isMobile);
         setExploring(isMobile ? true : false);
-        goToChicago(mainMapRef.current);
+        goToChicago(mainMapRef.current, isMobile); // Pass isMobile to preserve zoom settings
         setResetCameraToken((t) => t + 1);
       }, 0);
       return;
@@ -518,7 +520,9 @@ export default function App() {
     setMapMode('chicago');
     setShowAttractor(!isMobile);
     setExploring(isMobile ? true : false);
-    goToChicago(mainMapRef.current);
+    if (mainMapRef.current) {
+      goToChicago(mainMapRef.current, isMobile); // Pass isMobile to preserve zoom settings
+    }
     setResetCameraToken((t) => t + 1);
   };
 
@@ -639,7 +643,12 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className="app" style={{
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh', // Ensure full viewport height
+      height: '-webkit-fill-available', // Handle mobile browser UI bars
+    }}>
       <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
@@ -653,7 +662,7 @@ export default function App() {
 
       <div
         className="map-wrap"
-        style={{ position: 'relative', flex: 1, minHeight: '60vh', borderTop: '1px solid #222', borderBottom: '1px solid #222' }}
+        style={{ position: 'relative', flex: 1, minHeight: 0, borderTop: '1px solid #222', borderBottom: '1px solid #222' }}
       >
         <MapShell
           mapMode={mapMode}
