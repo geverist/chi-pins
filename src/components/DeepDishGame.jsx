@@ -1,39 +1,37 @@
 // src/components/DeepDishGame.jsx
 import { useState, useEffect, useRef } from 'react';
 import GameLeaderboard from './GameLeaderboard';
+import { useAdminSettings } from '../state/useAdminSettings';
 
-const GAME_DURATION = 60; // 60 seconds
-const FALL_SPEED_BASE = 2;
-const FALL_SPEED_INCREMENT = 0.15;
 const SPAWN_INTERVAL_BASE = 1500; // ms
 const SPAWN_INTERVAL_MIN = 600; // ms
+const FALL_SPEED_INCREMENT = 0.15;
 
-const INGREDIENTS = [
-  { id: 'dough', name: 'Pizza Dough', emoji: '🫓', points: 10, color: '#f4e4c1', size: 60 },
-  { id: 'sauce', name: 'Tomato Sauce', emoji: '🍅', points: 20, color: '#ff6347', size: 50 },
-  { id: 'cheese', name: 'Mozzarella', emoji: '🧀', points: 20, color: '#ffd700', size: 50 },
-  { id: 'sausage', name: 'Italian Sausage', emoji: '🌭', points: 30, color: '#8b4513', size: 45 },
-  { id: 'pepperoni', name: 'Pepperoni', emoji: '🍖', points: 30, color: '#dc143c', size: 45 },
-  { id: 'mushroom', name: 'Mushrooms', emoji: '🍄', points: 25, color: '#deb887', size: 45 },
-  { id: 'pepper', name: 'Bell Peppers', emoji: '🫑', points: 25, color: '#228b22', size: 45 },
-  { id: 'olive', name: 'Black Olives', emoji: '🫒', points: 25, color: '#2f4f4f', size: 40 },
+// Required ingredients to complete pizza
+const REQUIRED_INGREDIENTS = [
+  { id: 'sauce', name: 'Tomato Sauce', emoji: '🍅', points: 100, color: '#ff6347', size: 50 },
+  { id: 'cheese', name: 'Mozzarella', emoji: '🧀', points: 100, color: '#ffd700', size: 50 },
+  { id: 'sausage', name: 'Italian Sausage', emoji: '🌭', points: 150, color: '#8b4513', size: 45 },
+  { id: 'pepperoni', name: 'Pepperoni', emoji: '🍖', points: 150, color: '#dc143c', size: 45 },
+  { id: 'mushroom', name: 'Mushrooms', emoji: '🍄', points: 125, color: '#deb887', size: 45 },
+  { id: 'pepper', name: 'Bell Peppers', emoji: '🫑', points: 125, color: '#228b22', size: 45 },
 ];
 
 const BAD_ITEMS = [
-  { id: 'bomb', name: 'Burnt Pizza', emoji: '💣', points: -50, color: '#000000', size: 50 },
-  { id: 'pineapple', name: 'Pineapple', emoji: '🍍', points: -30, color: '#ffd700', size: 50 },
+  { id: 'bomb', name: 'Burnt Pizza', emoji: '💣', points: -100, color: '#000000', size: 50 },
+  { id: 'pineapple', name: 'Pineapple', emoji: '🍍', points: -75, color: '#ffd700', size: 50 },
 ];
 
 export default function DeepDishGame({ onClose }) {
+  const { settings: adminSettings } = useAdminSettings();
   const [gameState, setGameState] = useState('instructions');
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [fallingItems, setFallingItems] = useState([]);
   const [catcherX, setCatcherX] = useState(50); // percentage
-  const [combo, setCombo] = useState(0);
-  const [missedCount, setMissedCount] = useState(0);
-  const [caughtCount, setCaughtCount] = useState(0);
+  const [collectedIngredients, setCollectedIngredients] = useState([]);
   const [scorePopups, setScorePopups] = useState([]);
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
 
   const gameLoopRef = useRef(null);
   const spawnTimerRef = useRef(null);
@@ -55,14 +53,15 @@ export default function DeepDishGame({ onClose }) {
     setGameState('playing');
     isPlayingRef.current = true;
     setScore(0);
-    setTimeLeft(GAME_DURATION);
     setFallingItems([]);
     setCatcherX(50);
-    setCombo(0);
-    setMissedCount(0);
-    setCaughtCount(0);
+    setCollectedIngredients([]);
     setScorePopups([]);
-    fallSpeedRef.current = FALL_SPEED_BASE;
+    setStartTime(Date.now());
+    setEndTime(null);
+
+    const startSpeed = adminSettings.deepDishStartSpeed || 2;
+    fallSpeedRef.current = startSpeed;
     spawnIntervalRef.current = SPAWN_INTERVAL_BASE;
     gameStartTime.current = Date.now();
     nextItemId.current = 0;
@@ -91,7 +90,14 @@ export default function DeepDishGame({ onClose }) {
   };
 
   const spawnItem = () => {
-    const allItems = [...INGREDIENTS, ...BAD_ITEMS];
+    // Only spawn ingredients that haven't been collected yet, plus bad items
+    const uncollectedIngredients = REQUIRED_INGREDIENTS.filter(
+      ing => !collectedIngredients.find(c => c.id === ing.id)
+    );
+    const allItems = [...uncollectedIngredients, ...BAD_ITEMS];
+
+    if (allItems.length === 0) return; // No items left to spawn
+
     const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
 
     const newItem = {
@@ -109,16 +115,20 @@ export default function DeepDishGame({ onClose }) {
   const updateGame = () => {
     const now = Date.now();
     const elapsed = (now - gameStartTime.current) / 1000;
-    const newTimeLeft = Math.max(0, GAME_DURATION - elapsed);
-    setTimeLeft(newTimeLeft);
 
-    if (newTimeLeft <= 0) {
+    // Check if pizza is complete
+    if (collectedIngredients.length === REQUIRED_INGREDIENTS.length) {
       endGame();
       return;
     }
 
     // Increase difficulty over time
-    fallSpeedRef.current = FALL_SPEED_BASE + (elapsed / 10) * FALL_SPEED_INCREMENT;
+    const startSpeed = adminSettings.deepDishStartSpeed || 2;
+    const endSpeed = adminSettings.deepDishEndSpeed || 5;
+    const maxTime = 60; // Assume 60 seconds max for speed progression
+    const speedProgress = Math.min(elapsed / maxTime, 1);
+    fallSpeedRef.current = startSpeed + (endSpeed - startSpeed) * speedProgress;
+
     spawnIntervalRef.current = Math.max(
       SPAWN_INTERVAL_MIN,
       SPAWN_INTERVAL_BASE - (elapsed * 15)
@@ -172,31 +182,25 @@ export default function DeepDishGame({ onClose }) {
     const isBad = BAD_ITEMS.some(bad => bad.id === item.id);
 
     if (isBad) {
-      // Bad item - lose points and break combo
+      // Bad item - lose points
       const pointsLost = item.points;
       setScore(prev => Math.max(0, prev + pointsLost));
-      setCombo(0);
       showScorePopup(pointsLost, item.x, item.color);
     } else {
-      // Good item - gain points and increase combo
-      const newCombo = combo + 1;
-      setCombo(newCombo);
-      const comboMultiplier = 1 + (Math.floor(newCombo / 3) * 0.5);
-      const pointsGained = Math.round(item.points * comboMultiplier);
+      // Good item - add to collected ingredients
+      setCollectedIngredients(prev => {
+        // Avoid duplicates
+        if (prev.find(i => i.id === item.id)) return prev;
+        return [...prev, item];
+      });
+      const pointsGained = item.points;
       setScore(prev => prev + pointsGained);
-      setCaughtCount(prev => prev + 1);
-      showScorePopup(pointsGained, item.x, item.color);
+      showScorePopup(`+${pointsGained}`, item.x, item.color);
     }
   };
 
   const handleMiss = (item) => {
-    const isBad = BAD_ITEMS.some(bad => bad.id === item.id);
-
-    if (!isBad) {
-      // Missed a good item - break combo
-      setCombo(0);
-      setMissedCount(prev => prev + 1);
-    }
+    // Missing items doesn't affect score, just continues
   };
 
   const showScorePopup = (points, x, color) => {
@@ -218,10 +222,7 @@ export default function DeepDishGame({ onClose }) {
     if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     if (spawnTimerRef.current) clearTimeout(spawnTimerRef.current);
 
-    const accuracy = caughtCount > 0
-      ? (caughtCount / (caughtCount + missedCount)) * 100
-      : 0;
-
+    setEndTime(Date.now());
     setGameState('finished');
   };
 
@@ -261,11 +262,11 @@ export default function DeepDishGame({ onClose }) {
           How to Play
         </h3>
         <p style={{ color: '#a7b0b8', fontSize: 16, lineHeight: 1.6, margin: '0 0 16px' }}>
-          Catch falling pizza ingredients in your deep dish pan! Move with your mouse or finger.
-          Build combos by catching consecutive ingredients. Avoid burnt pizzas and pineapple!
+          Catch falling pizza ingredients on your pizza dough! Move with your mouse or finger.
+          Collect all 6 ingredients to complete your pizza. Avoid burnt pizzas and pineapple!
         </p>
         <p style={{ color: '#10b981', fontSize: 14, fontWeight: 600, margin: 0 }}>
-          Catch as many ingredients as you can in 60 seconds!
+          Complete your pizza as fast as possible for a higher score!
         </p>
       </div>
 
@@ -282,7 +283,7 @@ export default function DeepDishGame({ onClose }) {
             Catch These! ✓
           </h4>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-            {INGREDIENTS.map(item => (
+            {REQUIRED_INGREDIENTS.map(item => (
               <div key={item.id} style={{ fontSize: 32 }} title={item.name}>
                 {item.emoji}
               </div>
@@ -364,32 +365,30 @@ export default function DeepDishGame({ onClose }) {
             {score}
           </div>
         </div>
-        {combo >= 3 && (
-          <div
-            style={{
-              padding: '8px 20px',
-              borderRadius: 8,
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-              animation: 'pulse 0.5s infinite',
-            }}
-          >
-            <div style={{ color: 'white', fontSize: 12 }}>COMBO</div>
-            <div style={{ color: 'white', fontSize: 24, fontWeight: 700 }}>
-              ×{Math.floor(1 + (combo / 3) * 0.5 * 10) / 10}
-            </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ color: '#a7b0b8', fontSize: 14 }}>Pizza Progress</div>
+          <div style={{ color: '#f4f6f8', fontSize: 24, fontWeight: 700 }}>
+            {collectedIngredients.length}/{REQUIRED_INGREDIENTS.length}
           </div>
-        )}
+          <div style={{ display: 'flex', gap: 4, marginTop: 4, justifyContent: 'center' }}>
+            {REQUIRED_INGREDIENTS.map(ing => (
+              <div
+                key={ing.id}
+                style={{
+                  fontSize: 18,
+                  opacity: collectedIngredients.find(c => c.id === ing.id) ? 1 : 0.2,
+                  transition: 'opacity 0.3s',
+                }}
+              >
+                {ing.emoji}
+              </div>
+            ))}
+          </div>
+        </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ color: '#a7b0b8', fontSize: 14 }}>Time</div>
-          <div
-            style={{
-              color: timeLeft <= 10 ? '#ef4444' : '#f4f6f8',
-              fontSize: 32,
-              fontWeight: 700,
-              fontFamily: 'monospace',
-            }}
-          >
-            {Math.ceil(timeLeft)}
+          <div style={{ color: '#a7b0b8', fontSize: 14 }}>Speed</div>
+          <div style={{ color: '#f4f6f8', fontSize: 24, fontWeight: 700 }}>
+            {fallSpeedRef.current.toFixed(1)}x
           </div>
         </div>
       </div>
@@ -440,24 +439,34 @@ export default function DeepDishGame({ onClose }) {
           left: `${catcherX}%`,
           bottom: '5%',
           transform: 'translateX(-50%)',
-          fontSize: 80,
           pointerEvents: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
-        🥘
+        {/* Collected ingredients stacked on dough */}
+        <div style={{ display: 'flex', gap: 4, marginBottom: -20, flexWrap: 'wrap', maxWidth: 120, justifyContent: 'center' }}>
+          {collectedIngredients.map((ing, idx) => (
+            <div key={ing.id} style={{ fontSize: 24, zIndex: 100 + idx }}>
+              {ing.emoji}
+            </div>
+          ))}
+        </div>
+        {/* Pizza Dough */}
+        <div style={{ fontSize: 80 }}>🫓</div>
       </div>
     </div>
   );
 
   const renderFinished = () => {
-    const accuracy = caughtCount > 0
-      ? (caughtCount / (caughtCount + missedCount)) * 100
-      : 0;
+    const timeTaken = endTime && startTime ? (endTime - startTime) / 1000 : 0;
+    const isComplete = collectedIngredients.length === REQUIRED_INGREDIENTS.length;
 
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <h2 style={{ margin: '0 0 24px', color: '#f4f6f8', fontSize: 32 }}>
-          Time's Up!
+          {isComplete ? '🍕 Pizza Complete!' : 'Game Over!'}
         </h2>
 
         <div
@@ -477,7 +486,7 @@ export default function DeepDishGame({ onClose }) {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(2, 1fr)',
             gap: 16,
             marginBottom: 32,
           }}
@@ -491,10 +500,10 @@ export default function DeepDishGame({ onClose }) {
             }}
           >
             <div style={{ color: '#a7b0b8', fontSize: 14, marginBottom: 4 }}>
-              Caught
+              Ingredients
             </div>
             <div style={{ color: '#f4f6f8', fontSize: 28, fontWeight: 600 }}>
-              {caughtCount}
+              {collectedIngredients.length}/{REQUIRED_INGREDIENTS.length}
             </div>
           </div>
           <div
@@ -506,25 +515,10 @@ export default function DeepDishGame({ onClose }) {
             }}
           >
             <div style={{ color: '#a7b0b8', fontSize: 14, marginBottom: 4 }}>
-              Missed
+              Time
             </div>
             <div style={{ color: '#f4f6f8', fontSize: 28, fontWeight: 600 }}>
-              {missedCount}
-            </div>
-          </div>
-          <div
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: 12,
-              padding: 20,
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <div style={{ color: '#a7b0b8', fontSize: 14, marginBottom: 4 }}>
-              Accuracy
-            </div>
-            <div style={{ color: '#f4f6f8', fontSize: 28, fontWeight: 600 }}>
-              {accuracy.toFixed(0)}%
+              {timeTaken.toFixed(1)}s
             </div>
           </div>
         </div>

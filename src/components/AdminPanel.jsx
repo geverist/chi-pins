@@ -373,6 +373,33 @@ export default function AdminPanel({ open, onClose }) {
                 </p>
               </Card>
 
+              <Card title="Deep Dish Game Settings">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Configure falling speed for Deep Dish Toss game
+                </p>
+                <FieldRow label="Start speed">
+                  <NumberInput
+                    value={settings.deepDishStartSpeed}
+                    min={1}
+                    max={10}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, deepDishStartSpeed: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="End speed (max)">
+                  <NumberInput
+                    value={settings.deepDishEndSpeed}
+                    min={2}
+                    max={15}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, deepDishEndSpeed: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Speed progressively increases from start to end during game
+                </p>
+              </Card>
+
               <Card title="Data window">
                 <FieldRow label="Show pins from last (months)">
                   <NumberInput

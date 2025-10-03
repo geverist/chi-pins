@@ -26,6 +26,10 @@ const DEFAULTS = {
   jukeboxIdleTimeout: 120,    // 2 minutes
   orderingIdleTimeout: 300,   // 5 minutes
 
+  // Deep Dish Game settings
+  deepDishStartSpeed: 2,      // Initial fall speed
+  deepDishEndSpeed: 5,        // Maximum fall speed
+
   // Map display
   minZoomForPins: 13,
   maxZoom: 17,
