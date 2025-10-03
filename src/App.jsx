@@ -403,12 +403,12 @@ export default function App() {
       const tenMileZoom = map.getZoom();
       map.setZoom(cz, { animate: false });
       if (cz < tenMileZoom) {
+        // If zoomed out beyond 10 miles, zoom in to 10 mile view
         map.fitBounds(tenMileBounds, { animate: true });
       } else {
-        const nz = Math.min(cz + 0.5, 19);
-        map.setView([ll.lat, ll.lng], nz, { animate: true });
+        // If already zoomed in closer than 10 miles, stay at current zoom (or zoom in slightly)
+        map.setView([ll.lat, ll.lng], cz, { animate: true });
       }
-      focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES);
       setDraft(ll);
       if (mapMode === 'chicago') {
         showNearestTownFact(ll.lat, ll.lng);
