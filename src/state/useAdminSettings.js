@@ -30,6 +30,10 @@ const DEFAULTS = {
   deepDishStartSpeed: 2,      // Initial fall speed
   deepDishEndSpeed: 5,        // Maximum fall speed
 
+  // Security PINs
+  adminPanelPin: '1111',      // 4-digit PIN for admin panel access
+  kioskExitPin: '1111',       // 4-digit PIN for exiting kiosk mode
+
   // Map display
   minZoomForPins: 13,
   maxZoom: 17,

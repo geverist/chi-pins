@@ -236,6 +236,7 @@ export default function AdminPanel({ open, onClose }) {
         onSuccess={() => setAuthenticated(true)}
         onCancel={onClose}
         title="Admin Panel Access"
+        expectedPin={adminSettingsFromHook.adminPanelPin}
       />
 
       {authenticated && (
@@ -356,6 +357,67 @@ export default function AdminPanel({ open, onClose }) {
                 </FieldRow>
                 <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
                   Speed progressively increases from start to end during game
+                </p>
+              </Card>
+
+              <Card title="Security PIN Codes">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Set 4-digit PIN codes for admin panel access and kiosk exit
+                </p>
+                <FieldRow label="Admin Panel PIN">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    value={settings.adminPanelPin || '1111'}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      setSettings(s => ({ ...s, adminPanelPin: value }));
+                    }}
+                    placeholder="1111"
+                    style={{
+                      width: 100,
+                      padding: '8px 12px',
+                      background: '#0f1115',
+                      border: '1px solid #2a2f37',
+                      borderRadius: 6,
+                      color: '#f3f5f7',
+                      fontSize: 16,
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.2em',
+                      textAlign: 'center',
+                    }}
+                  />
+                </FieldRow>
+                <FieldRow label="Kiosk Exit PIN">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    value={settings.kioskExitPin || '1111'}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      setSettings(s => ({ ...s, kioskExitPin: value }));
+                    }}
+                    placeholder="1111"
+                    style={{
+                      width: 100,
+                      padding: '8px 12px',
+                      background: '#0f1115',
+                      border: '1px solid #2a2f37',
+                      borderRadius: 6,
+                      color: '#f3f5f7',
+                      fontSize: 16,
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.2em',
+                      textAlign: 'center',
+                    }}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  ⚠️ Must be exactly 4 digits. Press 'k' 3x to trigger kiosk exit prompt.
                 </p>
               </Card>
 

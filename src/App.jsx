@@ -888,6 +888,7 @@ export default function App() {
         }}
         onCancel={() => setShowKioskExitPin(false)}
         title="Exit Kiosk Mode"
+        expectedPin={adminSettings.kioskExitPin}
       />
 
       {isMobile && showMobileList && (

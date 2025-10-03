@@ -1,12 +1,13 @@
 // src/components/PinCodeModal.jsx
 import { useState, useEffect, useRef } from 'react'
 
-export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter PIN Code' }) {
+export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter PIN Code', expectedPin }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const inputRef = useRef(null)
 
-  const correctPin = import.meta.env.VITE_ADMIN_PIN || '1234'
+  // Use provided PIN or fallback to env var or default
+  const correctPin = expectedPin || import.meta.env.VITE_ADMIN_PIN || '1111'
 
   useEffect(() => {
     if (open) {
