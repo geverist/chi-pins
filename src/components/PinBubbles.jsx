@@ -123,12 +123,15 @@ export default function PinBubbles({
 
         if (!isCluster) {
           // For singletons at low zoom we still keep it minimal: tiny bubble with "1"
+          const onClick = () => {
+            map.flyTo([lat, lng], minZoomForPins, { duration: 0.6 })
+          }
           return (
             <Marker
               key={c.properties.__id}
               position={[lat, lng]}
               icon={bubbleIcon(1)}
-              interactive={false}
+              eventHandlers={{ click: onClick }}
             />
           )
         }
