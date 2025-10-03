@@ -86,6 +86,7 @@ export function usePins(mainMapRef) {
         const { data, error } = await query;
 
         if (!cancelled && !error) {
+          console.log(`usePins: Loaded ${data?.length || 0} pins from Supabase`);
           const seeded = [];
           for (const r of data || []) {
             const k = keyFor(r);
@@ -94,8 +95,11 @@ export function usePins(mainMapRef) {
               seeded.push(r);
             }
           }
+          console.log(`usePins: After dedup, ${seeded.length} new pins added`);
           bumpNewest(data || []);
           setPins((prev) => mergeRows(prev, seeded));
+        } else if (error) {
+          console.error('usePins: Error loading pins:', error);
         }
       } catch {
         // ignore; polling will retry
