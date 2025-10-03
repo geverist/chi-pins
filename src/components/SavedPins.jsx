@@ -152,6 +152,15 @@ export default function SavedPins({
           // Track this popup as currently open
           currentOpenSlugRef.current = slugText
 
+          // Center map on the selected pin
+          if (map && p?.lat && p?.lng) {
+            try {
+              map.setView([p.lat, p.lng], map.getZoom(), { animate: true })
+            } catch (e) {
+              console.warn('Failed to center map on pin:', e)
+            }
+          }
+
           // Set new timer for auto-close
           const duration = Math.max(2000, exploreDismissMs || 12000)
           exploreTimerRef.current = setTimeout(() => {
