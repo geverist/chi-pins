@@ -36,10 +36,22 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       icon: placingIconFor(pageTile),
       draggable: false,
       autoPan: false,
+      interactive: true,
+      bubblingMouseEvents: false,
     }).addTo(map);
 
     markerRef.current = marker;
-    console.log('Boot: Marker created and added to map');
+    console.log('Boot: Marker created and added to map at', [initialPos.lat, initialPos.lng]);
+    console.log('Boot: Marker element:', marker.getElement());
+
+    // Force marker to be visible
+    const markerEl = marker.getElement();
+    if (markerEl) {
+      markerEl.style.pointerEvents = 'auto';
+      markerEl.style.cursor = 'move';
+      markerEl.style.zIndex = '10000';
+      console.log('Boot: Marker element styled');
+    }
 
     // Set initial view
     const bounds = boundsForMiles(initialPos, 0.25); // 1/4 mile for fine-tune
@@ -51,13 +63,6 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       map.setView([initialPos.lat, initialPos.lng], map.getZoom(), { animate: false });
     }, 50);
 
-    // Get map container for event listening
-    const mapContainer = map.getContainer();
-    if (!mapContainer) {
-      console.error('Boot: Could not get map container');
-      return;
-    }
-
     // If we have handoff coordinates, start dragging immediately
     if (handoff && Number.isFinite(handoff.x) && Number.isFinite(handoff.y)) {
       console.log('Boot: Starting with handoff, beginning drag immediately');
@@ -65,13 +70,14 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
     }
 
     const onPointerDown = (e) => {
-      // Only start drag if clicking on or near the marker
-      const markerElement = marker.getElement();
-      if (markerElement && (e.target === markerElement || markerElement.contains(e.target))) {
-        isDraggingRef.current = true;
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Boot: Drag started via marker click');
+      isDraggingRef.current = true;
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Boot: Drag started on marker');
+
+      // Capture pointer to ensure we get all move events
+      if (markerEl.setPointerCapture && e.pointerId) {
+        markerEl.setPointerCapture(e.pointerId);
       }
     };
 
@@ -81,10 +87,19 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       e.preventDefault();
       e.stopPropagation();
 
-      // Convert screen coordinates directly to lat/lng using Leaflet's method
-      const point = map.mouseEventToLatLng(e);
+      // Get map container position
+      const mapContainer = map.getContainer();
+      const rect = mapContainer.getBoundingClientRect();
+
+      // Calculate coordinates relative to map container
+      const containerX = e.clientX - rect.left;
+      const containerY = e.clientY - rect.top;
+
+      // Convert to lat/lng
+      const point = map.containerPointToLatLng([containerX, containerY]);
 
       if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
+        console.log('Boot: Moving to', point.lat, point.lng);
         // Move marker to cursor position
         markerRef.current.setLatLng(point);
         // Keep map centered on the pin
@@ -100,6 +115,11 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       isDraggingRef.current = false;
       console.log('Boot: Drag ended');
 
+      // Release pointer capture
+      if (markerEl.releasePointerCapture && e.pointerId) {
+        markerEl.releasePointerCapture(e.pointerId);
+      }
+
       const ll = markerRef.current.getLatLng();
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
         setPos({ lat: ll.lat, lng: ll.lng });
@@ -112,11 +132,11 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       }
     };
 
-    // Attach listeners to map container for better event handling
-    mapContainer.addEventListener('pointerdown', onPointerDown, { passive: false });
-    mapContainer.addEventListener('pointermove', onPointerMove, { passive: false });
-    mapContainer.addEventListener('pointerup', onPointerUp);
-    mapContainer.addEventListener('pointercancel', onPointerUp);
+    // Attach listeners directly to marker element
+    markerEl.addEventListener('pointerdown', onPointerDown, { passive: false });
+    markerEl.addEventListener('pointermove', onPointerMove, { passive: false });
+    markerEl.addEventListener('pointerup', onPointerUp);
+    markerEl.addEventListener('pointercancel', onPointerUp);
 
     // Handle zoom - keep marker centered
     const onZoom = () => {
@@ -131,10 +151,12 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
     // Cleanup
     return () => {
       console.log('Boot: Cleaning up marker');
-      mapContainer.removeEventListener('pointerdown', onPointerDown);
-      mapContainer.removeEventListener('pointermove', onPointerMove);
-      mapContainer.removeEventListener('pointerup', onPointerUp);
-      mapContainer.removeEventListener('pointercancel', onPointerUp);
+      if (markerEl) {
+        markerEl.removeEventListener('pointerdown', onPointerDown);
+        markerEl.removeEventListener('pointermove', onPointerMove);
+        markerEl.removeEventListener('pointerup', onPointerUp);
+        markerEl.removeEventListener('pointercancel', onPointerUp);
+      }
       map.off('zoom', onZoom);
       marker.remove();
       markerRef.current = null;
