@@ -326,7 +326,7 @@ export default function Editor({
       }}>
         <input type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} aria-label="Loyalty phone number" />
         <span style={{ fontSize: 13, color: phoneLooksValid ? '#9AE6B4' : '#a7b0b8' }}>
-          {phoneLooksValid ? '⭐ You'll earn a star for linking' : 'Enter at least 10 digits'}
+          {phoneLooksValid ? '⭐ You\'ll earn a star for linking' : 'Enter at least 10 digits'}
         </span>
       </div>
     </div>
