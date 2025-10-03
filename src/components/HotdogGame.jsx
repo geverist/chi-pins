@@ -37,6 +37,28 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   const [accuracy, setAccuracy] = useState(0);
   const [draggedItem, setDraggedItem] = useState(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leftIngredients, setLeftIngredients] = useState([]);
+  const [rightIngredients, setRightIngredients] = useState([]);
+  const repositionTimerRef = useRef(null);
+
+  const randomizeIngredientPositions = () => {
+    const shuffled = [...INGREDIENTS].sort(() => Math.random() - 0.5);
+    const mid = Math.ceil(shuffled.length / 2);
+
+    setLeftIngredients(
+      shuffled.slice(0, mid).map(item => ({
+        ...item,
+        top: Math.random() * 60 + 10, // 10-70% from top
+      }))
+    );
+
+    setRightIngredients(
+      shuffled.slice(mid).map(item => ({
+        ...item,
+        top: Math.random() * 60 + 10, // 10-70% from top
+      }))
+    );
+  };
 
   const startGame = () => {
     setGameState('playing');
@@ -46,7 +68,21 @@ export default function HotdogGame({ onClose, onGameComplete }) {
     setEndTime(null);
     setScore(0);
     setAccuracy(0);
+    randomizeIngredientPositions();
+
+    // Reposition ingredients every 5 seconds
+    repositionTimerRef.current = setInterval(() => {
+      randomizeIngredientPositions();
+    }, 5000);
   };
+
+  useEffect(() => {
+    return () => {
+      if (repositionTimerRef.current) {
+        clearInterval(repositionTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleDragStart = (e, item) => {
     setDraggedItem(item);
@@ -88,6 +124,11 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   const finishGame = () => {
     const end = Date.now();
     setEndTime(end);
+
+    // Clear reposition timer
+    if (repositionTimerRef.current) {
+      clearInterval(repositionTimerRef.current);
+    }
 
     const timeTaken = (end - startTime) / 1000; // seconds
 
@@ -132,7 +173,10 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         </h3>
         <p style={{ color: '#a7b0b8', fontSize: 16, lineHeight: 1.6, margin: '0 0 16px' }}>
           Build a Chicago-style hot dog in the correct order as fast as you can!
-          Tap or drag ingredients from the bottom to the assembly area.
+          Ingredients appear on the left and right sides. Tap them to add to your hot dog.
+        </p>
+        <p style={{ color: '#fbbf24', fontSize: 14, fontWeight: 600, margin: '0 0 8px' }}>
+          Watch out! Ingredients move to random positions every 5 seconds!
         </p>
         <p style={{ color: '#10b981', fontSize: 14, fontWeight: 600, margin: 0 }}>
           The faster and more accurate, the higher your score!
@@ -211,36 +255,79 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   );
 
   const renderPlaying = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Timer and Progress */}
+    <div style={{ display: 'flex', height: '100%', position: 'relative' }}>
+      {/* Left Ingredients */}
       <div
         style={{
-          padding: '16px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: '15%',
+          padding: '80px 10px 20px',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
         }}
       >
-        <div style={{ color: '#a7b0b8', fontSize: 14 }}>
-          Progress: {assembledItems.length}/{INGREDIENTS.length}
-        </div>
-        <div style={{ color: '#10b981', fontSize: 18, fontWeight: 600 }}>
-          ⏱ {startTime ? Math.floor((Date.now() - startTime) / 1000) : 0}s
-        </div>
+        {leftIngredients.map((item) => {
+          const isUsed = assembledItems.find(i => i.id === item.id);
+          if (isUsed) return null;
+
+          return (
+            <div
+              key={item.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, item)}
+              onClick={() => handleTouchItem(item)}
+              style={{
+                position: 'absolute',
+                top: `${item.top}%`,
+                fontSize: 48,
+                cursor: 'move',
+                transition: 'all 0.5s ease-in-out',
+                filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
+              }}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              {item.emoji}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Assembly Area */}
+      {/* Center Assembly Area */}
       <div
         style={{
           flex: 1,
-          padding: 24,
+          padding: '60px 80px 20px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
+        {/* Timer and Progress */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: 32,
+            alignItems: 'center',
+          }}
+        >
+          <div style={{ color: '#a7b0b8', fontSize: 14 }}>
+            Progress: {assembledItems.length}/{INGREDIENTS.length}
+          </div>
+          <div style={{ color: '#10b981', fontSize: 18, fontWeight: 600 }}>
+            ⏱ {startTime ? Math.floor((Date.now() - startTime) / 1000) : 0}s
+          </div>
+        </div>
+
         <h3 style={{ margin: '0 0 24px', color: '#f4f6f8', fontSize: 20 }}>
           Build Your Hot Dog
         </h3>
@@ -250,7 +337,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           style={{
             minHeight: 400,
             width: '100%',
-            maxWidth: 500,
+            maxWidth: 400,
             background: 'rgba(255,255,255,0.03)',
             borderRadius: 16,
             border: '2px dashed rgba(255,255,255,0.2)',
@@ -269,7 +356,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
                 fontSize: 14,
               }}
             >
-              Tap or drag ingredients here
+              Tap ingredients to build
             </div>
           ) : (
             assembledItems.map((item, idx) => (
@@ -283,15 +370,13 @@ export default function HotdogGame({ onClose, onGameComplete }) {
                   border: `2px solid ${item.color}`,
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 12,
                   cursor: 'pointer',
                   transition: 'transform 0.2s',
                 }}
               >
-                <span style={{ fontSize: 24 }}>{item.emoji}</span>
-                <span style={{ color: '#f4f6f8', fontSize: 14, flex: 1 }}>
-                  {item.name}
-                </span>
+                <span style={{ fontSize: 32 }}>{item.emoji}</span>
                 <span style={{ color: '#ef4444', fontSize: 18 }}>✕</span>
               </div>
             ))
@@ -299,47 +384,45 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         </div>
       </div>
 
-      {/* Available Ingredients */}
+      {/* Right Ingredients */}
       <div
         style={{
-          padding: 20,
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          background: 'rgba(0,0,0,0.3)',
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: '15%',
+          padding: '80px 10px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
         }}
       >
-        <div style={{ marginBottom: 12, color: '#a7b0b8', fontSize: 14 }}>
-          Available Ingredients
-        </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-            gap: 12,
-          }}
-        >
-          {availableItems.map((item) => (
+        {rightIngredients.map((item) => {
+          const isUsed = assembledItems.find(i => i.id === item.id);
+          if (isUsed) return null;
+
+          return (
             <div
               key={item.id}
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
               onClick={() => handleTouchItem(item)}
               style={{
-                padding: '12px',
-                background: item.color + '22',
-                borderRadius: 10,
-                border: `2px solid ${item.color}`,
-                textAlign: 'center',
+                position: 'absolute',
+                top: `${item.top}%`,
+                fontSize: 48,
                 cursor: 'move',
-                transition: 'transform 0.2s',
+                transition: 'all 0.5s ease-in-out',
+                filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))',
               }}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.9)'}
               onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
-              <div style={{ fontSize: 32, marginBottom: 4 }}>{item.emoji}</div>
-              <div style={{ color: '#f4f6f8', fontSize: 11 }}>{item.name}</div>
+              {item.emoji}
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
     </div>
   );
