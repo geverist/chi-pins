@@ -1,9 +1,13 @@
 /* Pinboard Service Worker */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const STATIC_CACHE  = `static-${VERSION}`;  // app shell
 const ASSETS_CACHE  = `assets-${VERSION}`;  // built JS/CSS/images
 const TILES_CACHE   = `tiles-${VERSION}`;   // OSM tiles (stale-while-revalidate)
 const RUNTIME_CACHE = `runtime-${VERSION}`;
+
+// Tile cache settings
+const TILE_CACHE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days
+const TILE_CACHE_MAX_ENTRIES = 2000; // Max tiles to cache
 
 const APP_SHELL = [
   '/',                    // SPA shell
@@ -139,6 +143,27 @@ async function cacheFirst(request, cacheName, opts = {}) {
 async function staleWhileRevalidate(request, cacheName, opts = {}) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request, opts);
+
+  // For tiles, always return cache immediately if available
+  if (cacheName === TILES_CACHE && cached) {
+    // Update in background without blocking
+    fetch(request).then(async res => {
+      if (res && (res.ok || res.type === 'opaque')) {
+        // Limit cache size
+        const keys = await cache.keys();
+        if (keys.length > TILE_CACHE_MAX_ENTRIES) {
+          // Delete oldest entries (first 100)
+          for (let i = 0; i < 100; i++) {
+            await cache.delete(keys[i]);
+          }
+        }
+        await cache.put(request, res.clone());
+      }
+    }).catch(() => {});
+    return cached;
+  }
+
+  // Original behavior for non-tiles
   const netPromise = fetch(request).then(res => {
     if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
     return res;

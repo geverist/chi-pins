@@ -179,6 +179,7 @@ export default function SubMapModal({
 }) {
   const submapRef = useRef(null);
   const [pos, setPos] = useState(center);
+  const [tilesLoading, setTilesLoading] = useState(true);
 
   console.log('SubMapModal rendering with:', { center, handoff, team, baseZoom, pos });
 
@@ -218,7 +219,21 @@ export default function SubMapModal({
             Done
           </button>
         </div>
-        <div className="submap-map">
+        <div className="submap-map" style={{ position: 'relative' }}>
+          {tilesLoading && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(22, 24, 29, 0.9)',
+              display: 'grid',
+              placeItems: 'center',
+              zIndex: 10000,
+              color: '#fff',
+              fontSize: '14px'
+            }}>
+              Loading map...
+            </div>
+          )}
           <MapContainer
             center={center && Number.isFinite(center.lat) && Number.isFinite(center.lng) ? [center.lat, center.lng] : [41.8781, -87.6298]}
             zoom={baseZoom || 15}
@@ -235,6 +250,20 @@ export default function SubMapModal({
                 map.invalidateSize();
                 console.log('MapContainer size invalidated');
               }, 100);
+
+              // Listen for tile load events
+              let tilesLoaded = 0;
+              const onTileLoad = () => {
+                tilesLoaded++;
+                if (tilesLoaded >= 3) { // Wait for at least 3 tiles
+                  setTilesLoading(false);
+                }
+              };
+              map.on('tileload', onTileLoad);
+              map.on('tileerror', onTileLoad); // Count errors as loaded too
+
+              // Fallback: hide loading after 2 seconds regardless
+              setTimeout(() => setTilesLoading(false), 2000);
             }}
           >
             <SetSubMapRef submapRef={submapRef} />
