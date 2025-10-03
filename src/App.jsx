@@ -206,7 +206,7 @@ export default function App() {
       setExploring(e.matches ? true : false);
       console.log('App: isMobile=', e.matches, 'exploring=', e.matches ? true : false);
       if (mainMapRef.current) {
-        setTimeout(() => mainMapRef.current.invalidateSize(), 200); // Increased delay for Safari
+        mainMapRef.current.invalidateSize();
       }
     };
     if (mq.matches) setExploring(true);
@@ -233,7 +233,7 @@ export default function App() {
         setTimeout(() => enterFullscreen(), 500);
       }
       if (mainMapRef.current) {
-        setTimeout(() => mainMapRef.current.invalidateSize(), 200); // Increased delay for Safari
+        setTimeout(() => mainMapRef.current.invalidateSize(), 100);
       }
     });
     (async () => {
@@ -252,15 +252,11 @@ export default function App() {
   useEffect(() => {
     const handleResize = () => {
       if (mainMapRef.current) {
-        setTimeout(() => mainMapRef.current.invalidateSize(), 200); // Increased delay for Safari
+        mainMapRef.current.invalidateSize();
       }
     };
     window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize); // Added for mobile
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Set mapReady when mainMapRef is initialized
@@ -268,7 +264,7 @@ export default function App() {
     if (mainMapRef.current) {
       console.log('App: mainMapRef set, enabling mapReady');
       setMapReady(true);
-      setTimeout(() => mainMapRef.current.invalidateSize(), 200); // Increased delay for Safari
+      setTimeout(() => mainMapRef.current.invalidateSize(), 100);
     } else {
       console.warn('App: mainMapRef not set yet');
     }
@@ -399,10 +395,9 @@ export default function App() {
         console.warn('App: mainMapRef.current is null in handlePick');
         return;
       }
-      // Pass plain { lat, lng } to avoid toBounds error with older mapUtils.js
-      const latlng = { lat: ll.lat, lng: ll.lng };
+      const latlng = L.latLng(ll.lat, ll.lng); // Convert to L.LatLng
       const cz = map.getZoom() ?? 10;
-      const tenMileBounds = boundsForMiles(latlng, 10);
+      const tenMileBounds = boundsForMiles(latlng, 10); // Pass L.LatLng to boundsForMiles
       map.fitBounds(tenMileBounds, { animate: false });
       const tenMileZoom = map.getZoom();
       map.setZoom(cz, { animate: false });
@@ -412,7 +407,7 @@ export default function App() {
         const nz = Math.min(cz + 0.5, 19);
         map.setView([ll.lat, ll.lng], nz, { animate: true });
       }
-      focusDraft(mainMapRef.current, latlng, INITIAL_RADIUS_MILES);
+      focusDraft(mainMapRef.current, latlng, INITIAL_RADIUS_MILES); // Pass L.LatLng
       setDraft(ll);
       if (mapMode === 'chicago') {
         showNearestTownFact(ll.lat, ll.lng);
@@ -511,7 +506,7 @@ export default function App() {
 
   const closeSubmap = () => {
     enableMainMapInteractions(mainMapRef.current);
-    setTimeout(() => mainMapRef.current?.invalidateSize(), 200); // Increased delay for Safari
+    setTimeout(() => mainMapRef.current?.invalidateSize(), 0);
     setSubmapCenter(null);
     setHandoff(null);
     setSubmapBaseZoom(null);
@@ -675,7 +670,6 @@ export default function App() {
       flexDirection: 'column',
       minHeight: '100vh',
       height: '-webkit-fill-available',
-      overflow: 'hidden', // Added for Safari
     }}>
       <HeaderBar
         mapMode={mapMode}
