@@ -33,6 +33,7 @@ export default function WindGame({ onClose }) {
   const [dragStart, setDragStart] = useState(null);
   const [popcornPieces, setPopcornPieces] = useState([]);
   const [popcornCount, setPopcornCount] = useState(MAX_POPCORN);
+  const [windGusts, setWindGusts] = useState([]);
 
   const gameLoopRef = useRef(null);
   const windTimerRef = useRef(null);
@@ -42,6 +43,7 @@ export default function WindGame({ onClose }) {
   const lastScoreTime = useRef(0);
   const popcornSpawnTimerRef = useRef(null);
   const nextPopcornId = useRef(0);
+  const nextGustId = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -69,6 +71,8 @@ export default function WindGame({ onClose }) {
     setPopcornPieces([]);
     setPopcornCount(MAX_POPCORN);
     nextPopcornId.current = 0;
+    setWindGusts([]);
+    nextGustId.current = 0;
     gameStartTime.current = Date.now();
     lastScoreTime.current = Date.now();
 
@@ -145,12 +149,27 @@ export default function WindGame({ onClose }) {
         setWindStrength(strength);
         setWindWarning(null);
 
+        // Spawn random wind gusts across the screen
+        const numGusts = 8 + Math.floor(Math.random() * 8); // 8-15 gusts
+        const newGusts = [];
+        for (let i = 0; i < numGusts; i++) {
+          newGusts.push({
+            id: nextGustId.current++,
+            y: Math.random() * 80 + 10, // 10-90% from top
+            direction: windDir,
+            delay: Math.random() * 0.4, // Stagger animation starts
+            duration: 1.5 + Math.random() * 1, // 1.5-2.5s animation
+          });
+        }
+        setWindGusts(newGusts);
+
         // Wind gust duration
         const gustDuration = 800 + Math.random() * 400;
         setTimeout(() => {
           if (!isPlayingRef.current) return;
           setWindDirection(0);
           setWindStrength(0);
+          setWindGusts([]); // Clear gusts
         }, gustDuration);
 
         scheduleNextWind();
@@ -590,27 +609,24 @@ export default function WindGame({ onClose }) {
         </div>
       )}
 
-      {/* Wind Effect Particles */}
-      {windDirection !== 0 && (
-        <>
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                top: `${20 + i * 15}%`,
-                left: windDirection === 1 ? '-5%' : '105%',
-                fontSize: 24,
-                opacity: 0.6,
-                animation: `windBlow${windDirection === 1 ? 'Right' : 'Left'} 1.5s linear infinite`,
-                animationDelay: `${i * 0.2}s`,
-              }}
-            >
-              💨
-            </div>
-          ))}
-        </>
-      )}
+      {/* Animated Wind Gusts */}
+      {windGusts.map(gust => (
+        <div
+          key={gust.id}
+          style={{
+            position: 'absolute',
+            top: `${gust.y}%`,
+            left: gust.direction === 1 ? '-10%' : '110%',
+            fontSize: 32,
+            opacity: 0.7,
+            animation: `windBlow${gust.direction === 1 ? 'Right' : 'Left'} ${gust.duration}s ease-out`,
+            animationDelay: `${gust.delay}s`,
+            pointerEvents: 'none',
+          }}
+        >
+          💨
+        </div>
+      ))}
 
       {/* Popcorn Pieces */}
       {currentFood.hasPopcornPieces && popcornPieces.map(piece => (
@@ -728,14 +744,16 @@ export default function WindGame({ onClose }) {
           50% { opacity: 0.6; transform: scale(1.2); }
         }
         @keyframes windBlowRight {
-          from { transform: translateX(0); opacity: 0; }
-          50% { opacity: 0.6; }
-          to { transform: translateX(100vw); opacity: 0; }
+          0% { transform: translateX(0) scale(0.5); opacity: 0; }
+          10% { opacity: 0.8; transform: translateX(10vw) scale(1); }
+          80% { opacity: 0.8; }
+          100% { transform: translateX(120vw) scale(1.2); opacity: 0; }
         }
         @keyframes windBlowLeft {
-          from { transform: translateX(0); opacity: 0; }
-          50% { opacity: 0.6; }
-          to { transform: translateX(-100vw); opacity: 0; }
+          0% { transform: translateX(0) scale(0.5); opacity: 0; }
+          10% { opacity: 0.8; transform: translateX(-10vw) scale(1); }
+          80% { opacity: 0.8; }
+          100% { transform: translateX(-120vw) scale(1.2); opacity: 0; }
         }
       `}</style>
     </div>
