@@ -361,7 +361,7 @@ function MapModeController({ mode, isMobile }) {
       console.warn('MapModeController: Map not available');
       return;
     }
-    map.setMinZoom(CHI_MIN_ZOOM);
+    map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
     map.setMaxZoom(CHI_MAX_ZOOM);
     map.setMaxBounds(null);
     map.fitBounds(CHI_BOUNDS, { animate: false });
@@ -370,7 +370,8 @@ function MapModeController({ mode, isMobile }) {
     map.touchZoom?.enable();
     map.boxZoom?.enable();
     map.keyboard?.enable();
-  }, [map]);
+    setTimeout(() => map.invalidateSize(), 100);
+  }, [map, isMobile]);
 
   useEffect(() => {
     if (!map) {
@@ -406,7 +407,7 @@ function MapModeController({ mode, isMobile }) {
   return null;
 }
 
-function CameraReset({ mapMode, resetCameraToken }) {
+function CameraReset({ mapMode, resetCameraToken, isMobile }) {
   const map = useMap();
   useEffect(() => {
     if (!map) {
@@ -418,9 +419,10 @@ function CameraReset({ mapMode, resetCameraToken }) {
       try {
         map.invalidateSize();
         map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MAX_ZOOM });
+        map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
       } catch {}
     }, 0);
-  }, [resetCameraToken, mapMode, map]);
+  }, [resetCameraToken, mapMode, map, isMobile]);
   return null;
 }
 
@@ -484,7 +486,7 @@ export default function MapShell({
       <MapContainer
         center={center}
         zoom={zoom}
-        minZoom={2}
+        minZoom={isMobile ? 1 : 2}
         maxZoom={19}
         zoomControl={true}
         whenCreated={whenCreated}
@@ -502,7 +504,7 @@ export default function MapShell({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
-        <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} />
+        <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />
         {!editing && (
           <GeocoderTopCenter
             mode={mapMode === 'global' ? 'global' : 'chicago'}
