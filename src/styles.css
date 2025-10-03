@@ -310,7 +310,11 @@ small.muted { color: var(--muted); }
   font-size: 12px;
   line-height: 1.2;
   white-space: nowrap;
-  transform: translateY(-2px);
+  transform: translateY(0);
+}
+/* Hide the tooltip arrow/tip for clean labels */
+.leaflet-tooltip.biz-label.biz-label--clean::before {
+  display: none;
 }
 .leaflet-tooltip.biz-label.biz-label--clean {
   text-shadow:
@@ -327,7 +331,13 @@ small.muted { color: var(--muted); }
   backdrop-filter: blur(4px) saturate(120%);
   -webkit-backdrop-filter: blur(4px) saturate(120%);
 }
-.leaflet-tooltip-top.biz-label { margin-top: -2px; }
+/* Center the pill tooltip arrow */
+.leaflet-tooltip-top.biz-label::before {
+  border-top-color: rgba(255,255,255,0.18);
+  left: 50%;
+  margin-left: -6px;
+}
+.leaflet-tooltip-top.biz-label { margin-top: 0; }
 .biz-pin:hover + .leaflet-tooltip,
 .leaflet-marker-icon:hover ~ .biz-label { filter: brightness(1.05); }
 
