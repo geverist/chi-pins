@@ -9,7 +9,7 @@ import { useIdleAttractor } from './hooks/useIdleAttractor';
 import { useFunFacts } from './hooks/useFunFacts';
 import { useHighlightPin } from './hooks/useHighlightPin';
 
-// geo / map helpers
+// geo / map helpersadf
 import { continentFor, countByContinent } from './lib/geo';
 import {
   CHI,
