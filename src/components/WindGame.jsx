@@ -855,13 +855,15 @@ export default function WindGame({ onClose }) {
           maxWidth: 900,
           width: '100%',
           maxHeight: '90vh',
-          overflow: 'auto',
+          overflow: 'hidden',
           boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {gameState === 'instructions' && renderInstructions()}
         {gameState === 'playing' && (
-          <div style={{ padding: 24 }}>
+          <div style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             {renderPlaying()}
           </div>
         )}

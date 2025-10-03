@@ -154,8 +154,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   };
 
   const renderInstructions = () => (
-    <div style={{ padding: 40, textAlign: 'center' }}>
-      <h2 style={{ margin: '0 0 24px', color: '#f4f6f8', fontSize: 32 }}>
+    <div style={{ padding: '24px 40px', textAlign: 'center', overflow: 'hidden' }}>
+      <h2 style={{ margin: '0 0 16px', color: '#f4f6f8', fontSize: 28 }}>
         🌭 Build a Chicago Dog!
       </h2>
 
@@ -163,22 +163,22 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         style={{
           background: 'rgba(255,255,255,0.05)',
           borderRadius: 12,
-          padding: 24,
-          marginBottom: 24,
+          padding: 16,
+          marginBottom: 16,
           border: '1px solid rgba(255,255,255,0.1)',
         }}
       >
-        <h3 style={{ margin: '0 0 16px', color: '#f4f6f8', fontSize: 20 }}>
+        <h3 style={{ margin: '0 0 12px', color: '#f4f6f8', fontSize: 18 }}>
           How to Play
         </h3>
-        <p style={{ color: '#a7b0b8', fontSize: 16, lineHeight: 1.6, margin: '0 0 16px' }}>
+        <p style={{ color: '#a7b0b8', fontSize: 14, lineHeight: 1.5, margin: '0 0 8px' }}>
           Build a Chicago-style hot dog in the correct order as fast as you can!
           Ingredients appear on the left and right sides. Tap them to add to your hot dog.
         </p>
-        <p style={{ color: '#fbbf24', fontSize: 14, fontWeight: 600, margin: '0 0 8px' }}>
+        <p style={{ color: '#fbbf24', fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>
           Watch out! Ingredients move to random positions every 5 seconds!
         </p>
-        <p style={{ color: '#10b981', fontSize: 14, fontWeight: 600, margin: 0 }}>
+        <p style={{ color: '#10b981', fontSize: 13, fontWeight: 600, margin: 0 }}>
           The faster and more accurate, the higher your score!
         </p>
       </div>
@@ -187,15 +187,17 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         style={{
           background: 'rgba(59,130,246,0.1)',
           borderRadius: 12,
-          padding: 20,
-          marginBottom: 32,
+          padding: 16,
+          marginBottom: 20,
           border: '1px solid rgba(59,130,246,0.3)',
+          maxHeight: '280px',
+          overflow: 'auto',
         }}
       >
-        <h4 style={{ margin: '0 0 12px', color: '#60a5fa', fontSize: 16 }}>
+        <h4 style={{ margin: '0 0 10px', color: '#60a5fa', fontSize: 15 }}>
           Correct Order
         </h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {CORRECT_ORDER.map((id, idx) => {
             const ingredient = INGREDIENTS.find(i => i.id === id);
             return (
@@ -204,13 +206,13 @@ export default function HotdogGame({ onClose, onGameComplete }) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
+                  gap: 10,
                   color: '#e5e7eb',
-                  fontSize: 14,
+                  fontSize: 13,
                 }}
               >
-                <span style={{ color: '#6b7280', width: 20 }}>{idx + 1}.</span>
-                <span style={{ fontSize: 20 }}>{ingredient.emoji}</span>
+                <span style={{ color: '#6b7280', width: 18 }}>{idx + 1}.</span>
+                <span style={{ fontSize: 18 }}>{ingredient.emoji}</span>
                 <span>{ingredient.name}</span>
               </div>
             );
@@ -221,15 +223,15 @@ export default function HotdogGame({ onClose, onGameComplete }) {
       <button
         onClick={startGame}
         style={{
-          padding: '16px 48px',
+          padding: '14px 40px',
           borderRadius: 12,
           border: 'none',
           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
           color: 'white',
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: 600,
           cursor: 'pointer',
-          marginBottom: 16,
+          marginBottom: 12,
         }}
       >
         Start Game
@@ -240,12 +242,12 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         style={{
           display: 'block',
           width: '100%',
-          padding: '12px',
+          padding: '10px',
           borderRadius: 10,
           border: '1px solid rgba(255,255,255,0.2)',
           background: 'rgba(255,255,255,0.05)',
           color: '#f4f6f8',
-          fontSize: 16,
+          fontSize: 14,
           cursor: 'pointer',
         }}
       >
@@ -428,8 +430,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   );
 
   const renderFinished = () => (
-    <div style={{ padding: 40, textAlign: 'center' }}>
-      <h2 style={{ margin: '0 0 24px', color: '#f4f6f8', fontSize: 32 }}>
+    <div style={{ padding: '24px 32px', textAlign: 'center', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <h2 style={{ margin: '0 0 16px', color: '#f4f6f8', fontSize: 28 }}>
         Game Complete!
       </h2>
 
@@ -437,12 +439,12 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
           borderRadius: 16,
-          padding: 32,
-          marginBottom: 24,
+          padding: 24,
+          marginBottom: 16,
         }}
       >
-        <div style={{ color: 'white', fontSize: 18, marginBottom: 8 }}>Your Score</div>
-        <div style={{ color: 'white', fontSize: 56, fontWeight: 700 }}>
+        <div style={{ color: 'white', fontSize: 16, marginBottom: 6 }}>Your Score</div>
+        <div style={{ color: 'white', fontSize: 48, fontWeight: 700 }}>
           {score.toLocaleString()}
         </div>
       </div>
@@ -451,22 +453,22 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
-          gap: 16,
-          marginBottom: 32,
+          gap: 12,
+          marginBottom: 16,
         }}
       >
         <div
           style={{
             background: 'rgba(255,255,255,0.05)',
             borderRadius: 12,
-            padding: 20,
+            padding: 16,
             border: '1px solid rgba(255,255,255,0.1)',
           }}
         >
-          <div style={{ color: '#a7b0b8', fontSize: 14, marginBottom: 4 }}>
+          <div style={{ color: '#a7b0b8', fontSize: 13, marginBottom: 4 }}>
             Accuracy
           </div>
-          <div style={{ color: '#f4f6f8', fontSize: 28, fontWeight: 600 }}>
+          <div style={{ color: '#f4f6f8', fontSize: 24, fontWeight: 600 }}>
             {accuracy.toFixed(0)}%
           </div>
         </div>
@@ -474,37 +476,39 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           style={{
             background: 'rgba(255,255,255,0.05)',
             borderRadius: 12,
-            padding: 20,
+            padding: 16,
             border: '1px solid rgba(255,255,255,0.1)',
           }}
         >
-          <div style={{ color: '#a7b0b8', fontSize: 14, marginBottom: 4 }}>
+          <div style={{ color: '#a7b0b8', fontSize: 13, marginBottom: 4 }}>
             Time
           </div>
-          <div style={{ color: '#f4f6f8', fontSize: 28, fontWeight: 600 }}>
+          <div style={{ color: '#f4f6f8', fontSize: 24, fontWeight: 600 }}>
             {((endTime - startTime) / 1000).toFixed(1)}s
           </div>
         </div>
       </div>
 
-      <GameLeaderboard
-        game="hotdog-assembly"
-        currentScore={score}
-        currentAccuracy={accuracy}
-        currentTime={(endTime - startTime) / 1000}
-      />
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', marginBottom: 16 }}>
+        <GameLeaderboard
+          game="hotdog-assembly"
+          currentScore={score}
+          currentAccuracy={accuracy}
+          currentTime={(endTime - startTime) / 1000}
+        />
+      </div>
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <button
           onClick={startGame}
           style={{
             flex: 1,
-            padding: '16px',
+            padding: '14px',
             borderRadius: 12,
             border: 'none',
             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
             color: 'white',
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: 600,
             cursor: 'pointer',
           }}
@@ -515,12 +519,12 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           onClick={onClose}
           style={{
             flex: 1,
-            padding: '16px',
+            padding: '14px',
             borderRadius: 12,
             border: '1px solid rgba(255,255,255,0.2)',
             background: 'rgba(255,255,255,0.05)',
             color: '#f4f6f8',
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: 600,
             cursor: 'pointer',
           }}
@@ -599,7 +603,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         </div>
 
         {/* Game Content */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {gameState === 'instructions' && renderInstructions()}
           {gameState === 'playing' && renderPlaying()}
           {gameState === 'finished' && renderFinished()}

@@ -286,7 +286,7 @@ export default function TriviaGame({ onClose }) {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          overflow: 'auto',
+          overflow: 'hidden',
         }}
       >
         <div
@@ -585,7 +585,7 @@ export default function TriviaGame({ onClose }) {
         </div>
 
         {/* Game Content */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {gameState === 'instructions' && renderInstructions()}
           {gameState === 'playing' && renderPlaying()}
           {gameState === 'finished' && renderFinished()}
