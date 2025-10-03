@@ -211,6 +211,7 @@ export default function DraftMarker({
       bubblingMouseEvents={false}
       autoPan={false}
       interactive={true}             // ensure marker is interactive
+      zIndexOffset={4000}            // above search/attractor overlay (z-index 3600)
     >
       {/* Optional helper label for the draft pin */}
       <Tooltip
