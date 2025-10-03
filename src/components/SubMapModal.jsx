@@ -6,79 +6,98 @@ import 'leaflet/dist/leaflet.css';
 import { placingIconFor, boundsForMiles } from '../lib/mapUtils';
 import DragTip from './DragTip';
 
-function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit, mainMapRef, mapReady }) {
+function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
   const map = useMap();
   const markerRef = useRef(null);
-  const commitRef = useRef(0);
-  const activeTouches = useRef({});
+  const dragTimeoutRef = useRef(null);
 
+  // Create marker on mount
   useEffect(() => {
-    if (!map || !mapReady) return; // Prevent execution until map is ready
-
-    // Set initial position
-    let m = markerRef.current;
-    if (!m && Number.isFinite(pos.lat) && Number.isFinite(pos.lng)) {
-      m = L.marker([pos.lat, pos.lng], {
-        icon: placingIconFor(pageTile),
-        draggable: true,
-        autoPan: true,
-      }).addTo(map);
-      markerRef.current = m;
+    if (!map) {
+      console.warn('Boot: map not available');
+      return;
     }
 
-    // Set initial center
-    const c = pos && Number.isFinite(pos.lat) && Number.isFinite(pos.lng) ? pos : handoff;
-    if (c && Number.isFinite(c.lat) && Number.isFinite(c.lng)) {
-      const bounds = boundsForMiles(c, 0.25); // 1/4 mile for fine-tune
-      map.fitBounds(bounds, { animate: false });
-      map.setView([c.lat, c.lng], map.getZoom(), { animate: false });
+    console.log('Boot: Creating marker at', pos);
+
+    // Create marker
+    const initialPos = pos && Number.isFinite(pos.lat) && Number.isFinite(pos.lng)
+      ? pos
+      : handoff;
+
+    if (!initialPos || !Number.isFinite(initialPos.lat) || !Number.isFinite(initialPos.lng)) {
+      console.error('Boot: Invalid initial position', initialPos);
+      return;
     }
 
-    // Dragging
-    let timeout;
-    const update = () => {
-      if (!markerRef.current) return;
-      const ll = markerRef.current.getLatLng();
+    const marker = L.marker([initialPos.lat, initialPos.lng], {
+      icon: placingIconFor(pageTile),
+      draggable: true,
+      autoPan: false,
+    }).addTo(map);
+
+    markerRef.current = marker;
+    console.log('Boot: Marker created and added to map');
+
+    // Set initial view
+    const bounds = boundsForMiles(initialPos, 0.25); // 1/4 mile for fine-tune
+    map.fitBounds(bounds, { animate: false });
+
+    // Small delay to ensure map is ready, then invalidate size
+    setTimeout(() => {
+      map.invalidateSize();
+      map.setView([initialPos.lat, initialPos.lng], map.getZoom(), { animate: false });
+    }, 50);
+
+    // Handle dragging
+    const onDrag = () => {
+      const ll = marker.getLatLng();
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
         setPos({ lat: ll.lat, lng: ll.lng });
+        // Keep marker centered while dragging
+        map.panTo([ll.lat, ll.lng], { animate: false });
       }
     };
-    const commit = () => {
-      if (!markerRef.current) return;
-      const ll = markerRef.current.getLatLng();
-      if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          commitRef.current += 1;
-          onPointerUpCommit({ lat: ll.lat, lng: ll.lng });
-        }, 200);
-      }
-    };
-    if (m) {
-      m.on('drag', update);
-      m.on('dragend', commit);
-    }
 
-    // Pinch-zoom
-    map.on('zoom', () => {
-      if (!markerRef.current) return;
-      const ll = markerRef.current.getLatLng();
+    const onDragEnd = () => {
+      const ll = marker.getLatLng();
+      if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
+        setPos({ lat: ll.lat, lng: ll.lng });
+        // Auto-commit after short delay
+        if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
+        dragTimeoutRef.current = setTimeout(() => {
+          console.log('Boot: Auto-committing position', ll);
+          onPointerUpCommit({ lat: ll.lat, lng: ll.lng });
+        }, 300);
+      }
+    };
+
+    marker.on('drag', onDrag);
+    marker.on('dragend', onDragEnd);
+
+    // Handle zoom - keep marker centered
+    const onZoom = () => {
+      const ll = marker.getLatLng();
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
         map.setView([ll.lat, ll.lng], map.getZoom(), { animate: false });
       }
-    });
-
-    return () => {
-      if (m) {
-        m.off('drag', update);
-        m.off('dragend', commit);
-        m.remove();
-      }
-      map.off('zoom');
-      clearTimeout(timeout);
-      markerRef.current = null;
     };
-  }, [map, pos, setPos, pageTile, handoff, onPointerUpCommit, mapReady]);
+
+    map.on('zoom', onZoom);
+
+    // Cleanup
+    return () => {
+      console.log('Boot: Cleaning up marker');
+      marker.off('drag', onDrag);
+      marker.off('dragend', onDragEnd);
+      map.off('zoom', onZoom);
+      marker.remove();
+      markerRef.current = null;
+      if (dragTimeoutRef.current) {
+        clearTimeout(dragTimeoutRef.current);
+      }
+    };
+  }, [map]); // Only recreate if map changes
 
   return <DragTip pos={pos} />;
 }
@@ -168,8 +187,6 @@ export default function SubMapModal({
               pageTile={team}
               handoff={handoff}
               onPointerUpCommit={onCommit}
-              mainMapRef={mainMapRef}
-              mapReady={mapReady}
             />
           </MapContainer>
         </div>
