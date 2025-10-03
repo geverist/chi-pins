@@ -26,6 +26,9 @@ export default function GameLeaderboard({
       if (response.ok) {
         const data = await response.json();
         setLeaderboard(data.scores || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to fetch leaderboard:', response.status, errorData);
       }
     } catch (err) {
       console.error('Failed to fetch leaderboard:', err);
@@ -58,15 +61,17 @@ export default function GameLeaderboard({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit score');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Submit score error:', response.status, errorData);
+        throw new Error(errorData.message || 'Failed to submit score');
       }
 
       const data = await response.json();
       setRank(data.rank);
       setSubmitted(true);
 
-      // Refresh leaderboard
-      await fetchLeaderboard();
+      // Refresh leaderboard after a brief delay to ensure DB is updated
+      setTimeout(() => fetchLeaderboard(), 500);
     } catch (err) {
       console.error('Failed to submit score:', err);
       alert('Failed to save score. Please try again.');
