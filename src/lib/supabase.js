@@ -112,10 +112,14 @@ export const supabase =
           persistSession: false,
           autoRefreshToken: false,
         },
+        db: {
+          schema: 'public',
+        },
         global: {
           headers: {
             apikey: KEY,
             Authorization: `Bearer ${KEY}`,
+            'Prefer': 'return=representation',
           },
         },
       })

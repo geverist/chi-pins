@@ -13,6 +13,7 @@ export function usePins(mainMapRef) {
   const seen = useRef(new Set()); // de-dupe guard
   const channelRef = useRef(null);
   const offlineQueue = useRef([]); // Offline pin save queue
+  const mountCount = useRef(0); // Track mount count
 
   const keyFor = (r) =>
     r?.id ??
@@ -29,11 +30,15 @@ export function usePins(mainMapRef) {
   // Merge helper: de-dupe, sort desc by created_at, cap size
   const mergeRows = (prev, incoming) => {
     const out = [...prev];
+    let duplicates = 0;
+    let added = 0;
+
     for (const r of incoming) {
       const k = keyFor(r);
       if (!k) continue;
 
       if (seen.current.has(k)) {
+        duplicates++;
         const idx = out.findIndex((x) => keyFor(x) === k);
         if (idx !== -1) {
           const old = out[idx];
@@ -48,10 +53,13 @@ export function usePins(mainMapRef) {
 
       seen.current.add(k);
       out.unshift(r);
+      added++;
     }
 
     out.sort((a, b) => (b?.created_at || '').localeCompare(a?.created_at || ''));
     if (out.length > MAX_ROWS) out.length = MAX_ROWS;
+
+    console.log(`mergeRows: prev=${prev.length}, incoming=${incoming.length}, duplicates=${duplicates}, added=${added}, final=${out.length}`);
     return out;
   };
 
@@ -67,39 +75,68 @@ export function usePins(mainMapRef) {
   useEffect(() => {
     let cancelled = false;
 
+    // Always clear on mount to ensure fresh load
+    console.log('usePins: Clearing seen set for fresh load');
+    seen.current.clear();
+    newest.current = null;
+    setPins([]);
+
     const load = async () => {
       try {
-        let query = supabase
-          .from('pins')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1000);
+        // Fetch all pins in batches to avoid Supabase pagination limits
+        const allData = [];
+        let offset = 0;
+        const batchSize = 1000;
+        let hasMore = true;
 
         // Apply date filtering based on admin settings
         const monthsBack = settings?.showPinsSinceMonths ?? 999;
-        if (monthsBack < 999) {
-          const cutoffDate = new Date();
-          cutoffDate.setMonth(cutoffDate.getMonth() - monthsBack);
-          query = query.gte('created_at', cutoffDate.toISOString());
+        const cutoffDate = monthsBack < 999
+          ? (() => { const d = new Date(); d.setMonth(d.getMonth() - monthsBack); return d.toISOString(); })()
+          : null;
+
+        while (hasMore && !cancelled) {
+          let query = supabase
+            .from('pins')
+            .select('*', { count: 'exact', head: false })
+            .order('created_at', { ascending: false })
+            .range(offset, offset + batchSize - 1);
+
+          if (cutoffDate) {
+            query = query.gte('created_at', cutoffDate);
+          }
+
+          const { data, error, count } = await query;
+
+          if (error) {
+            console.error('usePins: Error loading pins:', error);
+            break;
+          }
+
+          if (data && data.length > 0) {
+            allData.push(...data);
+            offset += data.length;
+            hasMore = data.length === batchSize && (count === null || offset < count);
+            console.log(`usePins: Fetched batch ${Math.ceil(offset / batchSize)}, got ${data.length} pins, total so far: ${allData.length}`);
+          } else {
+            hasMore = false;
+          }
         }
 
-        const { data, error } = await query;
-
-        if (!cancelled && !error) {
-          console.log(`usePins: Loaded ${data?.length || 0} pins from Supabase`);
+        if (!cancelled) {
+          console.log(`usePins: Loaded ${allData.length} total pins from Supabase`);
+          console.log(`usePins: seen.current.size = ${seen.current.size}`);
           const seeded = [];
-          for (const r of data || []) {
+          for (const r of allData) {
             const k = keyFor(r);
             if (k && !seen.current.has(k)) {
               seen.current.add(k);
               seeded.push(r);
             }
           }
-          console.log(`usePins: After dedup, ${seeded.length} new pins added`);
-          bumpNewest(data || []);
+          console.log(`usePins: After dedup, ${seeded.length} new pins added, seen.current.size = ${seen.current.size}`);
+          bumpNewest(allData);
           setPins((prev) => mergeRows(prev, seeded));
-        } else if (error) {
-          console.error('usePins: Error loading pins:', error);
         }
       } catch {
         // ignore; polling will retry
