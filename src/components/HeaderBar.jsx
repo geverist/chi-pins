@@ -1,5 +1,7 @@
 // src/components/HeaderBar.jsx
 import { useEffect, useState } from 'react'
+import { useLogo } from '../hooks/useLogo'
+import defaultLogoUrl from '../assets/logo.png'
 
 const PIN_COLOR = {
   chicago:  '#0ea5e9',
@@ -36,12 +38,18 @@ export default function HeaderBar({
   onGlobal,
   onChicago,
   children,
-  logoSrc,
+  logoSrc: logoSrcProp,
   onLogoClick,
   continentCounts = null,
   /** Optional: force mobile mode from parent. If omitted, we detect by width. */
   isMobile: isMobileProp,
 }) {
+  // Fetch uploaded logo from Supabase
+  const { logoUrl: uploadedLogoUrl } = useLogo()
+
+  // Use uploaded logo if available, otherwise fall back to prop or default
+  const logoSrc = uploadedLogoUrl || logoSrcProp || defaultLogoUrl
+
   // If isMobile not provided, detect via media query
   const [isMobileDetected, setIsMobileDetected] = useState(false)
   useEffect(() => {

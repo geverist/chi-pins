@@ -2,6 +2,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useBackgroundImages } from '../hooks/useBackgroundImages'
+import { useNavigationSettings } from '../hooks/useNavigationSettings'
+import { useLogo } from '../hooks/useLogo'
 
 export default function AdminPanel({ open, onClose }) {
   const [tab, setTab] = useState('general')
@@ -9,23 +11,42 @@ export default function AdminPanel({ open, onClose }) {
   // Background images hook
   const { backgrounds, loading: bgLoading, addBackground, deleteBackground } = useBackgroundImages()
 
+  // Navigation settings hook
+  const { settings: navSettings, updateSettings: updateNavSettings } = useNavigationSettings()
+
+  // Logo hook
+  const { logoUrl, loading: logoLoading, uploadLogo, deleteLogo } = useLogo()
+
   // ---------- Defaults (kept same) ----------
   const defaultSettings = {
+    // Kiosk behavior
     idleAttractorSeconds: 60,
+    kioskAutoStart: true,
+    attractorHintEnabled: true,
+
+    // Map display
     minZoomForPins: 13,
     maxZoom: 17,
-    kioskAutoStart: true,
-    showPinsSinceMonths: 24,  // Changed from pinAgeMonths to match useAdminSettings
-    showPopularSpots: true,
-    showCommunityPins: true,
     clusterBubbleThreshold: 13,
     showLabelsZoom: 13,
     lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
-    // new-but-safe toggles used elsewhere; default true/false won't break anything
-    loyaltyEnabled: true,
-    enableGlobalBubbles: true,
-    attractorHintEnabled: true,
     labelStyle: 'pill', // 'pill' | 'clean'
+
+    // Content layers
+    showPinsSinceMonths: 24,
+    showPopularSpots: true,
+    showCommunityPins: true,
+    enableGlobalBubbles: true,
+
+    // Features
+    loyaltyEnabled: true,
+    vestaboardEnabled: false,
+    facebookShareEnabled: false,
+    photoBackgroundsEnabled: true,
+
+    // Map constants (rarely changed)
+    initialRadiusMiles: 0.5,
+    chiMinZoom: 10,
   }
 
   // ---------- State ----------
@@ -42,8 +63,8 @@ export default function AdminPanel({ open, onClose }) {
     try {
       const raw = localStorage.getItem('adminPopularSpots')
       return raw ? JSON.parse(raw) : [
-        { label: 'Portillo's – River North', category: 'hotdog' },
-        { label: 'Al's #1 Italian Beef – Little Italy', category: 'beef' },
+        { label: 'Portillo\'s - River North', category: 'hotdog' },
+        { label: 'Al\'s #1 Italian Beef - Little Italy', category: 'beef' },
       ]
     } catch { return [] }
   })
@@ -257,6 +278,8 @@ export default function AdminPanel({ open, onClose }) {
         <div style={s.tabs}>
           <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
           <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>Display</TabBtn>
+          <TabBtn active={tab === 'branding'} onClick={() => setTab('branding')}>Branding</TabBtn>
+          <TabBtn active={tab === 'navigation'} onClick={() => setTab('navigation')}>Navigation</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
           <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
           <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
@@ -303,13 +326,53 @@ export default function AdminPanel({ open, onClose }) {
                 </p>
               </Card>
 
-              <Card title="Loyalty">
-                <FieldRow label="Enable loyalty phone in editor">
+              <Card title="Features">
+                <FieldRow label="Loyalty phone in editor">
                   <Toggle
                     checked={settings.loyaltyEnabled}
                     onChange={(v) => setSettings(s => ({ ...s, loyaltyEnabled: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Photo backgrounds">
+                  <Toggle
+                    checked={settings.photoBackgroundsEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, photoBackgroundsEnabled: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Vestaboard notifications">
+                  <Toggle
+                    checked={settings.vestaboardEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, vestaboardEnabled: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Facebook share option">
+                  <Toggle
+                    checked={settings.facebookShareEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, facebookShareEnabled: v }))}
+                  />
+                </FieldRow>
+              </Card>
+
+              <Card title="Map constants">
+                <FieldRow label="Initial radius (miles)">
+                  <NumberInput
+                    value={settings.initialRadiusMiles}
+                    min={0.1}
+                    max={10}
+                    onChange={(v) => setSettings(s => ({ ...s, initialRadiusMiles: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Chicago min zoom">
+                  <NumberInput
+                    value={settings.chiMinZoom}
+                    min={2}
+                    max={15}
+                    onChange={(v) => setSettings(s => ({ ...s, chiMinZoom: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: 0, fontSize: 12 }}>
+                  Advanced: These control map behavior constants
+                </p>
               </Card>
             </SectionGrid>
           )}
@@ -389,6 +452,182 @@ export default function AdminPanel({ open, onClose }) {
                     <option value="pill">Pill</option>
                     <option value="clean">Clean</option>
                   </select>
+                </FieldRow>
+              </Card>
+            </SectionGrid>
+          )}
+
+          {tab === 'branding' && (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="App Logo">
+                <p style={s.muted}>
+                  Upload a custom logo to replace the default. The logo will appear in the header bar.
+                </p>
+
+                {/* Current Logo Preview */}
+                {logoUrl && !logoLoading && (
+                  <div style={{
+                    marginTop: 16,
+                    padding: 16,
+                    background: '#0f1115',
+                    borderRadius: 8,
+                    border: '1px solid #2a2f37',
+                    textAlign: 'center',
+                  }}>
+                    <div style={{
+                      fontSize: 12,
+                      color: '#a7b0b8',
+                      marginBottom: 8,
+                      fontWeight: '600'
+                    }}>
+                      Current Logo:
+                    </div>
+                    <img
+                      src={logoUrl}
+                      alt="Current logo"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: 120,
+                        objectFit: 'contain',
+                        display: 'block',
+                        margin: '0 auto',
+                      }}
+                    />
+                    <button
+                      onClick={async () => {
+                        if (confirm('Delete current logo and revert to default?')) {
+                          try {
+                            await deleteLogo();
+                          } catch (err) {
+                            alert(`Failed to delete logo: ${err.message}`);
+                          }
+                        }
+                      }}
+                      style={{
+                        ...btn.danger,
+                        marginTop: 12,
+                        fontSize: 12,
+                        padding: '6px 12px',
+                      }}
+                    >
+                      Delete Logo
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload Section */}
+                <div style={{ marginTop: 16 }}>
+                  <input
+                    type="file"
+                    id="logo-upload"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      // Validate file type
+                      if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file');
+                        return;
+                      }
+
+                      // Validate file size (max 2MB)
+                      if (file.size > 2 * 1024 * 1024) {
+                        alert('Logo must be smaller than 2MB');
+                        return;
+                      }
+
+                      try {
+                        await uploadLogo(file);
+                        e.target.value = ''; // Reset input
+                      } catch (err) {
+                        alert(`Failed to upload logo: ${err.message}`);
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => document.getElementById('logo-upload').click()}
+                    style={{
+                      ...btn.primary,
+                      width: '100%',
+                    }}
+                    disabled={logoLoading}
+                  >
+                    {logoLoading ? 'Uploading...' : logoUrl ? 'Replace Logo' : 'Upload Logo'}
+                  </button>
+                  <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 12 }}>
+                    Recommended: PNG with transparent background, max 2MB
+                  </p>
+                </div>
+
+                {/* Loading State */}
+                {logoLoading && (
+                  <p style={{ textAlign: 'center', color: '#888', marginTop: 12 }}>
+                    Processing logo...
+                  </p>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {tab === 'navigation' && (
+            <SectionGrid>
+              <Card title="Footer Navigation Items">
+                <p style={s.muted}>
+                  Control which navigation items appear in the footer. If only one item is enabled, the footer will hide icons.
+                </p>
+
+                <FieldRow label="🎮 Games">
+                  <Toggle
+                    checked={navSettings.games_enabled}
+                    onChange={async (v) => {
+                      try {
+                        await updateNavSettings({ ...navSettings, games_enabled: v });
+                      } catch (err) {
+                        alert('Failed to update navigation settings');
+                      }
+                    }}
+                  />
+                </FieldRow>
+
+                <FieldRow label="🎵 Jukebox">
+                  <Toggle
+                    checked={navSettings.jukebox_enabled}
+                    onChange={async (v) => {
+                      try {
+                        await updateNavSettings({ ...navSettings, jukebox_enabled: v });
+                      } catch (err) {
+                        alert('Failed to update navigation settings');
+                      }
+                    }}
+                  />
+                </FieldRow>
+
+                <FieldRow label="🍕 Order Now">
+                  <Toggle
+                    checked={navSettings.order_enabled}
+                    onChange={async (v) => {
+                      try {
+                        await updateNavSettings({ ...navSettings, order_enabled: v });
+                      } catch (err) {
+                        alert('Failed to update navigation settings');
+                      }
+                    }}
+                  />
+                </FieldRow>
+
+                <FieldRow label="🔎 Explore">
+                  <Toggle
+                    checked={navSettings.explore_enabled}
+                    onChange={async (v) => {
+                      try {
+                        await updateNavSettings({ ...navSettings, explore_enabled: v });
+                      } catch (err) {
+                        alert('Failed to update navigation settings');
+                      }
+                    }}
+                  />
                 </FieldRow>
               </Card>
             </SectionGrid>

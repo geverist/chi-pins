@@ -12,6 +12,8 @@ export default function Editor({
   hotdogSuggestions = [],
   onCancel,
   onOpenShare,
+  photoBackgroundsEnabled = true,
+  loyaltyEnabled = true,
 }) {
   const update = (patch) => setForm((f) => ({ ...f, ...patch }));
   const digitsOnly = String(form.loyaltyPhone || '').replace(/\D+/g, '');
@@ -221,7 +223,7 @@ export default function Editor({
       {cameraError && <div style={{ color: '#ef4444' }} role="alert">{cameraError}</div>}
 
       {/* Background Carousel */}
-      {isCameraReady && !photoPreview && backgrounds.length > 0 && (
+      {photoBackgroundsEnabled && isCameraReady && !photoPreview && backgrounds.length > 0 && (
         <div style={{ marginTop: 8 }}>
           <div style={{ fontSize: 13, color: '#a7b0b8', marginBottom: 8 }}>
             Select a background (optional):
@@ -302,7 +304,7 @@ export default function Editor({
     </div>
   );
 
-  const LoyaltySection = (
+  const LoyaltySection = loyaltyEnabled ? (
     <div style={{
       gridColumn: '1 / -1',
       border: '1px solid #2a2f37',
@@ -324,11 +326,11 @@ export default function Editor({
       }}>
         <input type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} aria-label="Loyalty phone number" />
         <span style={{ fontSize: 13, color: phoneLooksValid ? '#9AE6B4' : '#a7b0b8' }}>
-          {phoneLooksValid ? '⭐ You’ll earn a star for linking' : 'Enter at least 10 digits'}
+          {phoneLooksValid ? '⭐ You'll earn a star for linking' : 'Enter at least 10 digits'}
         </span>
       </div>
     </div>
-  );
+  ) : null;
 
   if (mapMode === 'chicago') {
     return (

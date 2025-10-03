@@ -51,8 +51,14 @@ import ZoomGate from './components/ZoomGate';
 // Admin panel
 import AdminPanel from './components/AdminPanel';
 import MobilePinsList from './components/MobilePinsList';
+import OrderMenu from './components/OrderMenu';
+import Jukebox from './components/Jukebox';
+import GamesMenu from './components/GamesMenu';
+import Footer from './components/Footer';
 import { useAdminSettings } from './state/useAdminSettings';
-import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode';
+import { useNavigationSettings } from './hooks/useNavigationSettings';
+import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode.jsx';
+import { enterFullscreen, exitFullscreenAndWake, ensureWakeLock, onFullscreenChange } from './lib/kiosk';
 
 function normalizePhoneToE164ish(raw) {
   if (!raw) return null;
@@ -69,25 +75,25 @@ function normalizePhoneToE164ish(raw) {
 const DEFAULT_FUN_FACTS = {
   chicago: 'The Chicago River flows backwards! Engineers reversed it in 1900 to improve sanitation.',
   evanston: 'Home to Northwestern University and birthplace of the ice cream sundae (1890s).',
-  oakpark: 'Frank Lloyd Wright's architectural playground—25 buildings still stand here.',
+  oakpark: 'Frank Lloyd Wright\'s architectural playground - 25 buildings still stand here.',
   cicero: 'Al Capone ran his empire from the Hawthorne Hotel, still standing on Ogden Ave.',
-  skokie: 'The "World's Largest Village" was called Niles Center until 1940.',
-  schaumburg: 'Went from 130 residents (1956) to 75,000+ today—one of America's fastest-growing suburbs.',
+  skokie: 'The "World\'s Largest Village" was called Niles Center until 1940.',
+  schaumburg: 'Went from 130 residents (1956) to 75,000+ today - one of America\'s fastest-growing suburbs.',
   naperville: 'Named "Best Place to Live in America" twice by Money magazine.',
   aurora: 'First U.S. city to illuminate its streets entirely with electric lights (1881).',
   joliet: 'The Old Joliet Prison hosted Jake and Elwood in The Blues Brothers opening scene.',
-  waukegan: 'Ray Bradbury grew up here—Green Town in his novels is based on Waukegan.',
-  'oak lawn': 'The Hilltop restaurant's iconic neon sign has been a Route 66 landmark since 1961.',
-  'des plaines': 'Home of the first McDonald's franchise opened by Ray Kroc in 1955.',
-  wilmette: 'The Bahá'í House of Worship is the oldest surviving Bahá'í temple in the world.',
-  berwyn: 'Features the world's largest laundromat and Cermak Plaza's iconic "Spindle" car sculpture.',
-  'park ridge': 'Hillary Clinton's hometown—she graduated from Maine South High School.',
+  waukegan: 'Ray Bradbury grew up here - Green Town in his novels is based on Waukegan.',
+  'oak lawn': 'The Hilltop restaurant\'s iconic neon sign has been a Route 66 landmark since 1961.',
+  'des plaines': 'Home of the first McDonald\'s franchise opened by Ray Kroc in 1955.',
+  wilmette: 'The Baha\'i House of Worship is the oldest surviving Baha\'i temple in the world.',
+  berwyn: 'Features the world\'s largest laundromat and Cermak Plaza\'s iconic "Spindle" car sculpture.',
+  'park ridge': 'Hillary Clinton\'s hometown - she graduated from Maine South High School.',
   'glen ellyn': 'Lake Ellyn was created in 1889 by damming a creek to power a mill.',
   wheaton: 'Red Grange, "The Galloping Ghost," played football at Wheaton College.',
-  'orland park': 'Named after the town's founder, John Orland, who arrived in the 1840s.',
-  'tinley park': 'Home to the Hollywood Casino Amphitheatre, one of the Midwest's premier concert venues.',
-  'oak brook': 'McDonald's global headquarters moved here in 2018 to a sprawling campus.',
-  lombard: 'The Lilac Village celebrates Lilacia Park's 1,200+ lilac bushes each May.',
+  'orland park': 'Named after the town\'s founder, John Orland, who arrived in the 1840s.',
+  'tinley park': 'Home to the Hollywood Casino Amphitheatre, one of the Midwest\'s premier concert venues.',
+  'oak brook': 'McDonald\'s global headquarters moved here in 2018 to a sprawling campus.',
+  lombard: 'The Lilac Village celebrates Lilacia Park\'s 1,200+ lilac bushes each May.',
   'downers grove': 'The Pierce Downer cabin (1832) is one of the oldest structures in the area.',
   elmhurst: 'York Theatre, built in 1924, is one of the few remaining atmospheric movie palaces.',
   palatine: 'Named after Palatine, New York, by early settlers from that region.',
@@ -95,8 +101,8 @@ const DEFAULT_FUN_FACTS = {
   'buffalo grove': 'Named after the buffalo that once roamed the prairie groves here.',
   'mount prospect': 'The Busse-Biermann mansion (1910) is now a historical museum.',
   hoffman: 'Hoffman Estates was farmland until the 1950s when Sam Hoffman built planned suburbs.',
-  bolingbrook: 'Incorporated in 1965, it's one of Illinois's youngest and fastest-growing towns.',
-  'crystal lake': 'The lake itself was formed by a glacier and is spring-fed—hence the crystal-clear water.',
+  bolingbrook: 'Incorporated in 1965, it\'s one of Illinois\'s youngest and fastest-growing towns.',
+  'crystal lake': 'The lake itself was formed by a glacier and is spring-fed - hence the crystal-clear water.',
 };
 
 export default function App() {
@@ -106,6 +112,7 @@ export default function App() {
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
   const { settings: adminSettings } = useAdminSettings();
+  const { settings: navSettings, enabledCount } = useNavigationSettings();
 
   // map mode
   const [mapMode, setMapMode] = useState('chicago');
@@ -134,6 +141,15 @@ export default function App() {
   // pin share modal
   const [pinShareOpen, setPinShareOpen] = useState(false);
   const [pinToShare, setPinToShare] = useState(null);
+
+  // order menu modal
+  const [orderMenuOpen, setOrderMenuOpen] = useState(false);
+
+  // jukebox modal
+  const [jukeboxOpen, setJukeboxOpen] = useState(false);
+
+  // games modal
+  const [gamesOpen, setGamesOpen] = useState(false);
 
   // layer toggles
   const [showPopularSpots, setShowPopularSpots] = useState(true);
@@ -519,12 +535,37 @@ export default function App() {
       }
 
       // Vestaboard notification (fire and forget - don't block on errors)
-      if (isVestaboardConfigured()) {
+      if (adminSettings.vestaboardEnabled && isVestaboardConfigured()) {
         notifyPinPlacement({
           slug: rec.slug,
           team: rec.team || rec.continent,
           notes: rec.note,
         }).catch(err => console.warn('Vestaboard notification failed:', err));
+      }
+
+      // Square Loyalty points (fire and forget - don't block on errors)
+      if (adminSettings.loyaltyEnabled && form.loyaltyPhone) {
+        const phoneE164 = normalizePhoneToE164ish(form.loyaltyPhone);
+        if (phoneE164) {
+          fetch('/api/square-loyalty-add-points', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phoneNumber: phoneE164,
+              points: 1,
+              reason: `Pin placed at ${rec.slug || 'location'}`,
+            }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                console.info('Loyalty points added:', data);
+              } else {
+                console.warn('Loyalty points failed:', data.error);
+              }
+            })
+            .catch(err => console.warn('Loyalty API request failed:', err));
+        }
       }
 
       setShowCommunityPins(true);
@@ -601,25 +642,6 @@ export default function App() {
     setResetCameraToken((t) => t + 1);
   };
 
-  // button style helper
-  const btn3d = (pressed) => ({
-    padding: '10px 12px',
-    borderRadius: 12,
-    border: '1px solid #2a2f37',
-    background: pressed ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-    color: '#f4f6f8',
-    boxShadow: pressed
-      ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
-      : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
-    transform: pressed ? 'translateY(1px)' : 'translateY(0)',
-    transition: 'transform 80ms ease, box-shadow 120ms ease',
-    cursor: 'pointer',
-    fontSize: 14,
-    lineHeight: 1,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-  });
 
   const headerRight =
     mapMode === 'chicago' ? (
@@ -833,78 +855,29 @@ export default function App() {
         />
       )}
 
-      {!isMobile && (
-        <footer
-          style={{ padding: '10px 14px' }}
-          onClick={handleFooterClick}
-          onTouchStart={handleFooterTouch}
-          aria-label="Footer controls"
-        >
-          {!draft ? (
-            <div
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                minHeight: 44,
-              }}
-            >
-              <div
-                className="hint"
-                style={{
-                  position: 'absolute',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  textAlign: 'center',
-                  color: '#a7b0b8',
-                  pointerEvents: 'none',
-                  width: '100%',
-                }}
-              >
-                {exploring
-                  ? 'Click any pin to see details.'
-                  : mapMode === 'global'
-                  ? 'Click the map to place your pin anywhere in the world.'
-                  : mapReady
-                  ? 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                  : 'Loading map, please wait...'}
-              </div>
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }} data-no-admin-tap>
-                {!exploring ? (
-                  <button
-                    onClick={() => {
-                      setExploring(true);
-                      setShowAttractor(false);
-                    }}
-                    className="btn-kiosk"
-                    aria-label="Explore community pins"
-                  >
-                    🔎 Explore pins
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setExploring(false)}
-                    className="btn-kiosk"
-                    aria-label="Close explore mode"
-                  >
-                    ✖ Close explore
-                  </button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <Editor
-              mapMode={mapMode}
-              slug={slug}
-              form={form}
-              setForm={setForm}
-              hotdogSuggestions={hotdogSuggestions}
-              onCancel={cancelEditing}
-              onOpenShare={() => setShareOpen(true)}
-            />
-          )}
-        </footer>
-      )}
+      <Footer
+        isMobile={isMobile}
+        draft={draft}
+        exploring={exploring}
+        mapMode={mapMode}
+        mapReady={mapReady}
+        navSettings={navSettings}
+        enabledCount={enabledCount}
+        setGamesOpen={setGamesOpen}
+        setJukeboxOpen={setJukeboxOpen}
+        setOrderMenuOpen={setOrderMenuOpen}
+        setExploring={setExploring}
+        setShowAttractor={setShowAttractor}
+        handleFooterClick={handleFooterClick}
+        handleFooterTouch={handleFooterTouch}
+        slug={slug}
+        form={form}
+        setForm={setForm}
+        hotdogSuggestions={hotdogSuggestions}
+        cancelEditing={cancelEditing}
+        setShareOpen={setShareOpen}
+        adminSettings={adminSettings}
+      />
 
       <ShareConfirmModal
         open={shareOpen}
@@ -915,6 +888,7 @@ export default function App() {
         draft={draft}
         form={form}
         mapMode={mapMode}
+        facebookShareEnabled={adminSettings.facebookShareEnabled}
       />
 
       <KioskStartOverlay visible={autoKiosk && needsKioskStart && !isFullscreen} onStart={startKioskNow} />
@@ -935,6 +909,18 @@ export default function App() {
           pins={pinsForRender}
           onClose={() => setShowMobileList(false)}
         />
+      )}
+
+      {orderMenuOpen && (
+        <OrderMenu onClose={() => setOrderMenuOpen(false)} />
+      )}
+
+      {jukeboxOpen && (
+        <Jukebox onClose={() => setJukeboxOpen(false)} />
+      )}
+
+      {gamesOpen && (
+        <GamesMenu onClose={() => setGamesOpen(false)} />
       )}
     </div>
   );

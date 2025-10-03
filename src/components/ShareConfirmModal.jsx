@@ -6,7 +6,8 @@ export default function ShareConfirmModal({
   setShareToFb,
   draft,
   form,
-  mapMode
+  mapMode,
+  facebookShareEnabled = false
 }) {
   if (!open) return null
   return (
@@ -43,20 +44,26 @@ export default function ShareConfirmModal({
         </div>
 
         <p style={{margin:'12px 0 10px', opacity:0.9, lineHeight:1.4}}>
-          You’re about to add a pin {mapMode === 'global' ? 'on the global map' : 'in Chicagoland'}.
-          You can also share the location and your guest notes to the
-          <strong> Chicago Mike’s</strong> Facebook page.
+          You're about to add a pin {mapMode === 'global' ? 'on the global map' : 'in Chicagoland'}.
+          {facebookShareEnabled && (
+            <>
+              {' '}You can also share the location and your guest notes to the
+              <strong> Chicago Mike's</strong> Facebook page.
+            </>
+          )}
         </p>
 
-        <label style={{display:'flex', gap:10, alignItems:'start', margin:'10px 0 6px', cursor:'pointer'}}>
-          <input
-            type="checkbox"
-            checked={shareToFb}
-            onChange={(e)=> setShareToFb(e.target.checked)}
-            style={{ marginTop:4 }}
-          />
-          <span>Also share to Chicago Mike’s Facebook page</span>
-        </label>
+        {facebookShareEnabled && (
+          <label style={{display:'flex', gap:10, alignItems:'start', margin:'10px 0 6px', cursor:'pointer'}}>
+            <input
+              type="checkbox"
+              checked={shareToFb}
+              onChange={(e)=> setShareToFb(e.target.checked)}
+              style={{ marginTop:4 }}
+            />
+            <span>Also share to Chicago Mike's Facebook page</span>
+          </label>
+        )}
 
         <div style={{
           marginTop:8, padding:'8px 10px', borderRadius:8,

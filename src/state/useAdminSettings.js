@@ -11,32 +11,53 @@ import { supabase } from '../lib/supabase'
  * Row: { key: 'app', value: { ...settings } }
  */
 const DEFAULTS = {
-  // Timers
+  // Kiosk behavior
+  idleAttractorSeconds: 60,
+  kioskAutoStart: true,
+  attractorHintEnabled: true,
+
+  // Timers (internal)
   idleTimeoutMs: 60_000,
   highlightMs: 30_000,
   exploreDismissMs: 12_000,
 
-  // Map thresholds
+  // Map display
   minZoomForPins: 13,
   maxZoom: 17,
+  clusterBubbleThreshold: 13,
+  showLabelsZoom: 13,
+  lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
+  labelStyle: 'pill', // 'pill' | 'clean'
 
-  // Kiosk defaults
+  // Content layers
+  showPinsSinceMonths: 24,
+  showPopularSpots: true,
+  showCommunityPins: true,
+  enableGlobalBubbles: true,
+
+  // Features
+  loyaltyEnabled: true,
+  vestaboardEnabled: false,
+  facebookShareEnabled: false,
+  photoBackgroundsEnabled: true,
+
+  // Map constants (rarely changed)
+  initialRadiusMiles: 0.5,
+  chiMinZoom: 10,
+
+  // Kiosk defaults (legacy)
   autoKiosk: false,
-
-  // UI defaults
   showPopularSpotsDefault: true,
   showCommunityPinsDefault: true,
-  lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
 
   // Content filters
-  showPinsSinceMonths: 24,    // default: last 24 months
   allowedTeams: ['cubs', 'whitesox', 'other'],
   allowedSources: ['kiosk', 'global'],
 
   // Popular spots seed (editable)
   popularSpots: [
-    { name: 'Portillo’s (Clark & Ontario)', type: 'hotdog', lat: 41.8922, lng: -87.6305 },
-    { name: 'Gene & Jude’s', type: 'hotdog', lat: 41.9099, lng: -87.8847 },
+    { name: 'Portillo's (Clark & Ontario)', type: 'hotdog', lat: 41.8922, lng: -87.6305 },
+    { name: 'Gene & Jude's', type: 'hotdog', lat: 41.9099, lng: -87.8847 },
   ],
 }
 

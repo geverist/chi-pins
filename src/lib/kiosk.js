@@ -26,6 +26,24 @@ export async function ensureWakeLock() {
   }
 }
 
+export async function exitFullscreenAndWake() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  } catch (e) {
+    console.warn('[kiosk] exitFullscreen failed:', e);
+  }
+  try {
+    if (wakeLock) {
+      await wakeLock.release();
+      wakeLock = null;
+    }
+  } catch (e) {
+    console.warn('[kiosk] wake lock release failed:', e);
+  }
+}
+
 export function onFullscreenChange(cb) {
   const handler = () => cb(!!document.fullscreenElement);
   document.addEventListener('fullscreenchange', handler);
