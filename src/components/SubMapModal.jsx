@@ -9,6 +9,7 @@ import DragTip from './DragTip';
 function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
   const map = useMap();
   const markerRef = useRef(null);
+  const isDraggingRef = useRef(false);
   const dragTimeoutRef = useRef(null);
 
   // Create marker on mount
@@ -20,7 +21,7 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
 
     console.log('Boot: Creating marker with pos=', pos, 'handoff=', handoff);
 
-    // Use pos (which should be the lat/lng), handoff is pointer coordinates
+    // Use pos (which should be the lat/lng)
     const initialPos = pos;
 
     if (!initialPos || !Number.isFinite(initialPos.lat) || !Number.isFinite(initialPos.lng)) {
@@ -30,9 +31,10 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
 
     console.log('Boot: Using position', initialPos);
 
+    // Create marker (non-draggable, we'll handle dragging manually)
     const marker = L.marker([initialPos.lat, initialPos.lng], {
       icon: placingIconFor(pageTile),
-      draggable: true,
+      draggable: false,
       autoPan: false,
     }).addTo(map);
 
@@ -49,18 +51,43 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       map.setView([initialPos.lat, initialPos.lng], map.getZoom(), { animate: false });
     }, 50);
 
-    // Handle dragging
-    const onDrag = () => {
-      const ll = marker.getLatLng();
-      if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
-        setPos({ lat: ll.lat, lng: ll.lng });
-        // Keep marker centered while dragging
-        map.panTo([ll.lat, ll.lng], { animate: false });
+    // Manual pointer-based dragging
+    const markerElement = marker.getElement();
+    if (!markerElement) {
+      console.error('Boot: Could not get marker element');
+      return;
+    }
+
+    const onPointerDown = (e) => {
+      isDraggingRef.current = true;
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Boot: Drag started');
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDraggingRef.current || !markerRef.current) return;
+
+      // Convert screen coordinates to map coordinates
+      const point = map.containerPointToLatLng([e.clientX, e.clientY]);
+
+      if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
+        // Move marker to cursor position
+        markerRef.current.setLatLng(point);
+        // Keep map centered on the pin
+        map.panTo(point, { animate: false });
+        // Update position state
+        setPos({ lat: point.lat, lng: point.lng });
       }
     };
 
-    const onDragEnd = () => {
-      const ll = marker.getLatLng();
+    const onPointerUp = (e) => {
+      if (!isDraggingRef.current) return;
+
+      isDraggingRef.current = false;
+      console.log('Boot: Drag ended');
+
+      const ll = markerRef.current.getLatLng();
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
         setPos({ lat: ll.lat, lng: ll.lng });
         // Auto-commit after short delay
@@ -72,8 +99,11 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       }
     };
 
-    marker.on('drag', onDrag);
-    marker.on('dragend', onDragEnd);
+    // Attach listeners to marker element
+    markerElement.addEventListener('pointerdown', onPointerDown, { passive: false });
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
 
     // Handle zoom - keep marker centered
     const onZoom = () => {
@@ -88,8 +118,10 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
     // Cleanup
     return () => {
       console.log('Boot: Cleaning up marker');
-      marker.off('drag', onDrag);
-      marker.off('dragend', onDragEnd);
+      markerElement.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
       map.off('zoom', onZoom);
       marker.remove();
       markerRef.current = null;
