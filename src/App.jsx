@@ -461,7 +461,6 @@ export default function App() {
       device_id: 'kiosk-1',
       loyalty_phone: loyaltyPhoneNormalized,
       loyalty_opt_in: loyaltyOptIn,
-      photoUrl: form.photoUrl || null,
     };
 
     try {
@@ -473,7 +472,6 @@ export default function App() {
           note: rec.note,
           source: rec.source,
           slug: rec.slug,
-          photoUrl: rec.photoUrl,
         });
       }
       setShowCommunityPins(true);
