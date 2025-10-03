@@ -18,6 +18,15 @@ export function useNavigationSettings() {
     fetchSettings();
   }, []);
 
+  // Listen for updates from other hook instances
+  useEffect(() => {
+    const handleUpdate = (event) => {
+      setSettings(event.detail);
+    };
+    window.addEventListener('navigation-settings-updated', handleUpdate);
+    return () => window.removeEventListener('navigation-settings-updated', handleUpdate);
+  }, []);
+
   const fetchSettings = async () => {
     try {
       setLoading(true);
@@ -53,6 +62,10 @@ export function useNavigationSettings() {
       const data = await response.json();
       setSettings(data);
       setError(null);
+
+      // Trigger a global event to notify other hook instances
+      window.dispatchEvent(new CustomEvent('navigation-settings-updated', { detail: data }));
+
       return data;
     } catch (err) {
       console.error('Error updating navigation settings:', err);
