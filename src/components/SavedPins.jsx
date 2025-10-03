@@ -29,7 +29,8 @@ export default function SavedPins({
   // Refs
   const markerRefs = useRef(Object.create(null))
   const highlightTimerRef = useRef(null)
-  const exploreTimersRef = useRef(Object.create(null)) // ← per-marker timers
+  const exploreTimerRef = useRef(null) // ← single timer for explore mode
+  const currentOpenSlugRef = useRef(null) // ← track currently open popup
   const userInteractedRef = useRef(false)
 
   // Keep labels tidy with zoom/move
@@ -113,10 +114,7 @@ export default function SavedPins({
   useEffect(() => {
     return () => {
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current)
-      // clear all per-marker timers
-      const timers = exploreTimersRef.current || {}
-      Object.keys(timers).forEach(k => clearTimeout(timers[k]))
-      exploreTimersRef.current = Object.create(null)
+      if (exploreTimerRef.current) clearTimeout(exploreTimerRef.current)
     }
   }, [])
 
@@ -138,26 +136,41 @@ export default function SavedPins({
           else delete markerRefs.current[slugText]
         }
 
-        const clearExploreTimer = () => {
-          const timers = exploreTimersRef.current
-          if (timers?.[slugText]) {
-            clearTimeout(timers[slugText])
-            delete timers[slugText]
-          }
-        }
-
         const onPopupOpen = () => {
-          clearExploreTimer()
+          // Close any previously open popup
+          if (currentOpenSlugRef.current && currentOpenSlugRef.current !== slugText) {
+            const prevMarker = markerRefs.current?.[currentOpenSlugRef.current]
+            try { prevMarker?.closePopup?.() } catch {}
+          }
+
+          // Clear any existing timer
+          if (exploreTimerRef.current) {
+            clearTimeout(exploreTimerRef.current)
+            exploreTimerRef.current = null
+          }
+
+          // Track this popup as currently open
+          currentOpenSlugRef.current = slugText
+
+          // Set new timer for auto-close
           const duration = Math.max(2000, exploreDismissMs || 12000)
-          exploreTimersRef.current[slugText] = setTimeout(() => {
+          exploreTimerRef.current = setTimeout(() => {
             const m = markerRefs.current?.[slugText]
             try { m?.closePopup?.() } catch {}
-            clearExploreTimer()
+            currentOpenSlugRef.current = null
+            exploreTimerRef.current = null
           }, duration)
         }
 
         const onPopupClose = () => {
-          clearExploreTimer()
+          // Clear timer when popup closes manually
+          if (currentOpenSlugRef.current === slugText) {
+            if (exploreTimerRef.current) {
+              clearTimeout(exploreTimerRef.current)
+              exploreTimerRef.current = null
+            }
+            currentOpenSlugRef.current = null
+          }
         }
 
         return (
