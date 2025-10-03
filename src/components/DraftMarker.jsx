@@ -39,10 +39,11 @@ export default function DraftMarker({
       if (modalOpen) return
 
       const currentZoom = map.getZoom()
+      const modalZoom = Math.min(MAX_ZOOM, currentZoom + MODAL_ZOOM_BOOST)
 
-      // If zoom is too high for modal to provide benefit, enable direct dragging on main map
-      if (currentZoom >= MAX_ZOOM - MODAL_ZOOM_BOOST + 1) {
-        console.log('[DraftMarker] Zoom too high for modal, enabling direct drag on main map')
+      // If modal can't zoom in further than current view, enable direct dragging on main map
+      if (modalZoom <= currentZoom) {
+        console.log('[DraftMarker] Modal cannot zoom further, enabling direct drag on main map')
         isDraggingRef.current = true
         ev.preventDefault?.()
         ev.stopPropagation?.()
