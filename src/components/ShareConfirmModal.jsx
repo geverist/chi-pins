@@ -47,7 +47,7 @@ export default function ShareConfirmModal({
           You're about to add a pin {mapMode === 'global' ? 'on the global map' : 'in Chicagoland'}.
           {facebookShareEnabled && (
             <>
-              {' '}You can also share the location and your guest notes to the
+              {' '}You can also share a pin card image to the
               <strong> Chicago Mike's</strong> Facebook page.
             </>
           )}
@@ -61,7 +61,7 @@ export default function ShareConfirmModal({
               onChange={(e)=> setShareToFb(e.target.checked)}
               style={{ marginTop:4 }}
             />
-            <span>Also share to Chicago Mike's Facebook page</span>
+            <span>Share pin card image to Chicago Mike's Facebook page</span>
           </label>
         )}
 
@@ -71,8 +71,17 @@ export default function ShareConfirmModal({
           fontSize:13, lineHeight:1.35
         }}>
           <strong>Disclaimer:</strong> No personal information will be shared.
-          We’ll only post the approximate map location and the text you enter in <em>Notes</em>.
-          Your name is optional and not required for posting.
+          {facebookShareEnabled ? (
+            <>
+              {' '}We'll post a card image with the location emoji, your note text, and a small map view.
+              No names, phone numbers, or other personal details are included.
+            </>
+          ) : (
+            <>
+              {' '}We'll only post the approximate map location and the text you enter in <em>Notes</em>.
+              Your name is optional and not required for posting.
+            </>
+          )}
         </div>
 
         <div style={{marginTop:12, fontSize:13, color:'#aeb5bd'}}>

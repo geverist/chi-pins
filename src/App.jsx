@@ -492,14 +492,16 @@ export default function App() {
     try {
       const inserted = await setPins(rec);
 
-      // Facebook share
+      // Facebook share with pin card image
       if (shareToFb && rec.note) {
+        const pinCardImageUrl = `${window.location.origin}/api/generate-pin-image?slug=${encodeURIComponent(rec.slug)}`;
         postToFacebook({
           lat: rec.lat,
           lng: rec.lng,
           note: rec.note,
           source: rec.source,
           slug: rec.slug,
+          pinCardImageUrl,
         });
       }
 

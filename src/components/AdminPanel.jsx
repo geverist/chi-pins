@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useBackgroundImages } from '../hooks/useBackgroundImages'
 import { useNavigationSettings } from '../hooks/useNavigationSettings'
 import { useLogo } from '../hooks/useLogo'
+import { useAdminSettings } from '../state/useAdminSettings'
 
 export default function AdminPanel({ open, onClose }) {
   const [tab, setTab] = useState('general')
@@ -25,58 +26,16 @@ export default function AdminPanel({ open, onClose }) {
   // Logo hook
   const { logoUrl, loading: logoLoading, uploadLogo, deleteLogo } = useLogo()
 
-  // ---------- Defaults (kept same) ----------
-  const defaultSettings = {
-    // Kiosk behavior
-    idleAttractorSeconds: 60,
-    kioskAutoStart: true,
-    attractorHintEnabled: true,
-
-    // Map display
-    minZoomForPins: 13,
-    maxZoom: 17,
-    clusterBubbleThreshold: 13,
-    showLabelsZoom: 13,
-    lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
-    labelStyle: 'pill', // 'pill' | 'clean'
-
-    // Feature idle timeouts (seconds)
-    gamesIdleTimeout: 180,      // 3 minutes
-    jukeboxIdleTimeout: 120,    // 2 minutes
-    orderingIdleTimeout: 300,   // 5 minutes
-
-    // Content layers
-    showPinsSinceMonths: 24,
-    showPopularSpots: true,
-    showCommunityPins: true,
-    enableGlobalBubbles: true,
-
-    // Features
-    loyaltyEnabled: true,
-    vestaboardEnabled: false,
-    facebookShareEnabled: false,
-    photoBackgroundsEnabled: true,
-
-    // Restaurant Info (for share modal)
-    restaurantName: 'Chicago Mike\'s',
-    restaurantYelpUrl: '',
-    restaurantGoogleUrl: '',
-    restaurantWebsiteUrl: '',
-
-    // Map constants (rarely changed)
-    initialRadiusMiles: 0.5,
-    chiMinZoom: 10,
-  }
+  // Admin settings hook (replaces local state)
+  const { settings: adminSettingsFromHook, save: saveAdminSettings, DEFAULTS } = useAdminSettings()
 
   // ---------- State ----------
-  const [settings, setSettings] = useState(() => {
-    try {
-      const raw = localStorage.getItem('adminSettings')
-      return raw ? { ...defaultSettings, ...JSON.parse(raw) } : defaultSettings
-    } catch {
-      return defaultSettings
-    }
-  })
+  const [settings, setSettings] = useState(adminSettingsFromHook)
+
+  // Sync settings with hook when it changes
+  useEffect(() => {
+    setSettings(adminSettingsFromHook)
+  }, [adminSettingsFromHook])
 
   const [popularSpots, setPopularSpots] = useState(() => {
     try {
@@ -104,22 +63,8 @@ export default function AdminPanel({ open, onClose }) {
   const loadFromSupabase = useCallback(async () => {
     if (!open) return
     try {
-      // SETTINGS: table "settings" with key='app', value=jsonb
-      const { data: sData, error: sErr } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'app')
-        .maybeSingle()
-
-      if (!sErr && sData?.value) {
-        // Merge unknown keys so we can roll forward/back
-        const merged = { ...defaultSettings, ...sData.value }
-        setSettings(merged)
-        setInitialSettings(merged)
-        localStorage.setItem('adminSettings', JSON.stringify(merged))
-      } else {
-        setInitialSettings(settings)
-      }
+      // Settings are loaded by useAdminSettings hook, just set initial state
+      setInitialSettings(adminSettingsFromHook)
 
       // POPULAR SPOTS: table "popular_spots" with columns {id, label, category, city?}
       const { data: pData, error: pErr } = await supabase
@@ -142,11 +87,11 @@ export default function AdminPanel({ open, onClose }) {
       setHasUnsavedChanges(false)
     } catch {
       // ignore – fallback to localStorage is already set
-      setInitialSettings(settings)
+      setInitialSettings(adminSettingsFromHook)
       setInitialPopularSpots(popularSpots)
       setInitialNavSettings(navSettings)
     }
-  }, [open, navSettings])
+  }, [open, navSettings, adminSettingsFromHook])
 
   useEffect(() => { if (open) loadFromSupabase() }, [open, loadFromSupabase])
 
@@ -170,17 +115,10 @@ export default function AdminPanel({ open, onClose }) {
   }, [open, onClose])
 
   // ---------- Persist helpers ----------
-  const saveLocal = () => {
-    localStorage.setItem('adminSettings', JSON.stringify(settings))
-    localStorage.setItem('adminPopularSpots', JSON.stringify(popularSpots))
-  }
-
   const saveSupabase = useCallback(async () => {
     try {
-      // Upsert settings table (key='app')
-      await supabase
-        .from('settings')
-        .upsert({ key: 'app', value: settings }, { onConflict: 'key' })
+      // Save settings using the hook
+      await saveAdminSettings(settings)
 
       // Sync popular_spots:
       // For simplicity, replace entire set: delete then insert (transactional-like pattern)
@@ -196,6 +134,9 @@ export default function AdminPanel({ open, onClose }) {
         if (insErr) throw insErr
       }
 
+      // Save popular spots to localStorage
+      localStorage.setItem('adminPopularSpots', JSON.stringify(popularSpots))
+
       // Save navigation settings
       await updateNavSettingsAPI(navSettings)
     } catch (e) {
@@ -204,13 +145,13 @@ export default function AdminPanel({ open, onClose }) {
       return false
     }
     return true
-  }, [settings, popularSpots])
+  }, [settings, popularSpots, navSettings, saveAdminSettings, updateNavSettingsAPI])
 
   const saveAndClose = async () => {
-    saveLocal()
     await saveSupabase()
     setInitialSettings(settings)
     setInitialPopularSpots(popularSpots)
+    setInitialNavSettings(navSettings)
     setHasUnsavedChanges(false)
     onClose?.()
   }

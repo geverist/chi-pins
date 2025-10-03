@@ -11,6 +11,7 @@ if (!map) return;
 map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
 map.setMaxZoom(CHI_MAX_ZOOM);
 map.setMaxBounds(null);
-map.fitBounds(CHI_BOUNDS, { animate: true });
+// Zoom out one level from the min zoom (10 → 9)
+map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MIN_ZOOM - 1 });
 map.invalidateSize();
 }
