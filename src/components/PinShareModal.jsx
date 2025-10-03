@@ -1,19 +1,12 @@
 // src/components/PinShareModal.jsx
 import { useState, useEffect } from 'react';
-import {
-  getPinShareUrl,
-  generatePinQRCode,
-  copyPinUrlToClipboard,
-  downloadPinQRCode,
-  sharePin,
-  isWebShareSupported,
-  getSocialShareUrls,
-} from '../lib/pinShare';
+import { getPinShareUrl, generatePinQRCode } from '../lib/pinShare';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function PinShareModal({ open, onClose, pin }) {
   const [qrCode, setQrCode] = useState(null);
-  const [copySuccess, setCopySuccess] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
+  const { settings: adminSettings } = useAdminSettings();
 
   useEffect(() => {
     if (open && pin?.slug) {
@@ -23,27 +16,6 @@ export default function PinShareModal({ open, onClose, pin }) {
         .catch(err => console.error('QR generation failed:', err));
     }
   }, [open, pin?.slug]);
-
-  const handleCopyUrl = async () => {
-    const success = await copyPinUrlToClipboard(pin.slug);
-    if (success) {
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    }
-  };
-
-  const handleDownloadQR = () => {
-    downloadPinQRCode(pin.slug);
-  };
-
-  const handleNativeShare = async () => {
-    await sharePin(pin);
-  };
-
-  const handleSocialShare = (platform) => {
-    const urls = getSocialShareUrls(pin);
-    window.open(urls[platform], '_blank', 'width=600,height=400');
-  };
 
   if (!open) return null;
 
@@ -62,12 +34,13 @@ export default function PinShareModal({ open, onClose, pin }) {
     background: '#1a1d23',
     border: '1px solid #2a2f37',
     borderRadius: '12px',
-    padding: '24px',
-    maxWidth: '500px',
+    padding: '32px',
+    maxWidth: '450px',
     width: '100%',
     maxHeight: '90vh',
     overflow: 'auto',
     boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    textAlign: 'center',
   };
 
   const headerStyle = {
@@ -101,11 +74,51 @@ export default function PinShareModal({ open, onClose, pin }) {
 
   const qrContainerStyle = {
     background: '#fff',
-    padding: '20px',
+    padding: '24px',
     borderRadius: '12px',
     display: 'grid',
     placeItems: 'center',
-    marginBottom: '20px',
+    marginBottom: '24px',
+  };
+
+  const instructionStyle = {
+    fontSize: '16px',
+    color: '#b0b8c0',
+    marginBottom: '24px',
+    lineHeight: '1.6',
+  };
+
+  const restaurantInfoStyle = {
+    background: '#0f1115',
+    border: '1px solid #2a2f37',
+    borderRadius: '8px',
+    padding: '16px',
+    marginTop: '24px',
+  };
+
+  const restaurantTitleStyle = {
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#888',
+    marginBottom: '12px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  };
+
+  const linkButtonStyle = {
+    display: 'block',
+    width: '100%',
+    background: '#2a2f37',
+    border: '1px solid #3a3f47',
+    color: '#fff',
+    padding: '12px',
+    borderRadius: '6px',
+    marginBottom: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    textDecoration: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   };
 
   const urlContainerStyle = {
@@ -221,123 +234,80 @@ export default function PinShareModal({ open, onClose, pin }) {
               <div style={pinSlugStyle}>{pin.slug}</div>
             </div>
 
+            <div style={instructionStyle}>
+              Scan this QR code with your phone to access your pin and share it with friends!
+            </div>
+
             {qrCode && (
               <div style={qrContainerStyle}>
                 <img
                   src={qrCode}
-                  alt="QR Code"
-                  style={{ width: '200px', height: '200px', display: 'block' }}
+                  alt="QR Code for your pin"
+                  style={{ width: '240px', height: '240px', display: 'block' }}
                 />
               </div>
             )}
 
-            <div style={urlContainerStyle}>
-              <div style={urlTextStyle}>{shareUrl}</div>
-            </div>
-
-            <div style={buttonGridStyle}>
-              <button
-                style={copySuccess ? { ...primaryButtonStyle, background: '#22c55e', border: '1px solid #22c55e' } : primaryButtonStyle}
-                onClick={handleCopyUrl}
-                onMouseEnter={(e) => {
-                  if (!copySuccess) e.target.style.background = '#0284c7';
-                }}
-                onMouseLeave={(e) => {
-                  if (!copySuccess) e.target.style.background = '#0ea5e9';
-                }}
-              >
-                {copySuccess ? '✓ Copied!' : '📋 Copy Link'}
-              </button>
-
-              <button
-                style={buttonStyle}
-                onClick={handleDownloadQR}
-                onMouseEnter={(e) => {
-                  e.target.style.background = '#3a3f47';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = '#2a2f37';
-                }}
-              >
-                ⬇ Download QR
-              </button>
-            </div>
-
-            {isWebShareSupported() && (
-              <button
-                style={{ ...primaryButtonStyle, width: '100%', marginBottom: '20px' }}
-                onClick={handleNativeShare}
-                onMouseEnter={(e) => {
-                  e.target.style.background = '#0284c7';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = '#0ea5e9';
-                }}
-              >
-                📤 Share
-              </button>
+            {/* Restaurant Info Section */}
+            {(adminSettings.restaurantYelpUrl || adminSettings.restaurantGoogleUrl || adminSettings.restaurantWebsiteUrl) && (
+              <div style={restaurantInfoStyle}>
+                <div style={restaurantTitleStyle}>
+                  {adminSettings.restaurantName || 'Restaurant Info'}
+                </div>
+                {adminSettings.restaurantYelpUrl && (
+                  <a
+                    href={adminSettings.restaurantYelpUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={linkButtonStyle}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#d32323';
+                      e.target.style.borderColor = '#d32323';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#2a2f37';
+                      e.target.style.borderColor = '#3a3f47';
+                    }}
+                  >
+                    ⭐ View on Yelp
+                  </a>
+                )}
+                {adminSettings.restaurantGoogleUrl && (
+                  <a
+                    href={adminSettings.restaurantGoogleUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={linkButtonStyle}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#4285f4';
+                      e.target.style.borderColor = '#4285f4';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#2a2f37';
+                      e.target.style.borderColor = '#3a3f47';
+                    }}
+                  >
+                    🔍 View on Google
+                  </a>
+                )}
+                {adminSettings.restaurantWebsiteUrl && (
+                  <a
+                    href={adminSettings.restaurantWebsiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={linkButtonStyle}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#3a3f47';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = '#2a2f37';
+                    }}
+                  >
+                    🌐 Visit Website
+                  </a>
+                )}
+              </div>
             )}
-
-            <div style={sectionTitleStyle}>Share to Social</div>
-            <div style={socialGridStyle}>
-              <button
-                style={buttonStyle}
-                onClick={() => handleSocialShare('twitter')}
-                onMouseEnter={(e) => {
-                  e.target.style.background = '#1DA1F2';
-                  e.target.style.borderColor = '#1DA1F2';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = '#2a2f37';
-                  e.target.style.borderColor = '#3a3f47';
-                }}
-              >
-                𝕏
-              </button>
-
-              <button
-                style={buttonStyle}
-                onClick={() => handleSocialShare('facebook')}
-                onMouseEnter={(e) => {
-                  e.target.style.background = '#1877F2';
-                  e.target.style.borderColor = '#1877F2';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = '#2a2f37';
-                  e.target.style.borderColor = '#3a3f47';
-                }}
-              >
-                Facebook
-              </button>
-
-              <button
-                style={buttonStyle}
-                onClick={() => handleSocialShare('reddit')}
-                onMouseEnter={(e) => {
-                  e.target.style.background = '#FF4500';
-                  e.target.style.borderColor = '#FF4500';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = '#2a2f37';
-                  e.target.style.borderColor = '#3a3f47';
-                }}
-              >
-                Reddit
-              </button>
-
-              <button
-                style={buttonStyle}
-                onClick={() => handleSocialShare('email')}
-                onMouseEnter={(e) => {
-                  e.target.style.background = '#3a3f47';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = '#2a2f37';
-                }}
-              >
-                ✉ Email
-              </button>
-            </div>
           </>
         )}
       </div>

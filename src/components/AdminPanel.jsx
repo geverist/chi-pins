@@ -459,6 +459,60 @@ export default function AdminPanel({ open, onClose }) {
 
           {tab === 'branding' && (
             <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="Restaurant Information">
+                <p style={s.muted}>
+                  Configure restaurant details shown in the pin share modal. Add links to your Yelp, Google, and website.
+                </p>
+                <FieldRow label="Restaurant Name">
+                  <input
+                    type="text"
+                    value={settings.restaurantName || ''}
+                    onChange={(e) => setSettings(s => ({ ...s, restaurantName: e.target.value }))}
+                    placeholder="Chicago Mike's"
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                    }}
+                  />
+                </FieldRow>
+                <FieldRow label="Yelp URL">
+                  <input
+                    type="url"
+                    value={settings.restaurantYelpUrl || ''}
+                    onChange={(e) => setSettings(s => ({ ...s, restaurantYelpUrl: e.target.value }))}
+                    placeholder="https://www.yelp.com/biz/..."
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                    }}
+                  />
+                </FieldRow>
+                <FieldRow label="Google URL">
+                  <input
+                    type="url"
+                    value={settings.restaurantGoogleUrl || ''}
+                    onChange={(e) => setSettings(s => ({ ...s, restaurantGoogleUrl: e.target.value }))}
+                    placeholder="https://maps.google.com/?cid=..."
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                    }}
+                  />
+                </FieldRow>
+                <FieldRow label="Website URL">
+                  <input
+                    type="url"
+                    value={settings.restaurantWebsiteUrl || ''}
+                    onChange={(e) => setSettings(s => ({ ...s, restaurantWebsiteUrl: e.target.value }))}
+                    placeholder="https://chicagomikes.com"
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                    }}
+                  />
+                </FieldRow>
+              </Card>
+
               <Card title="App Logo">
                 <p style={s.muted}>
                   Upload a custom logo to replace the default. The logo will appear in the header bar.
