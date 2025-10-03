@@ -5,11 +5,12 @@ import GameLeaderboard from './GameLeaderboard';
 const GAME_DURATION = 60; // 60 seconds
 const GRAVITY = 0.3;
 const DRAG_FORCE = 0.15;
-const WIND_FORCE_BASE = 0.8;
+const WIND_FORCE_BASE = 0.5;
 const WIND_FORCE_MAX = 2.5;
 const PLATFORM_Y = 70; // percentage from top
-const MAX_POPCORN = 10; // Maximum popcorn pieces
-const POPCORN_SPAWN_INTERVAL = 2000; // ms between popcorn spawns
+const MAX_POPCORN = 15; // Maximum popcorn pieces
+const POPCORN_SPAWN_INTERVAL = 800; // ms between popcorn spawns
+const POPCORN_SIZE = 28; // Size of popcorn piece emoji
 
 const FOOD_ITEMS = [
   { id: 'hotdog', name: 'Chicago Hot Dog', emoji: '🌭', weight: 1.0, size: 60 },
@@ -102,15 +103,20 @@ export default function WindGame({ onClose }) {
       setPopcornPieces(prev => {
         if (prev.length >= MAX_POPCORN) return prev;
 
-        const newPiece = {
-          id: nextPopcornId.current++,
-          x: foodPosition.x + (Math.random() * 20 - 10),
-          y: foodPosition.y + (Math.random() * 10 - 5),
-          vx: (Math.random() - 0.5) * 3,
-          vy: (Math.random() - 0.5) * 2,
-        };
+        setFoodPosition(currentPos => {
+          const newPiece = {
+            id: nextPopcornId.current++,
+            x: currentPos.x + (Math.random() * 16 - 8),
+            y: currentPos.y + (Math.random() * 16 - 8),
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+          };
 
-        return [...prev, newPiece];
+          setPopcornPieces(prevPieces => [...prevPieces, newPiece]);
+          return currentPos;
+        });
+
+        return prev;
       });
 
       schedulePopcornSpawn();
@@ -123,13 +129,13 @@ export default function WindGame({ onClose }) {
     const now = Date.now();
     const elapsed = (now - gameStartTime.current) / 1000;
 
-    // Wind frequency increases over time
-    const baseInterval = 3000;
-    const minInterval = 1000;
-    const interval = Math.max(minInterval, baseInterval - (elapsed * 40));
+    // Wind frequency increases over time - start slower
+    const baseInterval = 5000; // Start at 5 seconds
+    const minInterval = 1500; // Speed up to 1.5 seconds minimum
+    const interval = Math.max(minInterval, baseInterval - (elapsed * 50));
 
     // Show warning before wind
-    const warningDelay = Math.max(500, interval * 0.3);
+    const warningDelay = Math.max(800, interval * 0.35);
 
     windTimerRef.current = setTimeout(() => {
       if (!isPlayingRef.current) return;
@@ -149,22 +155,24 @@ export default function WindGame({ onClose }) {
         setWindStrength(strength);
         setWindWarning(null);
 
-        // Spawn random wind gusts across the screen
-        const numGusts = 8 + Math.floor(Math.random() * 8); // 8-15 gusts
+        // Spawn random wind gusts across the screen - more gusts as time goes on
+        const baseGusts = 6;
+        const maxGusts = 20;
+        const gustCount = Math.min(maxGusts, baseGusts + Math.floor(elapsed / 10)); // Add gust every 10 seconds
         const newGusts = [];
-        for (let i = 0; i < numGusts; i++) {
+        for (let i = 0; i < gustCount; i++) {
           newGusts.push({
             id: nextGustId.current++,
             y: Math.random() * 80 + 10, // 10-90% from top
             direction: windDir,
-            delay: Math.random() * 0.4, // Stagger animation starts
-            duration: 1.5 + Math.random() * 1, // 1.5-2.5s animation
+            delay: Math.random() * 0.5, // Stagger animation starts
+            duration: 2.5 + Math.random() * 1.5, // 2.5-4s animation - slower at first
           });
         }
         setWindGusts(newGusts);
 
-        // Wind gust duration
-        const gustDuration = 800 + Math.random() * 400;
+        // Wind gust duration - longer at first
+        const gustDuration = 1200 + Math.random() * 400;
         setTimeout(() => {
           if (!isPlayingRef.current) return;
           setWindDirection(0);
@@ -617,11 +625,12 @@ export default function WindGame({ onClose }) {
             position: 'absolute',
             top: `${gust.y}%`,
             left: gust.direction === 1 ? '-10%' : '110%',
-            fontSize: 32,
-            opacity: 0.7,
+            fontSize: 48,
+            opacity: 0.9,
             animation: `windBlow${gust.direction === 1 ? 'Right' : 'Left'} ${gust.duration}s ease-out`,
             animationDelay: `${gust.delay}s`,
             pointerEvents: 'none',
+            filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.5))',
           }}
         >
           💨
@@ -637,9 +646,11 @@ export default function WindGame({ onClose }) {
             left: `${piece.x}%`,
             top: `${piece.y}%`,
             transform: 'translate(-50%, -50%)',
-            fontSize: 20,
+            fontSize: POPCORN_SIZE,
             pointerEvents: 'none',
-            opacity: 0.9,
+            opacity: 1,
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+            transition: 'left 0.1s, top 0.1s',
           }}
         >
           🍿
