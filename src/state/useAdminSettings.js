@@ -26,6 +26,7 @@ const DEFAULTS = {
   // UI defaults
   showPopularSpotsDefault: true,
   showCommunityPinsDefault: true,
+  lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
 
   // Content filters
   showPinsSinceMonths: 24,    // default: last 24 months

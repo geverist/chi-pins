@@ -45,6 +45,7 @@ export default function PinBubbles({
 }) {
   const map = useMap()
   const indexRef = useRef(null)
+  const [indexReady, setIndexReady] = useState(false)
   const [view, setView] = useState(() => ({
     zoom: map?.getZoom?.() ?? 12,
     bounds: map?.getBounds?.() ?? null,
@@ -65,11 +66,19 @@ export default function PinBubbles({
   }, [pins])
 
   useEffect(() => {
-    if (!points.length) { indexRef.current = null; return }
+    console.log('PinBubbles: Building index with', points.length, 'points');
+    if (!points.length) {
+      indexRef.current = null;
+      setIndexReady(false);
+      console.log('PinBubbles: No points, index cleared');
+      return;
+    }
     indexRef.current = new Supercluster({
       radius: 64,          // px
       maxZoom,             // up to Leaflet's practical max
     }).load(points)
+    setIndexReady(true);
+    console.log('PinBubbles: Index built successfully, triggering re-render');
   }, [points, maxZoom])
 
   // Track map view
@@ -88,16 +97,23 @@ export default function PinBubbles({
     }
   }, [map])
 
-  if (!enabled || !indexRef.current || !view.bounds) return null
+  if (!enabled || !indexReady || !indexRef.current || !view.bounds) {
+    console.log('PinBubbles: Not rendering -', { enabled, indexReady, hasIndex: !!indexRef.current, hasBounds: !!view.bounds, pinCount: pins.length });
+    return null;
+  }
 
   const zoom = view.zoom
   // Only show bubbles when zoomed out
-  if (zoom >= minZoomForPins) return null
+  if (zoom >= minZoomForPins) {
+    console.log('PinBubbles: Zoom too high', { zoom, minZoomForPins });
+    return null;
+  }
 
   // Compute clusters for current viewport
   const b = view.bounds
   const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
   const clusters = indexRef.current.getClusters(bbox, Math.floor(zoom))
+  console.log('PinBubbles: Rendering', { zoom, clusterCount: clusters.length, pinCount: pins.length });
 
   return (
     <LayerGroup>

@@ -41,11 +41,13 @@ import GlobalCounters from './components/GlobalCounters';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
+import PinHeatmap from './components/PinHeatmap';
 import ZoomGate from './components/ZoomGate';
 
 // Admin panel
 import AdminPanel from './components/AdminPanel';
 import MobilePinsList from './components/MobilePinsList';
+import { useAdminSettings } from './state/useAdminSettings';
 
 /* ---------------- KIOSK HELPERS ---------------- */
 async function enterFullscreen(el) {
@@ -150,6 +152,7 @@ export default function App() {
 
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
+  const { settings: adminSettings } = useAdminSettings();
 
   // map mode
   const [mapMode, setMapMode] = useState('chicago');
@@ -752,7 +755,13 @@ export default function App() {
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
           )}
           {showCommunityPins && !draft && (
-            <PinBubbles pins={pinsDeduped} enabled={true} minZoomForPins={13} maxZoom={17} />
+            <>
+              {adminSettings?.lowZoomVisualization === 'heatmap' ? (
+                <PinHeatmap pins={pinsDeduped} enabled={true} minZoomForPins={13} />
+              ) : (
+                <PinBubbles pins={pinsDeduped} enabled={true} minZoomForPins={13} maxZoom={17} />
+              )}
+            </>
           )}
           {showCommunityPins && !draft && mapMode === 'chicago' && (
             <ZoomGate minZoom={13} forceOpen={!!highlightSlug}>

@@ -334,6 +334,16 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, enableGlobalBubbles: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Low zoom visualization">
+                  <select
+                    value={settings.lowZoomVisualization || 'bubbles'}
+                    onChange={(e) => setSettings(s => ({ ...s, lowZoomVisualization: e.target.value }))}
+                    style={inp.select}
+                  >
+                    <option value="bubbles">Bubbles</option>
+                    <option value="heatmap">Heatmap</option>
+                  </select>
+                </FieldRow>
                 <FieldRow label="Label style">
                   <select
                     value={settings.labelStyle}
