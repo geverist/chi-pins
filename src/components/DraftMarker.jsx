@@ -22,6 +22,7 @@ export default function DraftMarker({
   const map = useMap()
   const markerRef = useRef(null)
   const isDraggingRef = useRef(false)
+  const mapContainerRef = useRef(null)
 
   // Attach pointer handler directly to the pin's DOM element
   useEffect(() => {
@@ -45,6 +46,10 @@ export default function DraftMarker({
       if (modalZoom <= currentZoom) {
         console.log('[DraftMarker] Modal cannot zoom further, enabling direct drag on main map')
         isDraggingRef.current = true
+
+        // Store map container reference
+        mapContainerRef.current = map.getContainer()
+
         // Disable all map interactions while dragging pin
         map.dragging?.disable()
         map.touchZoom?.disable()
@@ -52,6 +57,12 @@ export default function DraftMarker({
         map.scrollWheelZoom?.disable()
         map.boxZoom?.disable()
         map.keyboard?.disable()
+
+        // Prevent pointer events on map container
+        if (mapContainerRef.current) {
+          mapContainerRef.current.style.pointerEvents = 'none'
+        }
+
         ev.preventDefault?.()
         ev.stopPropagation?.()
         return
@@ -93,29 +104,10 @@ export default function DraftMarker({
       const containerX = ev.clientX - rect.left
       const containerY = ev.clientY - rect.top
 
-      // Edge panning threshold (in pixels from edge)
-      const edgeThreshold = 50
-      const panAmount = 0.1 // fraction of view to pan
-
-      // Check if near edges and pan map accordingly
-      if (containerX < edgeThreshold) {
-        const bounds = map.getBounds()
-        const west = bounds.getWest()
-        const east = bounds.getEast()
-        const shift = (east - west) * panAmount
-        map.panBy([-50, 0], { animate: false })
-      } else if (containerX > rect.width - edgeThreshold) {
-        map.panBy([50, 0], { animate: false })
-      }
-
-      if (containerY < edgeThreshold) {
-        map.panBy([0, -50], { animate: false })
-      } else if (containerY > rect.height - edgeThreshold) {
-        map.panBy([0, 50], { animate: false })
-      }
-
-      // Convert to lat/lng
-      const point = map.containerPointToLatLng([containerX, containerY])
+      // Convert to lat/lng (clamp to visible area - no panning)
+      const clampedX = Math.max(0, Math.min(rect.width, containerX))
+      const clampedY = Math.max(0, Math.min(rect.height, containerY))
+      const point = map.containerPointToLatLng([clampedX, clampedY])
 
       if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
         // Move marker to cursor position
@@ -128,6 +120,12 @@ export default function DraftMarker({
     const handlePointerUp = (ev) => {
       if (!isDraggingRef.current) return
       isDraggingRef.current = false
+
+      // Re-enable pointer events on map container
+      if (mapContainerRef.current) {
+        mapContainerRef.current.style.pointerEvents = ''
+        mapContainerRef.current = null
+      }
 
       // Re-enable all map interactions
       map.dragging?.enable()
