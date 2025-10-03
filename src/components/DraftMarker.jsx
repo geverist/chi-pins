@@ -52,7 +52,12 @@ export default function DraftMarker({
         mapContainerRef.current = map.getContainer()
 
         // Create event blocker function that stops ALL events at capture phase
+        // EXCEPT for events coming from our marker element
         mapEventBlockerRef.current = (e) => {
+          // Don't block events from the marker itself
+          if (e.target === el || el.contains(e.target)) {
+            return
+          }
           e.stopPropagation()
           e.preventDefault()
         }
@@ -64,6 +69,7 @@ export default function DraftMarker({
           mapContainerRef.current.addEventListener('touchstart', mapEventBlockerRef.current, { capture: true, passive: false })
           mapContainerRef.current.addEventListener('touchmove', mapEventBlockerRef.current, { capture: true, passive: false })
           mapContainerRef.current.addEventListener('pointermove', mapEventBlockerRef.current, { capture: true, passive: false })
+          mapContainerRef.current.addEventListener('pointerdown', mapEventBlockerRef.current, { capture: true, passive: false })
         }
 
         // Disable all map interactions while dragging pin
@@ -158,6 +164,7 @@ export default function DraftMarker({
         mapContainerRef.current.removeEventListener('touchstart', mapEventBlockerRef.current, { capture: true })
         mapContainerRef.current.removeEventListener('touchmove', mapEventBlockerRef.current, { capture: true })
         mapContainerRef.current.removeEventListener('pointermove', mapEventBlockerRef.current, { capture: true })
+        mapContainerRef.current.removeEventListener('pointerdown', mapEventBlockerRef.current, { capture: true })
         mapContainerRef.current = null
         mapEventBlockerRef.current = null
       }
