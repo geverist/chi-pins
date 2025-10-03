@@ -12,7 +12,15 @@ export default function AdminPanel({ open, onClose }) {
   const { backgrounds, loading: bgLoading, addBackground, deleteBackground } = useBackgroundImages()
 
   // Navigation settings hook
-  const { settings: navSettings, updateSettings: updateNavSettings } = useNavigationSettings()
+  const { settings: navSettingsFromHook, updateSettings: updateNavSettingsAPI } = useNavigationSettings()
+
+  // Local navigation settings state (synced with hook but saved on "Save & Close")
+  const [navSettings, setNavSettings] = useState(navSettingsFromHook)
+
+  // Sync with hook when it loads
+  useEffect(() => {
+    setNavSettings(navSettingsFromHook)
+  }, [navSettingsFromHook])
 
   // Logo hook
   const { logoUrl, loading: logoLoading, uploadLogo, deleteLogo } = useLogo()
@@ -83,6 +91,7 @@ export default function AdminPanel({ open, onClose }) {
   // Track initial state to detect changes
   const [initialSettings, setInitialSettings] = useState(null)
   const [initialPopularSpots, setInitialPopularSpots] = useState(null)
+  const [initialNavSettings, setInitialNavSettings] = useState(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Moderation – selected IDs for deletion
@@ -127,25 +136,30 @@ export default function AdminPanel({ open, onClose }) {
         setInitialPopularSpots(popularSpots)
       }
 
+      // Initialize navigation settings tracking
+      setInitialNavSettings(navSettings)
+
       setHasUnsavedChanges(false)
     } catch {
       // ignore – fallback to localStorage is already set
       setInitialSettings(settings)
       setInitialPopularSpots(popularSpots)
+      setInitialNavSettings(navSettings)
     }
-  }, [open])
+  }, [open, navSettings])
 
   useEffect(() => { if (open) loadFromSupabase() }, [open, loadFromSupabase])
 
   // Detect changes
   useEffect(() => {
-    if (!initialSettings || !initialPopularSpots) return
+    if (!initialSettings || !initialPopularSpots || !initialNavSettings) return
 
     const settingsChanged = JSON.stringify(settings) !== JSON.stringify(initialSettings)
     const spotsChanged = JSON.stringify(popularSpots) !== JSON.stringify(initialPopularSpots)
+    const navChanged = JSON.stringify(navSettings) !== JSON.stringify(initialNavSettings)
 
-    setHasUnsavedChanges(settingsChanged || spotsChanged)
-  }, [settings, popularSpots, initialSettings, initialPopularSpots])
+    setHasUnsavedChanges(settingsChanged || spotsChanged || navChanged)
+  }, [settings, popularSpots, navSettings, initialSettings, initialPopularSpots, initialNavSettings])
 
   // ESC closes
   useEffect(() => {
@@ -181,6 +195,9 @@ export default function AdminPanel({ open, onClose }) {
         const { error: insErr } = await supabase.from('popular_spots').insert(payload)
         if (insErr) throw insErr
       }
+
+      // Save navigation settings
+      await updateNavSettingsAPI(navSettings)
     } catch (e) {
       // Let local save still happen; surface a gentle message
       console.warn('Supabase save failed; falling back to local only.', e)
@@ -679,12 +696,9 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🎮 Games">
                   <Toggle
                     checked={navSettings.games_enabled}
-                    onChange={async (v) => {
-                      try {
-                        await updateNavSettings({ ...navSettings, games_enabled: v });
-                      } catch (err) {
-                        alert('Failed to update navigation settings');
-                      }
+                    onChange={(v) => {
+                      // Update local state only, save happens on "Save & Close"
+                      setNavSettings({ ...navSettings, games_enabled: v });
                     }}
                   />
                 </FieldRow>
@@ -692,12 +706,9 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🎵 Jukebox">
                   <Toggle
                     checked={navSettings.jukebox_enabled}
-                    onChange={async (v) => {
-                      try {
-                        await updateNavSettings({ ...navSettings, jukebox_enabled: v });
-                      } catch (err) {
-                        alert('Failed to update navigation settings');
-                      }
+                    onChange={(v) => {
+                      // Update local state only, save happens on "Save & Close"
+                      setNavSettings({ ...navSettings, jukebox_enabled: v });
                     }}
                   />
                 </FieldRow>
@@ -705,12 +716,9 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🍕 Order Now">
                   <Toggle
                     checked={navSettings.order_enabled}
-                    onChange={async (v) => {
-                      try {
-                        await updateNavSettings({ ...navSettings, order_enabled: v });
-                      } catch (err) {
-                        alert('Failed to update navigation settings');
-                      }
+                    onChange={(v) => {
+                      // Update local state only, save happens on "Save & Close"
+                      setNavSettings({ ...navSettings, order_enabled: v });
                     }}
                   />
                 </FieldRow>
@@ -718,12 +726,9 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🔎 Explore">
                   <Toggle
                     checked={navSettings.explore_enabled}
-                    onChange={async (v) => {
-                      try {
-                        await updateNavSettings({ ...navSettings, explore_enabled: v });
-                      } catch (err) {
-                        alert('Failed to update navigation settings');
-                      }
+                    onChange={(v) => {
+                      // Update local state only, save happens on "Save & Close"
+                      setNavSettings({ ...navSettings, explore_enabled: v });
                     }}
                   />
                 </FieldRow>
