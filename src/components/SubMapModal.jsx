@@ -1,5 +1,5 @@
 // src/components/SubMapModal.jsx
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -18,17 +18,17 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       return;
     }
 
-    console.log('Boot: Creating marker at', pos);
+    console.log('Boot: Creating marker with pos=', pos, 'handoff=', handoff);
 
-    // Create marker
-    const initialPos = pos && Number.isFinite(pos.lat) && Number.isFinite(pos.lng)
-      ? pos
-      : handoff;
+    // Use pos (which should be the lat/lng), handoff is pointer coordinates
+    const initialPos = pos;
 
     if (!initialPos || !Number.isFinite(initialPos.lat) || !Number.isFinite(initialPos.lng)) {
       console.error('Boot: Invalid initial position', initialPos);
       return;
     }
+
+    console.log('Boot: Using position', initialPos);
 
     const marker = L.marker([initialPos.lat, initialPos.lng], {
       icon: placingIconFor(pageTile),
@@ -125,14 +125,14 @@ export default function SubMapModal({
   mapReady,
 }) {
   const submapRef = useRef(null);
-  const pos = useRef(handoff || center);
-  const setPos = (p) => {
-    pos.current = p;
-  };
+  const [pos, setPos] = useState(center);
+
+  console.log('SubMapModal rendering with:', { center, handoff, team, baseZoom, pos });
 
   useEffect(() => {
-    pos.current = handoff || center;
-  }, [center, handoff]);
+    console.log('SubMapModal: Setting initial position to center', center);
+    setPos(center);
+  }, [center]);
 
   useEffect(() => {
     const m = mainMapRef.current;
@@ -159,7 +159,7 @@ export default function SubMapModal({
           <span>Fine-tune your pin placement</span>
           <button
             className="submap-close"
-            onClick={() => onCommit(pos.current)}
+            onClick={() => onCommit(pos)}
             aria-label="Confirm pin placement"
           >
             Done
@@ -167,7 +167,7 @@ export default function SubMapModal({
         </div>
         <div className="submap-map">
           <MapContainer
-            center={center}
+            center={center && Number.isFinite(center.lat) && Number.isFinite(center.lng) ? [center.lat, center.lng] : [41.8781, -87.6298]}
             zoom={baseZoom || 15}
             style={{ width: '100%', height: '100%' }}
             zoomControl={false}
@@ -175,6 +175,14 @@ export default function SubMapModal({
             touchZoom={true}
             doubleClickZoom={true}
             aria-label="Fine-tune map"
+            whenCreated={(map) => {
+              console.log('MapContainer created:', map);
+              submapRef.current = map;
+              setTimeout(() => {
+                map.invalidateSize();
+                console.log('MapContainer size invalidated');
+              }, 100);
+            }}
           >
             <SetSubMapRef submapRef={submapRef} />
             <TileLayer
@@ -182,7 +190,7 @@ export default function SubMapModal({
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <Boot
-              pos={pos.current}
+              pos={pos}
               setPos={setPos}
               pageTile={team}
               handoff={handoff}
