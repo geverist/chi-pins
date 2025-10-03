@@ -180,6 +180,7 @@ export default function SubMapModal({
   const submapRef = useRef(null);
   const [pos, setPos] = useState(center);
   const [tilesLoading, setTilesLoading] = useState(true);
+  const loadingTimerRef = useRef(null);
 
   console.log('SubMapModal rendering with:', { center, handoff, team, baseZoom, pos });
 
@@ -204,6 +205,20 @@ export default function SubMapModal({
       }
     }, 100);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Auto-hide loading after max 1 second
+  useEffect(() => {
+    loadingTimerRef.current = setTimeout(() => {
+      console.log('SubMapModal: Force hiding loading indicator');
+      setTilesLoading(false);
+    }, 1000);
+
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -255,15 +270,28 @@ export default function SubMapModal({
               let tilesLoaded = 0;
               const onTileLoad = () => {
                 tilesLoaded++;
-                if (tilesLoaded >= 3) { // Wait for at least 3 tiles
+                console.log('SubMapModal: Tiles loaded:', tilesLoaded);
+                if (tilesLoaded >= 2) { // Wait for at least 2 tiles
+                  console.log('SubMapModal: Hiding loading indicator (tiles loaded)');
                   setTilesLoading(false);
+                  if (loadingTimerRef.current) {
+                    clearTimeout(loadingTimerRef.current);
+                  }
                 }
               };
               map.on('tileload', onTileLoad);
-              map.on('tileerror', onTileLoad); // Count errors as loaded too
+              map.on('tileerror', onTileLoad);
 
-              // Fallback: hide loading after 2 seconds regardless
-              setTimeout(() => setTilesLoading(false), 2000);
+              // Also hide when map is ready
+              map.whenReady(() => {
+                console.log('SubMapModal: Map ready');
+                setTimeout(() => {
+                  setTilesLoading(false);
+                  if (loadingTimerRef.current) {
+                    clearTimeout(loadingTimerRef.current);
+                  }
+                }, 200);
+              });
             }}
           >
             <SetSubMapRef submapRef={submapRef} />
