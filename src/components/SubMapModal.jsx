@@ -58,18 +58,35 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       return;
     }
 
+    // If we have handoff coordinates, start dragging immediately
+    if (handoff && Number.isFinite(handoff.x) && Number.isFinite(handoff.y)) {
+      console.log('Boot: Starting with handoff, beginning drag immediately');
+      isDraggingRef.current = true;
+    }
+
     const onPointerDown = (e) => {
       isDraggingRef.current = true;
       e.preventDefault();
       e.stopPropagation();
-      console.log('Boot: Drag started');
+      console.log('Boot: Drag started via pointerdown');
     };
 
     const onPointerMove = (e) => {
       if (!isDraggingRef.current || !markerRef.current) return;
 
-      // Convert screen coordinates to map coordinates
-      const point = map.containerPointToLatLng([e.clientX, e.clientY]);
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Get the container's position to calculate relative coordinates
+      const container = map.getContainer();
+      const rect = container.getBoundingClientRect();
+
+      // Calculate position relative to map container
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Convert container coordinates to lat/lng
+      const point = map.containerPointToLatLng([x, y]);
 
       if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
         // Move marker to cursor position
@@ -99,7 +116,7 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       }
     };
 
-    // Attach listeners to marker element
+    // Attach listeners to marker element AND window
     markerElement.addEventListener('pointerdown', onPointerDown, { passive: false });
     window.addEventListener('pointermove', onPointerMove, { passive: false });
     window.addEventListener('pointerup', onPointerUp);
