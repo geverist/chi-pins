@@ -3,6 +3,7 @@ import { useState } from 'react';
 import HotdogGame from './HotdogGame';
 import TriviaGame from './TriviaGame';
 import DeepDishGame from './DeepDishGame';
+import WindGame from './WindGame';
 
 const GAMES = [
   {
@@ -28,6 +29,14 @@ const GAMES = [
     emoji: '🍕',
     color: '#f59e0b',
     difficulty: 'Medium',
+  },
+  {
+    id: 'chicago-wind',
+    name: 'Chicago Wind Challenge',
+    description: 'Keep your food from blowing away in Chicago\'s famous wind! React fast!',
+    emoji: '💨',
+    color: '#06b6d4',
+    difficulty: 'Hard',
   },
 ];
 
@@ -56,6 +65,15 @@ export default function GamesMenu({ onClose }) {
   if (selectedGame === 'deep-dish-toss') {
     return (
       <DeepDishGame
+        onClose={() => setSelectedGame(null)}
+      />
+    );
+  }
+
+  if (selectedGame === 'chicago-wind') {
+    return (
+      <WindGame
+        open={true}
         onClose={() => setSelectedGame(null)}
       />
     );
