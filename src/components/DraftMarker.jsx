@@ -23,6 +23,7 @@ export default function DraftMarker({
   const markerRef = useRef(null)
   const isDraggingRef = useRef(false)
   const mapContainerRef = useRef(null)
+  const mapEventBlockerRef = useRef(null)
 
   // Attach pointer handler directly to the pin's DOM element
   useEffect(() => {
@@ -50,13 +51,19 @@ export default function DraftMarker({
         // Store map container reference
         mapContainerRef.current = map.getContainer()
 
-        // Completely disable map pane interactions
-        const mapPanes = map.getPanes()
-        if (mapPanes?.mapPane) {
-          mapPanes.mapPane.style.pointerEvents = 'none'
+        // Create event blocker function that stops ALL events at capture phase
+        mapEventBlockerRef.current = (e) => {
+          e.stopPropagation()
+          e.preventDefault()
         }
-        if (mapPanes?.overlayPane) {
-          mapPanes.overlayPane.style.pointerEvents = 'none'
+
+        // Add event blockers at capture phase to intercept before Leaflet sees them
+        if (mapContainerRef.current) {
+          mapContainerRef.current.addEventListener('mousedown', mapEventBlockerRef.current, { capture: true, passive: false })
+          mapContainerRef.current.addEventListener('mousemove', mapEventBlockerRef.current, { capture: true, passive: false })
+          mapContainerRef.current.addEventListener('touchstart', mapEventBlockerRef.current, { capture: true, passive: false })
+          mapContainerRef.current.addEventListener('touchmove', mapEventBlockerRef.current, { capture: true, passive: false })
+          mapContainerRef.current.addEventListener('pointermove', mapEventBlockerRef.current, { capture: true, passive: false })
         }
 
         // Disable all map interactions while dragging pin
@@ -67,12 +74,6 @@ export default function DraftMarker({
         map.boxZoom?.disable()
         map.keyboard?.disable()
         map.tap?.disable()
-
-        // Prevent any touch/pointer actions on map container
-        if (mapContainerRef.current) {
-          mapContainerRef.current.style.touchAction = 'none'
-          mapContainerRef.current.style.userSelect = 'none'
-        }
 
         // Capture pointer on the marker element to prevent map from receiving events
         if (el.setPointerCapture && ev.pointerId) {
@@ -150,21 +151,15 @@ export default function DraftMarker({
         }
       }
 
-      // Re-enable map pane interactions
-      const mapPanes = map.getPanes()
-      if (mapPanes?.mapPane) {
-        mapPanes.mapPane.style.pointerEvents = ''
-      }
-      if (mapPanes?.overlayPane) {
-        mapPanes.overlayPane.style.pointerEvents = ''
-      }
-
-      // Re-enable pointer events and touch actions on map container
-      if (mapContainerRef.current) {
-        mapContainerRef.current.style.pointerEvents = ''
-        mapContainerRef.current.style.touchAction = ''
-        mapContainerRef.current.style.userSelect = ''
+      // Remove event blockers
+      if (mapContainerRef.current && mapEventBlockerRef.current) {
+        mapContainerRef.current.removeEventListener('mousedown', mapEventBlockerRef.current, { capture: true })
+        mapContainerRef.current.removeEventListener('mousemove', mapEventBlockerRef.current, { capture: true })
+        mapContainerRef.current.removeEventListener('touchstart', mapEventBlockerRef.current, { capture: true })
+        mapContainerRef.current.removeEventListener('touchmove', mapEventBlockerRef.current, { capture: true })
+        mapContainerRef.current.removeEventListener('pointermove', mapEventBlockerRef.current, { capture: true })
         mapContainerRef.current = null
+        mapEventBlockerRef.current = null
       }
 
       // Re-enable all map interactions
