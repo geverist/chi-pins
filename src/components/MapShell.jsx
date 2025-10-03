@@ -67,7 +67,7 @@ function ensureSearchCss() {
       .map-search-clear {
         min-width: 48px !important;
         min-height: 48px !important;
-        font-size: 1.5rem !important;
+        fontSize: 1.5rem !important;
         right: 8px !important;
       }
     }
@@ -353,7 +353,7 @@ function GeocoderTopCenter({
 
 /* --------------------------------------------------------------------------- */
 
-function MapModeController({ mode }) {
+function MapModeController({ mode, isMobile }) {
   const map = useMap();
 
   useEffect(() => {
@@ -363,7 +363,7 @@ function MapModeController({ mode }) {
     }
     map.setMinZoom(CHI_MIN_ZOOM);
     map.setMaxZoom(CHI_MAX_ZOOM);
-    map.setMaxBounds(CHI_BOUNDS);
+    map.setMaxBounds(null);
     map.fitBounds(CHI_BOUNDS, { animate: false });
     map.dragging?.enable();
     map.scrollWheelZoom?.enable();
@@ -390,8 +390,12 @@ function MapModeController({ mode }) {
         map.boxZoom?.enable();
         map.keyboard?.enable();
       } else {
-        map.setMaxBounds(CHI_BOUNDS);
-        map.setMinZoom(CHI_MIN_ZOOM);
+        map.setMaxBounds(null);
+        if (isMobile) {
+          map.setMinZoom(1);
+        } else {
+          map.setMinZoom(CHI_MIN_ZOOM);
+        }
         map.setMaxZoom(CHI_MAX_ZOOM);
         map.fitBounds(CHI_BOUNDS, { animate: true });
         map.dragging?.enable();
@@ -401,7 +405,7 @@ function MapModeController({ mode }) {
         map.keyboard?.enable();
       }
     }, 0);
-  }, [mode, map]);
+  }, [mode, map, isMobile]);
 
   return null;
 }
@@ -462,6 +466,7 @@ export default function MapShell({
   editing = false,
   clearSearchToken = 0,
   mapReady,
+  isMobile,
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   const zoom = useMemo(() => 10, []);
@@ -496,7 +501,7 @@ export default function MapShell({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <MapModeController mode={mapMode} />
+        <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} />
         {!editing && (
           <GeocoderTopCenter
