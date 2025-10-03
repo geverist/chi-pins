@@ -50,6 +50,15 @@ export default function DraftMarker({
         // Store map container reference
         mapContainerRef.current = map.getContainer()
 
+        // Completely disable map pane interactions
+        const mapPanes = map.getPanes()
+        if (mapPanes?.mapPane) {
+          mapPanes.mapPane.style.pointerEvents = 'none'
+        }
+        if (mapPanes?.overlayPane) {
+          mapPanes.overlayPane.style.pointerEvents = 'none'
+        }
+
         // Disable all map interactions while dragging pin
         map.dragging?.disable()
         map.touchZoom?.disable()
@@ -139,6 +148,15 @@ export default function DraftMarker({
         } catch (e) {
           console.warn('Could not release pointer:', e)
         }
+      }
+
+      // Re-enable map pane interactions
+      const mapPanes = map.getPanes()
+      if (mapPanes?.mapPane) {
+        mapPanes.mapPane.style.pointerEvents = ''
+      }
+      if (mapPanes?.overlayPane) {
+        mapPanes.overlayPane.style.pointerEvents = ''
       }
 
       // Re-enable pointer events and touch actions on map container

@@ -41,7 +41,7 @@ export default function PinBubbles({
   pins = [],
   enabled = true,
   minZoomForPins = 13,     // when zoom < this => show bubbles
-  maxZoom = 19,
+  maxZoom = 18,
 }) {
   const map = useMap()
   const indexRef = useRef(null)
