@@ -5,7 +5,7 @@ import logoUrl from './assets/logo.png';
 // hooks
 import { usePins } from './hooks/usePins';
 import { useIdleAttractor } from './hooks/useIdleAttractor';
-import { useFunFacts } from './hooks/useFunFacts';
+import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useHighlightPin } from './hooks/useHighlightPin';
 
 // geo / map helpers
@@ -60,6 +60,7 @@ import { useNavigationSettings } from './hooks/useNavigationSettings';
 import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode.jsx';
 import { enterFullscreen, exitFullscreenAndWake, ensureWakeLock, onFullscreenChange } from './lib/kiosk';
 import { btn3d } from './lib/styles';
+import { CHICAGO_FUN_FACTS } from './data/chicagoFunFacts';
 
 function normalizePhoneToE164ish(raw) {
   if (!raw) return null;
@@ -73,39 +74,6 @@ function normalizePhoneToE164ish(raw) {
 
 /* ------------------------------------------------------------------------ */
 
-const DEFAULT_FUN_FACTS = {
-  chicago: 'The Chicago River flows backwards! Engineers reversed it in 1900 to improve sanitation.',
-  evanston: 'Home to Northwestern University and birthplace of the ice cream sundae (1890s).',
-  oakpark: 'Frank Lloyd Wright\'s architectural playground - 25 buildings still stand here.',
-  cicero: 'Al Capone ran his empire from the Hawthorne Hotel, still standing on Ogden Ave.',
-  skokie: 'The "World\'s Largest Village" was called Niles Center until 1940.',
-  schaumburg: 'Went from 130 residents (1956) to 75,000+ today - one of America\'s fastest-growing suburbs.',
-  naperville: 'Named "Best Place to Live in America" twice by Money magazine.',
-  aurora: 'First U.S. city to illuminate its streets entirely with electric lights (1881).',
-  joliet: 'The Old Joliet Prison hosted Jake and Elwood in The Blues Brothers opening scene.',
-  waukegan: 'Ray Bradbury grew up here - Green Town in his novels is based on Waukegan.',
-  'oak lawn': 'The Hilltop restaurant\'s iconic neon sign has been a Route 66 landmark since 1961.',
-  'des plaines': 'Home of the first McDonald\'s franchise opened by Ray Kroc in 1955.',
-  wilmette: 'The Baha\'i House of Worship is the oldest surviving Baha\'i temple in the world.',
-  berwyn: 'Features the world\'s largest laundromat and Cermak Plaza\'s iconic "Spindle" car sculpture.',
-  'park ridge': 'Hillary Clinton\'s hometown - she graduated from Maine South High School.',
-  'glen ellyn': 'Lake Ellyn was created in 1889 by damming a creek to power a mill.',
-  wheaton: 'Red Grange, "The Galloping Ghost," played football at Wheaton College.',
-  'orland park': 'Named after the town\'s founder, John Orland, who arrived in the 1840s.',
-  'tinley park': 'Home to the Hollywood Casino Amphitheatre, one of the Midwest\'s premier concert venues.',
-  'oak brook': 'McDonald\'s global headquarters moved here in 2018 to a sprawling campus.',
-  lombard: 'The Lilac Village celebrates Lilacia Park\'s 1,200+ lilac bushes each May.',
-  'downers grove': 'The Pierce Downer cabin (1832) is one of the oldest structures in the area.',
-  elmhurst: 'York Theatre, built in 1924, is one of the few remaining atmospheric movie palaces.',
-  palatine: 'Named after Palatine, New York, by early settlers from that region.',
-  'arlington heights': 'Arlington Park racetrack hosted the first million-dollar horse race in 1981.',
-  'buffalo grove': 'Named after the buffalo that once roamed the prairie groves here.',
-  'mount prospect': 'The Busse-Biermann mansion (1910) is now a historical museum.',
-  hoffman: 'Hoffman Estates was farmland until the 1950s when Sam Hoffman built planned suburbs.',
-  bolingbrook: 'Incorporated in 1965, it\'s one of Illinois\'s youngest and fastest-growing towns.',
-  'crystal lake': 'The lake itself was formed by a glacier and is spring-fed - hence the crystal-clear water.',
-};
-
 export default function App() {
   const mainMapRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
@@ -118,8 +86,8 @@ export default function App() {
   // map mode
   const [mapMode, setMapMode] = useState('chicago');
 
-  // fun facts (DB-backed with fallback)
-  const funFacts = useFunFacts(DEFAULT_FUN_FACTS);
+  // fun facts (DB-backed with fallback to 150 Chicago metro towns)
+  const funFacts = useFunFacts(CHICAGO_FUN_FACTS);
 
   // draft pin
   const [draft, setDraft] = useState(null);
@@ -429,7 +397,7 @@ export default function App() {
       const addr = json?.address || {};
       const candidate = addr.city || addr.town || addr.village || addr.suburb || addr.locality || 'Chicago';
       const key = String(candidate).toLowerCase();
-      const fact = funFacts[key] || `You’re near ${candidate}.`;
+      const fact = getRandomFact(funFacts, key) || `You're near ${candidate}.`;
       setToast({ title: candidate, text: fact });
       setTimeout(() => setToast(null), 10000);
     } catch {}

@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase'
 
 /**
  * Loads fun facts from Supabase if available; falls back to provided defaults.
- * Returns a plain object: { key -> fact }
+ * Now supports array values for random selection.
+ * Returns a plain object: { key -> fact (or array of facts) }
  */
 export function useFunFacts(defaults = {}) {
   const [facts, setFacts] = useState(defaults || {})
@@ -35,4 +36,24 @@ export function useFunFacts(defaults = {}) {
   }, [])
 
   return facts
+}
+
+/**
+ * Get a random fun fact for a location
+ * @param {object} facts - Facts object from useFunFacts
+ * @param {string} key - Location key
+ * @returns {string|null} - Random fact or null if not found
+ */
+export function getRandomFact(facts, key) {
+  const fact = facts[key]
+  if (!fact) return null
+
+  // If it's an array, return a random item
+  if (Array.isArray(fact)) {
+    const randomIndex = Math.floor(Math.random() * fact.length)
+    return fact[randomIndex]
+  }
+
+  // Otherwise return the string directly
+  return fact
 }
