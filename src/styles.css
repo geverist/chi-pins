@@ -3,6 +3,7 @@
 html, body, #root {
   height: 100%;
   margin: 0;
+  padding: 0;
   background: var(--bg);
   color: var(--fg);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -10,14 +11,21 @@ html, body, #root {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overflow: hidden;                /* NEW: no page scroll */
+  width: 100vw;
+  max-width: 100vw;
+  position: fixed;                 /* Prevent Safari bounce/scroll */
 }
 .app {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 100dvh;              /* NEW: stable viewport on mobile */
-  height: 100dvh;                  /* NEW */
-  overflow: clip;                  /* NEW: block any accidental overflow */
+  height: 100vh;
+  height: 100dvh;                  /* Dynamic viewport height for mobile */
+  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: 100dvh;              /* Stable viewport on mobile */
+  overflow: hidden;                /* Block any accidental overflow */
+  width: 100vw;
+  max-width: 100vw;
+  position: relative;
 }
 header, footer { padding: 10px 14px; }
 header { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }

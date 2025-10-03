@@ -192,27 +192,43 @@ export default function App() {
     photoUrl: null,
   });
 
-  // mobile mode detection
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 640px)').matches : false
-  );
+  // mobile mode detection - use touch capability and max width, not orientation
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    // Check if device has touch AND is narrow (mobile device)
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isNarrow = window.innerWidth <= 640;
+    return hasTouch && isNarrow;
+  });
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    const mq = window.matchMedia('(max-width: 640px)');
-    const handler = (e) => {
-      setIsMobile(e.matches);
-      setExploring(e.matches ? true : false);
-      console.log('App: isMobile=', e.matches, 'exploring=', e.matches ? true : false);
-      if (mainMapRef.current) {
-        setTimeout(() => mainMapRef.current.invalidateSize(), 300);
+
+    const checkMobile = () => {
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isNarrow = window.innerWidth <= 640;
+      const shouldBeMobile = hasTouch && isNarrow;
+
+      if (shouldBeMobile !== isMobile) {
+        setIsMobile(shouldBeMobile);
+        setExploring(shouldBeMobile ? true : false);
+        console.log('App: isMobile=', shouldBeMobile, 'exploring=', shouldBeMobile ? true : false);
+        if (mainMapRef.current) {
+          setTimeout(() => mainMapRef.current.invalidateSize(), 300);
+        }
       }
     };
-    if (mq.matches) setExploring(true);
+
+    // Initial check
+    checkMobile();
+    if (isMobile) setExploring(true);
     else setExploring(false);
-    console.log('App: Initial isMobile=', mq.matches, 'exploring=', mq.matches ? true : false);
-    mq.addEventListener?.('change', handler);
-    return () => mq.removeEventListener?.('change', handler);
-  }, []);
+    console.log('App: Initial isMobile=', isMobile);
+
+    // Listen for resize (handles rotation)
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [isMobile]);
 
   // kiosk state
   const [needsKioskStart, setNeedsKioskStart] = useState(false);
