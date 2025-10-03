@@ -122,6 +122,17 @@ export default function SubMapModal({
     }
   }, [mainMapRef, mapReady]);
 
+  // Invalidate submap size when modal opens
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (submapRef.current) {
+        submapRef.current.invalidateSize();
+        console.log('SubMapModal: invalidateSize called');
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="submap-overlay">
       <div className="submap-card glass">
@@ -135,29 +146,33 @@ export default function SubMapModal({
             Done
           </button>
         </div>
-        <MapContainer
-          center={center}
-          zoom={baseZoom || 15}
-          style={{ width: '100%', height: '100%' }}
-          zoomControl={false}
-          scrollWheelZoom={false}
-          aria-label="Fine-tune map"
-        >
-          <SetSubMapRef submapRef={submapRef} />
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Boot
-            pos={pos.current}
-            setPos={setPos}
-            pageTile={team}
-            handoff={handoff}
-            onPointerUpCommit={onCommit}
-            mainMapRef={mainMapRef}
-            mapReady={mapReady}
-          />
-        </MapContainer>
+        <div className="submap-map">
+          <MapContainer
+            center={center}
+            zoom={baseZoom || 15}
+            style={{ width: '100%', height: '100%' }}
+            zoomControl={false}
+            scrollWheelZoom={true}
+            touchZoom={true}
+            doubleClickZoom={true}
+            aria-label="Fine-tune map"
+          >
+            <SetSubMapRef submapRef={submapRef} />
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Boot
+              pos={pos.current}
+              setPos={setPos}
+              pageTile={team}
+              handoff={handoff}
+              onPointerUpCommit={onCommit}
+              mainMapRef={mainMapRef}
+              mapReady={mapReady}
+            />
+          </MapContainer>
+        </div>
         <div className="submap-help">
           Drag the pin to fine-tune its position, or pinch to zoom. Tap Done to confirm.
         </div>
