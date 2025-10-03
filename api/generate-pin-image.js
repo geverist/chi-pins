@@ -1,11 +1,51 @@
 // api/generate-pin-image.js
 // Generates a static image of a pin card with details and map view
 
+// Rate limiting map: IP -> { count, resetTime }
+const rateLimitMap = new Map()
+const RATE_LIMIT = 20 // requests
+const RATE_WINDOW = 60000 // 1 minute
+
+function checkRateLimit(ip) {
+  const now = Date.now()
+  const record = rateLimitMap.get(ip)
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW })
+    return true
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    return false
+  }
+
+  record.count++
+  return true
+}
+
 export default async function handler(req, res) {
+  // Only allow GET requests
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  // Rate limiting
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({ error: 'Too many requests' })
+  }
+
   const { slug } = req.query;
 
-  if (!slug) {
+  // Validate slug
+  if (!slug || typeof slug !== 'string') {
     return res.status(400).json({ error: 'Pin slug is required' });
+  }
+
+  // Sanitize slug (alphanumeric, hyphens, underscores only)
+  const sanitizedSlug = slug.replace(/[^a-z0-9-_]/gi, '').slice(0, 100)
+  if (!sanitizedSlug) {
+    return res.status(400).json({ error: 'Invalid slug format' });
   }
 
   try {
@@ -15,15 +55,34 @@ export default async function handler(req, res) {
       process.env.VITE_SUPABASE_ANON_KEY
     );
 
-    // Fetch pin data
+    // Fetch pin data using sanitized slug
     const { data: pin, error } = await supabase
       .from('pins')
-      .select('*')
-      .eq('slug', slug)
+      .select('slug, name, note, latitude, longitude, icon')
+      .eq('slug', sanitizedSlug)
       .single();
 
     if (error || !pin) {
       return res.status(404).json({ error: 'Pin not found' });
+    }
+
+    // HTML escape function to prevent XSS
+    function escapeHTML(str) {
+      if (!str) return ''
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;')
+    }
+
+    // Validate coordinates
+    const lat = parseFloat(pin.latitude)
+    const lng = parseFloat(pin.longitude)
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ error: 'Invalid coordinates' });
     }
 
     // Generate static map image URL using Mapbox or similar
@@ -33,8 +92,14 @@ export default async function handler(req, res) {
     const mapboxToken = process.env.MAPBOX_ACCESS_TOKEN || '';
 
     const staticMapUrl = mapboxToken
-      ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+3b82f6(${pin.longitude},${pin.latitude})/${pin.longitude},${pin.latitude},${zoom},0/${mapWidth}x${mapHeight}@2x?access_token=${mapboxToken}`
-      : `https://www.openstreetmap.org/export/embed.html?bbox=${pin.longitude - 0.01},${pin.latitude - 0.01},${pin.longitude + 0.01},${pin.latitude + 0.01}&marker=${pin.latitude},${pin.longitude}`;
+      ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+3b82f6(${lng},${lat})/${lng},${lat},${zoom},0/${mapWidth}x${mapHeight}@2x?access_token=${mapboxToken}`
+      : `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.01},${lat - 0.01},${lng + 0.01},${lat + 0.01}&marker=${lat},${lng}`;
+
+    // Escape all user-provided content
+    const safeName = escapeHTML(pin.name)
+    const safeNote = escapeHTML(pin.note)
+    const safeSlug = escapeHTML(pin.slug)
+    const safeIcon = escapeHTML(pin.icon)
 
     // Generate HTML for the pin card
     const html = `
@@ -151,17 +216,17 @@ export default async function handler(req, res) {
               <img src="${staticMapUrl}" alt="Map location" />
             </div>
             <div class="content">
-              ${pin.icon ? `<div class="emoji">${pin.icon}</div>` : ''}
-              ${pin.name ? `<div class="name">${pin.name}</div>` : ''}
-              <div class="slug">#${pin.slug}</div>
-              ${pin.note ? `<div class="note">${pin.note}</div>` : ''}
+              ${safeIcon ? `<div class="emoji">${safeIcon}</div>` : ''}
+              ${safeName ? `<div class="name">${safeName}</div>` : ''}
+              <div class="slug">#${safeSlug}</div>
+              ${safeNote ? `<div class="note">${safeNote}</div>` : ''}
               <div class="location">
-                📍 <span class="coordinates">${pin.latitude.toFixed(6)}, ${pin.longitude.toFixed(6)}</span>
+                📍 <span class="coordinates">${lat.toFixed(6)}, ${lng.toFixed(6)}</span>
               </div>
             </div>
             <div class="footer">
               <div style="text-align: center; margin-bottom: 12px;">
-                <a href="sms:&body=${encodeURIComponent(`Check out this pin from Chi-Pins!\n\n${pin.note || pin.name || ''}\n\n${req.headers.host}/api/generate-pin-image?slug=${slug}`)}" class="share-btn">
+                <a href="sms:&body=${encodeURIComponent(`Check out this pin from Chi-Pins!\n\n${pin.note || pin.name || ''}\n\n${req.headers.host}/api/generate-pin-image?slug=${sanitizedSlug}`)}" class="share-btn">
                   💬 Share via Text
                 </a>
               </div>

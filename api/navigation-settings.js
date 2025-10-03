@@ -6,6 +6,28 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
 );
 
+// Rate limiting
+const rateLimitMap = new Map()
+const RATE_LIMIT = 30
+const RATE_WINDOW = 60000 // 1 minute
+
+function checkRateLimit(ip) {
+  const now = Date.now()
+  const record = rateLimitMap.get(ip)
+
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW })
+    return true
+  }
+
+  if (record.count >= RATE_LIMIT) {
+    return false
+  }
+
+  record.count++
+  return true
+}
+
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,6 +36,12 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Rate limiting
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({ error: 'Too many requests' })
   }
 
   try {
@@ -46,6 +74,16 @@ export default async function handler(req, res) {
     if (req.method === 'PUT') {
       // Update navigation settings
       const { games_enabled, jukebox_enabled, order_enabled, explore_enabled } = req.body;
+
+      // Validate input - must be booleans
+      if (
+        typeof games_enabled !== 'boolean' ||
+        typeof jukebox_enabled !== 'boolean' ||
+        typeof order_enabled !== 'boolean' ||
+        typeof explore_enabled !== 'boolean'
+      ) {
+        return res.status(400).json({ error: 'Invalid input: all fields must be boolean' });
+      }
 
       // First, get the existing record
       const { data: existing } = await supabase

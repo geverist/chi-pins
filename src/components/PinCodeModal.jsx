@@ -4,15 +4,22 @@ import { useState, useEffect, useRef } from 'react'
 export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter PIN Code', expectedPin }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
+  const [attempts, setAttempts] = useState(0)
   const inputRef = useRef(null)
 
   // Use provided PIN or fallback to env var or default
-  const correctPin = expectedPin || import.meta.env.VITE_ADMIN_PIN || '1111'
+  // Ensure PIN is a 4-digit string
+  const correctPin = String(expectedPin || import.meta.env.VITE_ADMIN_PIN || '1111').replace(/\D/g, '').slice(0, 4) || '1111'
+
+  // Rate limiting: max 5 attempts before lockout
+  const MAX_ATTEMPTS = 5
+  const isLockedOut = attempts >= MAX_ATTEMPTS
 
   useEffect(() => {
     if (open) {
       setCode('')
       setError('')
+      setAttempts(0)
       // Auto-focus input when modal opens
       setTimeout(() => inputRef.current?.focus(), 100)
     }
@@ -20,10 +27,27 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
 
   const handleSubmit = (e) => {
     e?.preventDefault()
+
+    if (isLockedOut) {
+      setError('Too many attempts. Please refresh.')
+      return
+    }
+
+    // Validate input is exactly 4 digits
+    if (!/^\d{4}$/.test(code)) {
+      setError('PIN must be exactly 4 digits')
+      setCode('')
+      setTimeout(() => setError(''), 2000)
+      return
+    }
+
     if (code === correctPin) {
+      setAttempts(0)
       onSuccess?.()
     } else {
-      setError('Incorrect PIN')
+      const newAttempts = attempts + 1
+      setAttempts(newAttempts)
+      setError(`Incorrect PIN (${newAttempts}/${MAX_ATTEMPTS})`)
       setCode('')
       setTimeout(() => setError(''), 2000)
     }
@@ -45,16 +69,23 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
   }
 
   const handleChange = (e) => {
+    if (isLockedOut) return
+
     const value = e.target.value.replace(/\D/g, '').slice(0, 4)
     setCode(value)
     setError('')
     // Auto-submit when 4 digits entered
     if (value.length === 4) {
       setTimeout(() => {
+        if (!/^\d{4}$/.test(value)) return
+
         if (value === correctPin) {
+          setAttempts(0)
           onSuccess?.()
         } else {
-          setError('Incorrect PIN')
+          const newAttempts = attempts + 1
+          setAttempts(newAttempts)
+          setError(`Incorrect PIN (${newAttempts}/${MAX_ATTEMPTS})`)
           setCode('')
           setTimeout(() => setError(''), 2000)
         }
@@ -103,6 +134,7 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
             onKeyDown={handleKeyDown}
             placeholder="••••"
             autoComplete="off"
+            disabled={isLockedOut}
             style={{
               width: '100%',
               padding: '16px 20px',

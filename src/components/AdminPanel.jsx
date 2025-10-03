@@ -157,8 +157,25 @@ export default function AdminPanel({ open, onClose }) {
   }, [settings, popularSpots, navSettings, saveAdminSettings, updateNavSettingsAPI])
 
   const saveAndClose = async () => {
+    // Validate PINs before saving
+    const adminPin = String(settings.adminPanelPin || '1111').replace(/\D/g, '').slice(0, 4)
+    const kioskPin = String(settings.kioskExitPin || '1111').replace(/\D/g, '').slice(0, 4)
+
+    if (adminPin.length !== 4 || kioskPin.length !== 4) {
+      alert('PINs must be exactly 4 digits')
+      return
+    }
+
+    // Ensure PINs are saved as 4-digit strings
+    const validatedSettings = {
+      ...settings,
+      adminPanelPin: adminPin.padStart(4, '0'),
+      kioskExitPin: kioskPin.padStart(4, '0'),
+    }
+
+    setSettings(validatedSettings)
     await saveSupabase()
-    setInitialSettings(settings)
+    setInitialSettings(validatedSettings)
     setInitialPopularSpots(popularSpots)
     setInitialNavSettings(navSettings)
     setHasUnsavedChanges(false)
