@@ -74,18 +74,10 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       e.preventDefault();
       e.stopPropagation();
       console.log('Boot: Drag started on marker');
-
-      // Capture pointer to ensure we get all move events
-      if (markerEl.setPointerCapture && e.pointerId) {
-        markerEl.setPointerCapture(e.pointerId);
-      }
     };
 
     const onPointerMove = (e) => {
       if (!isDraggingRef.current || !markerRef.current) return;
-
-      e.preventDefault();
-      e.stopPropagation();
 
       // Get map container position
       const mapContainer = map.getContainer();
@@ -99,11 +91,8 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       const point = map.containerPointToLatLng([containerX, containerY]);
 
       if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
-        console.log('Boot: Moving to', point.lat, point.lng);
-        // Move marker to cursor position
+        // Move marker to cursor position WITHOUT panning the map
         markerRef.current.setLatLng(point);
-        // Keep map centered on the pin
-        map.panTo(point, { animate: false });
         // Update position state
         setPos({ lat: point.lat, lng: point.lng });
       }
@@ -115,14 +104,11 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       isDraggingRef.current = false;
       console.log('Boot: Drag ended');
 
-      // Release pointer capture
-      if (markerEl.releasePointerCapture && e.pointerId) {
-        markerEl.releasePointerCapture(e.pointerId);
-      }
-
       const ll = markerRef.current.getLatLng();
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
         setPos({ lat: ll.lat, lng: ll.lng });
+        // Center map on final position
+        map.panTo([ll.lat, ll.lng], { animate: true });
         // Auto-commit after short delay
         if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
         dragTimeoutRef.current = setTimeout(() => {
@@ -132,11 +118,11 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       }
     };
 
-    // Attach listeners directly to marker element
+    // Attach pointerdown only to marker, move/up to window
     markerEl.addEventListener('pointerdown', onPointerDown, { passive: false });
-    markerEl.addEventListener('pointermove', onPointerMove, { passive: false });
-    markerEl.addEventListener('pointerup', onPointerUp);
-    markerEl.addEventListener('pointercancel', onPointerUp);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
 
     // Handle zoom - keep marker centered
     const onZoom = () => {
@@ -153,10 +139,10 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       console.log('Boot: Cleaning up marker');
       if (markerEl) {
         markerEl.removeEventListener('pointerdown', onPointerDown);
-        markerEl.removeEventListener('pointermove', onPointerMove);
-        markerEl.removeEventListener('pointerup', onPointerUp);
-        markerEl.removeEventListener('pointercancel', onPointerUp);
       }
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
       map.off('zoom', onZoom);
       marker.remove();
       markerRef.current = null;
