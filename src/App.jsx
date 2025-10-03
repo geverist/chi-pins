@@ -192,42 +192,42 @@ export default function App() {
     photoUrl: null,
   });
 
-  // mobile mode detection - use touch capability and max width, not orientation
+  // mobile mode detection - detect mobile device once and stick with it
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
-    // Check if device has touch AND is narrow (mobile device)
+    // Detect if this is a mobile device based on:
+    // 1. Touch capability
+    // 2. User agent contains mobile indicators
+    // 3. Screen size (use the smaller dimension to handle rotation)
     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isNarrow = window.innerWidth <= 640;
-    return hasTouch && isNarrow;
+    const isMobileUA = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const smallestDimension = Math.min(window.innerWidth, window.innerHeight);
+    const isSmallScreen = smallestDimension <= 640;
+
+    return (hasTouch && isSmallScreen) || isMobileUA;
   });
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
-    const checkMobile = () => {
-      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      const isNarrow = window.innerWidth <= 640;
-      const shouldBeMobile = hasTouch && isNarrow;
+    // Set exploring mode based on mobile state
+    if (isMobile) {
+      setExploring(true);
+      console.log('App: Mobile mode - exploring enabled');
+    } else {
+      setExploring(false);
+      console.log('App: Desktop mode - exploring disabled');
+    }
 
-      if (shouldBeMobile !== isMobile) {
-        setIsMobile(shouldBeMobile);
-        setExploring(shouldBeMobile ? true : false);
-        console.log('App: isMobile=', shouldBeMobile, 'exploring=', shouldBeMobile ? true : false);
-        if (mainMapRef.current) {
-          setTimeout(() => mainMapRef.current.invalidateSize(), 300);
-        }
+    // Handle resize for map invalidation only, don't change mobile mode
+    const handleResize = () => {
+      if (mainMapRef.current) {
+        setTimeout(() => mainMapRef.current.invalidateSize(), 300);
       }
     };
 
-    // Initial check
-    checkMobile();
-    if (isMobile) setExploring(true);
-    else setExploring(false);
-    console.log('App: Initial isMobile=', isMobile);
-
-    // Listen for resize (handles rotation)
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [isMobile]);
 
   // kiosk state
