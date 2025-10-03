@@ -29,6 +29,13 @@ export function usePins(mainMapRef) {
 
   // Merge helper: de-dupe, sort desc by created_at, cap size
   const mergeRows = (prev, incoming) => {
+    // Rebuild seen set from prev to handle React Strict Mode double-mounting
+    const prevSeen = new Set();
+    for (const p of prev) {
+      const k = keyFor(p);
+      if (k) prevSeen.add(k);
+    }
+
     const out = [...prev];
     let duplicates = 0;
     let added = 0;
@@ -37,7 +44,7 @@ export function usePins(mainMapRef) {
       const k = keyFor(r);
       if (!k) continue;
 
-      if (seen.current.has(k)) {
+      if (prevSeen.has(k)) {
         duplicates++;
         const idx = out.findIndex((x) => keyFor(x) === k);
         if (idx !== -1) {
@@ -51,7 +58,7 @@ export function usePins(mainMapRef) {
         continue;
       }
 
-      seen.current.add(k);
+      prevSeen.add(k);
       out.unshift(r);
       added++;
     }

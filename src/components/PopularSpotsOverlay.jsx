@@ -78,17 +78,20 @@ export default function PopularSpotsOverlay({
     try { return (map?.getZoom?.() ?? 12) >= minLabelZoom } catch { return true }
   })
 
-  // Fetch from `spots` (id, name, category, lat, lng). Falls back to in-file list.
+  // Fetch from `popular_spots` (id, label, category, lat, lng). Falls back to in-file list.
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       let dbRows = null
       try {
         const { data, error } = await supabase
-          .from('spots')
-          .select('id,name,category,lat,lng')
+          .from('popular_spots')
+          .select('id,label,category,lat,lng')
           .limit(1000)
-        if (!error && Array.isArray(data)) dbRows = data
+        if (!error && Array.isArray(data)) {
+          // Map 'label' to 'name' for compatibility
+          dbRows = data.map(r => ({ ...r, name: r.label }))
+        }
       } catch {}
       if (!cancelled) setRows(dbRows && dbRows.length ? dbRows : FALLBACK_SPOTS)
     })()
