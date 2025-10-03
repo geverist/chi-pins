@@ -21,7 +21,7 @@ const INGREDIENTS = [
 
 const BAD_ITEMS = [
   { id: 'bomb', name: 'Burnt Pizza', emoji: '💣', points: -50, color: '#000000', size: 50 },
-  { id: 'anchor', name: 'Cast Iron Pan', emoji: '⚓', points: -30, color: '#696969', size: 55 },
+  { id: 'pineapple', name: 'Pineapple', emoji: '🍍', points: -30, color: '#ffd700', size: 50 },
 ];
 
 export default function DeepDishGame({ onClose }) {
@@ -42,6 +42,7 @@ export default function DeepDishGame({ onClose }) {
   const gameContainerRef = useRef(null);
   const fallSpeedRef = useRef(FALL_SPEED_BASE);
   const spawnIntervalRef = useRef(SPAWN_INTERVAL_BASE);
+  const isPlayingRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -52,6 +53,7 @@ export default function DeepDishGame({ onClose }) {
 
   const startGame = () => {
     setGameState('playing');
+    isPlayingRef.current = true;
     setScore(0);
     setTimeLeft(GAME_DURATION);
     setFallingItems([]);
@@ -78,9 +80,11 @@ export default function DeepDishGame({ onClose }) {
   };
 
   const scheduleNextSpawn = () => {
+    if (!isPlayingRef.current) return;
+
     spawnTimerRef.current = setTimeout(() => {
-      spawnItem();
-      if (gameState === 'playing') {
+      if (isPlayingRef.current) {
+        spawnItem();
         scheduleNextSpawn();
       }
     }, spawnIntervalRef.current);
@@ -210,6 +214,7 @@ export default function DeepDishGame({ onClose }) {
   };
 
   const endGame = () => {
+    isPlayingRef.current = false;
     if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     if (spawnTimerRef.current) clearTimeout(spawnTimerRef.current);
 
@@ -256,8 +261,8 @@ export default function DeepDishGame({ onClose }) {
           How to Play
         </h3>
         <p style={{ color: '#a7b0b8', fontSize: 16, lineHeight: 1.6, margin: '0 0 16px' }}>
-          Catch falling pizza ingredients in your pan! Move with your mouse or finger.
-          Build combos by catching consecutive ingredients. Avoid burnt pizzas and cast iron pans!
+          Catch falling pizza ingredients in your deep dish pan! Move with your mouse or finger.
+          Build combos by catching consecutive ingredients. Avoid burnt pizzas and pineapple!
         </p>
         <p style={{ color: '#10b981', fontSize: 14, fontWeight: 600, margin: 0 }}>
           Catch as many ingredients as you can in 60 seconds!
@@ -428,7 +433,7 @@ export default function DeepDishGame({ onClose }) {
         </div>
       ))}
 
-      {/* Catcher (Pan) */}
+      {/* Catcher (Deep Dish Pan) */}
       <div
         style={{
           position: 'absolute',
@@ -439,7 +444,7 @@ export default function DeepDishGame({ onClose }) {
           pointerEvents: 'none',
         }}
       >
-        🍳
+        🥘
       </div>
     </div>
   );
