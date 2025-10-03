@@ -18,7 +18,60 @@ L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 let __searchCssInjected = false;
 function ensureSearchCss() {
   if (__searchCssInjected || typeof document === 'undefined') return;
-  const css = `/* Input text + placeholder (high contrast) */ .map-search-wrap .leaflet-control-geocoder-form input { color: #e9eef3 !important; background: rgba(0,0,0,0.22) !important; border: 1px solid rgba(255,255,255,0.18) !important; font-weight: 600 !important; } .map-search-wrap .leaflet-control-geocoder-form input::placeholder { color: #cfd6de !important; opacity: 0.95 !important; } /* Extra placeholder vendor selectors for stubborn browsers */ .map-search-wrap .leaflet-control-geocoder-form input::-webkit-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; } .map-search-wrap .leaflet-control-geocoder-form input:-ms-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; } .map-search-wrap .leaflet-control-geocoder-form input::-ms-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; } /* Results text/links */ .map-search-wrap .leaflet-control-geocoder-alternatives { background: rgba(16,17,20,0.92) !important; border: 1px solid rgba(255,255,255,0.14) !important; color: #e9eef3 !important; border-radius: 10px !important; box-shadow: 0 12px 28px rgba(0,0,0,0.35) !important; overflow: hidden !important; max-height: 50vh !important; overscroll-behavior: contain !important; } .map-search-wrap .leaflet-control-geocoder-alternatives a { color: #e9eef3 !important; text-decoration: none !important; display: block !important; padding: 8px 10px !important; } .map-search-wrap .leaflet-control-geocoder-alternatives li + li a { border-top: 1px solid rgba(255,255,255,0.10) !important; } .map-search-wrap .leaflet-control-geocoder-alternatives a:hover { background: rgba(255,255,255,0.06) !important; } /* Touch-friendly sizing for kiosk */ @media (min-width: 1920px) { .map-search-wrap .leaflet-control-geocoder-form input { min-height: 60px !important; font-size: 1.25rem !important; padding: 12px 48px 12px 12px !important; } .map-search-clear { min-width: 48px !important; min-height: 48px !important; font-size: 1.5rem !important; right: 8px !important; } }`;
+  const css = `
+    /* Input text + placeholder (high contrast) */
+    .map-search-wrap .leaflet-control-geocoder-form input {
+      color: #e9eef3 !important;
+      background: rgba(0,0,0,0.22) !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      font-weight: 600 !important;
+    }
+    .map-search-wrap .leaflet-control-geocoder-form input::placeholder {
+      color: #cfd6de !important;
+      opacity: 0.95 !important;
+    }
+    /* Extra placeholder vendor selectors for stubborn browsers */
+    .map-search-wrap .leaflet-control-geocoder-form input::-webkit-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; }
+    .map-search-wrap .leaflet-control-geocoder-form input:-ms-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; }
+    .map-search-wrap .leaflet-control-geocoder-form input::-ms-input-placeholder { color: #cfd6de !important; opacity: 0.95 !important; }
+    /* Results text/links */
+    .map-search-wrap .leaflet-control-geocoder-alternatives {
+      background: rgba(16,17,20,0.92) !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      color: #e9eef3 !important;
+      border-radius: 10px !important;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35) !important;
+      overflow: hidden !important;
+      max-height: 50vh !important;
+      overscroll-behavior: contain !important;
+    }
+    .map-search-wrap .leaflet-control-geocoder-alternatives a {
+      color: #e9eef3 !important;
+      text-decoration: none !important;
+      display: block !important;
+      padding: 8px 10px !important;
+    }
+    .map-search-wrap .leaflet-control-geocoder-alternatives li + li a {
+      border-top: 1px solid rgba(255,255,255,0.10) !important;
+    }
+    .map-search-wrap .leaflet-control-geocoder-alternatives a:hover {
+      background: rgba(255,255,255,0.06) !important;
+    }
+    /* Touch-friendly sizing for kiosk */
+    @media (min-width: 1920px) {
+      .map-search-wrap .leaflet-control-geocoder-form input {
+        min-height: 60px !important;
+        font-size: 1.25rem !important;
+        padding: 12px 48px 12px 12px !important;
+      }
+      .map-search-clear {
+        min-width: 48px !important;
+        min-height: 48px !important;
+        font-size: 1.5rem !important;
+        right: 8px !important;
+      }
+    }
+  `;
   const style = document.createElement('style');
   style.setAttribute('data-map-search-css', '1');
   style.textContent = css;
