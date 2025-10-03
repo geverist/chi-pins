@@ -5,7 +5,7 @@ import L from 'leaflet';
 export const CHI = { lat: 41.8781, lng: -87.6298 };
 export const CHI_BOUNDS = L.latLngBounds([41.4, -88.5], [42.6, -87.3]);
 export const CHI_MIN_ZOOM = 10;
-export const CHI_MAX_ZOOM = 18;
+export const CHI_MAX_ZOOM = 17;
 export const USA = { lat: 37.0902, lng: -95.7129 };
 export const GLOBAL_ZOOM = 4;
 export const INITIAL_RADIUS_MILES = 0.5;

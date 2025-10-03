@@ -18,7 +18,7 @@ const DEFAULTS = {
 
   // Map thresholds
   minZoomForPins: 13,
-  maxZoom: 18,
+  maxZoom: 17,
 
   // Kiosk defaults
   autoKiosk: false,

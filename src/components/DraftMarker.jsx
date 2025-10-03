@@ -30,7 +30,7 @@ export default function DraftMarker({
     const el = m?.getElement?.()
     if (!el || !map) return
 
-    const MAX_ZOOM = 18
+    const MAX_ZOOM = 17
     const MODAL_ZOOM_BOOST = 2 // SubMapModal zooms in 2 levels
 
     const handlePointerDown = (ev) => {

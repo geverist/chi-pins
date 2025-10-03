@@ -9,7 +9,7 @@ export default function AdminPanel({ open, onClose }) {
   const defaultSettings = {
     idleAttractorSeconds: 60,
     minZoomForPins: 13,
-    maxZoom: 18,
+    maxZoom: 17,
     kioskAutoStart: true,
     pinAgeMonths: 24,
     showPopularSpots: true,
