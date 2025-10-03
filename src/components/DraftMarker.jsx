@@ -28,6 +28,8 @@ export default function DraftMarker({
     if (!el || !map) return
 
     const handlePointerDown = (ev) => {
+      console.log('[DraftMarker] pointerdown detected, modalOpen=', modalOpen)
+
       // Avoid re-entrancy if the modal is already open
       if (modalOpen) return
 
@@ -37,6 +39,8 @@ export default function DraftMarker({
         y: ev.clientY,
         id: ev.pointerId ?? -1
       }
+
+      console.log('[DraftMarker] Opening modal with center=', center, 'handoff=', handoff)
 
       // Hand off to the modal (App will disable map interactions)
       try {
@@ -68,6 +72,7 @@ export default function DraftMarker({
       keyboard={false}
       bubblingMouseEvents={false}
       autoPan={false}
+      interactive={true}             // ensure marker is interactive
     >
       {/* Optional helper label for the draft pin */}
       <Tooltip
