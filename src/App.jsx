@@ -59,6 +59,7 @@ import { useAdminSettings } from './state/useAdminSettings';
 import { useNavigationSettings } from './hooks/useNavigationSettings';
 import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode.jsx';
 import { enterFullscreen, exitFullscreenAndWake, ensureWakeLock, onFullscreenChange } from './lib/kiosk';
+import { btn3d } from './lib/styles';
 
 function normalizePhoneToE164ish(raw) {
   if (!raw) return null;
