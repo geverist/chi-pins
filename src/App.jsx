@@ -17,6 +17,8 @@ import {
   enableMainMapInteractions,
   disableMainMapInteractions,
   boundsForMiles,
+  CHI_BOUNDS,
+  CHI_MIN_ZOOM,
 } from './lib/mapUtils';
 import { focusDraft, goToChicago } from './lib/mapActions';
 
@@ -202,6 +204,9 @@ export default function App() {
       setIsMobile(e.matches);
       setExploring(e.matches ? true : false);
       console.log('App: isMobile=', e.matches, 'exploring=', e.matches ? true : false);
+      if (mainMapRef.current) {
+        setTimeout(() => mainMapRef.current.invalidateSize(), 300);
+      }
     };
     if (mq.matches) setExploring(true);
     else setExploring(false);
@@ -226,6 +231,9 @@ export default function App() {
       if (autoKiosk && !isFull) {
         setTimeout(() => enterFullscreen(), 500);
       }
+      if (mainMapRef.current) {
+        setTimeout(() => mainMapRef.current.invalidateSize(), 300);
+      }
     });
     (async () => {
       if (autoKiosk) {
@@ -239,15 +247,56 @@ export default function App() {
     return () => off?.();
   }, [autoKiosk]);
 
+  // Handle resize and orientation for Safari
+  useEffect(() => {
+    const handleResize = () => {
+      if (mainMapRef.current) {
+        setTimeout(() => mainMapRef.current.invalidateSize(), 300);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   // Set mapReady when mainMapRef is initialized
   useEffect(() => {
     if (mainMapRef.current) {
       console.log('App: mainMapRef set, enabling mapReady');
       setMapReady(true);
+      setTimeout(() => mainMapRef.current.invalidateSize(), 300);
     } else {
       console.warn('App: mainMapRef not set yet');
     }
   }, [mainMapRef.current]);
+
+  // Mobile mode zoom and mode switching
+  useEffect(() => {
+    if (!mainMapRef.current || !isMobile) return;
+
+    const map = mainMapRef.current;
+
+    const switchMode = () => {
+      const currentZoom = map.getZoom();
+      const currentBounds = map.getBounds();
+      if (mapMode === 'chicago' && currentZoom < CHI_MIN_ZOOM) {
+        setMapMode('global');
+      } else if (mapMode === 'global' && currentZoom >= CHI_MIN_ZOOM && currentBounds.intersects(CHI_BOUNDS)) {
+        setMapMode('chicago');
+      }
+    };
+
+    map.on('zoomend', switchMode);
+    map.on('moveend', switchMode);
+
+    return () => {
+      map.off('zoomend', switchMode);
+      map.off('moveend', switchMode);
+    };
+  }, [isMobile, mapMode, mainMapRef]);
 
   const startKioskNow = async () => {
     await enterFullscreen();
@@ -317,7 +366,9 @@ export default function App() {
     setExploring(isMobile ? true : false);
     clearHighlight();
     setMapMode('chicago');
-    goToChicago(mainMapRef.current);
+    if (mainMapRef.current) {
+      goToChicago(mainMapRef.current, isMobile);
+    }
     setResetCameraToken((t) => t + 1);
     setForm((f) => ({ ...f, name: '', neighborhood: '', hotdog: '', note: '', photoUrl: null }));
   };
@@ -358,21 +409,21 @@ export default function App() {
         const nz = Math.min(cz + 0.5, 19);
         map.setView([ll.lat, ll.lng], nz, { animate: true });
       }
+      focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES);
+      setDraft(ll);
+      if (mapMode === 'chicago') {
+        showNearestTownFact(ll.lat, ll.lng);
+      }
+      if (!slug) {
+        const fresh = await ensureUniqueSlug(makeChiSlug());
+        setSlug(fresh);
+      }
+      setExploring(false);
+      setShowAttractor(false);
     } catch (err) {
       console.error('Pin placement failed:', err);
-      return;
+      setToast({ title: 'Error', text: 'Failed to place pin. Please try again.' });
     }
-    focusDraft(mainMapRef.current, ll, INITIAL_RADIUS_MILES);
-    setDraft(ll);
-    if (mapMode === 'chicago') {
-      showNearestTownFact(ll.lat, ll.lng);
-    }
-    if (!slug) {
-      const fresh = await ensureUniqueSlug(makeChiSlug());
-      setSlug(fresh);
-    }
-    setExploring(false);
-    setShowAttractor(false);
   }
 
   // keep draft pin centered
@@ -457,7 +508,7 @@ export default function App() {
 
   const closeSubmap = () => {
     enableMainMapInteractions(mainMapRef.current);
-    setTimeout(() => mainMapRef.current?.invalidateSize(), 0);
+    setTimeout(() => mainMapRef.current?.invalidateSize(), 300);
     setSubmapCenter(null);
     setHandoff(null);
     setSubmapBaseZoom(null);
@@ -483,7 +534,9 @@ export default function App() {
       setTimeout(() => {
         setShowAttractor(!isMobile);
         setExploring(isMobile ? true : false);
-        goToChicago(mainMapRef.current);
+        if (mainMapRef.current) {
+          goToChicago(mainMapRef.current, isMobile);
+        }
         setResetCameraToken((t) => t + 1);
       }, 0);
       return;
@@ -491,7 +544,9 @@ export default function App() {
     setMapMode('chicago');
     setShowAttractor(!isMobile);
     setExploring(isMobile ? true : false);
-    goToChicago(mainMapRef.current);
+    if (mainMapRef.current) {
+      goToChicago(mainMapRef.current, isMobile);
+    }
     setResetCameraToken((t) => t + 1);
   };
 
@@ -612,7 +667,22 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        height: '-webkit-fill-available',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'hidden',
+        willChange: 'transform',
+      }}
+    >
       <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
@@ -626,19 +696,30 @@ export default function App() {
 
       <div
         className="map-wrap"
-        style={{ position: 'relative', flex: 1, minHeight: '60vh', borderTop: '1px solid #222', borderBottom: '1px solid #222' }}
+        style={{
+          position: 'relative',
+          flex: 1,
+          minHeight: 0,
+          height: '100%',
+          width: '100%',
+          borderTop: '1px solid #222',
+          borderBottom: '1px solid #222',
+          willChange: 'transform',
+        }}
       >
         <MapShell
           mapMode={mapMode}
           mainMapRef={mainMapRef}
+          setMapReady={setMapReady}
           exploring={exploring}
           onPick={handlePick}
           resetCameraToken={resetCameraToken}
           editing={!!draft}
           clearSearchToken={clearSearchToken}
           mapReady={mapReady}
+          isMobile={isMobile}
         >
-          {showPopularSpots && mapMode === 'chicago' && !draft && (
+          {!isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (
             <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
           )}
           {showCommunityPins && !draft && (
