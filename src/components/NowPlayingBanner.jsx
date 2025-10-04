@@ -23,7 +23,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying }) {
     <div
       style={{
         position: 'fixed',
-        bottom: 60, // Above footer (assuming footer is 60px)
+        bottom: 100, // Above footer (accounting for buttons + padding)
         left: 0,
         right: 0,
         height: 36,
