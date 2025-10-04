@@ -44,5 +44,29 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('background-images', 'background-images', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- Storage policies for background images bucket
+CREATE POLICY "Allow public reads from background-images"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'background-images');
+
+CREATE POLICY "Allow public uploads to background-images"
+ON storage.objects FOR INSERT
+TO public
+WITH CHECK (bucket_id = 'background-images');
+
+CREATE POLICY "Allow public deletes from background-images"
+ON storage.objects FOR DELETE
+TO public
+USING (bucket_id = 'background-images');
+
 -- Comment for documentation
 COMMENT ON TABLE background_images IS 'Background images for photo capture with carousel selection';
+
+-- NOTE: If the bucket creation fails with "bucket not found", you need to:
+-- 1. Go to Supabase Dashboard > Storage
+-- 2. Click "New bucket"
+-- 3. Name: "background-images"
+-- 4. Set "Public bucket" to ON
+-- 5. Click "Create bucket"
+-- 6. Then re-run the storage policy statements above
