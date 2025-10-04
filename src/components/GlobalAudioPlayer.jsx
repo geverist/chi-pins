@@ -65,11 +65,11 @@ export default function GlobalAudioPlayer() {
       setIsPlaying(false);
     };
 
-    const handleEnded = () => {
+    const handleEnded = async () => {
       console.log('GlobalAudioPlayer - track ended, trying next...');
       setIsPlaying(false);
       // playNext will handle setting lastPlayed
-      const nextTrack = playNext();
+      const nextTrack = await playNext();
       if (nextTrack) {
         console.log('GlobalAudioPlayer - playing next track:', nextTrack.title);
       } else {
