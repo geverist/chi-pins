@@ -65,6 +65,9 @@ export default async function handler(req, res) {
           jukebox_enabled: true,
           order_enabled: true,
           explore_enabled: true,
+          photobooth_enabled: true,
+          thenandnow_enabled: true,
+          comments_enabled: true,
         });
       }
 
@@ -73,14 +76,25 @@ export default async function handler(req, res) {
 
     if (req.method === 'PUT') {
       // Update navigation settings
-      const { games_enabled, jukebox_enabled, order_enabled, explore_enabled } = req.body;
+      const {
+        games_enabled,
+        jukebox_enabled,
+        order_enabled,
+        explore_enabled,
+        photobooth_enabled,
+        thenandnow_enabled,
+        comments_enabled
+      } = req.body;
 
       // Validate input - must be booleans
       if (
         typeof games_enabled !== 'boolean' ||
         typeof jukebox_enabled !== 'boolean' ||
         typeof order_enabled !== 'boolean' ||
-        typeof explore_enabled !== 'boolean'
+        typeof explore_enabled !== 'boolean' ||
+        typeof photobooth_enabled !== 'boolean' ||
+        typeof thenandnow_enabled !== 'boolean' ||
+        typeof comments_enabled !== 'boolean'
       ) {
         return res.status(400).json({ error: 'Invalid input: all fields must be boolean' });
       }
@@ -101,6 +115,9 @@ export default async function handler(req, res) {
             jukebox_enabled,
             order_enabled,
             explore_enabled,
+            photobooth_enabled,
+            thenandnow_enabled,
+            comments_enabled,
             updated_at: new Date().toISOString(),
           })
           .eq('id', existing.id)
@@ -122,6 +139,9 @@ export default async function handler(req, res) {
             jukebox_enabled,
             order_enabled,
             explore_enabled,
+            photobooth_enabled,
+            thenandnow_enabled,
+            comments_enabled,
           })
           .select()
           .single();
