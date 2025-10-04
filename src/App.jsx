@@ -89,6 +89,12 @@ export default function App() {
   const { settings: navSettings, enabledCount } = useNavigationSettings();
   const { currentTrack, isPlaying } = useNowPlaying();
 
+  // Debug logging for Now Playing state
+  useEffect(() => {
+    console.log('App.jsx - currentTrack changed:', currentTrack);
+    console.log('App.jsx - isPlaying:', isPlaying);
+  }, [currentTrack, isPlaying]);
+
   // map mode
   const [mapMode, setMapMode] = useState('chicago');
 
@@ -916,7 +922,10 @@ export default function App() {
       )}
 
       {jukeboxOpen && (
-        <Jukebox onClose={() => setJukeboxOpen(false)} />
+        <Jukebox onClose={() => {
+          console.log('App.jsx - Jukebox onClose called, closing modal...');
+          setJukeboxOpen(false);
+        }} />
       )}
 
       {gamesOpen && (
