@@ -154,10 +154,19 @@ export default function SavedPins({
           // Track this popup as currently open
           currentOpenSlugRef.current = slugText
 
-          // Center map on the selected pin
+          // Center map on the selected pin with offset to account for search bar
           if (map && p?.lat && p?.lng) {
             try {
-              map.setView([p.lat, p.lng], map.getZoom(), { animate: true })
+              // Get the pin's pixel position
+              const point = map.latLngToContainerPoint([p.lat, p.lng])
+
+              // Offset by ~80px down to account for search bar at top
+              // This centers the pin in the visible area below the search bar
+              point.y -= 80
+
+              // Convert back to lat/lng and set view
+              const offsetLatLng = map.containerPointToLatLng(point)
+              map.setView(offsetLatLng, map.getZoom(), { animate: true })
             } catch (e) {
               console.warn('Failed to center map on pin:', e)
             }
