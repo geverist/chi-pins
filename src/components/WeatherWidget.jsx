@@ -24,6 +24,8 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
       const lng = adminSettings.weatherLng || -87.6298;
       const timezone = adminSettings.weatherTimezone || 'America/Chicago';
 
+      console.log('WeatherWidget - Fetching weather for:', { lat, lng, timezone });
+
       const response = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=${encodeURIComponent(timezone)}`
       );
@@ -42,6 +44,7 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
   }, [adminSettings.weatherLat, adminSettings.weatherLng, adminSettings.weatherTimezone]);
 
   useEffect(() => {
+    console.log('WeatherWidget - useEffect triggered, fetching weather');
     fetchWeather();
     // Refresh every 30 minutes
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
