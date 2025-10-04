@@ -18,57 +18,57 @@ const SHORELINE_BUFFER = 0.01; // ~0.5 miles inland buffer
 
 export const LAKE_MICHIGAN_SHORELINE = [
   // Indiana border (south) - with buffer
-  [41.60, -87.52 - SHORELINE_BUFFER],
+  [41.60, -87.52 + SHORELINE_BUFFER],
   // South Chicago
-  [41.65, -87.53 - SHORELINE_BUFFER],
-  [41.70, -87.54 - SHORELINE_BUFFER],
-  [41.73, -87.55 - SHORELINE_BUFFER],
+  [41.65, -87.53 + SHORELINE_BUFFER],
+  [41.70, -87.54 + SHORELINE_BUFFER],
+  [41.73, -87.55 + SHORELINE_BUFFER],
   // Hyde Park
-  [41.78, -87.58 - SHORELINE_BUFFER],
-  [41.79, -87.59 - SHORELINE_BUFFER],
+  [41.78, -87.58 + SHORELINE_BUFFER],
+  [41.79, -87.59 + SHORELINE_BUFFER],
   // Museum Campus
-  [41.86, -87.61 - SHORELINE_BUFFER],
+  [41.86, -87.61 + SHORELINE_BUFFER],
   // Streeterville / Navy Pier
-  [41.88, -87.61 - SHORELINE_BUFFER],
-  [41.89, -87.61 - SHORELINE_BUFFER],
+  [41.88, -87.61 + SHORELINE_BUFFER],
+  [41.89, -87.61 + SHORELINE_BUFFER],
   // Gold Coast
-  [41.90, -87.62 - SHORELINE_BUFFER],
-  [41.91, -87.63 - SHORELINE_BUFFER],
+  [41.90, -87.62 + SHORELINE_BUFFER],
+  [41.91, -87.63 + SHORELINE_BUFFER],
   // Lincoln Park
-  [41.92, -87.64 - SHORELINE_BUFFER],
-  [41.93, -87.64 - SHORELINE_BUFFER],
-  [41.94, -87.65 - SHORELINE_BUFFER],
+  [41.92, -87.64 + SHORELINE_BUFFER],
+  [41.93, -87.64 + SHORELINE_BUFFER],
+  [41.94, -87.65 + SHORELINE_BUFFER],
   // Uptown
-  [41.96, -87.65 - SHORELINE_BUFFER],
-  [41.97, -87.65 - SHORELINE_BUFFER],
+  [41.96, -87.65 + SHORELINE_BUFFER],
+  [41.97, -87.65 + SHORELINE_BUFFER],
   // Edgewater
-  [41.98, -87.66 - SHORELINE_BUFFER],
-  [41.99, -87.66 - SHORELINE_BUFFER],
+  [41.98, -87.66 + SHORELINE_BUFFER],
+  [41.99, -87.66 + SHORELINE_BUFFER],
   // Rogers Park
-  [42.00, -87.66 - SHORELINE_BUFFER],
-  [42.01, -87.66 - SHORELINE_BUFFER],
+  [42.00, -87.66 + SHORELINE_BUFFER],
+  [42.01, -87.66 + SHORELINE_BUFFER],
   // Evanston
-  [42.04, -87.67 - SHORELINE_BUFFER],
-  [42.05, -87.67 - SHORELINE_BUFFER],
+  [42.04, -87.67 + SHORELINE_BUFFER],
+  [42.05, -87.67 + SHORELINE_BUFFER],
   // Wilmette
-  [42.07, -87.68 - SHORELINE_BUFFER],
-  [42.08, -87.69 - SHORELINE_BUFFER],
+  [42.07, -87.68 + SHORELINE_BUFFER],
+  [42.08, -87.69 + SHORELINE_BUFFER],
   // Winnetka
-  [42.10, -87.69 - SHORELINE_BUFFER],
+  [42.10, -87.69 + SHORELINE_BUFFER],
   // Glencoe
-  [42.13, -87.70 - SHORELINE_BUFFER],
+  [42.13, -87.70 + SHORELINE_BUFFER],
   // Highland Park
-  [42.18, -87.70 - SHORELINE_BUFFER],
+  [42.18, -87.70 + SHORELINE_BUFFER],
   // Lake Forest
-  [42.24, -87.68 - SHORELINE_BUFFER],
+  [42.24, -87.68 + SHORELINE_BUFFER],
   // Waukegan
-  [42.35, -87.82 - SHORELINE_BUFFER],
-  [42.40, -87.82 - SHORELINE_BUFFER],
+  [42.35, -87.82 + SHORELINE_BUFFER],
+  [42.40, -87.82 + SHORELINE_BUFFER],
   // Zion / Illinois Beach
-  [42.45, -87.81 - SHORELINE_BUFFER],
-  [42.48, -87.81 - SHORELINE_BUFFER],
+  [42.45, -87.81 + SHORELINE_BUFFER],
+  [42.48, -87.81 + SHORELINE_BUFFER],
   // Wisconsin border (north)
-  [42.50, -87.80 - SHORELINE_BUFFER],
+  [42.50, -87.80 + SHORELINE_BUFFER],
 ];
 
 /* ---------- Utility: geographic helpers ---------- */
@@ -103,8 +103,8 @@ function pointInPolygon(lat, lng, polygon) {
  * Uses polygon boundary traced along the Chicago lakefront
  */
 export function isInLakeMichigan(lat, lng) {
-  // Quick bounds check first
-  if (lat < 41.6 || lat > 42.5 || lng < -87.9 || lng > -87.5) {
+  // Quick bounds check first - entire lake area from shore to Michigan side
+  if (lat < 41.6 || lat > 42.5 || lng < -87.9 || lng > -86.0) {
     return false;
   }
 
