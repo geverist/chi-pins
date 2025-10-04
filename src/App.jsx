@@ -725,11 +725,6 @@ export default function App() {
         willChange: 'transform',
       }}
     >
-      <NewsTicker
-        enabled={adminSettings.newsTickerEnabled}
-        feedUrl={adminSettings.newsTickerRssUrl}
-      />
-
       <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
@@ -740,6 +735,11 @@ export default function App() {
       >
         {headerRight}
       </HeaderBar>
+
+      <NewsTicker
+        enabled={adminSettings.newsTickerEnabled}
+        feedUrl={adminSettings.newsTickerRssUrl}
+      />
 
       <div
         className="map-wrap"

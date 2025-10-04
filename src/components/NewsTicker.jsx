@@ -44,14 +44,12 @@ export default function NewsTicker({ enabled = false, feedUrl = '' }) {
   return (
     <div
       style={{
-        position: 'fixed',
-        top: 0,
+        position: 'relative',
         left: 0,
         right: 0,
         height: 40,
         background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)',
         borderBottom: '2px solid #3b82f6',
-        zIndex: 9999,
         overflow: 'hidden',
         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
       }}
