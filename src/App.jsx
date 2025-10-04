@@ -44,6 +44,7 @@ import GlobalCounters from './components/GlobalCounters';
 import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
 import NowPlayingBanner from './components/NowPlayingBanner';
+import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -840,6 +841,7 @@ export default function App() {
         />
       )}
 
+      <GlobalAudioPlayer />
       <NowPlayingBanner currentTrack={currentTrack} isPlaying={isPlaying} />
 
       <Footer
