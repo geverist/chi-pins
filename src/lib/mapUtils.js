@@ -108,7 +108,7 @@ export function isInLakeMichigan(lat, lng) {
     return false;
   }
 
-  // Create polygon: Illinois shoreline (west) + Michigan shoreline (east)
+  // Create polygon: Illinois shoreline (west) + Michigan shoreline (east) + Indiana shoreline (south)
   // Michigan shoreline points (eastern boundary) - approximate, going north to south
   const michiganShoreline = [
     [42.50, -86.50],  // Wisconsin border area
@@ -129,13 +129,21 @@ export function isInLakeMichigan(lat, lng) {
     [41.75, -86.13],
     [41.70, -86.10],
     [41.65, -86.08],
-    [41.60, -86.05],  // Indiana border area
+    [41.60, -86.05],  // Near Indiana border
+  ];
+
+  // Indiana shoreline (southern boundary) - going east to west
+  const indianaShoreline = [
+    [41.60, -86.80],  // Eastern Indiana shore
+    [41.60, -87.20],  // Central Indiana shore
+    [41.60, -87.40],  // Western Indiana shore
   ];
 
   const polygon = [
     ...LAKE_MICHIGAN_SHORELINE,  // West side (Illinois): south to north
     ...michiganShoreline,         // East side (Michigan): north to south
-    // Auto-closes back to first point
+    ...indianaShoreline,          // South side (Indiana): east to west
+    // Auto-closes back to first point of LAKE_MICHIGAN_SHORELINE
   ];
 
   return pointInPolygon(lat, lng, polygon);
