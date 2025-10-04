@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App.jsx'
 import TableMode from './routes/TableMode.jsx'
 import Admin from './routes/Admin.jsx'
+import { NowPlayingProvider } from './state/useNowPlaying'
 import './styles.css'
 
 // Set CSS custom property for actual viewport height (fixes Safari)
@@ -35,6 +36,8 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <NowPlayingProvider>
+      <RouterProvider router={router} />
+    </NowPlayingProvider>
   </React.StrictMode>
 )

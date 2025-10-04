@@ -43,6 +43,7 @@ import AttractorOverlay from './components/AttractorOverlay';
 import GlobalCounters from './components/GlobalCounters';
 import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
+import NowPlayingBanner from './components/NowPlayingBanner';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -58,6 +59,7 @@ import Jukebox from './components/Jukebox';
 import GamesMenu from './components/GamesMenu';
 import Footer from './components/Footer';
 import { useAdminSettings } from './state/useAdminSettings';
+import { useNowPlaying } from './state/useNowPlaying';
 import { useNavigationSettings } from './hooks/useNavigationSettings';
 import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode.jsx';
 import { enterFullscreen, exitFullscreenAndWake, ensureWakeLock, onFullscreenChange } from './lib/kiosk';
@@ -84,6 +86,7 @@ export default function App() {
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
   const { settings: adminSettings } = useAdminSettings();
   const { settings: navSettings, enabledCount } = useNavigationSettings();
+  const { currentTrack, isPlaying } = useNowPlaying();
 
   // map mode
   const [mapMode, setMapMode] = useState('chicago');
@@ -836,6 +839,8 @@ export default function App() {
           mapReady={mapReady}
         />
       )}
+
+      <NowPlayingBanner currentTrack={currentTrack} isPlaying={isPlaying} />
 
       <Footer
         isMobile={isMobile}

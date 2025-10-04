@@ -62,6 +62,7 @@ const DEFAULTS = {
   bluetoothDeviceId: '',
   sonosRoomName: '',
   sonosIpAddress: '',
+  jukeboxAutoPlay: false, // If true, play immediately; if false, add to queue
 
   // Restaurant Info (for share modal)
   restaurantName: 'Chicago Mike\'s',

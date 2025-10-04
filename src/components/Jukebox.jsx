@@ -3,14 +3,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useFeatureIdleTimeout } from '../hooks/useFeatureIdleTimeout';
 import { useAdminSettings } from '../state/useAdminSettings';
 import { useMediaFiles } from '../hooks/useMediaFiles';
+import { useNowPlaying } from '../state/useNowPlaying';
 
 export default function Jukebox({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const { settings: adminSettings } = useAdminSettings();
   const { mediaFiles, loading } = useMediaFiles();
+  const { currentTrack, setCurrentTrack, isPlaying, setIsPlaying, addToQueue, playNext } = useNowPlaying();
   const audioRef = useRef(null);
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -41,7 +41,14 @@ export default function Jukebox({ onClose }) {
     const handleDurationChange = () => setDuration(audio.duration);
     const handleEnded = () => {
       setIsPlaying(false);
-      handleNext(); // Auto-play next track
+      // Try to play next track from queue
+      const nextTrack = playNext();
+      if (nextTrack && audioRef.current) {
+        audioRef.current.src = nextTrack.url;
+        audioRef.current.play().catch(err => {
+          console.error('Failed to play next track:', err);
+        });
+      }
     };
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
@@ -406,7 +413,21 @@ export default function Jukebox({ onClose }) {
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
-                onClick={() => handlePlayNow(track)}
+                onClick={() => {
+                  if (adminSettings.jukeboxAutoPlay) {
+                    // Play immediately and close
+                    handlePlayNow(track);
+                    setTimeout(() => onClose(), 500); // Small delay for feedback
+                  } else {
+                    // Add to queue
+                    addToQueue(track);
+                    // If nothing is playing, start playing
+                    if (!currentTrack) {
+                      handlePlayNow(track);
+                    }
+                    setTimeout(() => onClose(), 500);
+                  }
+                }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
@@ -426,26 +447,18 @@ export default function Jukebox({ onClose }) {
                     {track.duration_seconds && ` • ${formatTime(track.duration_seconds)}`}
                   </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePlayNow(track);
-                  }}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    border: 'none',
-                    background: currentTrack?.id === track.id && isPlaying
-                      ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)'
-                      : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    fontWeight: 600,
-                  }}
-                >
-                  {currentTrack?.id === track.id && isPlaying ? '⏸' : '▶'}
-                </button>
+                <div style={{
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  background: currentTrack?.id === track.id
+                    ? 'rgba(139,92,246,0.3)'
+                    : 'rgba(255,255,255,0.1)',
+                  color: '#a78bfa',
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}>
+                  {adminSettings.jukeboxAutoPlay ? '▶ Play' : '+ Queue'}
+                </div>
               </div>
             ))}
           </div>

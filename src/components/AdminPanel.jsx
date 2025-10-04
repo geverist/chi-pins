@@ -584,6 +584,24 @@ export default function AdminPanel({ open, onClose }) {
                     </p>
                   </>
                 )}
+
+                <FieldRow label="Jukebox Behavior">
+                  <select
+                    value={settings.jukeboxAutoPlay ? 'play' : 'queue'}
+                    onChange={(e) => setSettings(s => ({ ...s, jukeboxAutoPlay: e.target.value === 'play' }))}
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="play">Play Immediately & Close</option>
+                    <option value="queue">Add to Queue</option>
+                  </select>
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Controls what happens when you select a track in the Jukebox
+                </p>
               </Card>
 
               <Card title="Map constants">
