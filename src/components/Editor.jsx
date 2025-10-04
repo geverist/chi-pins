@@ -356,6 +356,7 @@ export default function Editor({
           ))}
         </div>
         {InlineFieldsChicago}
+        {photoBackgroundsEnabled && PhotoSection}
         {LoyaltySection}
       </div>
     );
@@ -371,6 +372,7 @@ export default function Editor({
     }}>
       {IdAndActionsRow}
       {InlineFieldsGlobal}
+      {photoBackgroundsEnabled && PhotoSection}
       {LoyaltySection}
     </div>
   );
