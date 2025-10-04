@@ -5,6 +5,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { supabase } from '../lib/supabase'
 import { parseTableToken } from '../lib/token'
+import { isInLakeMichigan } from '../lib/mapUtils'
 
 const CHI = { lat: 41.8781, lng: -87.6298 }
 
@@ -91,6 +92,13 @@ export default function TableMode() {
 
   async function savePin() {
     if (!placing) return
+
+    // Check if pin is in Lake Michigan
+    if (isInLakeMichigan(placing.lat, placing.lng)) {
+      alert('Cannot place a pin in Lake Michigan! Please select a location on land.')
+      return
+    }
+
     const clean = { ...draft, note: draft.note.trim().slice(0, 280) }
     if (!clean.note) return
 
