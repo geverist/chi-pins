@@ -31,3 +31,14 @@ CREATE POLICY "Customer feedback is viewable by authenticated users only" ON cus
 
 CREATE POLICY "Anyone can insert customer feedback" ON customer_feedback
   FOR INSERT WITH CHECK (true);
+
+-- Add album column to media_files table if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'media_files' AND column_name = 'album'
+  ) THEN
+    ALTER TABLE media_files ADD COLUMN album TEXT;
+  END IF;
+END $$;
