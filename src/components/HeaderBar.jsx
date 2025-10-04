@@ -12,9 +12,9 @@ const PIN_COLOR = {
   as:       '#a855f7',
 }
 
-function InlineCount({ color, label, count }) {
-  return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
+function InlineCount({ color, label, count, onClick }) {
+  const content = (
+    <>
       <span
         aria-hidden
         style={{
@@ -28,8 +28,39 @@ function InlineCount({ color, label, count }) {
       <span style={{ opacity:0.95 }}>
         <strong style={{ fontWeight:700 }}>{label}</strong>: {count ?? 0}
       </span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        style={{
+          display:'inline-flex',
+          alignItems:'center',
+          gap:6,
+          whiteSpace:'nowrap',
+          background:'transparent',
+          border:'none',
+          padding:'4px 8px',
+          borderRadius:8,
+          cursor:'pointer',
+          transition:'background 0.2s',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        title={`Center map on ${label}`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}>
+      {content}
     </span>
-  )
+  );
 }
 
 export default function HeaderBar({
@@ -41,6 +72,7 @@ export default function HeaderBar({
   logoSrc: logoSrcProp,
   onLogoClick,
   continentCounts = null,
+  onContinentClick,
   /** Optional: force mobile mode from parent. If omitted, we detect by width. */
   isMobile: isMobileProp,
 }) {
@@ -160,12 +192,12 @@ export default function HeaderBar({
       <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
         {mapMode === 'global' && continentCounts && (
           <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-            <InlineCount color={PIN_COLOR.chicago} label="Chicago"       count={continentCounts.chicago} />
-            <InlineCount color={PIN_COLOR.na}      label="North America" count={continentCounts.na} />
-            <InlineCount color={PIN_COLOR.sa}      label="South America" count={continentCounts.sa} />
-            <InlineCount color={PIN_COLOR.eu}      label="Europe"        count={continentCounts.eu} />
-            <InlineCount color={PIN_COLOR.as}      label="Asia"          count={continentCounts.as} />
-            <InlineCount color={PIN_COLOR.af}      label="Africa"        count={continentCounts.af} />
+            <InlineCount color={PIN_COLOR.chicago} label="Chicago"       count={continentCounts.chicago} onClick={() => onContinentClick?.('chicago')} />
+            <InlineCount color={PIN_COLOR.na}      label="North America" count={continentCounts.na}      onClick={() => onContinentClick?.('na')} />
+            <InlineCount color={PIN_COLOR.sa}      label="South America" count={continentCounts.sa}      onClick={() => onContinentClick?.('sa')} />
+            <InlineCount color={PIN_COLOR.eu}      label="Europe"        count={continentCounts.eu}      onClick={() => onContinentClick?.('eu')} />
+            <InlineCount color={PIN_COLOR.as}      label="Asia"          count={continentCounts.as}      onClick={() => onContinentClick?.('as')} />
+            <InlineCount color={PIN_COLOR.af}      label="Africa"        count={continentCounts.af}      onClick={() => onContinentClick?.('af')} />
           </div>
         )}
 

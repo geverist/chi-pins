@@ -670,6 +670,27 @@ export default function App() {
     setResetCameraToken((t) => t + 1);
   };
 
+  // Center map on specific continent
+  const handleContinentClick = (continent) => {
+    const map = mainMapRef.current;
+    if (!map) return;
+
+    // Continent center coordinates and zoom levels
+    const continentViews = {
+      chicago: { center: [41.8781, -87.6298], zoom: 10 },
+      na: { center: [40.0, -100.0], zoom: 3 },      // North America
+      sa: { center: [-15.0, -60.0], zoom: 3 },      // South America
+      eu: { center: [50.0, 10.0], zoom: 4 },        // Europe
+      as: { center: [30.0, 100.0], zoom: 3 },       // Asia
+      af: { center: [0.0, 20.0], zoom: 3 },         // Africa
+    };
+
+    const view = continentViews[continent];
+    if (view) {
+      console.log(`Centering map on ${continent}:`, view);
+      map.setView(view.center, view.zoom, { animate: true });
+    }
+  };
 
   const headerRight =
     mapMode === 'chicago' ? (
@@ -792,6 +813,8 @@ export default function App() {
         onChicago={goChicagoZoomedOut}
         logoSrc={logoUrl}
         onLogoClick={goChicagoZoomedOut}
+        continentCounts={continentCounts}
+        onContinentClick={handleContinentClick}
       >
         {headerRight}
       </HeaderBar>
