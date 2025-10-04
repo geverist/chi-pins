@@ -25,7 +25,10 @@ CREATE INDEX IF NOT EXISTS idx_customer_feedback_rating ON customer_feedback (ra
 -- Enable RLS
 ALTER TABLE customer_feedback ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
+-- RLS Policies (drop and recreate to avoid conflicts)
+DROP POLICY IF EXISTS "Customer feedback is viewable by authenticated users only" ON customer_feedback;
+DROP POLICY IF EXISTS "Anyone can insert customer feedback" ON customer_feedback;
+
 CREATE POLICY "Customer feedback is viewable by authenticated users only" ON customer_feedback
   FOR SELECT USING (auth.role() = 'authenticated');
 
