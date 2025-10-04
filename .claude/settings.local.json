@@ -23,7 +23,8 @@
       "WebFetch(domain:www.illinois-demographics.com)",
       "WebFetch(domain:worldpopulationreview.com)",
       "WebFetch(domain:federalcos.com)",
-      "WebFetch(domain:en.wikipedia.org)"
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

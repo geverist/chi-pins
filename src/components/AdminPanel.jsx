@@ -5,6 +5,7 @@ import { useBackgroundImages } from '../hooks/useBackgroundImages'
 import { useNavigationSettings } from '../hooks/useNavigationSettings'
 import { useLogo } from '../hooks/useLogo'
 import { useAdminSettings } from '../state/useAdminSettings'
+import { useMediaFiles } from '../hooks/useMediaFiles'
 import PinCodeModal from './PinCodeModal'
 
 export default function AdminPanel({ open, onClose }) {
@@ -20,6 +21,9 @@ export default function AdminPanel({ open, onClose }) {
 
   // Background images hook
   const { backgrounds, loading: bgLoading, addBackground, deleteBackground } = useBackgroundImages()
+
+  // Media files hook
+  const { mediaFiles, loading: mediaLoading, uploading: mediaUploading, uploadMediaFile, deleteMediaFile, updateMediaFile } = useMediaFiles()
 
   // Navigation settings hook
   const { settings: navSettingsFromHook, updateSettings: updateNavSettingsAPI } = useNavigationSettings()
@@ -287,6 +291,7 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'navigation'} onClick={() => setTab('navigation')}>Navigation</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
           <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
+          <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>Media</TabBtn>
           <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
         </div>
 
@@ -1013,6 +1018,148 @@ export default function AdminPanel({ open, onClose }) {
                             Delete
                           </button>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {tab === 'media' && (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="Media Library">
+                <p style={s.muted}>
+                  Upload MP3 audio files for the jukebox. Files are stored in Supabase and played locally.
+                </p>
+
+                {/* Upload Section */}
+                <div style={{ marginTop: 16 }}>
+                  <input
+                    type="file"
+                    id="media-upload"
+                    accept="audio/mpeg,audio/mp3,audio/*"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      // Validate file type
+                      if (!file.type.startsWith('audio/')) {
+                        alert('Please select an audio file (MP3)');
+                        return;
+                      }
+
+                      // Validate file size (max 25MB)
+                      if (file.size > 25 * 1024 * 1024) {
+                        alert('Audio file must be smaller than 25MB');
+                        return;
+                      }
+
+                      try {
+                        const title = prompt('Enter a title for this track:', file.name.replace(/\.[^/.]+$/, ''));
+                        if (!title) return;
+
+                        const artist = prompt('Enter the artist name (optional):', '');
+
+                        await uploadMediaFile(file, { title, artist: artist || null });
+                        e.target.value = ''; // Reset input
+                      } catch (err) {
+                        alert(`Failed to upload: ${err.message}`);
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => document.getElementById('media-upload').click()}
+                    style={{
+                      ...btn.primary,
+                      width: '100%',
+                      marginBottom: 16,
+                    }}
+                    disabled={mediaUploading}
+                  >
+                    {mediaUploading ? 'Uploading...' : '🎵 Upload Audio File'}
+                  </button>
+                </div>
+
+                {/* Loading State */}
+                {mediaLoading && (
+                  <p style={{ textAlign: 'center', color: '#888' }}>Loading media files...</p>
+                )}
+
+                {/* Media Files List */}
+                {!mediaLoading && mediaFiles.length === 0 && (
+                  <p style={{ textAlign: 'center', color: '#888', fontStyle: 'italic' }}>
+                    No media files yet. Upload your first track!
+                  </p>
+                )}
+
+                {!mediaLoading && mediaFiles.length > 0 && (
+                  <div style={{
+                    display: 'grid',
+                    gap: 12,
+                    marginTop: 16,
+                  }}>
+                    {mediaFiles.map((media) => (
+                      <div
+                        key={media.id}
+                        style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          borderRadius: 12,
+                          padding: 16,
+                          border: '1px solid rgba(255,255,255,0.1)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ color: '#f4f6f8', fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                              {media.title}
+                            </div>
+                            {media.artist && (
+                              <div style={{ color: '#a7b0b8', fontSize: 13, marginBottom: 4 }}>
+                                {media.artist}
+                              </div>
+                            )}
+                            <div style={{ color: '#6b7280', fontSize: 12 }}>
+                              {media.duration_seconds ? `${Math.floor(media.duration_seconds / 60)}:${String(media.duration_seconds % 60).padStart(2, '0')}` : 'Unknown duration'}
+                              {' • '}
+                              {(media.file_size_bytes / (1024 * 1024)).toFixed(2)} MB
+                            </div>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (confirm(`Delete "${media.title}"?`)) {
+                                try {
+                                  await deleteMediaFile(media.id, media.storage_path);
+                                } catch (err) {
+                                  alert(`Failed to delete: ${err.message}`);
+                                }
+                              }
+                            }}
+                            style={{
+                              ...btn.danger,
+                              padding: '6px 12px',
+                              fontSize: 12,
+                              marginLeft: 12,
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+
+                        {/* Audio preview */}
+                        <audio
+                          controls
+                          style={{
+                            width: '100%',
+                            height: 32,
+                            marginTop: 8,
+                          }}
+                          preload="metadata"
+                        >
+                          <source src={media.url} type={media.mime_type} />
+                          Your browser does not support the audio element.
+                        </audio>
                       </div>
                     ))}
                   </div>

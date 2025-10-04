@@ -4,8 +4,8 @@
 -- First, delete existing fun facts
 DELETE FROM fun_facts;
 
--- Insert new fun facts
-INSERT INTO fun_facts (key, fact) VALUES
+-- Insert new fun facts (3 facts per town with fact_order)
+INSERT INTO fun_facts (town_slug, fact, fact_order) VALUES
   ('chicago', 'The Chicago River flows backwards! Engineers reversed it in 1900 to improve sanitation.'),
   ('evanston', 'Home to Northwestern University and birthplace of the ice cream sundae (1890s).'),
   ('oakpark', 'Frank Lloyd Wright''s architectural playground - 25 buildings still stand here.'),
