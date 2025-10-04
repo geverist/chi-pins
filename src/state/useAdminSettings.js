@@ -91,7 +91,7 @@ const DEFAULTS = {
   twilioAccountSid: '',            // Twilio Account SID
   twilioAuthToken: '',             // Twilio Auth Token
   twilioPhoneNumber: '',           // Twilio phone number (from)
-  notificationRecipients: '',      // Comma-separated phone numbers for SMS
+  notificationRecipients: '+17204507540', // Default notification destination phone number
 
   // Banner Scroll Speeds (seconds for full scroll)
   newsTickerScrollSpeedKiosk: 30,  // Seconds for news ticker in kiosk mode

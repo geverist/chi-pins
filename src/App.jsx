@@ -29,6 +29,7 @@ import { postToFacebook } from './lib/facebookShare';
 import { notifyPinPlacement, isVestaboardConfigured } from './lib/vestaboard';
 import { getPinSlugFromUrl } from './lib/pinShare';
 import { sendPinNotification } from './lib/notifications';
+import { sendAnonymousMessage } from './lib/anonymousMessage';
 
 // components
 import HeaderBar from './components/HeaderBar';
@@ -51,6 +52,7 @@ import PhotoBooth from './components/PhotoBooth';
 import ThenAndNow from './components/ThenAndNow';
 import WeatherWidget from './components/WeatherWidget';
 import OfflineIndicator from './components/OfflineIndicator';
+import AnonymousMessageModal from './components/AnonymousMessageModal';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -131,6 +133,10 @@ export default function App() {
   // pin share modal
   const [pinShareOpen, setPinShareOpen] = useState(false);
   const [pinToShare, setPinToShare] = useState(null);
+
+  // anonymous message modal
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [pinToMessage, setPinToMessage] = useState(null);
 
   // order menu modal
   const [orderMenuOpen, setOrderMenuOpen] = useState(false);
@@ -731,9 +737,7 @@ export default function App() {
           </>
         )}
       </div>
-    ) : (
-      <GlobalCounters counts={continentCounts} />
-    );
+    ) : null; // Continent counts are now shown in HeaderBar itself
 
   // admin (hidden)
   const [adminOpen, setAdminOpen] = useState(
@@ -881,9 +885,9 @@ export default function App() {
                 highlightSlug={mapMode === 'chicago' ? highlightSlug : null}
                 highlightMs={15000}
                 onHighlightEnd={clearHighlight}
-                onShare={(pin) => {
-                  setPinToShare(pin);
-                  setPinShareOpen(true);
+                onMessage={(pin) => {
+                  setPinToMessage(pin);
+                  setMessageModalOpen(true);
                 }}
               />
             </ZoomGate>
@@ -1003,6 +1007,24 @@ export default function App() {
         }}
         pin={pinToShare}
       />
+
+      {messageModalOpen && pinToMessage && (
+        <AnonymousMessageModal
+          recipientPin={pinToMessage}
+          onClose={() => {
+            setMessageModalOpen(false);
+            setPinToMessage(null);
+          }}
+          onSend={async (messageData) => {
+            await sendAnonymousMessage(messageData, adminSettings);
+            setToast({
+              title: 'Message Sent!',
+              text: 'Your anonymous message has been delivered.',
+            });
+            setTimeout(() => setToast(null), 5000);
+          }}
+        />
+      )}
 
       <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
 

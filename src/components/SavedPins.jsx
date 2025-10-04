@@ -19,8 +19,8 @@ export default function SavedPins({
   exploreDismissMs = 12000,
   // Override icon (used for Global/region coloring)
   getIcon = (p) => iconFor(p.team || 'other'),
-  // Share callback
-  onShare,
+  // Message callback
+  onMessage,
 }) {
   const map = useMap()
 
@@ -243,17 +243,17 @@ export default function SavedPins({
                     <div style={{ marginTop: 6 }}>{p.note}</div>
                   ) : null}
 
-                  {onShare && (
+                  {onMessage && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onShare(p);
+                        onMessage(p);
                       }}
                       style={{
                         marginTop: 12,
                         width: '100%',
                         padding: '8px 12px',
-                        background: '#0ea5e9',
+                        background: '#8b5cf6',
                         border: 'none',
                         borderRadius: '6px',
                         color: 'white',
@@ -266,13 +266,13 @@ export default function SavedPins({
                         gap: '6px',
                       }}
                       onMouseEnter={(e) => {
-                        e.target.style.background = '#0284c7';
+                        e.target.style.background = '#7c3aed';
                       }}
                       onMouseLeave={(e) => {
-                        e.target.style.background = '#0ea5e9';
+                        e.target.style.background = '#8b5cf6';
                       }}
                     >
-                      <span>📤</span> Share Pin
+                      <span>💬</span> Message Anonymously
                     </button>
                   )}
                 </div>
