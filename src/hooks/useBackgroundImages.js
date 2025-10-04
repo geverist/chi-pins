@@ -26,12 +26,20 @@ export function useBackgroundImages() {
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        // Table doesn't exist yet - silently fail
+        if (fetchError.code === 'PGRST204' || fetchError.code === 'PGRST205') {
+          setBackgrounds([]);
+          setError(null);
+          return;
+        }
+        throw fetchError;
+      }
 
       setBackgrounds(data || []);
     } catch (err) {
-      console.error('Failed to load background images:', err);
-      setError(err.message);
+      console.warn('Background images not available:', err.message);
+      setError(null); // Don't expose error to UI
       setBackgrounds([]);
     } finally {
       setLoading(false);

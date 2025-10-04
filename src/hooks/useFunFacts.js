@@ -16,15 +16,20 @@ export function useFunFacts(defaults = {}) {
       try {
         const { data, error } = await supabase
           .from('fun_facts')
-          .select('key,fact')
-          .order('key', { ascending: true })
+          .select('town_slug,fact,fact_order')
+          .order('town_slug', { ascending: true })
+          .order('fact_order', { ascending: true })
           .limit(1000)
 
         if (!cancelled && !error && Array.isArray(data)) {
           const obj = Object.create(null)
           for (const row of data) {
-            const k = String(row.key || '').trim().toLowerCase()
-            if (k) obj[k] = String(row.fact || '').trim()
+            const k = String(row.town_slug || '').trim().toLowerCase()
+            if (!k) continue
+
+            // Group facts by town_slug into arrays
+            if (!obj[k]) obj[k] = []
+            obj[k].push(String(row.fact || '').trim())
           }
           if (Object.keys(obj).length) setFacts(obj)
         }
