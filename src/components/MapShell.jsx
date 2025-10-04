@@ -479,13 +479,19 @@ function CameraReset({ mapMode, resetCameraToken, isMobile }) {
   return null;
 }
 
-function TapToPlace({ onPick, disabled = false, mapReady }) {
+function TapToPlace({ onPick, onMapClick, disabled = false, mapReady }) {
   useMapEvent('click', (e) => {
     console.log('TapToPlace: Click event, disabled=', disabled, 'mapReady=', mapReady);
-    if (disabled || !mapReady) return;
-    if (!onPick) return;
     const { lat, lng } = e.latlng || {};
-    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    // Always call onMapClick for fun facts (even when exploring/disabled)
+    if (onMapClick) {
+      onMapClick({ lat, lng });
+    }
+
+    // Only call onPick when not disabled (for pin placement)
+    if (!disabled && mapReady && onPick) {
       onPick({ lat, lng });
     }
   });
@@ -513,6 +519,7 @@ export default function MapShell({
   setMapReady,
   exploring,
   onPick,
+  onMapClick,
   children,
   resetCameraToken,
   editing = false,
@@ -569,7 +576,7 @@ export default function MapShell({
             isMobile={isMobile}
           />
         )}
-        <TapToPlace onPick={onPick} disabled={exploring} mapReady={mapReady} />
+        <TapToPlace onPick={onPick} onMapClick={onMapClick} disabled={exploring} mapReady={mapReady} />
         {children}
       </MapContainer>
     </div>

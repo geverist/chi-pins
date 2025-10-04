@@ -462,7 +462,33 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, newsTickerEnabled: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Fun facts on map click">
+                  <Toggle
+                    checked={settings.funFactsEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, funFactsEnabled: v }))}
+                  />
+                </FieldRow>
               </Card>
+
+              {settings.funFactsEnabled && (
+                <Card title="Fun Facts Settings">
+                  <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                    Configure how long fun facts display when clicking on the Chicago map
+                  </p>
+                  <FieldRow label="Display duration (seconds)">
+                    <NumberInput
+                      value={settings.funFactDurationSeconds}
+                      min={5}
+                      max={60}
+                      step={5}
+                      onChange={(v) => setSettings(s => ({ ...s, funFactDurationSeconds: v }))}
+                    />
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                    Fun facts appear as a toast notification when users click on locations in Chicago
+                  </p>
+                </Card>
+              )}
 
               {settings.newsTickerEnabled && (
                 <Card title="News Ticker Settings">

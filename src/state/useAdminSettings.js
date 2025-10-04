@@ -73,6 +73,10 @@ const DEFAULTS = {
   newsTickerEnabled: false,
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
 
+  // Fun Facts
+  funFactsEnabled: true,           // Show fun facts when clicking on Chicago map
+  funFactDurationSeconds: 15,      // How long fun fact toast stays visible
+
   // Banner Scroll Speeds (seconds for full scroll)
   newsTickerScrollSpeedKiosk: 30,  // Seconds for news ticker in kiosk mode
   newsTickerScrollSpeedMobile: 20, // Seconds for news ticker in mobile mode

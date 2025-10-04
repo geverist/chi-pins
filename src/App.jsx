@@ -415,6 +415,9 @@ export default function App() {
 
   // fun-fact toast
   async function showNearestTownFact(lat, lng) {
+    // Check if fun facts are enabled
+    if (!adminSettings.funFactsEnabled) return;
+
     try {
       console.log('Fetching fun fact for:', lat, lng);
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
@@ -427,9 +430,17 @@ export default function App() {
       const fact = getRandomFact(funFacts, key) || `You're near ${candidate}.`;
       console.log('Showing toast with fact:', fact);
       setToast({ title: candidate, text: fact });
-      setTimeout(() => setToast(null), 10000);
+      const duration = (adminSettings.funFactDurationSeconds || 15) * 1000;
+      setTimeout(() => setToast(null), duration);
     } catch (err) {
       console.error('Failed to fetch fun fact:', err);
+    }
+  }
+
+  // Handle any map click for fun facts
+  function handleMapClick(ll) {
+    if (mapMode === 'chicago' && adminSettings.funFactsEnabled) {
+      showNearestTownFact(ll.lat, ll.lng);
     }
   }
 
@@ -789,6 +800,7 @@ export default function App() {
           setMapReady={setMapReady}
           exploring={exploring}
           onPick={handlePick}
+          onMapClick={handleMapClick}
           resetCameraToken={resetCameraToken}
           editing={!!draft}
           clearSearchToken={clearSearchToken}
