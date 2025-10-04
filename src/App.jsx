@@ -7,6 +7,7 @@ import { usePins } from './hooks/usePins';
 import { useIdleAttractor } from './hooks/useIdleAttractor';
 import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useHighlightPin } from './hooks/useHighlightPin';
+import { useQuadrantTouch } from './hooks/useQuadrantTouch';
 
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo';
@@ -736,6 +737,12 @@ export default function App() {
   const handleFooterClick = (e) => {
     if (shouldCountTap(e)) registerTap();
   };
+
+  // Four-quadrant touch to open admin panel
+  useQuadrantTouch(() => {
+    console.log('Four quadrant touch detected - opening admin panel');
+    setAdminOpen(true);
+  }, !adminOpen); // Only enable when admin panel is closed
   const handleFooterTouch = (e) => {
     if (shouldCountTap(e)) registerTap();
   };
