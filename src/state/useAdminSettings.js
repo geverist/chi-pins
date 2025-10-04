@@ -77,6 +77,16 @@ const DEFAULTS = {
   funFactsEnabled: true,           // Show fun facts when clicking on Chicago map
   funFactDurationSeconds: 15,      // How long fun fact toast stays visible
 
+  // Notifications
+  notificationsEnabled: false,     // Enable notifications for new pin placements
+  notificationType: 'webhook',     // 'webhook' | 'sms' | 'both'
+  webhookUrl: '',                  // Generic webhook URL for pin notifications
+  twilioEnabled: false,            // Enable Twilio SMS notifications
+  twilioAccountSid: '',            // Twilio Account SID
+  twilioAuthToken: '',             // Twilio Auth Token
+  twilioPhoneNumber: '',           // Twilio phone number (from)
+  notificationRecipients: '',      // Comma-separated phone numbers for SMS
+
   // Banner Scroll Speeds (seconds for full scroll)
   newsTickerScrollSpeedKiosk: 30,  // Seconds for news ticker in kiosk mode
   newsTickerScrollSpeedMobile: 20, // Seconds for news ticker in mobile mode
