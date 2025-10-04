@@ -1,10 +1,12 @@
 // src/components/NewsTicker.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function NewsTicker({ enabled = false, feedUrl = '', scrollSpeed = 60, isMobile = false }) {
   const [newsItems, setNewsItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [animate, setAnimate] = useState(false);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     if (!enabled || !feedUrl) {
@@ -16,6 +18,16 @@ export default function NewsTicker({ enabled = false, feedUrl = '', scrollSpeed 
     const interval = setInterval(fetchNews, 300000); // Refresh every 5 minutes
     return () => clearInterval(interval);
   }, [enabled, feedUrl]);
+
+  // Start animation after items are loaded
+  useEffect(() => {
+    if (newsItems.length > 0) {
+      // Small delay to ensure DOM is ready
+      setAnimate(false);
+      const timer = setTimeout(() => setAnimate(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [newsItems]);
 
   const fetchNews = async () => {
     if (!feedUrl) return;
@@ -41,6 +53,9 @@ export default function NewsTicker({ enabled = false, feedUrl = '', scrollSpeed 
   if (loading && newsItems.length === 0) return null;
   if (error || newsItems.length === 0) return null;
 
+  // Create enough duplicates for seamless scrolling
+  const scrollContent = Array(4).fill(newsItems).flat();
+
   return (
     <div
       style={{
@@ -55,16 +70,16 @@ export default function NewsTicker({ enabled = false, feedUrl = '', scrollSpeed 
       }}
     >
       <div
+        ref={scrollRef}
         style={{
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
           height: '100%',
-          animation: `scroll-left ${scrollSpeed}s linear infinite`,
+          animation: animate ? `news-scroll ${scrollSpeed}s linear infinite` : 'none',
           whiteSpace: 'nowrap',
         }}
       >
-        {/* Duplicate items to create seamless loop */}
-        {[...newsItems, ...newsItems].map((item, index) => (
+        {scrollContent.map((item, index) => (
           <div
             key={`${item.title}-${index}`}
             style={{
@@ -94,11 +109,11 @@ export default function NewsTicker({ enabled = false, feedUrl = '', scrollSpeed 
       </div>
 
       <style>{`
-        @keyframes scroll-left {
-          0% {
+        @keyframes news-scroll {
+          from {
             transform: translateX(0);
           }
-          100% {
+          to {
             transform: translateX(-50%);
           }
         }
