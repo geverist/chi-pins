@@ -24,7 +24,8 @@
       "WebFetch(domain:worldpopulationreview.com)",
       "WebFetch(domain:federalcos.com)",
       "WebFetch(domain:en.wikipedia.org)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

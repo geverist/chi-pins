@@ -54,15 +54,16 @@ export default function GlobalAudioPlayer() {
     const handleEnded = () => {
       console.log('GlobalAudioPlayer - track ended, trying next...');
       setIsPlaying(false);
-      // Save current track as last played before moving to next
-      if (currentTrack) {
-        setLastPlayed(currentTrack);
-      }
+      // playNext will handle setting lastPlayed
       const nextTrack = playNext();
       if (nextTrack) {
         console.log('GlobalAudioPlayer - playing next track:', nextTrack.title);
       } else {
         console.log('GlobalAudioPlayer - no more tracks in queue');
+        // No next track, so save current as last played
+        if (currentTrack) {
+          setLastPlayed(currentTrack);
+        }
       }
     };
 

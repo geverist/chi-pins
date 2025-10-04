@@ -6,13 +6,15 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
   // Restart animation when track changes
   useEffect(() => {
-    console.log('NowPlayingBanner - currentTrack changed:', currentTrack);
+    console.log('NowPlayingBanner - currentTrack:', currentTrack);
+    console.log('NowPlayingBanner - lastPlayed:', lastPlayed);
+    console.log('NowPlayingBanner - nextInQueue:', nextInQueue);
     console.log('NowPlayingBanner - isPlaying:', isPlaying);
-    if (currentTrack) {
+    if (currentTrack || lastPlayed) {
       setAnimate(false);
       setTimeout(() => setAnimate(true), 50);
     }
-  }, [currentTrack?.id, isPlaying]);
+  }, [currentTrack?.id, lastPlayed?.id, nextInQueue?.id, isPlaying]);
 
   if (!currentTrack && !lastPlayed) {
     console.log('NowPlayingBanner - no current or last track, hiding banner');
