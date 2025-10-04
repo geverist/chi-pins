@@ -852,14 +852,6 @@ export default function App() {
       )}
 
       <GlobalAudioPlayer />
-      <NowPlayingBanner
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        lastPlayed={lastPlayed}
-        nextInQueue={queue[0] || null}
-        scrollSpeed={isMobile ? adminSettings.nowPlayingScrollSpeedMobile : adminSettings.nowPlayingScrollSpeedKiosk}
-        isMobile={isMobile}
-      />
 
       <Footer
         isMobile={isMobile}
@@ -883,6 +875,15 @@ export default function App() {
         cancelEditing={cancelEditing}
         setShareOpen={setShareOpen}
         adminSettings={adminSettings}
+      />
+
+      <NowPlayingBanner
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        lastPlayed={lastPlayed}
+        nextInQueue={queue[0] || null}
+        scrollSpeed={isMobile ? adminSettings.nowPlayingScrollSpeedMobile : adminSettings.nowPlayingScrollSpeedKiosk}
+        isMobile={isMobile}
       />
 
       <ShareConfirmModal

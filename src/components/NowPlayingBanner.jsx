@@ -36,32 +36,30 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
     parts.push(`Next: ${nextInQueue.title}${nextInQueue.artist ? ` - ${nextInQueue.artist}` : ''}`);
   }
 
-  const displayText = parts.join('   •   ');
+  const displayText = parts.join('        •        ');
 
-  // Duplicate text for seamless scrolling
-  const scrollContent = Array(10).fill(displayText).join('   •   ');
+  // Duplicate text for seamless scrolling - need more copies for smooth loop
+  const scrollContent = Array(20).fill(displayText).join('        •        ');
 
   console.log('NowPlayingBanner - RENDERING BANNER with text:', displayText);
 
   return (
     <div
       style={{
-        position: 'fixed',
-        bottom: 0,
+        position: 'relative',
         left: 0,
         right: 0,
         height: 36,
         background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
         borderTop: '2px solid #a78bfa',
-        zIndex: 10000, // Above everything else at the very bottom
+        zIndex: 100,
         overflow: 'hidden',
         boxShadow: '0 -2px 8px rgba(0,0,0,0.2)',
       }}
     >
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
+          display: 'inline-block',
           height: '100%',
           animation: animate ? `scroll-left ${scrollSpeed}s linear infinite` : 'none',
           whiteSpace: 'nowrap',
@@ -69,10 +67,12 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
       >
         <span
           style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            height: '100%',
             color: '#fff',
             fontSize: 14,
             fontWeight: 600,
-            paddingLeft: '100vw', // Start off-screen to the right
           }}
         >
           {scrollContent}
@@ -81,10 +81,10 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
       <style>{`
         @keyframes scroll-left {
-          0% {
+          from {
             transform: translateX(0);
           }
-          100% {
+          to {
             transform: translateX(-50%);
           }
         }

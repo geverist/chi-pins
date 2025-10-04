@@ -16,7 +16,7 @@ const CORRECT_ORDER = [
 ];
 
 const INGREDIENTS = [
-  { id: 'bun', name: 'Poppy Seed Bun', emoji: '🍞', color: '#f4e4c1' },
+  { id: 'bun', name: 'Poppy Seed Bun', emoji: '🥖', color: '#f4e4c1' },
   { id: 'hotdog', name: 'All-Beef Frank', emoji: '🌭', color: '#d4926f' },
   { id: 'mustard', name: 'Yellow Mustard', emoji: '💛', color: '#ffd700' },
   { id: 'relish', name: 'Neon Green Relish', emoji: '🥒', color: '#7cfc00' },
@@ -45,17 +45,22 @@ export default function HotdogGame({ onClose, onGameComplete }) {
     const shuffled = [...INGREDIENTS].sort(() => Math.random() - 0.5);
     const mid = Math.ceil(shuffled.length / 2);
 
+    // Calculate evenly spaced positions to prevent overlapping
+    const leftCount = mid;
+    const rightCount = shuffled.length - mid;
+    const spacing = 70 / Math.max(leftCount, rightCount); // Divide 70% range
+
     setLeftIngredients(
-      shuffled.slice(0, mid).map(item => ({
+      shuffled.slice(0, mid).map((item, index) => ({
         ...item,
-        top: Math.random() * 60 + 10, // 10-70% from top
+        top: 10 + (index * spacing) + (Math.random() * (spacing * 0.5)), // Add some randomness within spacing
       }))
     );
 
     setRightIngredients(
-      shuffled.slice(mid).map(item => ({
+      shuffled.slice(mid).map((item, index) => ({
         ...item,
-        top: Math.random() * 60 + 10, // 10-70% from top
+        top: 10 + (index * spacing) + (Math.random() * (spacing * 0.5)), // Add some randomness within spacing
       }))
     );
   };

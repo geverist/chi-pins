@@ -386,11 +386,32 @@ export default function DeepDishGame({ onClose }) {
             ))}
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ color: '#a7b0b8', fontSize: 14 }}>Speed</div>
-          <div style={{ color: '#f4f6f8', fontSize: 24, fontWeight: 700 }}>
-            {fallSpeedRef.current.toFixed(1)}x
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+          <div>
+            <div style={{ color: '#a7b0b8', fontSize: 14 }}>Speed</div>
+            <div style={{ color: '#f4f6f8', fontSize: 24, fontWeight: 700 }}>
+              {fallSpeedRef.current.toFixed(1)}x
+            </div>
           </div>
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to quit?')) {
+                endGame();
+              }
+            }}
+            style={{
+              background: 'rgba(239,68,68,0.8)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 8,
+              color: '#fff',
+              padding: '8px 16px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            ✕ Quit
+          </button>
         </div>
       </div>
 

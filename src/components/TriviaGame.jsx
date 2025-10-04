@@ -251,15 +251,37 @@ export default function TriviaGame({ onClose }) {
           <div style={{ color: '#a7b0b8', fontSize: 14 }}>
             Question {currentQuestionIndex + 1} of {questions.length}
           </div>
-          <div
-            style={{
-              color: timeLeft <= 5 ? '#ef4444' : '#10b981',
-              fontSize: 24,
-              fontWeight: 700,
-              fontFamily: 'monospace',
-            }}
-          >
-            {timeLeft}s
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div
+              style={{
+                color: timeLeft <= 5 ? '#ef4444' : '#10b981',
+                fontSize: 24,
+                fontWeight: 700,
+                fontFamily: 'monospace',
+              }}
+            >
+              {timeLeft}s
+            </div>
+            <button
+              onClick={() => {
+                if (confirm('Are you sure you want to quit?')) {
+                  if (timerRef.current) clearInterval(timerRef.current);
+                  setGameState('instructions');
+                }
+              }}
+              style={{
+                background: 'rgba(239,68,68,0.8)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 8,
+                color: '#fff',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 14,
+              }}
+            >
+              ✕ Quit
+            </button>
           </div>
         </div>
         <div
