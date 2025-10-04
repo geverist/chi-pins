@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import GameLeaderboard from './GameLeaderboard';
 import { useAdminSettings } from '../state/useAdminSettings';
 
+const GAME_DURATION = 90; // 90 seconds (1.5 minutes)
 const SPAWN_INTERVAL_BASE = 1500; // ms
 const SPAWN_INTERVAL_MIN = 600; // ms
 const FALL_SPEED_BASE = 2; // pixels per frame
@@ -27,6 +28,7 @@ export default function DeepDishGame({ onClose }) {
   const { settings: adminSettings } = useAdminSettings();
   const [gameState, setGameState] = useState('instructions');
   const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [fallingItems, setFallingItems] = useState([]);
   const [catcherX, setCatcherX] = useState(50); // percentage
   const [collectedIngredients, setCollectedIngredients] = useState([]);
@@ -54,6 +56,7 @@ export default function DeepDishGame({ onClose }) {
     setGameState('playing');
     isPlayingRef.current = true;
     setScore(0);
+    setTimeLeft(GAME_DURATION);
     setFallingItems([]);
     setCatcherX(50);
     setCollectedIngredients([]);
@@ -116,6 +119,14 @@ export default function DeepDishGame({ onClose }) {
   const updateGame = () => {
     const now = Date.now();
     const elapsed = (now - gameStartTime.current) / 1000;
+    const newTimeLeft = Math.max(0, GAME_DURATION - elapsed);
+    setTimeLeft(newTimeLeft);
+
+    // Check if time's up
+    if (newTimeLeft <= 0) {
+      endGame();
+      return;
+    }
 
     // Check if pizza is complete
     if (collectedIngredients.length === REQUIRED_INGREDIENTS.length) {
@@ -388,8 +399,14 @@ export default function DeepDishGame({ onClose }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
           <div>
+            <div style={{ color: '#a7b0b8', fontSize: 14 }}>⏱ Time</div>
+            <div style={{ color: timeLeft < 10 ? '#ef4444' : '#f4f6f8', fontSize: 24, fontWeight: 700 }}>
+              {Math.ceil(timeLeft)}s
+            </div>
+          </div>
+          <div>
             <div style={{ color: '#a7b0b8', fontSize: 14 }}>Speed</div>
-            <div style={{ color: '#f4f6f8', fontSize: 24, fontWeight: 700 }}>
+            <div style={{ color: '#f4f6f8', fontSize: 20, fontWeight: 700 }}>
               {fallSpeedRef.current.toFixed(1)}x
             </div>
           </div>

@@ -25,7 +25,8 @@
       "WebFetch(domain:federalcos.com)",
       "WebFetch(domain:en.wikipedia.org)",
       "Bash(node:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npx vercel:*)"
     ],
     "deny": [],
     "ask": []
