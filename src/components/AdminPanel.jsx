@@ -30,13 +30,14 @@ export default function AdminPanel({ open, onClose }) {
   const { stopAll, currentTrack, queue } = useNowPlaying()
 
   // Navigation settings hook
-  const { settings: navSettingsFromHook, updateSettings: updateNavSettingsAPI } = useNavigationSettings()
+  const { settings: navSettingsFromHook, updateSettings: updateNavSettingsAPI, loading: navLoading } = useNavigationSettings()
 
   // Local navigation settings state (synced with hook but saved on "Save & Close")
   const [navSettings, setNavSettings] = useState(navSettingsFromHook)
 
   // Sync with hook when it loads
   useEffect(() => {
+    console.log('[AdminPanel] navSettingsFromHook updated:', navSettingsFromHook);
     setNavSettings(navSettingsFromHook)
   }, [navSettingsFromHook])
 
@@ -98,17 +99,22 @@ export default function AdminPanel({ open, onClose }) {
         setInitialPopularSpots(popularSpots)
       }
 
-      // Initialize navigation settings tracking
-      setInitialNavSettings(navSettings)
+      // Initialize navigation settings tracking (only if loaded)
+      if (!navLoading) {
+        console.log('[AdminPanel] Setting initial nav settings:', navSettings);
+        setInitialNavSettings(navSettings)
+      }
 
       setHasUnsavedChanges(false)
     } catch {
       // ignore – fallback to localStorage is already set
       setInitialSettings(adminSettingsFromHook)
       setInitialPopularSpots(popularSpots)
-      setInitialNavSettings(navSettings)
+      if (!navLoading) {
+        setInitialNavSettings(navSettings)
+      }
     }
-  }, [open, adminSettingsFromHook])
+  }, [open, adminSettingsFromHook, navLoading, navSettings])
 
   useEffect(() => { if (open) loadFromSupabase() }, [open, loadFromSupabase])
 
@@ -1309,7 +1315,10 @@ export default function AdminPanel({ open, onClose }) {
                     checked={navSettings.comments_enabled}
                     onChange={(v) => {
                       // Update local state only, save happens on "Save & Close"
-                      setNavSettings({ ...navSettings, comments_enabled: v });
+                      console.log('[AdminPanel] Leave Feedback toggled to:', v, 'current navSettings:', navSettings);
+                      const updated = { ...navSettings, comments_enabled: v };
+                      console.log('[AdminPanel] Updated navSettings:', updated);
+                      setNavSettings(updated);
                     }}
                   />
                 </FieldRow>
