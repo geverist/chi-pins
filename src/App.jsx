@@ -45,6 +45,9 @@ import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
 import NowPlayingBanner from './components/NowPlayingBanner';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
+import PhotoBooth from './components/PhotoBooth';
+import ThenAndNow from './components/ThenAndNow';
+import WeatherWidget from './components/WeatherWidget';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -134,6 +137,12 @@ export default function App() {
 
   // games modal
   const [gamesOpen, setGamesOpen] = useState(false);
+
+  // photo booth modal
+  const [photoBoothOpen, setPhotoBoothOpen] = useState(false);
+
+  // then & now modal
+  const [thenAndNowOpen, setThenAndNowOpen] = useState(false);
 
   // layer toggles
   const [showPopularSpots, setShowPopularSpots] = useState(true);
@@ -865,6 +874,8 @@ export default function App() {
         setGamesOpen={setGamesOpen}
         setJukeboxOpen={setJukeboxOpen}
         setOrderMenuOpen={setOrderMenuOpen}
+        setPhotoBoothOpen={setPhotoBoothOpen}
+        setThenAndNowOpen={setThenAndNowOpen}
         setExploring={setExploring}
         setShowAttractor={setShowAttractor}
         handleFooterClick={handleFooterClick}
@@ -878,14 +889,16 @@ export default function App() {
         adminSettings={adminSettings}
       />
 
-      <NowPlayingBanner
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        lastPlayed={lastPlayed}
-        nextInQueue={queue[0] || null}
-        scrollSpeed={isMobile ? adminSettings.nowPlayingScrollSpeedMobile : adminSettings.nowPlayingScrollSpeedKiosk}
-        isMobile={isMobile}
-      />
+      {(!isMobile || adminSettings.showNowPlayingOnMobile) && (
+        <NowPlayingBanner
+          currentTrack={currentTrack}
+          isPlaying={isPlaying}
+          lastPlayed={lastPlayed}
+          nextInQueue={queue[0] || null}
+          scrollSpeed={isMobile ? adminSettings.nowPlayingScrollSpeedMobile : adminSettings.nowPlayingScrollSpeedKiosk}
+          isMobile={isMobile}
+        />
+      )}
 
       <ShareConfirmModal
         open={shareOpen}
@@ -945,12 +958,26 @@ export default function App() {
         <GamesMenu onClose={() => setGamesOpen(false)} />
       )}
 
-      {isMobile && (
+      {photoBoothOpen && (
+        <PhotoBooth onClose={() => setPhotoBoothOpen(false)} />
+      )}
+
+      {thenAndNowOpen && (
+        <ThenAndNow onClose={() => setThenAndNowOpen(false)} />
+      )}
+
+      {adminSettings.showWeatherWidget && (
+        <WeatherWidget />
+      )}
+
+      {isMobile && adminSettings.showNavMenuOnMobile && (
         <MobileNavMenu
           navSettings={navSettings}
           setGamesOpen={setGamesOpen}
           setJukeboxOpen={setJukeboxOpen}
           setOrderMenuOpen={setOrderMenuOpen}
+          setPhotoBoothOpen={setPhotoBoothOpen}
+          setThenAndNowOpen={setThenAndNowOpen}
         />
       )}
     </div>

@@ -1044,6 +1044,67 @@ export default function AdminPanel({ open, onClose }) {
                     }}
                   />
                 </FieldRow>
+
+                <FieldRow label="📸 Photo Booth">
+                  <Toggle
+                    checked={navSettings.photobooth_enabled}
+                    onChange={(v) => {
+                      // Update local state only, save happens on "Save & Close"
+                      setNavSettings({ ...navSettings, photobooth_enabled: v });
+                    }}
+                  />
+                </FieldRow>
+
+                <FieldRow label="🏛️ Then & Now">
+                  <Toggle
+                    checked={navSettings.thenandnow_enabled}
+                    onChange={(v) => {
+                      // Update local state only, save happens on "Save & Close"
+                      setNavSettings({ ...navSettings, thenandnow_enabled: v });
+                    }}
+                  />
+                </FieldRow>
+              </Card>
+
+              <Card title="Mobile Device Controls">
+                <p style={s.muted}>
+                  Configure which features are visible on mobile devices
+                </p>
+
+                <FieldRow label="Show navigation menu">
+                  <Toggle
+                    checked={settings.showNavMenuOnMobile}
+                    onChange={(v) => setSettings(s => ({ ...s, showNavMenuOnMobile: v }))}
+                  />
+                </FieldRow>
+
+                <FieldRow label="Show 'Now Playing' banner">
+                  <Toggle
+                    checked={settings.showNowPlayingOnMobile}
+                    onChange={(v) => setSettings(s => ({ ...s, showNowPlayingOnMobile: v }))}
+                  />
+                </FieldRow>
+
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  These settings only affect mobile devices. Kiosk mode always shows all enabled features.
+                </p>
+              </Card>
+
+              <Card title="Widgets">
+                <p style={s.muted}>
+                  Enable or disable informational widgets
+                </p>
+
+                <FieldRow label="Weather Widget">
+                  <Toggle
+                    checked={settings.showWeatherWidget}
+                    onChange={(v) => setSettings(s => ({ ...s, showWeatherWidget: v }))}
+                  />
+                </FieldRow>
+
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Weather widget shows current Chicago weather with hot dog recommendations
+                </p>
               </Card>
             </SectionGrid>
           )}

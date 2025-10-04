@@ -9,6 +9,8 @@ export function useNavigationSettings() {
     jukebox_enabled: true,
     order_enabled: true,
     explore_enabled: true,
+    photobooth_enabled: true,
+    thenandnow_enabled: true,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

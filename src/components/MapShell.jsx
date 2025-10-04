@@ -126,14 +126,18 @@ function GeocoderTopCenter({
     const checkBounds = () => {
       const mapBounds = map.getBounds();
       const chicagoBounds = CHI_BOUNDS;
+      const currentZoom = map.getZoom();
 
-      // Check if current view intersects with Chicago bounds
-      const isInChicago = chicagoBounds.intersects(mapBounds);
+      // Check if we're zoomed out enough that Chicago is a small part of the view
+      // If the map view CONTAINS all of Chicago bounds, we're too zoomed out - use global search
+      // Otherwise, if Chicago intersects with the view, use Chicago search
+      const mapContainsAllOfChicago = mapBounds.contains(chicagoBounds);
+      const isInChicago = !mapContainsAllOfChicago && chicagoBounds.intersects(mapBounds);
 
       const newMode = isInChicago ? 'chicago' : 'global';
       const newPlaceholder = isInChicago ? 'Search Chicago & nearby…' : 'Search places worldwide…';
 
-      console.log('GeocoderTopCenter: checkBounds - isInChicago:', isInChicago, 'newMode:', newMode, 'currentMode:', dynamicMode);
+      console.log('GeocoderTopCenter: checkBounds - zoom:', currentZoom, 'mapContainsAllOfChicago:', mapContainsAllOfChicago, 'isInChicago:', isInChicago, 'newMode:', newMode, 'currentMode:', dynamicMode);
 
       if (newMode !== dynamicMode) {
         console.log('GeocoderTopCenter: MODE CHANGE - Switching from', dynamicMode, 'to', newMode);

@@ -14,6 +14,19 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+// Generate a placeholder album art with gradient based on track title
+function getAlbumArtPlaceholder(track) {
+  if (track.album_art || track.albumArt) {
+    return track.album_art || track.albumArt;
+  }
+
+  // Generate gradient based on title hash
+  const hash = (track.title || 'unknown').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const hue1 = hash % 360;
+  const hue2 = (hash * 2) % 360;
+  return `linear-gradient(135deg, hsl(${hue1}, 70%, 50%), hsl(${hue2}, 70%, 40%))`;
+}
+
 export default function Jukebox({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('library'); // 'library' or 'spotify'
@@ -31,6 +44,11 @@ export default function Jukebox({ onClose }) {
     onClose,
     adminSettings.jukeboxIdleTimeout || 120
   );
+
+  // Get most popular tracks (first 6 tracks sorted by play_count if available, or just first 6)
+  const popularTracks = mediaFiles
+    .sort((a, b) => (b.play_count || 0) - (a.play_count || 0))
+    .slice(0, 6);
 
   // Filter library based on search
   const filteredLibrary = mediaFiles.filter(track => {
@@ -279,74 +297,206 @@ export default function Jukebox({ onClose }) {
                 </div>
               )}
 
-              {!loading && filteredLibrary.length === 0 && (
+              {!loading && mediaFiles.length === 0 && (
                 <div style={{ textAlign: 'center', padding: 40, color: '#a7b0b8' }}>
-                  {searchQuery ? 'No tracks match your search' : 'No tracks uploaded. Go to Admin Panel > Media to upload MP3 files.'}
+                  No tracks uploaded. Go to Admin Panel > Media to upload MP3 files.
                 </div>
               )}
 
-              <div style={{ display: 'grid', gap: 8 }}>
-                {filteredLibrary.map(track => (
-                  <div
-                    key={track.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: 12,
-                      background: currentTrack?.id === track.id
-                        ? 'rgba(139,92,246,0.15)'
-                        : 'rgba(255,255,255,0.05)',
-                      borderRadius: 10,
-                      border: currentTrack?.id === track.id
-                        ? '1px solid rgba(139,92,246,0.5)'
-                        : '1px solid rgba(255,255,255,0.1)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                    onClick={() => handleSelectTrack(track)}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          color: '#f4f6f8',
-                          fontSize: 14,
-                          fontWeight: 600,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {track.title}
-                        {track.music_source === 'spotify' && (
-                          <span style={{ marginLeft: 6, fontSize: 10, color: '#1ed760' }}>🎧</span>
-                        )}
-                      </div>
-                      <div style={{ color: '#a7b0b8', fontSize: 12 }}>
-                        {track.artist || 'Unknown Artist'}
-                        {track.duration_seconds && ` • ${formatTime(track.duration_seconds)}`}
-                        {track.license_type && (
-                          <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.6 }}>
-                            • {track.license_type === 'streaming_api' ? 'Licensed' : track.license_type}
-                          </span>
-                        )}
+              {!loading && mediaFiles.length > 0 && (
+                <>
+                  {/* Popular Tracks Section - only show if not searching */}
+                  {!searchQuery && popularTracks.length > 0 && (
+                    <div style={{ marginBottom: 32 }}>
+                      <h3 style={{ margin: '0 0 16px', color: '#f4f6f8', fontSize: 18, fontWeight: 600 }}>
+                        🔥 Most Popular
+                      </h3>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                        gap: 16,
+                      }}>
+                        {popularTracks.map(track => {
+                          const albumArt = getAlbumArtPlaceholder(track);
+                          const isImage = albumArt.startsWith('http') || albumArt.startsWith('data:');
+
+                          return (
+                            <div
+                              key={track.id}
+                              onClick={() => handleSelectTrack(track)}
+                              style={{
+                                cursor: 'pointer',
+                                borderRadius: 12,
+                                overflow: 'hidden',
+                                background: 'rgba(255,255,255,0.05)',
+                                border: currentTrack?.id === track.id ? '2px solid rgba(139,92,246,0.8)' : '1px solid rgba(255,255,255,0.1)',
+                                transition: 'all 0.2s',
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              {/* Album Art */}
+                              <div style={{
+                                aspectRatio: '1/1',
+                                background: isImage ? '#1a1d23' : albumArt,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                              }}>
+                                {isImage ? (
+                                  <img src={albumArt} alt={track.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ fontSize: 48 }}>🎵</div>
+                                )}
+                                {currentTrack?.id === track.id && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    background: 'rgba(139,92,246,0.9)',
+                                    borderRadius: 20,
+                                    padding: '4px 8px',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    color: '#fff',
+                                  }}>
+                                    NOW PLAYING
+                                  </div>
+                                )}
+                              </div>
+                              {/* Track Info */}
+                              <div style={{ padding: 12 }}>
+                                <div style={{
+                                  color: '#f4f6f8',
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  marginBottom: 4,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}>
+                                  {track.title}
+                                </div>
+                                <div style={{
+                                  color: '#a7b0b8',
+                                  fontSize: 11,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}>
+                                  {track.artist || 'Unknown Artist'}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                    <div style={{
-                      padding: '6px 12px',
-                      borderRadius: 6,
-                      background: currentTrack?.id === track.id
-                        ? 'rgba(139,92,246,0.3)'
-                        : 'rgba(255,255,255,0.1)',
-                      color: '#a78bfa',
-                      fontSize: 11,
-                      fontWeight: 600,
-                    }}>
-                      {adminSettings.jukeboxAutoPlay ? '▶ Play' : '+ Queue'}
+                  )}
+
+                  {/* All Tracks Section */}
+                  {filteredLibrary.length > 0 && (
+                    <div>
+                      <h3 style={{ margin: '0 0 16px', color: '#f4f6f8', fontSize: 18, fontWeight: 600 }}>
+                        {searchQuery ? `Search Results (${filteredLibrary.length})` : '🎵 All Tracks'}
+                      </h3>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                        gap: 16,
+                      }}>
+                        {filteredLibrary.map(track => {
+                          const albumArt = getAlbumArtPlaceholder(track);
+                          const isImage = albumArt.startsWith('http') || albumArt.startsWith('data:');
+
+                          return (
+                            <div
+                              key={track.id}
+                              onClick={() => handleSelectTrack(track)}
+                              style={{
+                                cursor: 'pointer',
+                                borderRadius: 12,
+                                overflow: 'hidden',
+                                background: 'rgba(255,255,255,0.05)',
+                                border: currentTrack?.id === track.id ? '2px solid rgba(139,92,246,0.8)' : '1px solid rgba(255,255,255,0.1)',
+                                transition: 'all 0.2s',
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              {/* Album Art */}
+                              <div style={{
+                                aspectRatio: '1/1',
+                                background: isImage ? '#1a1d23' : albumArt,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                position: 'relative',
+                              }}>
+                                {isImage ? (
+                                  <img src={albumArt} alt={track.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ fontSize: 48 }}>🎵</div>
+                                )}
+                                {track.music_source === 'spotify' && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    left: 8,
+                                    background: 'rgba(30,215,96,0.9)',
+                                    borderRadius: 20,
+                                    padding: '4px 8px',
+                                    fontSize: 10,
+                                    fontWeight: 700,
+                                    color: '#000',
+                                  }}>
+                                    SPOTIFY
+                                  </div>
+                                )}
+                              </div>
+                              {/* Track Info */}
+                              <div style={{ padding: 12 }}>
+                                <div style={{
+                                  color: '#f4f6f8',
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  marginBottom: 4,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}>
+                                  {track.title}
+                                </div>
+                                <div style={{
+                                  color: '#a7b0b8',
+                                  fontSize: 11,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}>
+                                  {track.artist || 'Unknown Artist'}
+                                </div>
+                                {track.duration_seconds && (
+                                  <div style={{ color: '#6b7280', fontSize: 10, marginTop: 4 }}>
+                                    {formatTime(track.duration_seconds)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  )}
+
+                  {searchQuery && filteredLibrary.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: 40, color: '#a7b0b8' }}>
+                      No tracks match your search
+                    </div>
+                  )}
+                </>
+              )}
             </>
           )}
 

@@ -70,6 +70,13 @@ const DEFAULTS = {
   nowPlayingScrollSpeedKiosk: 30,  // Seconds for now playing banner in kiosk mode
   nowPlayingScrollSpeedMobile: 20, // Seconds for now playing banner in mobile mode
 
+  // Mobile UI Controls
+  showNowPlayingOnMobile: true,    // Show "Now Playing" banner on mobile devices
+  showNavMenuOnMobile: true,       // Show navigation menu (Games/Jukebox/Order) on mobile devices
+
+  // Widget Controls
+  showWeatherWidget: true,         // Show weather widget with hot dog recommendations
+
   // Audio Output Settings
   audioOutputType: 'local', // 'local' | 'bluetooth' | 'sonos'
   bluetoothDeviceName: '',

@@ -13,6 +13,8 @@ export default function Footer({
   setGamesOpen,
   setJukeboxOpen,
   setOrderMenuOpen,
+  setPhotoBoothOpen,
+  setThenAndNowOpen,
   setExploring,
   setShowAttractor,
   handleFooterClick,
@@ -43,13 +45,14 @@ export default function Footer({
             gap: 8,
           }}
         >
-          {/* Top row: Games, Jukebox, Order Now */}
-          {(navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled) && (
+          {/* Top row: Games, Jukebox, Order Now, Photo Booth, Then & Now */}
+          {(navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled) && (
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'center',
                 gap: 10,
+                flexWrap: 'wrap',
               }}
               data-no-admin-tap
             >
@@ -81,6 +84,26 @@ export default function Footer({
                   aria-label="Order from Chicago Mike's"
                 >
                   🍕 Order Now
+                </button>
+              )}
+              {navSettings.photobooth_enabled && (
+                <button
+                  onClick={() => setPhotoBoothOpen(true)}
+                  style={btn3d(false)}
+                  className="btn-kiosk"
+                  aria-label="Photo Booth"
+                >
+                  📸 Photo Booth
+                </button>
+              )}
+              {navSettings.thenandnow_enabled && (
+                <button
+                  onClick={() => setThenAndNowOpen(true)}
+                  style={btn3d(false)}
+                  className="btn-kiosk"
+                  aria-label="Then & Now Photos"
+                >
+                  🏛️ Then & Now
                 </button>
               )}
             </div>
