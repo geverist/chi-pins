@@ -50,6 +50,9 @@ export function useNavigationSettings() {
 
   const updateSettings = async (newSettings) => {
     try {
+      // Optimistically update UI immediately
+      setSettings(newSettings);
+
       const response = await fetch(`${API_BASE}/api/navigation-settings`, {
         method: 'PUT',
         headers: {
@@ -59,7 +62,9 @@ export function useNavigationSettings() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update navigation settings');
+        const errorText = await response.text();
+        console.error('Navigation settings update failed:', response.status, errorText);
+        throw new Error(`Failed to update navigation settings: ${response.status}`);
       }
 
       const data = await response.json();
@@ -73,6 +78,8 @@ export function useNavigationSettings() {
     } catch (err) {
       console.error('Error updating navigation settings:', err);
       setError(err.message);
+      // Revert optimistic update on error
+      await fetchSettings();
       throw err;
     }
   };
