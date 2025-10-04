@@ -166,6 +166,83 @@ export default function Editor({
     </div>
   );
 
+  const CameraSection = photoBackgroundsEnabled && (isCameraReady || photoPreview) ? (
+    <div style={{
+      gridColumn: '1 / -1',
+      border: '1px solid #2a2f37',
+      borderRadius: 12,
+      padding: 12,
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02))',
+      display: 'grid',
+      gap: 12,
+    }}>
+      {/* Background selector */}
+      {isCameraReady && !photoPreview && backgrounds.length > 0 && (
+        <div>
+          <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Select Background (optional)</div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+            <button
+              onClick={() => setSelectedBg(null)}
+              style={{
+                minWidth: 80,
+                height: 60,
+                background: !selectedBg ? '#0ea5e9' : '#1a1d24',
+                border: '2px solid ' + (!selectedBg ? '#0ea5e9' : '#2a2f37'),
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+            >
+              None
+            </button>
+            {backgrounds.map((bg) => (
+              <button
+                key={bg.id}
+                onClick={() => setSelectedBg(bg)}
+                style={{
+                  minWidth: 80,
+                  height: 60,
+                  padding: 0,
+                  background: `url(${bg.thumbnail_url || bg.url}) center/cover`,
+                  border: '2px solid ' + (selectedBg?.id === bg.id ? '#0ea5e9' : '#2a2f37'),
+                  borderRadius: 8,
+                }}
+                title={bg.name}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Video preview */}
+      {isCameraReady && !photoPreview && (
+        <div style={{ position: 'relative' }}>
+          <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', borderRadius: 8 }} />
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+          <div style={{ marginTop: 8, display: 'flex', gap: 8, justifyContent: 'center' }}>
+            <button onClick={capturePhoto} style={{ background: '#0ea5e9' }}>📸 Take Picture</button>
+            <button onClick={stopCamera} className="cancel">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Photo preview */}
+      {photoPreview && (
+        <div>
+          <img src={photoPreview} alt="Captured photo" style={{ width: '100%', borderRadius: 8 }} />
+          <div style={{ marginTop: 8, display: 'flex', gap: 8, justifyContent: 'center' }}>
+            <button onClick={() => { setPhotoPreview(null); update({ photoUrl: null }); startCamera(); }}>
+              🔄 Retake
+            </button>
+          </div>
+        </div>
+      )}
+
+      {cameraError && (
+        <div style={{ color: '#ef4444', fontSize: 14 }}>{cameraError}</div>
+      )}
+    </div>
+  ) : null;
+
   const InlineFieldsChicago = (
     <div style={{
       gridColumn: '1 / -1',
@@ -242,6 +319,7 @@ export default function Editor({
         paddingTop: 2,
       }}>
         {IdAndActionsRow}
+        {CameraSection}
         <div style={{
           gridColumn: '1 / -1',
           display: 'grid',
@@ -270,6 +348,7 @@ export default function Editor({
       paddingTop: 2,
     }}>
       {IdAndActionsRow}
+      {CameraSection}
       {InlineFieldsGlobal}
       {LoyaltySection}
     </div>

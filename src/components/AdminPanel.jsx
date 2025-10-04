@@ -542,17 +542,31 @@ export default function AdminPanel({ open, onClose }) {
                           type="text"
                           value={settings.twilioAccountSid || ''}
                           onChange={(e) => setSettings(s => ({ ...s, twilioAccountSid: e.target.value }))}
+                          onPaste={(e) => {
+                            e.stopPropagation();
+                            const pastedText = e.clipboardData.getData('text');
+                            setSettings(s => ({ ...s, twilioAccountSid: pastedText.trim() }));
+                          }}
                           placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          autoComplete="off"
+                          spellCheck={false}
                           style={{ ...s.input, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
                         />
                       </FieldRow>
 
                       <FieldRow label="Twilio Auth Token">
                         <input
-                          type="password"
+                          type="text"
                           value={settings.twilioAuthToken || ''}
                           onChange={(e) => setSettings(s => ({ ...s, twilioAuthToken: e.target.value }))}
+                          onPaste={(e) => {
+                            e.stopPropagation();
+                            const pastedText = e.clipboardData.getData('text');
+                            setSettings(s => ({ ...s, twilioAuthToken: pastedText.trim() }));
+                          }}
                           placeholder="********************************"
+                          autoComplete="off"
+                          spellCheck={false}
                           style={{ ...s.input, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
                         />
                       </FieldRow>
@@ -562,7 +576,14 @@ export default function AdminPanel({ open, onClose }) {
                           type="tel"
                           value={settings.twilioPhoneNumber || ''}
                           onChange={(e) => setSettings(s => ({ ...s, twilioPhoneNumber: e.target.value }))}
+                          onPaste={(e) => {
+                            e.stopPropagation();
+                            const pastedText = e.clipboardData.getData('text');
+                            setSettings(s => ({ ...s, twilioPhoneNumber: pastedText.trim() }));
+                          }}
                           placeholder="+1234567890"
+                          autoComplete="off"
+                          spellCheck={false}
                           style={{ ...s.input, width: '100%' }}
                         />
                       </FieldRow>

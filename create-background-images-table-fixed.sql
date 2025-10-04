@@ -35,7 +35,7 @@ CREATE POLICY "Allow public reads of active backgrounds" ON background_images
 -- Allow authenticated full access (for admin)
 CREATE POLICY "Allow authenticated modifications" ON background_images
   FOR ALL
-  TO authenticated
+  TO authenticated, anon
   USING (true)
   WITH CHECK (true);
 
