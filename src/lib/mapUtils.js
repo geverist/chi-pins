@@ -103,40 +103,42 @@ function pointInPolygon(lat, lng, polygon) {
  * Uses polygon boundary traced along the Chicago lakefront
  */
 export function isInLakeMichigan(lat, lng) {
-  // Quick bounds check first
-  if (lat < 41.6 || lat > 42.5 || lng < -88.0 || lng > -85.5) {
+  // Quick bounds check first - only check the Chicago metro area
+  if (lat < 41.6 || lat > 42.5 || lng < -88.0 || lng > -86.0) {
     return false;
   }
 
   // Create polygon: Illinois shoreline (west) + Michigan shoreline (east) + Indiana shoreline (south)
-  // Michigan shoreline points (eastern boundary) - approximate, going north to south
+  // Michigan shoreline points (eastern boundary) - western shore of Michigan facing the lake
+  // Going from north to south, following the actual Michigan coastline
   const michiganShoreline = [
-    [42.50, -86.50],  // Wisconsin border area
-    [42.45, -86.48],
-    [42.40, -86.45],
-    [42.35, -86.43],
-    [42.30, -86.40],
-    [42.25, -86.38],
-    [42.20, -86.35],
-    [42.15, -86.33],
-    [42.10, -86.30],
+    [42.50, -86.25],  // Wisconsin-Michigan border area
+    [42.48, -86.26],
+    [42.45, -86.27],
+    [42.40, -86.28],
+    [42.35, -86.29],
+    [42.30, -86.30],
+    [42.25, -86.30],
+    [42.20, -86.30],
+    [42.15, -86.30],
+    [42.10, -86.29],
     [42.05, -86.28],
-    [42.00, -86.25],
-    [41.95, -86.23],
-    [41.90, -86.20],
-    [41.85, -86.18],
-    [41.80, -86.15],
-    [41.75, -86.13],
-    [41.70, -86.10],
-    [41.65, -86.08],
-    [41.60, -86.05],  // Near Indiana border
+    [42.00, -86.27],  // Muskegon area
+    [41.95, -86.26],
+    [41.90, -86.25],
+    [41.85, -86.24],
+    [41.80, -86.23],
+    [41.75, -86.22],
+    [41.70, -86.21],
+    [41.65, -86.20],
+    [41.60, -86.85],  // Indiana-Michigan border on lake shore
   ];
 
-  // Indiana shoreline (southern boundary) - going east to west
+  // Indiana shoreline (southern boundary) - going west along Indiana's lakefront
   const indianaShoreline = [
-    [41.60, -86.80],  // Eastern Indiana shore
-    [41.60, -87.20],  // Central Indiana shore
-    [41.60, -87.40],  // Western Indiana shore
+    [41.60, -87.00],  // Eastern Indiana shore
+    [41.60, -87.30],  // Central Indiana shore near Gary
+    [41.60, -87.52 + SHORELINE_BUFFER],  // Connect to Illinois border
   ];
 
   const polygon = [
