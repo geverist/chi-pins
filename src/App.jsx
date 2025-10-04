@@ -416,16 +416,21 @@ export default function App() {
   // fun-fact toast
   async function showNearestTownFact(lat, lng) {
     try {
+      console.log('Fetching fun fact for:', lat, lng);
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
       const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
       const json = await res.json();
       const addr = json?.address || {};
       const candidate = addr.city || addr.town || addr.village || addr.suburb || addr.locality || 'Chicago';
       const key = String(candidate).toLowerCase();
+      console.log('Location key:', key, 'Available facts:', funFacts[key]);
       const fact = getRandomFact(funFacts, key) || `You're near ${candidate}.`;
+      console.log('Showing toast with fact:', fact);
       setToast({ title: candidate, text: fact });
       setTimeout(() => setToast(null), 10000);
-    } catch {}
+    } catch (err) {
+      console.error('Failed to fetch fun fact:', err);
+    }
   }
 
   // map click
