@@ -310,7 +310,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           alignItems: 'center',
         }}
       >
-        {/* Timer and Progress */}
+        {/* Timer, Progress, and Quit Button */}
         <div
           style={{
             position: 'absolute',
@@ -328,6 +328,30 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           <div style={{ color: '#10b981', fontSize: 18, fontWeight: 600 }}>
             ⏱ {startTime ? Math.floor((Date.now() - startTime) / 1000) : 0}s
           </div>
+          <button
+            onClick={() => {
+              if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
+                if (repositionTimerRef.current) {
+                  clearInterval(repositionTimerRef.current);
+                }
+                setGameState('instructions');
+                setAssembledItems([]);
+                setAvailableItems([...INGREDIENTS]);
+              }
+            }}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 8,
+              border: '1px solid rgba(239,68,68,0.4)',
+              background: 'rgba(239,68,68,0.1)',
+              color: '#fca5a5',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Quit Game
+          </button>
         </div>
 
         <h3 style={{ margin: '0 0 24px', color: '#f4f6f8', fontSize: 20 }}>
@@ -345,7 +369,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
             border: '2px dashed rgba(255,255,255,0.2)',
             padding: 20,
             display: 'flex',
-            flexDirection: 'column-reverse',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
             gap: 8,
           }}
         >
