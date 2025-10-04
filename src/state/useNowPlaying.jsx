@@ -1,16 +1,41 @@
 // src/state/useNowPlaying.jsx
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 const NowPlayingContext = createContext();
+
+// Local storage keys
+const LS_CURRENT_TRACK = 'nowPlaying_currentTrack';
+const LS_LAST_PLAYED = 'nowPlaying_lastPlayed';
+const LS_IS_PLAYING = 'nowPlaying_isPlaying';
+const LS_QUEUE = 'nowPlaying_queue';
 
 export function NowPlayingProvider({ children }) {
   const [currentTrack, setCurrentTrack] = useState(null);
   const [lastPlayed, setLastPlayed] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [queue, setQueue] = useState([]);
+  const [isOnline, setIsOnline] = useState(true);
+  const isOnlineRef = useRef(true);
 
-  // Load initial state from Supabase
+  // Load from localStorage first for instant UI
+  useEffect(() => {
+    try {
+      const cachedCurrent = localStorage.getItem(LS_CURRENT_TRACK);
+      const cachedLast = localStorage.getItem(LS_LAST_PLAYED);
+      const cachedPlaying = localStorage.getItem(LS_IS_PLAYING);
+      const cachedQueue = localStorage.getItem(LS_QUEUE);
+
+      if (cachedCurrent) setCurrentTrack(JSON.parse(cachedCurrent));
+      if (cachedLast) setLastPlayed(JSON.parse(cachedLast));
+      if (cachedPlaying) setIsPlaying(JSON.parse(cachedPlaying));
+      if (cachedQueue) setQueue(JSON.parse(cachedQueue));
+    } catch (err) {
+      console.error('Failed to load from localStorage:', err);
+    }
+  }, []);
+
+  // Load initial state from Supabase and set up subscriptions
   useEffect(() => {
     loadPlaybackState();
     loadQueue();
@@ -25,19 +50,31 @@ export function NowPlayingProvider({ children }) {
       }, (payload) => {
         console.log('Playback state changed:', payload);
         if (payload.new) {
-          setCurrentTrack(payload.new.current_track_url ? {
+          const current = payload.new.current_track_url ? {
             url: payload.new.current_track_url,
             title: payload.new.current_track_title,
             artist: payload.new.current_track_artist,
             album: payload.new.current_track_album,
-          } : null);
-          setLastPlayed(payload.new.last_played_url ? {
+          } : null;
+          const last = payload.new.last_played_url ? {
             url: payload.new.last_played_url,
             title: payload.new.last_played_title,
             artist: payload.new.last_played_artist,
             album: payload.new.last_played_album,
-          } : null);
+          } : null;
+
+          setCurrentTrack(current);
+          setLastPlayed(last);
           setIsPlaying(payload.new.is_playing);
+
+          // Update localStorage cache
+          try {
+            localStorage.setItem(LS_CURRENT_TRACK, JSON.stringify(current));
+            localStorage.setItem(LS_LAST_PLAYED, JSON.stringify(last));
+            localStorage.setItem(LS_IS_PLAYING, JSON.stringify(payload.new.is_playing));
+          } catch (err) {
+            console.error('Failed to cache playback state:', err);
+          }
         }
       })
       .subscribe();
@@ -71,22 +108,40 @@ export function NowPlayingProvider({ children }) {
 
       if (error) throw error;
       if (data) {
-        setCurrentTrack(data.current_track_url ? {
+        const current = data.current_track_url ? {
           url: data.current_track_url,
           title: data.current_track_title,
           artist: data.current_track_artist,
           album: data.current_track_album,
-        } : null);
-        setLastPlayed(data.last_played_url ? {
+        } : null;
+        const last = data.last_played_url ? {
           url: data.last_played_url,
           title: data.last_played_title,
           artist: data.last_played_artist,
           album: data.last_played_album,
-        } : null);
+        } : null;
+
+        setCurrentTrack(current);
+        setLastPlayed(last);
         setIsPlaying(data.is_playing);
+
+        // Cache to localStorage
+        try {
+          localStorage.setItem(LS_CURRENT_TRACK, JSON.stringify(current));
+          localStorage.setItem(LS_LAST_PLAYED, JSON.stringify(last));
+          localStorage.setItem(LS_IS_PLAYING, JSON.stringify(data.is_playing));
+        } catch (err) {
+          console.error('Failed to cache playback state:', err);
+        }
+
+        setIsOnline(true);
+        isOnlineRef.current = true;
       }
     } catch (err) {
       console.error('Failed to load playback state:', err);
+      setIsOnline(false);
+      isOnlineRef.current = false;
+      console.warn('Running in offline mode - using local cache');
     }
   };
 
@@ -98,14 +153,30 @@ export function NowPlayingProvider({ children }) {
         .order('position', { ascending: true });
 
       if (error) throw error;
-      setQueue((data || []).map(item => ({
+
+      const queueData = (data || []).map(item => ({
         url: item.track_url,
         title: item.track_title,
         artist: item.track_artist,
         album: item.track_album,
-      })));
+      }));
+
+      setQueue(queueData);
+
+      // Cache to localStorage
+      try {
+        localStorage.setItem(LS_QUEUE, JSON.stringify(queueData));
+      } catch (err) {
+        console.error('Failed to cache queue:', err);
+      }
+
+      setIsOnline(true);
+      isOnlineRef.current = true;
     } catch (err) {
       console.error('Failed to load queue:', err);
+      setIsOnline(false);
+      isOnlineRef.current = false;
+      console.warn('Running in offline mode - using local cache');
     }
   };
 
@@ -127,6 +198,13 @@ export function NowPlayingProvider({ children }) {
 
   const setCurrentTrackShared = useCallback((track) => {
     setCurrentTrack(track);
+    // Cache immediately
+    try {
+      localStorage.setItem(LS_CURRENT_TRACK, JSON.stringify(track));
+    } catch (err) {
+      console.error('Failed to cache current track:', err);
+    }
+    // Try to update Supabase
     updatePlaybackState({
       current_track_url: track?.url || null,
       current_track_title: track?.title || null,
@@ -137,6 +215,13 @@ export function NowPlayingProvider({ children }) {
 
   const setLastPlayedShared = useCallback((track) => {
     setLastPlayed(track);
+    // Cache immediately
+    try {
+      localStorage.setItem(LS_LAST_PLAYED, JSON.stringify(track));
+    } catch (err) {
+      console.error('Failed to cache last played:', err);
+    }
+    // Try to update Supabase
     updatePlaybackState({
       last_played_url: track?.url || null,
       last_played_title: track?.title || null,
@@ -147,10 +232,29 @@ export function NowPlayingProvider({ children }) {
 
   const setIsPlayingShared = useCallback((playing) => {
     setIsPlaying(playing);
+    // Cache immediately
+    try {
+      localStorage.setItem(LS_IS_PLAYING, JSON.stringify(playing));
+    } catch (err) {
+      console.error('Failed to cache playing state:', err);
+    }
+    // Try to update Supabase
     updatePlaybackState({ is_playing: playing });
   }, []);
 
   const addToQueue = useCallback(async (track) => {
+    // Add to local state immediately for responsive UI
+    setQueue(prev => {
+      const updated = [...prev, track];
+      try {
+        localStorage.setItem(LS_QUEUE, JSON.stringify(updated));
+      } catch (err) {
+        console.error('Failed to cache queue:', err);
+      }
+      return updated;
+    });
+
+    // Try to sync with Supabase
     try {
       // Get current max position
       const { data: maxData } = await supabase
@@ -173,12 +277,38 @@ export function NowPlayingProvider({ children }) {
         });
 
       if (error) throw error;
+      setIsOnline(true);
+      isOnlineRef.current = true;
     } catch (err) {
-      console.error('Failed to add to queue:', err);
+      console.error('Failed to add to queue (offline mode):', err);
+      setIsOnline(false);
+      isOnlineRef.current = false;
     }
   }, []);
 
   const playNext = useCallback(async () => {
+    // Handle offline mode - use local queue
+    if (!isOnlineRef.current || queue.length === 0) {
+      if (queue.length === 0) return null;
+
+      const [nextTrack, ...remainingQueue] = queue;
+      setLastPlayed(currentTrack);
+      setCurrentTrack(nextTrack);
+      setQueue(remainingQueue);
+
+      // Update localStorage
+      try {
+        localStorage.setItem(LS_CURRENT_TRACK, JSON.stringify(nextTrack));
+        localStorage.setItem(LS_LAST_PLAYED, JSON.stringify(currentTrack));
+        localStorage.setItem(LS_QUEUE, JSON.stringify(remainingQueue));
+      } catch (err) {
+        console.error('Failed to cache playback changes:', err);
+      }
+
+      return nextTrack;
+    }
+
+    // Online mode - sync with Supabase
     try {
       // Get first item in queue
       const { data: queueData, error: queueError } = await supabase
@@ -230,14 +360,45 @@ export function NowPlayingProvider({ children }) {
         }
       }
 
+      setIsOnline(true);
+      isOnlineRef.current = true;
       return nextTrack;
     } catch (err) {
-      console.error('Failed to play next:', err);
+      console.error('Failed to play next (offline mode):', err);
+      setIsOnline(false);
+      isOnlineRef.current = false;
+
+      // Fallback to local queue
+      if (queue.length > 0) {
+        const [nextTrack, ...remainingQueue] = queue;
+        setLastPlayed(currentTrack);
+        setCurrentTrack(nextTrack);
+        setQueue(remainingQueue);
+
+        try {
+          localStorage.setItem(LS_CURRENT_TRACK, JSON.stringify(nextTrack));
+          localStorage.setItem(LS_LAST_PLAYED, JSON.stringify(currentTrack));
+          localStorage.setItem(LS_QUEUE, JSON.stringify(remainingQueue));
+        } catch (err) {
+          console.error('Failed to cache playback changes:', err);
+        }
+
+        return nextTrack;
+      }
       return null;
     }
-  }, [currentTrack]);
+  }, [currentTrack, queue]);
 
   const clearQueue = useCallback(async () => {
+    // Clear local state immediately
+    setQueue([]);
+    try {
+      localStorage.setItem(LS_QUEUE, JSON.stringify([]));
+    } catch (err) {
+      console.error('Failed to clear queue cache:', err);
+    }
+
+    // Try to sync with Supabase
     try {
       const { error } = await supabase
         .from('music_queue')
@@ -245,8 +406,12 @@ export function NowPlayingProvider({ children }) {
         .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
 
       if (error) throw error;
+      setIsOnline(true);
+      isOnlineRef.current = true;
     } catch (err) {
-      console.error('Failed to clear queue:', err);
+      console.error('Failed to clear queue (offline mode):', err);
+      setIsOnline(false);
+      isOnlineRef.current = false;
     }
   }, []);
 
@@ -262,6 +427,7 @@ export function NowPlayingProvider({ children }) {
       addToQueue,
       playNext,
       clearQueue,
+      isOnline,
     }}>
       {children}
     </NowPlayingContext.Provider>
