@@ -304,6 +304,61 @@ export default function AdminPanel({ open, onClose }) {
         <div style={s.body}>
           {tab === 'general' && (
             <SectionGrid>
+              <Card title="Media Control">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Control currently playing media and queue
+                </p>
+                <div style={{
+                  padding: '16px',
+                  background: currentTrack || queue.length > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                  border: currentTrack || queue.length > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(100, 116, 139, 0.3)',
+                  borderRadius: 8
+                }}>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+                      {currentTrack ? '🎵 Now Playing' : queue.length > 0 ? '⏸️ Queue Ready' : '✓ No Active Media'}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#9ca3af' }}>
+                      {currentTrack ? (
+                        <>
+                          <div style={{ fontWeight: 500, color: '#f3f4f6', marginBottom: 2 }}>
+                            {currentTrack.title}
+                            {currentTrack.artist && ` • ${currentTrack.artist}`}
+                          </div>
+                          {queue.length > 0 && <div>+{queue.length} track{queue.length !== 1 ? 's' : ''} in queue</div>}
+                        </>
+                      ) : queue.length > 0 ? (
+                        `${queue.length} track${queue.length !== 1 ? 's' : ''} queued`
+                      ) : (
+                        'No tracks playing or queued'
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (confirm('Stop all playback and clear the entire queue?')) {
+                        stopAll();
+                      }
+                    }}
+                    disabled={!currentTrack && queue.length === 0}
+                    style={{
+                      width: '100%',
+                      padding: '10px 16px',
+                      background: (!currentTrack && queue.length === 0) ? '#4b5563' : '#ef4444',
+                      border: 'none',
+                      borderRadius: 6,
+                      color: '#fff',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: (!currentTrack && queue.length === 0) ? 'not-allowed' : 'pointer',
+                      opacity: (!currentTrack && queue.length === 0) ? 0.5 : 1,
+                    }}
+                  >
+                    ⏹️ Stop All Media & Clear Queue
+                  </button>
+                </div>
+              </Card>
+
               <Card title="Idle / Kiosk">
                 <FieldRow label="Idle attractor (seconds)">
                   <NumberInput
@@ -772,40 +827,6 @@ export default function AdminPanel({ open, onClose }) {
                 <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
                   Banner scroll speed for currently playing music
                 </p>
-
-                {/* Stop All Media Button */}
-                <div style={{ marginTop: 20, padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>Stop All Media</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
-                        {currentTrack ? `Now playing: ${currentTrack.title}` : 'No media playing'}
-                        {queue.length > 0 && ` • ${queue.length} in queue`}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (confirm('Stop playback and clear the queue?')) {
-                          stopAll();
-                        }
-                      }}
-                      disabled={!currentTrack && queue.length === 0}
-                      style={{
-                        padding: '8px 16px',
-                        background: (!currentTrack && queue.length === 0) ? '#6b7280' : '#ef4444',
-                        border: 'none',
-                        borderRadius: 6,
-                        color: '#fff',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        cursor: (!currentTrack && queue.length === 0) ? 'not-allowed' : 'pointer',
-                        opacity: (!currentTrack && queue.length === 0) ? 0.5 : 1,
-                      }}
-                    >
-                      ⏹️ Stop All
-                    </button>
-                  </div>
-                </div>
               </Card>
 
               <Card title="Map constants">
