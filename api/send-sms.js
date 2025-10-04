@@ -18,32 +18,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { accountSid, authToken, from, to, message } = req.body;
+    // Get Twilio credentials from environment variables (secure, backend-only)
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
 
-    console.log('send-sms: Request received', {
-      hasAccountSid: !!accountSid,
-      accountSidLength: accountSid?.length,
-      accountSidPrefix: accountSid?.substring(0, 4),
-      hasAuthToken: !!authToken,
-      authTokenLength: authToken?.length,
-      from,
-      to: Array.isArray(to) ? to : [to],
-      messageLength: message?.length,
-    });
+    if (!accountSid || !authToken || !twilioPhone) {
+      console.error('Twilio credentials not configured in environment variables');
+      return res.status(500).json({
+        error: 'SMS service not configured',
+        details: 'Administrator needs to configure Twilio credentials'
+      });
+    }
 
-    // Validate required fields
-    if (!accountSid || !authToken || !from || !to || !message) {
-      console.error('send-sms: Missing required fields');
+    const { to, message } = req.body;
+
+    // Validate required fields from request
+    if (!to || !message) {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['accountSid', 'authToken', 'from', 'to', 'message'],
-        received: {
-          accountSid: !!accountSid,
-          authToken: !!authToken,
-          from: !!from,
-          to: !!to,
-          message: !!message,
-        }
+        required: ['to', 'message']
       });
     }
 
@@ -70,7 +64,7 @@ export default async function handler(req, res) {
 
         const formData = new URLSearchParams();
         formData.append('To', recipient);
-        formData.append('From', from);
+        formData.append('From', twilioPhone);
         formData.append('Body', message);
 
         console.log('send-sms: Form data prepared');

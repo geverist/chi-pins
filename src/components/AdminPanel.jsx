@@ -537,56 +537,18 @@ export default function AdminPanel({ open, onClose }) {
 
                   {(settings.notificationType === 'sms' || settings.notificationType === 'both') && (
                     <>
-                      <FieldRow label="Twilio Account SID">
-                        <input
-                          type="text"
-                          value={settings.twilioAccountSid || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, twilioAccountSid: e.target.value }))}
-                          onPaste={(e) => {
-                            e.stopPropagation();
-                            const pastedText = e.clipboardData.getData('text');
-                            setSettings(s => ({ ...s, twilioAccountSid: pastedText.trim() }));
-                          }}
-                          placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                          autoComplete="off"
-                          spellCheck={false}
-                          style={{ ...s.input, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
-                        />
-                      </FieldRow>
-
-                      <FieldRow label="Twilio Auth Token">
-                        <input
-                          type="text"
-                          value={settings.twilioAuthToken || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, twilioAuthToken: e.target.value }))}
-                          onPaste={(e) => {
-                            e.stopPropagation();
-                            const pastedText = e.clipboardData.getData('text');
-                            setSettings(s => ({ ...s, twilioAuthToken: pastedText.trim() }));
-                          }}
-                          placeholder="********************************"
-                          autoComplete="off"
-                          spellCheck={false}
-                          style={{ ...s.input, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
-                        />
-                      </FieldRow>
-
-                      <FieldRow label="Twilio Phone Number">
-                        <input
-                          type="tel"
-                          value={settings.twilioPhoneNumber || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, twilioPhoneNumber: e.target.value }))}
-                          onPaste={(e) => {
-                            e.stopPropagation();
-                            const pastedText = e.clipboardData.getData('text');
-                            setSettings(s => ({ ...s, twilioPhoneNumber: pastedText.trim() }));
-                          }}
-                          placeholder="+1234567890"
-                          autoComplete="off"
-                          spellCheck={false}
-                          style={{ ...s.input, width: '100%' }}
-                        />
-                      </FieldRow>
+                      <div style={{
+                        padding: '12px',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: 8,
+                        marginBottom: 12,
+                        fontSize: 12,
+                        color: '#93c5fd'
+                      }}>
+                        ℹ️ Twilio credentials are now managed securely via environment variables on the server.
+                        <br/>Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in your deployment settings.
+                      </div>
 
                       <FieldRow label="Recipient Phone Numbers">
                         <input

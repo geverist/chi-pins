@@ -37,23 +37,17 @@ export async function sendPinNotification(pin, settings) {
       results.webhook = await sendWebhook(pin, settings.webhookUrl);
     }
 
-    // Send SMS notification
+    // Send SMS notification (credentials managed on backend)
     if (
       (settings.notificationType === 'sms' ||
         settings.notificationType === 'both') &&
-      settings.twilioAccountSid &&
-      settings.twilioAuthToken &&
-      settings.twilioPhoneNumber
+      settings.notificationRecipients
     ) {
       console.log('Sending SMS notification to:', settings.notificationRecipients);
       results.sms = await sendSMS(pin, settings);
       console.log('SMS result:', results.sms);
     } else if (settings.notificationType === 'sms' || settings.notificationType === 'both') {
-      console.warn('SMS notification skipped - missing Twilio credentials:', {
-        hasSid: !!settings.twilioAccountSid,
-        hasToken: !!settings.twilioAuthToken,
-        hasPhone: !!settings.twilioPhoneNumber,
-      });
+      console.warn('SMS notification skipped - no recipients configured');
     }
 
     return {
@@ -143,17 +137,13 @@ async function sendSMS(pin, settings) {
       pin.team?.toUpperCase() || 'OTHER'
     }\n\nView: ${window.location.origin}/?pin=${pin.slug}`;
 
-    // In a production app, you'd send this to a backend endpoint that
-    // securely uses Twilio API. Never expose Twilio credentials to the client!
+    // Send SMS via backend API (credentials stored securely in environment variables)
     const response = await fetch('/api/send-sms', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        accountSid: settings.twilioAccountSid,
-        authToken: settings.twilioAuthToken,
-        from: settings.twilioPhoneNumber,
         to: recipients,
         message: message,
       }),
