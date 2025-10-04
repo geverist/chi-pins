@@ -203,106 +203,6 @@ export default function Editor({
     </div>
   );
 
-  const PhotoSection = (
-    <div style={{
-      gridColumn: '1 / -1',
-      border: '1px solid #2a2f37',
-      borderRadius: 12,
-      padding: 12,
-      background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02))',
-      display: 'grid',
-      gap: 8,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 18 }}>📸</span>
-        <strong>Add a photo (optional)</strong>
-      </div>
-      <div style={{ color: '#a7b0b8', fontSize: 13 }}>
-        Snap a photo of your hot dog spot or upload one.
-      </div>
-      {cameraError && <div style={{ color: '#ef4444' }} role="alert">{cameraError}</div>}
-
-      {/* Background Carousel */}
-      {photoBackgroundsEnabled && isCameraReady && !photoPreview && backgrounds.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          <div style={{ fontSize: 13, color: '#a7b0b8', marginBottom: 8 }}>
-            Select a background (optional):
-          </div>
-          <div style={{
-            display: 'flex',
-            gap: 8,
-            overflowX: 'auto',
-            padding: 8,
-            background: '#0f1115',
-            borderRadius: 8,
-          }}>
-            <button
-              onClick={() => setSelectedBg(null)}
-              style={{
-                minWidth: 80,
-                height: 60,
-                border: selectedBg === null ? '2px solid #0ea5e9' : '1px solid #2a2f37',
-                borderRadius: 6,
-                background: '#1a1d23',
-                color: '#fff',
-                fontSize: 11,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              None
-            </button>
-            {backgrounds.map((bg) => (
-              <button
-                key={bg.id}
-                onClick={() => setSelectedBg(bg)}
-                style={{
-                  minWidth: 80,
-                  height: 60,
-                  border: selectedBg?.id === bg.id ? '2px solid #0ea5e9' : '1px solid #2a2f37',
-                  borderRadius: 6,
-                  padding: 0,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  background: 'transparent',
-                }}
-              >
-                <img
-                  src={bg.url}
-                  alt={bg.name}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
-                />
-              </button>
-            ))}
-          </div>
-          {selectedBg && (
-            <div style={{ fontSize: 11, color: '#0ea5e9', marginTop: 4 }}>
-              Background: {selectedBg.name}
-            </div>
-          )}
-        </div>
-      )}
-
-      {isCameraReady && !photoPreview && (
-        <video ref={videoRef} style={{ maxWidth: '300px', maxHeight: '200px' }} aria-hidden="true" />
-      )}
-      {photoPreview && <img src={photoPreview} alt="Photo preview" style={{ maxWidth: '300px', maxHeight: '200px' }} />}
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-      {isCameraReady && !photoPreview && (
-        <button onClick={capturePhoto} aria-label="Capture photo">Take Photo</button>
-      )}
-      {photoPreview && (
-        <button onClick={() => { setPhotoPreview(null); startCamera(); }} aria-label="Retake photo">Retake Photo</button>
-      )}
-    </div>
-  );
 
   const LoyaltySection = loyaltyEnabled ? (
     <div style={{
@@ -356,7 +256,6 @@ export default function Editor({
           ))}
         </div>
         {InlineFieldsChicago}
-        {photoBackgroundsEnabled && PhotoSection}
         {LoyaltySection}
       </div>
     );
@@ -372,7 +271,6 @@ export default function Editor({
     }}>
       {IdAndActionsRow}
       {InlineFieldsGlobal}
-      {photoBackgroundsEnabled && PhotoSection}
       {LoyaltySection}
     </div>
   );

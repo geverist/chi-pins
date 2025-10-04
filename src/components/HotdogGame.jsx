@@ -1,6 +1,7 @@
 // src/components/HotdogGame.jsx
 import { useState, useEffect, useRef } from 'react';
 import GameLeaderboard from './GameLeaderboard';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 // Correct order for Chicago-style hot dog (bottom to top)
 const CORRECT_ORDER = [
@@ -27,16 +28,17 @@ const CORRECT_INGREDIENTS = [
   { id: 'celery-salt', name: 'Celery Salt', emoji: '🧂', color: '#e0e0e0', isCorrect: true },
 ];
 
-// Wrong ingredients (deduct points!)
-const WRONG_INGREDIENTS = [
-  { id: 'ketchup', name: 'Ketchup (NO!)', emoji: '🔴', color: '#dc2626', isCorrect: false, penalty: -500 },
-  { id: 'sauerkraut', name: 'Sauerkraut', emoji: '🥗', color: '#9ca3af', isCorrect: false, penalty: -300 },
-  { id: 'moldy-onion', name: 'Moldy Onions', emoji: '🧄', color: '#4b5563', isCorrect: false, penalty: -400 },
-];
-
-const INGREDIENTS = [...CORRECT_INGREDIENTS, ...WRONG_INGREDIENTS];
-
 export default function HotdogGame({ onClose, onGameComplete }) {
+  const { settings: adminSettings } = useAdminSettings();
+
+  // Wrong ingredients (deduct points!) - uses admin settings for ketchup penalty
+  const WRONG_INGREDIENTS = [
+    { id: 'ketchup', name: 'Ketchup (NO!)', emoji: '🔴', color: '#dc2626', isCorrect: false, penalty: adminSettings.hotdogKetchupPenalty || -500 },
+    { id: 'sauerkraut', name: 'Sauerkraut', emoji: '🥗', color: '#9ca3af', isCorrect: false, penalty: -300 },
+    { id: 'moldy-onion', name: 'Moldy Onions', emoji: '🧄', color: '#4b5563', isCorrect: false, penalty: -400 },
+  ];
+
+  const INGREDIENTS = [...CORRECT_INGREDIENTS, ...WRONG_INGREDIENTS];
   const [gameState, setGameState] = useState('instructions'); // instructions, playing, finished
   const [assembledItems, setAssembledItems] = useState([]);
   const [availableItems, setAvailableItems] = useState([...INGREDIENTS]);
@@ -177,10 +179,15 @@ export default function HotdogGame({ onClose, onGameComplete }) {
     });
 
     // Calculate score: accuracy weighted heavily, speed bonus, minus penalties
-    const maxTime = 60; // 60 seconds for max speed bonus
+    const maxTime = adminSettings.hotdogTimeLimit || 90; // Use admin setting for max time
     const speedBonus = Math.max(0, Math.min(1000, ((maxTime - timeTaken) / maxTime) * 1000));
     const accuracyScore = accuracyPercent * 100;
-    const totalScore = Math.max(0, Math.round(accuracyScore + speedBonus - orderPenalty - wrongIngredientPenalty));
+
+    // Perfect order bonus
+    const isPerfectOrder = correctCount === CORRECT_INGREDIENTS.length && orderPenalty === 0;
+    const perfectBonus = isPerfectOrder ? (adminSettings.hotdogPerfectOrderBonus || 1000) : 0;
+
+    const totalScore = Math.max(0, Math.round(accuracyScore + speedBonus + perfectBonus - orderPenalty - wrongIngredientPenalty));
 
     setScore(totalScore);
     setGameState('finished');

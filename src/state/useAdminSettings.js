@@ -38,6 +38,15 @@ const DEFAULTS = {
   popcornWindStartSpeed: 0.3,  // Initial wind gust force
   popcornWindMaxSpeed: 1.2,    // Maximum wind gust force
 
+  // Trivia Game settings
+  triviaQuestionTimeLimit: 12, // Seconds per question
+  triviaTotalQuestions: 8,     // Total number of questions (8 × 12s = 96s)
+
+  // Hotdog Assembly Game settings
+  hotdogTimeLimit: 90,         // Time limit in seconds to assemble the hot dog
+  hotdogPerfectOrderBonus: 1000, // Bonus points for perfect order
+  hotdogKetchupPenalty: -500,  // Penalty for using ketchup
+
   // Security PINs
   adminPanelPin: '1111',      // 4-digit PIN for admin panel access
   kioskExitPin: '1111',       // 4-digit PIN for exiting kiosk mode

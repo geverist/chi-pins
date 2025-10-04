@@ -747,6 +747,69 @@ export default function AdminPanel({ open, onClose }) {
                   Wind gust speed and frequency increase during the game
                 </p>
               </Card>
+
+              <Card title="🧠 Chicago Trivia Challenge">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Configure settings for the Chicago trivia quiz game
+                </p>
+                <FieldRow label="Time per question (seconds)">
+                  <NumberInput
+                    value={settings.triviaQuestionTimeLimit}
+                    min={5}
+                    max={30}
+                    step={1}
+                    onChange={(v) => setSettings(s => ({ ...s, triviaQuestionTimeLimit: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Total questions">
+                  <NumberInput
+                    value={settings.triviaTotalQuestions}
+                    min={5}
+                    max={20}
+                    step={1}
+                    onChange={(v) => setSettings(s => ({ ...s, triviaTotalQuestions: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Total game time = questions × time per question
+                </p>
+              </Card>
+
+              <Card title="🌭 Hotdog Assembly Challenge">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Configure settings for the Chicago-style hot dog assembly game
+                </p>
+                <FieldRow label="Time limit (seconds)">
+                  <NumberInput
+                    value={settings.hotdogTimeLimit}
+                    min={30}
+                    max={180}
+                    step={10}
+                    onChange={(v) => setSettings(s => ({ ...s, hotdogTimeLimit: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Perfect order bonus">
+                  <NumberInput
+                    value={settings.hotdogPerfectOrderBonus}
+                    min={0}
+                    max={5000}
+                    step={100}
+                    onChange={(v) => setSettings(s => ({ ...s, hotdogPerfectOrderBonus: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Ketchup penalty">
+                  <NumberInput
+                    value={settings.hotdogKetchupPenalty}
+                    min={-2000}
+                    max={0}
+                    step={100}
+                    onChange={(v) => setSettings(s => ({ ...s, hotdogKetchupPenalty: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Never put ketchup on a Chicago dog! 🚫
+                </p>
+              </Card>
             </SectionGrid>
           )}
 

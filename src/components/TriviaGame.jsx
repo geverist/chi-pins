@@ -2,11 +2,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { getRandomQuestions } from '../data/chicagoTrivia';
 import GameLeaderboard from './GameLeaderboard';
-
-const QUESTION_TIME_LIMIT = 12; // seconds per question
-const TOTAL_QUESTIONS = 8; // 8 questions × 12 seconds = 96 seconds (~1.5 minutes)
+import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function TriviaGame({ onClose }) {
+  const { settings: adminSettings } = useAdminSettings();
+
+  const QUESTION_TIME_LIMIT = adminSettings.triviaQuestionTimeLimit || 12;
+  const TOTAL_QUESTIONS = adminSettings.triviaTotalQuestions || 8;
   const [gameState, setGameState] = useState('instructions'); // instructions, playing, finished
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
