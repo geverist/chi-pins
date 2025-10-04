@@ -60,7 +60,7 @@ import Jukebox from './components/Jukebox';
 import GamesMenu from './components/GamesMenu';
 import Footer from './components/Footer';
 import { useAdminSettings } from './state/useAdminSettings';
-import { useNowPlaying } from './state/useNowPlaying';
+import { useNowPlaying } from './state/useNowPlaying.jsx';
 import { useNavigationSettings } from './hooks/useNavigationSettings';
 import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode.jsx';
 import { enterFullscreen, exitFullscreenAndWake, ensureWakeLock, onFullscreenChange } from './lib/kiosk';

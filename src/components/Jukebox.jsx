@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useFeatureIdleTimeout } from '../hooks/useFeatureIdleTimeout';
 import { useAdminSettings } from '../state/useAdminSettings';
 import { useMediaFiles } from '../hooks/useMediaFiles';
-import { useNowPlaying } from '../state/useNowPlaying';
+import { useNowPlaying } from '../state/useNowPlaying.jsx';
 
 // Helper function to format seconds as MM:SS
 function formatTime(seconds) {

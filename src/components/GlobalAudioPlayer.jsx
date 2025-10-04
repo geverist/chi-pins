@@ -1,7 +1,7 @@
 // src/components/GlobalAudioPlayer.jsx
 // Hidden audio player that persists globally for continuous playback
 import { useEffect, useRef } from 'react';
-import { useNowPlaying } from '../state/useNowPlaying';
+import { useNowPlaying } from '../state/useNowPlaying.jsx';
 import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function GlobalAudioPlayer() {

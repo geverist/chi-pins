@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App.jsx'
 import TableMode from './routes/TableMode.jsx'
 import Admin from './routes/Admin.jsx'
-import { NowPlayingProvider } from './state/useNowPlaying'
+import { NowPlayingProvider } from './state/useNowPlaying.jsx'
 import './styles.css'
 
 // Set CSS custom property for actual viewport height (fixes Safari)
