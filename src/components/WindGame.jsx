@@ -484,7 +484,6 @@ export default function WindGame({ onClose }) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          pointerEvents: 'none',
         }}
       >
         <div style={{
@@ -494,6 +493,7 @@ export default function WindGame({ onClose }) {
           color: '#fff',
           fontWeight: 600,
           fontSize: 18,
+          pointerEvents: 'none',
         }}>
           ⏱️ {Math.ceil(timeLeft)}s
         </div>
@@ -504,6 +504,7 @@ export default function WindGame({ onClose }) {
           color: '#10b981',
           fontWeight: 600,
           fontSize: 18,
+          pointerEvents: 'none',
         }}>
           🏆 {score}
         </div>
@@ -515,9 +516,29 @@ export default function WindGame({ onClose }) {
           fontWeight: 600,
           fontSize: 18,
           animation: popcornCount < 5 ? 'pulse 0.5s ease-in-out infinite' : 'none',
+          pointerEvents: 'none',
         }}>
           🍿 {popcornCount}/{STARTING_POPCORN}
         </div>
+        <button
+          onClick={() => {
+            if (confirm('Are you sure you want to quit?')) {
+              endGame();
+            }
+          }}
+          style={{
+            background: 'rgba(239,68,68,0.8)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 8,
+            color: '#fff',
+            padding: '8px 16px',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: 16,
+          }}
+        >
+          ✕ Quit
+        </button>
       </div>
 
       <style>{`
