@@ -1,8 +1,5 @@
 // src/hooks/useSpotify.js
-import { useState, useEffect, useRef } from 'react';
-
-const SPOTIFY_CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
-const SPOTIFY_CLIENT_SECRET = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
+import { useState, useEffect } from 'react';
 
 // Token stored in memory
 let cachedToken = null;
@@ -13,33 +10,29 @@ export function useSpotify() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Get access token using Client Credentials Flow
+  // Get access token from secure backend endpoint
+  // This keeps the Client Secret on the server, not exposed in client bundle
   const getAccessToken = async () => {
     // Check if we have a valid cached token
     if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
       return cachedToken;
     }
 
-    if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
-      console.warn('Spotify credentials not configured');
-      return null;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('https://accounts.spotify.com/api/token', {
+      // Request token from our secure backend endpoint
+      const response = await fetch('/api/spotify-token', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic ' + btoa(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET),
+          'Content-Type': 'application/json',
         },
-        body: 'grant_type=client_credentials',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get Spotify access token');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || 'Failed to get Spotify access token');
       }
 
       const data = await response.json();
@@ -58,9 +51,7 @@ export function useSpotify() {
 
   // Initialize token on mount
   useEffect(() => {
-    if (SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET) {
-      getAccessToken();
-    }
+    getAccessToken();
   }, []);
 
   // Search for tracks
