@@ -108,7 +108,7 @@ export default function AdminPanel({ open, onClose }) {
       setInitialPopularSpots(popularSpots)
       setInitialNavSettings(navSettings)
     }
-  }, [open, navSettings, adminSettingsFromHook])
+  }, [open, adminSettingsFromHook])
 
   useEffect(() => { if (open) loadFromSupabase() }, [open, loadFromSupabase])
 
