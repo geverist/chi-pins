@@ -5,18 +5,16 @@ import GameLeaderboard from './GameLeaderboard';
 const GAME_DURATION = 60; // 60 seconds
 const GRAVITY = 0.3;
 const DRAG_FORCE = 0.15;
-const WIND_FORCE_BASE = 0.5;
-const WIND_FORCE_MAX = 2.5;
+const WIND_FORCE_BASE = 0.3; // Slower wind
+const WIND_FORCE_MAX = 1.2; // Reduced max wind
 const PLATFORM_Y = 70; // percentage from top
-const MAX_POPCORN = 15; // Maximum popcorn pieces
-const POPCORN_SPAWN_INTERVAL = 800; // ms between popcorn spawns
+const MAX_POPCORN = 20; // Maximum popcorn pieces
+const POPCORN_SPAWN_INTERVAL = 600; // ms between popcorn spawns - spawn faster
 const POPCORN_SIZE = 28; // Size of popcorn piece emoji
+const CONTINUOUS_WIND_SPEED = 0.15; // Constant gentle breeze
 
 const FOOD_ITEMS = [
-  { id: 'hotdog', name: 'Chicago Hot Dog', emoji: '🌭', weight: 1.0, size: 60 },
-  { id: 'pizza', name: 'Deep Dish Slice', emoji: '🍕', weight: 1.2, size: 65 },
-  { id: 'beef', name: 'Italian Beef', emoji: '🥪', weight: 1.1, size: 55 },
-  { id: 'popcorn', name: 'Garrett Popcorn', emoji: '🍿', weight: 0.6, size: 50, hasPopcornPieces: true },
+  { id: 'popcorn', name: 'Garrett Popcorn', emoji: '🍿', weight: 0.6, size: 60, hasPopcornPieces: true },
 ];
 
 export default function WindGame({ onClose }) {
@@ -59,12 +57,12 @@ export default function WindGame({ onClose }) {
     isPlayingRef.current = true;
     setScore(0);
     setTimeLeft(GAME_DURATION);
-    const startFood = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
+    const startFood = FOOD_ITEMS[0]; // Always use Garrett Popcorn
     setCurrentFood(startFood);
     setFoodPosition({ x: 50, y: 50 });
     setFoodVelocity({ x: 0, y: 0 });
-    setWindDirection(0);
-    setWindStrength(0);
+    setWindDirection(1); // Start with gentle continuous wind
+    setWindStrength(CONTINUOUS_WIND_SPEED);
     setWindWarning(null);
     setLives(3);
     setCombo(0);
@@ -79,11 +77,7 @@ export default function WindGame({ onClose }) {
 
     startGameLoop();
     scheduleNextWind();
-
-    // Start spawning popcorn if current food is popcorn
-    if (startFood.hasPopcornPieces) {
-      schedulePopcornSpawn();
-    }
+    schedulePopcornSpawn(); // Always spawn popcorn now
   };
 
   const startGameLoop = () => {
@@ -129,55 +123,55 @@ export default function WindGame({ onClose }) {
     const now = Date.now();
     const elapsed = (now - gameStartTime.current) / 1000;
 
-    // Wind frequency increases over time - start slower
-    const baseInterval = 5000; // Start at 5 seconds
-    const minInterval = 1500; // Speed up to 1.5 seconds minimum
-    const interval = Math.max(minInterval, baseInterval - (elapsed * 50));
+    // More frequent but weaker wind gusts
+    const baseInterval = 4000; // Start at 4 seconds
+    const minInterval = 2000; // Speed up to 2 seconds minimum
+    const interval = Math.max(minInterval, baseInterval - (elapsed * 30));
 
-    // Show warning before wind
-    const warningDelay = Math.max(800, interval * 0.35);
+    // Longer warning time
+    const warningDelay = 1200;
 
     windTimerRef.current = setTimeout(() => {
       if (!isPlayingRef.current) return;
 
-      // Show warning
+      // Alternate wind direction for variety
       const direction = Math.random() > 0.5 ? 'right' : 'left';
       setWindWarning(direction);
 
-      // Trigger wind after warning
+      // Trigger wind gust after warning
       setTimeout(() => {
         if (!isPlayingRef.current) return;
 
         const windDir = direction === 'right' ? 1 : -1;
-        const strength = WIND_FORCE_BASE + (elapsed / 60) * (WIND_FORCE_MAX - WIND_FORCE_BASE);
+        const strength = WIND_FORCE_BASE + (elapsed / 90) * (WIND_FORCE_MAX - WIND_FORCE_BASE);
 
+        // Apply gust force on top of continuous wind
         setWindDirection(windDir);
-        setWindStrength(strength);
+        setWindStrength(CONTINUOUS_WIND_SPEED + strength);
         setWindWarning(null);
 
-        // Spawn random wind gusts across the screen - more gusts as time goes on
-        const baseGusts = 6;
-        const maxGusts = 20;
-        const gustCount = Math.min(maxGusts, baseGusts + Math.floor(elapsed / 10)); // Add gust every 10 seconds
+        // Spawn wind gust animations - moderate amount
+        const gustCount = 8 + Math.floor(elapsed / 15);
         const newGusts = [];
         for (let i = 0; i < gustCount; i++) {
           newGusts.push({
             id: nextGustId.current++,
-            y: Math.random() * 80 + 10, // 10-90% from top
+            y: Math.random() * 80 + 10,
             direction: windDir,
-            delay: Math.random() * 0.5, // Stagger animation starts
-            duration: 2.5 + Math.random() * 1.5, // 2.5-4s animation - slower at first
+            delay: Math.random() * 0.3,
+            duration: 3 + Math.random() * 2, // Slower animations
           });
         }
         setWindGusts(newGusts);
 
-        // Wind gust duration - longer at first
-        const gustDuration = 1200 + Math.random() * 400;
+        // Gust lasts longer but is weaker
+        const gustDuration = 1500 + Math.random() * 500;
         setTimeout(() => {
           if (!isPlayingRef.current) return;
-          setWindDirection(0);
-          setWindStrength(0);
-          setWindGusts([]); // Clear gusts
+          // Return to gentle continuous wind
+          setWindDirection(Math.random() > 0.5 ? 1 : -1);
+          setWindStrength(CONTINUOUS_WIND_SPEED);
+          setWindGusts([]);
         }, gustDuration);
 
         scheduleNextWind();
@@ -459,13 +453,13 @@ export default function WindGame({ onClose }) {
           How to Play
         </h3>
         <p style={{ color: '#a7b0b8', fontSize: 16, lineHeight: 1.6, margin: '0 0 16px' }}>
-          Chicago's famous wind is trying to blow your food away! Drag your food item to keep it balanced on the platform. Watch for wind warnings and react quickly!
+          Chicago's famous wind is constantly blowing! Drag your Garrett Popcorn bag to protect it from wind gusts. A gentle breeze blows continuously, but watch out for strong gusts!
         </p>
         <p style={{ color: '#fbbf24', fontSize: 14, fontWeight: 600, margin: '0 0 8px' }}>
-          Special: With Garrett Popcorn, pieces will fly away! Don't lose them all or you'll lose a life!
+          🍿 Popcorn pieces will fly away in the wind! If you lose all your popcorn, you lose a life!
         </p>
         <p style={{ color: '#10b981', fontSize: 14, fontWeight: 600, margin: 0 }}>
-          Keep your food from blowing away for 60 seconds!
+          Survive for 60 seconds and keep your popcorn safe!
         </p>
       </div>
 
@@ -638,24 +632,30 @@ export default function WindGame({ onClose }) {
       ))}
 
       {/* Popcorn Pieces */}
-      {currentFood.hasPopcornPieces && popcornPieces.map(piece => (
-        <div
-          key={piece.id}
-          style={{
-            position: 'absolute',
-            left: `${piece.x}%`,
-            top: `${piece.y}%`,
-            transform: 'translate(-50%, -50%)',
-            fontSize: POPCORN_SIZE,
-            pointerEvents: 'none',
-            opacity: 1,
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-            transition: 'left 0.1s, top 0.1s',
-          }}
-        >
-          🍿
-        </div>
-      ))}
+      {currentFood.hasPopcornPieces && popcornPieces.map(piece => {
+        // Check if piece is flying away (near edges)
+        const isFlyingAway = piece.x < 5 || piece.x > 95 || piece.y > 85;
+        return (
+          <div
+            key={piece.id}
+            style={{
+              position: 'absolute',
+              left: `${piece.x}%`,
+              top: `${piece.y}%`,
+              transform: `translate(-50%, -50%) rotate(${piece.x * 3}deg)`,
+              fontSize: POPCORN_SIZE,
+              pointerEvents: 'none',
+              opacity: isFlyingAway ? 0 : 1,
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+              transition: isFlyingAway
+                ? 'left 0.5s ease-out, top 0.5s ease-out, opacity 0.5s ease-out, transform 0.5s ease-out'
+                : 'left 0.1s linear, top 0.1s linear, transform 0.2s linear',
+            }}
+          >
+            🍿
+          </div>
+        );
+      })}
 
       {/* Food Item */}
       <div
