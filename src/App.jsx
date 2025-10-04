@@ -53,6 +53,7 @@ import ThenAndNow from './components/ThenAndNow';
 import WeatherWidget from './components/WeatherWidget';
 import OfflineIndicator from './components/OfflineIndicator';
 import AnonymousMessageModal from './components/AnonymousMessageModal';
+import CommentsModal from './components/CommentsModal';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -152,6 +153,9 @@ export default function App() {
 
   // then & now modal
   const [thenAndNowOpen, setThenAndNowOpen] = useState(false);
+
+  // comments modal
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   // layer toggles
   const [showPopularSpots, setShowPopularSpots] = useState(true);
@@ -1069,6 +1073,10 @@ export default function App() {
         <ThenAndNow onClose={() => setThenAndNowOpen(false)} />
       )}
 
+      {commentsOpen && (
+        <CommentsModal onClose={() => setCommentsOpen(false)} />
+      )}
+
       {adminSettings.showWeatherWidget && (
         <WeatherWidget autoDismissOnEdit={draft !== null || exploring} />
       )}
@@ -1081,6 +1089,7 @@ export default function App() {
           setOrderMenuOpen={setOrderMenuOpen}
           setPhotoBoothOpen={setPhotoBoothOpen}
           setThenAndNowOpen={setThenAndNowOpen}
+          setCommentsOpen={setCommentsOpen}
         />
       )}
 

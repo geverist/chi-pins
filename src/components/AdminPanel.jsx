@@ -1306,6 +1306,16 @@ export default function AdminPanel({ open, onClose }) {
                     }}
                   />
                 </FieldRow>
+
+                <FieldRow label="💬 Leave Feedback">
+                  <Toggle
+                    checked={navSettings.comments_enabled}
+                    onChange={(v) => {
+                      // Update local state only, save happens on "Save & Close"
+                      setNavSettings({ ...navSettings, comments_enabled: v });
+                    }}
+                  />
+                </FieldRow>
               </Card>
 
               <Card title="Mobile Device Controls">

@@ -7,7 +7,8 @@ export default function MobileNavMenu({
   setJukeboxOpen,
   setOrderMenuOpen,
   setPhotoBoothOpen,
-  setThenAndNowOpen
+  setThenAndNowOpen,
+  setCommentsOpen
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -16,7 +17,8 @@ export default function MobileNavMenu({
     (navSettings?.jukebox_enabled ? 1 : 0) +
     (navSettings?.order_enabled ? 1 : 0) +
     (navSettings?.photobooth_enabled ? 1 : 0) +
-    (navSettings?.thenandnow_enabled ? 1 : 0);
+    (navSettings?.thenandnow_enabled ? 1 : 0) +
+    (navSettings?.comments_enabled ? 1 : 0);
 
   // Don't show if no features are enabled
   if (enabledCount === 0) return null;
@@ -161,6 +163,7 @@ export default function MobileNavMenu({
                 padding: '16px 20px',
                 background: 'transparent',
                 border: 'none',
+                borderBottom: navSettings?.comments_enabled ? '1px solid rgba(255,255,255,0.1)' : 'none',
                 color: '#f4f6f8',
                 fontSize: 16,
                 fontWeight: 600,
@@ -173,6 +176,28 @@ export default function MobileNavMenu({
             >
               <span style={{ fontSize: 24 }}>🏛️</span>
               <span>Then & Now</span>
+            </button>
+          )}
+          {navSettings?.comments_enabled && (
+            <button
+              onClick={() => handleItemClick(() => setCommentsOpen(true))}
+              style={{
+                width: '100%',
+                padding: '16px 20px',
+                background: 'transparent',
+                border: 'none',
+                color: '#f4f6f8',
+                fontSize: 16,
+                fontWeight: 600,
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <span style={{ fontSize: 24 }}>💬</span>
+              <span>Leave Feedback</span>
             </button>
           )}
         </div>

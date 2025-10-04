@@ -11,6 +11,7 @@ export function useNavigationSettings() {
     explore_enabled: true,
     photobooth_enabled: true,
     thenandnow_enabled: true,
+    comments_enabled: true,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
