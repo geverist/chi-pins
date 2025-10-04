@@ -130,10 +130,14 @@ export default function WindGame({ onClose }) {
 
   const checkWindCollision = (windDir, strength) => {
     // Wind gust comes from left (windDir = 1) or right (windDir = -1)
+    // windDir = 1: wind blows from left to right (arrow →)
+    // windDir = -1: wind blows from right to left (arrow ←)
     const boxX = boxPosition.x;
 
-    // If box is on the side where wind is coming from, it gets hit
-    const isHit = (windDir === 1 && boxX < 50) || (windDir === -1 && boxX > 50);
+    // If box is in the path of the wind, it gets hit
+    // Wind from left (→) hits boxes on the right side (x > 50)
+    // Wind from right (←) hits boxes on the left side (x < 50)
+    const isHit = (windDir === 1 && boxX > 50) || (windDir === -1 && boxX < 50);
 
     if (isHit) {
       losePopcorn(Math.ceil(strength * 2)); // Lose 1-3 pieces based on wind strength
@@ -275,10 +279,10 @@ export default function WindGame({ onClose }) {
         </h3>
         <p style={{ color: '#a7b0b8', fontSize: 16, lineHeight: 1.6, margin: '0 0 16px' }}>
           Chicago's famous wind is trying to blow your Garrett Popcorn away!
-          Touch and drag the popcorn box to avoid wind gusts coming from left and right.
+          Touch and drag the popcorn box to the OPPOSITE side of the wind direction to avoid getting hit.
         </p>
         <p style={{ color: '#fbbf24', fontSize: 14, fontWeight: 600, margin: '0 0 8px' }}>
-          🍿 Each time a wind gust hits your box, popcorn flies away!
+          🍿 Wind from left (→)? Move LEFT! Wind from right (←)? Move RIGHT!
         </p>
         <p style={{ color: '#10b981', fontSize: 14, fontWeight: 600, margin: 0 }}>
           Survive for {GAME_DURATION} seconds without losing all your popcorn!
@@ -298,10 +302,10 @@ export default function WindGame({ onClose }) {
             💡 Tips
           </h4>
           <ul style={{ color: '#a7b0b8', fontSize: 14, textAlign: 'left', margin: 0, paddingLeft: 20 }}>
-            <li>Watch for wind direction arrows</li>
-            <li>Move to opposite side of gust</li>
-            <li>Wind gets faster and stronger!</li>
-            <li>Stay away from edges</li>
+            <li>Watch for wind direction warnings</li>
+            <li>Move to the SAFE side (where wind comes from)</li>
+            <li>Wind gets faster and stronger over time!</li>
+            <li>React quickly to each warning</li>
           </ul>
         </div>
         <div
