@@ -382,6 +382,69 @@ export default function AdminPanel({ open, onClose }) {
                 </p>
               </Card>
 
+              <Card title="Popcorn Wind Challenge Settings">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Configure difficulty settings for the Windy City Popcorn game
+                </p>
+                <FieldRow label="Starting popcorn pieces">
+                  <NumberInput
+                    value={settings.popcornStartingPieces}
+                    min={5}
+                    max={50}
+                    step={1}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornStartingPieces: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Game duration (seconds)">
+                  <NumberInput
+                    value={settings.popcornGameDuration}
+                    min={30}
+                    max={180}
+                    step={10}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornGameDuration: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind start interval (sec)">
+                  <NumberInput
+                    value={settings.popcornWindStartInterval}
+                    min={2}
+                    max={10}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindStartInterval: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind min interval (sec)">
+                  <NumberInput
+                    value={settings.popcornWindMinInterval}
+                    min={1}
+                    max={5}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindMinInterval: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind start speed">
+                  <NumberInput
+                    value={settings.popcornWindStartSpeed}
+                    min={0.1}
+                    max={2}
+                    step={0.1}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindStartSpeed: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind max speed">
+                  <NumberInput
+                    value={settings.popcornWindMaxSpeed}
+                    min={0.5}
+                    max={3}
+                    step={0.1}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindMaxSpeed: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Wind gust speed and frequency increase during the game
+                </p>
+              </Card>
+
               <Card title="Security PIN Codes">
                 <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
                   Set 4-digit PIN codes for admin panel access and kiosk exit

@@ -30,6 +30,14 @@ const DEFAULTS = {
   deepDishStartSpeed: 2,      // Initial fall speed
   deepDishEndSpeed: 5,        // Maximum fall speed
 
+  // Popcorn Wind Game settings
+  popcornStartingPieces: 20,   // Number of popcorn pieces in box at start
+  popcornGameDuration: 60,     // Game duration in seconds
+  popcornWindStartInterval: 4, // Initial seconds between wind gusts
+  popcornWindMinInterval: 2,   // Minimum seconds between wind gusts (speed increases over time)
+  popcornWindStartSpeed: 0.3,  // Initial wind gust force
+  popcornWindMaxSpeed: 1.2,    // Maximum wind gust force
+
   // Security PINs
   adminPanelPin: '1111',      // 4-digit PIN for admin panel access
   kioskExitPin: '1111',       // 4-digit PIN for exiting kiosk mode

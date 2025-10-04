@@ -1,38 +1,28 @@
 // src/components/WindGame.jsx
 import { useState, useEffect, useRef } from 'react';
+import { useAdminSettings } from '../state/useAdminSettings';
 import GameLeaderboard from './GameLeaderboard';
 
-const GAME_DURATION = 60; // 60 seconds
-const GRAVITY = 0.3;
-const DRAG_FORCE = 0.15;
-const WIND_FORCE_BASE = 0.3; // Slower wind
-const WIND_FORCE_MAX = 1.2; // Reduced max wind
-const PLATFORM_Y = 70; // percentage from top
-const MAX_POPCORN = 20; // Maximum popcorn pieces
-const POPCORN_SPAWN_INTERVAL = 600; // ms between popcorn spawns - spawn faster
-const POPCORN_SIZE = 28; // Size of popcorn piece emoji
-const CONTINUOUS_WIND_SPEED = 0.15; // Constant gentle breeze
-
-const FOOD_ITEMS = [
-  { id: 'popcorn', name: 'Garrett Popcorn', emoji: '🍿', weight: 0.6, size: 60, hasPopcornPieces: true },
-];
-
 export default function WindGame({ onClose }) {
+  const { settings: adminSettings } = useAdminSettings();
+
+  // Game settings from admin panel
+  const GAME_DURATION = adminSettings.popcornGameDuration || 60;
+  const STARTING_POPCORN = adminSettings.popcornStartingPieces || 20;
+  const WIND_START_INTERVAL = adminSettings.popcornWindStartInterval || 4;
+  const WIND_MIN_INTERVAL = adminSettings.popcornWindMinInterval || 2;
+  const WIND_START_SPEED = adminSettings.popcornWindStartSpeed || 0.3;
+  const WIND_MAX_SPEED = adminSettings.popcornWindMaxSpeed || 1.2;
+
   const [gameState, setGameState] = useState('instructions');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
-  const [currentFood, setCurrentFood] = useState(FOOD_ITEMS[0]);
-  const [foodPosition, setFoodPosition] = useState({ x: 50, y: 50 }); // percentage
-  const [foodVelocity, setFoodVelocity] = useState({ x: 0, y: 0 });
-  const [windDirection, setWindDirection] = useState(0); // -1 left, 0 none, 1 right
-  const [windStrength, setWindStrength] = useState(0);
-  const [windWarning, setWindWarning] = useState(null); // 'left', 'right', or null
-  const [lives, setLives] = useState(3);
-  const [combo, setCombo] = useState(0);
-  const [dragStart, setDragStart] = useState(null);
-  const [popcornPieces, setPopcornPieces] = useState([]);
-  const [popcornCount, setPopcornCount] = useState(MAX_POPCORN);
+  const [popcornCount, setPopcornCount] = useState(STARTING_POPCORN);
+  const [boxPosition, setBoxPosition] = useState({ x: 50, y: 70 }); // percentage
   const [windGusts, setWindGusts] = useState([]);
+  const [windWarning, setWindWarning] = useState(null);
+  const [flyingPopcorn, setFlyingPopcorn] = useState([]);
+  const [touchStartPos, setTouchStartPos] = useState(null);
 
   const gameLoopRef = useRef(null);
   const windTimerRef = useRef(null);
@@ -40,15 +30,13 @@ export default function WindGame({ onClose }) {
   const gameContainerRef = useRef(null);
   const isPlayingRef = useRef(false);
   const lastScoreTime = useRef(0);
-  const popcornSpawnTimerRef = useRef(null);
-  const nextPopcornId = useRef(0);
   const nextGustId = useRef(0);
+  const nextPopcornId = useRef(0);
 
   useEffect(() => {
     return () => {
       if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
       if (windTimerRef.current) clearTimeout(windTimerRef.current);
-      if (popcornSpawnTimerRef.current) clearTimeout(popcornSpawnTimerRef.current);
     };
   }, []);
 
@@ -57,27 +45,19 @@ export default function WindGame({ onClose }) {
     isPlayingRef.current = true;
     setScore(0);
     setTimeLeft(GAME_DURATION);
-    const startFood = FOOD_ITEMS[0]; // Always use Garrett Popcorn
-    setCurrentFood(startFood);
-    setFoodPosition({ x: 50, y: 50 });
-    setFoodVelocity({ x: 0, y: 0 });
-    setWindDirection(1); // Start with gentle continuous wind
-    setWindStrength(CONTINUOUS_WIND_SPEED);
-    setWindWarning(null);
-    setLives(3);
-    setCombo(0);
-    setDragStart(null);
-    setPopcornPieces([]);
-    setPopcornCount(MAX_POPCORN);
-    nextPopcornId.current = 0;
+    setPopcornCount(STARTING_POPCORN);
+    setBoxPosition({ x: 50, y: 70 });
     setWindGusts([]);
+    setWindWarning(null);
+    setFlyingPopcorn([]);
+    setTouchStartPos(null);
     nextGustId.current = 0;
+    nextPopcornId.current = 0;
     gameStartTime.current = Date.now();
     lastScoreTime.current = Date.now();
 
     startGameLoop();
     scheduleNextWind();
-    schedulePopcornSpawn(); // Always spawn popcorn now
   };
 
   const startGameLoop = () => {
@@ -88,53 +68,24 @@ export default function WindGame({ onClose }) {
     gameLoopRef.current = requestAnimationFrame(loop);
   };
 
-  const schedulePopcornSpawn = () => {
-    if (!isPlayingRef.current || !currentFood.hasPopcornPieces) return;
-
-    popcornSpawnTimerRef.current = setTimeout(() => {
-      if (!isPlayingRef.current || !currentFood.hasPopcornPieces) return;
-
-      setPopcornPieces(prev => {
-        if (prev.length >= MAX_POPCORN) return prev;
-
-        setFoodPosition(currentPos => {
-          const newPiece = {
-            id: nextPopcornId.current++,
-            x: currentPos.x + (Math.random() * 16 - 8),
-            y: currentPos.y + (Math.random() * 16 - 8),
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2,
-          };
-
-          setPopcornPieces(prevPieces => [...prevPieces, newPiece]);
-          return currentPos;
-        });
-
-        return prev;
-      });
-
-      schedulePopcornSpawn();
-    }, POPCORN_SPAWN_INTERVAL);
-  };
-
   const scheduleNextWind = () => {
     if (!isPlayingRef.current) return;
 
     const now = Date.now();
     const elapsed = (now - gameStartTime.current) / 1000;
 
-    // More frequent but weaker wind gusts
-    const baseInterval = 4000; // Start at 4 seconds
-    const minInterval = 2000; // Speed up to 2 seconds minimum
-    const interval = Math.max(minInterval, baseInterval - (elapsed * 30));
+    // Calculate interval - gets faster over time
+    const intervalRange = WIND_START_INTERVAL - WIND_MIN_INTERVAL;
+    const progress = Math.min(elapsed / GAME_DURATION, 1);
+    const interval = (WIND_START_INTERVAL - (intervalRange * progress)) * 1000;
 
-    // Longer warning time
+    // Warning time before gust
     const warningDelay = 1200;
 
     windTimerRef.current = setTimeout(() => {
       if (!isPlayingRef.current) return;
 
-      // Alternate wind direction for variety
+      // Random direction
       const direction = Math.random() > 0.5 ? 'right' : 'left';
       setWindWarning(direction);
 
@@ -143,40 +94,81 @@ export default function WindGame({ onClose }) {
         if (!isPlayingRef.current) return;
 
         const windDir = direction === 'right' ? 1 : -1;
-        const strength = WIND_FORCE_BASE + (elapsed / 90) * (WIND_FORCE_MAX - WIND_FORCE_BASE);
 
-        // Apply gust force on top of continuous wind
-        setWindDirection(windDir);
-        setWindStrength(CONTINUOUS_WIND_SPEED + strength);
-        setWindWarning(null);
+        // Calculate wind strength - gets stronger over time
+        const speedRange = WIND_MAX_SPEED - WIND_START_SPEED;
+        const strength = WIND_START_SPEED + (speedRange * progress);
 
-        // Spawn wind gust animations - moderate amount
-        const gustCount = 8 + Math.floor(elapsed / 15);
+        // Spawn wind gust visual
+        const gustCount = 12 + Math.floor(elapsed / 10);
         const newGusts = [];
         for (let i = 0; i < gustCount; i++) {
           newGusts.push({
             id: nextGustId.current++,
-            y: Math.random() * 80 + 10,
+            y: Math.random() * 60 + 20, // Center area where box moves
             direction: windDir,
             delay: Math.random() * 0.3,
-            duration: 3 + Math.random() * 2, // Slower animations
+            duration: 2.5 + Math.random() * 1.5,
           });
         }
         setWindGusts(newGusts);
 
-        // Gust lasts longer but is weaker
-        const gustDuration = 1500 + Math.random() * 500;
+        // Check collision with box
+        checkWindCollision(windDir, strength);
+
+        // Clear gusts after animation
         setTimeout(() => {
           if (!isPlayingRef.current) return;
-          // Return to gentle continuous wind
-          setWindDirection(Math.random() > 0.5 ? 1 : -1);
-          setWindStrength(CONTINUOUS_WIND_SPEED);
           setWindGusts([]);
-        }, gustDuration);
+        }, 3000);
 
+        setWindWarning(null);
         scheduleNextWind();
       }, warningDelay);
     }, interval - warningDelay);
+  };
+
+  const checkWindCollision = (windDir, strength) => {
+    // Wind gust comes from left (windDir = 1) or right (windDir = -1)
+    const boxX = boxPosition.x;
+
+    // If box is on the side where wind is coming from, it gets hit
+    const isHit = (windDir === 1 && boxX < 50) || (windDir === -1 && boxX > 50);
+
+    if (isHit) {
+      losePopcorn(Math.ceil(strength * 2)); // Lose 1-3 pieces based on wind strength
+    }
+  };
+
+  const losePopcorn = (count) => {
+    setPopcornCount(prev => {
+      const newCount = Math.max(0, prev - count);
+
+      // Spawn flying popcorn animations
+      const newFlying = [];
+      for (let i = 0; i < count; i++) {
+        newFlying.push({
+          id: nextPopcornId.current++,
+          x: boxPosition.x + (Math.random() * 10 - 5),
+          y: boxPosition.y + (Math.random() * 10 - 5),
+          targetX: Math.random() > 0.5 ? -20 : 120,
+          targetY: -20 + Math.random() * 40,
+        });
+      }
+      setFlyingPopcorn(prev => [...prev, ...newFlying]);
+
+      // Remove flying popcorn after animation
+      setTimeout(() => {
+        setFlyingPopcorn(prev => prev.filter(p => !newFlying.find(n => n.id === p.id)));
+      }, 2000);
+
+      // Check if game over
+      if (newCount === 0) {
+        endGame();
+      }
+
+      return newCount;
+    });
   };
 
   const updateGame = () => {
@@ -190,153 +182,11 @@ export default function WindGame({ onClose }) {
       return;
     }
 
-    // Score points for keeping food on platform (every 0.1 seconds)
+    // Score points every 0.1 seconds
     if (now - lastScoreTime.current >= 100) {
       const pointsPerTick = 1;
       setScore(prev => prev + pointsPerTick);
       lastScoreTime.current = now;
-    }
-
-    // Update popcorn pieces physics
-    if (currentFood.hasPopcornPieces && popcornPieces.length > 0) {
-      setPopcornPieces(prev => {
-        const updated = [];
-        let lostCount = 0;
-
-        prev.forEach(piece => {
-          let newVx = piece.vx;
-          let newVy = piece.vy;
-
-          // Apply wind force (popcorn is lighter, more affected)
-          if (windDirection !== 0) {
-            newVx += windDirection * windStrength * 1.5;
-          }
-
-          // Apply drag
-          newVx *= (1 - DRAG_FORCE * 0.8);
-          newVy *= (1 - DRAG_FORCE * 0.8);
-
-          // Light gravity
-          newVy += GRAVITY * 0.5;
-
-          // Cap velocities
-          const maxVel = 12;
-          newVx = Math.max(-maxVel, Math.min(maxVel, newVx));
-          newVy = Math.max(-maxVel, Math.min(maxVel, newVy));
-
-          const newX = piece.x + newVx * 0.1;
-          const newY = piece.y + newVy * 0.1;
-
-          // Check if popcorn fell off screen
-          if (newX < -5 || newX > 105 || newY > 95) {
-            lostCount++;
-          } else {
-            updated.push({
-              ...piece,
-              x: newX,
-              y: newY,
-              vx: newVx,
-              vy: newVy,
-            });
-          }
-        });
-
-        // Update popcorn count and check for life loss
-        if (lostCount > 0) {
-          setPopcornCount(prevCount => {
-            const newCount = Math.max(0, prevCount - lostCount);
-
-            // Lose a life if all popcorn is gone
-            if (newCount === 0 && prevCount > 0) {
-              loseLife();
-            }
-
-            return newCount;
-          });
-        }
-
-        return updated;
-      });
-    }
-
-    setFoodPosition(prev => {
-      setFoodVelocity(prevVel => {
-        let newVelX = prevVel.x;
-        let newVelY = prevVel.y;
-
-        // Apply wind force
-        if (windDirection !== 0) {
-          newVelX += windDirection * windStrength;
-        }
-
-        // Apply drag when not being moved by user
-        if (!dragStart) {
-          newVelX *= (1 - DRAG_FORCE);
-          newVelY *= (1 - DRAG_FORCE);
-        }
-
-        // Apply gravity if above platform
-        if (prev.y < PLATFORM_Y - 2) {
-          newVelY += GRAVITY;
-        } else if (prev.y > PLATFORM_Y + 2) {
-          // Gentle push back to platform if below
-          newVelY -= GRAVITY * 0.5;
-        } else {
-          // On platform - dampen vertical velocity
-          newVelY *= 0.8;
-        }
-
-        // Cap velocities
-        const maxVel = 8;
-        newVelX = Math.max(-maxVel, Math.min(maxVel, newVelX));
-        newVelY = Math.max(-maxVel, Math.min(maxVel, newVelY));
-
-        return { x: newVelX, y: newVelY };
-      });
-
-      const newX = prev.x + foodVelocity.x * 0.1;
-      const newY = prev.y + foodVelocity.y * 0.1;
-
-      // Check if food fell off screen
-      if (newX < -10 || newX > 110 || newY > 100) {
-        loseLife();
-        return { x: 50, y: 50 }; // Reset position
-      }
-
-      // Boundary constraints
-      const boundedX = Math.max(5, Math.min(95, newX));
-      const boundedY = Math.max(10, Math.min(PLATFORM_Y + 5, newY));
-
-      return { x: boundedX, y: boundedY };
-    });
-  };
-
-  const loseLife = () => {
-    setLives(prev => {
-      const newLives = prev - 1;
-      if (newLives <= 0) {
-        endGame();
-      }
-      return newLives;
-    });
-    setCombo(0);
-    setFoodVelocity({ x: 0, y: 0 });
-
-    // Clear popcorn pieces and timers
-    if (popcornSpawnTimerRef.current) {
-      clearTimeout(popcornSpawnTimerRef.current);
-    }
-    setPopcornPieces([]);
-    setPopcornCount(MAX_POPCORN);
-    nextPopcornId.current = 0;
-
-    // Change to new random food item
-    const newFood = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)];
-    setCurrentFood(newFood);
-
-    // Start spawning popcorn if new food is popcorn
-    if (newFood.hasPopcornPieces && isPlayingRef.current) {
-      schedulePopcornSpawn();
     }
   };
 
@@ -347,49 +197,6 @@ export default function WindGame({ onClose }) {
     setGameState('finished');
   };
 
-  const handleMouseDown = (e) => {
-    if (gameState !== 'playing' || !gameContainerRef.current) return;
-
-    const rect = gameContainerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    // Check if clicking near food
-    const distance = Math.sqrt(
-      Math.pow(x - foodPosition.x, 2) + Math.pow(y - foodPosition.y, 2)
-    );
-
-    if (distance < 15) {
-      setDragStart({ x, y, foodX: foodPosition.x, foodY: foodPosition.y });
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (!dragStart || gameState !== 'playing' || !gameContainerRef.current) return;
-
-    const rect = gameContainerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    const deltaX = x - dragStart.x;
-    const deltaY = y - dragStart.y;
-
-    setFoodPosition({
-      x: Math.max(5, Math.min(95, dragStart.foodX + deltaX)),
-      y: Math.max(10, Math.min(PLATFORM_Y + 5, dragStart.foodY + deltaY)),
-    });
-
-    // Apply velocity based on drag
-    setFoodVelocity({
-      x: deltaX * 0.3,
-      y: deltaY * 0.3,
-    });
-  };
-
-  const handleMouseUp = () => {
-    setDragStart(null);
-  };
-
   const handleTouchStart = (e) => {
     if (gameState !== 'playing' || !gameContainerRef.current) return;
 
@@ -398,17 +205,11 @@ export default function WindGame({ onClose }) {
     const x = ((touch.clientX - rect.left) / rect.width) * 100;
     const y = ((touch.clientY - rect.top) / rect.height) * 100;
 
-    const distance = Math.sqrt(
-      Math.pow(x - foodPosition.x, 2) + Math.pow(y - foodPosition.y, 2)
-    );
-
-    if (distance < 15) {
-      setDragStart({ x, y, foodX: foodPosition.x, foodY: foodPosition.y });
-    }
+    setTouchStartPos({ x, y });
   };
 
   const handleTouchMove = (e) => {
-    if (!dragStart || gameState !== 'playing' || !gameContainerRef.current) return;
+    if (!touchStartPos || gameState !== 'playing' || !gameContainerRef.current) return;
     e.preventDefault();
 
     const touch = e.touches[0];
@@ -416,28 +217,48 @@ export default function WindGame({ onClose }) {
     const x = ((touch.clientX - rect.left) / rect.width) * 100;
     const y = ((touch.clientY - rect.top) / rect.height) * 100;
 
-    const deltaX = x - dragStart.x;
-    const deltaY = y - dragStart.y;
-
-    setFoodPosition({
-      x: Math.max(5, Math.min(95, dragStart.foodX + deltaX)),
-      y: Math.max(10, Math.min(PLATFORM_Y + 5, dragStart.foodY + deltaY)),
-    });
-
-    setFoodVelocity({
-      x: deltaX * 0.3,
-      y: deltaY * 0.3,
+    // Update box position - constrain to play area
+    setBoxPosition({
+      x: Math.max(10, Math.min(90, x)),
+      y: Math.max(20, Math.min(80, y)),
     });
   };
 
   const handleTouchEnd = () => {
-    setDragStart(null);
+    setTouchStartPos(null);
+  };
+
+  const handleMouseDown = (e) => {
+    if (gameState !== 'playing' || !gameContainerRef.current) return;
+
+    const rect = gameContainerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setTouchStartPos({ x, y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!touchStartPos || gameState !== 'playing' || !gameContainerRef.current) return;
+
+    const rect = gameContainerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setBoxPosition({
+      x: Math.max(10, Math.min(90, x)),
+      y: Math.max(20, Math.min(80, y)),
+    });
+  };
+
+  const handleMouseUp = () => {
+    setTouchStartPos(null);
   };
 
   const renderInstructions = () => (
     <div style={{ padding: 40, textAlign: 'center' }}>
       <h2 style={{ margin: '0 0 24px', color: '#f4f6f8', fontSize: 32 }}>
-        💨 Chicago Wind Challenge!
+        💨 Windy City Popcorn Challenge!
       </h2>
 
       <div
@@ -453,13 +274,14 @@ export default function WindGame({ onClose }) {
           How to Play
         </h3>
         <p style={{ color: '#a7b0b8', fontSize: 16, lineHeight: 1.6, margin: '0 0 16px' }}>
-          Chicago's famous wind is constantly blowing! Drag your Garrett Popcorn bag to protect it from wind gusts. A gentle breeze blows continuously, but watch out for strong gusts!
+          Chicago's famous wind is trying to blow your Garrett Popcorn away!
+          Touch and drag the popcorn box to avoid wind gusts coming from left and right.
         </p>
         <p style={{ color: '#fbbf24', fontSize: 14, fontWeight: 600, margin: '0 0 8px' }}>
-          🍿 Popcorn pieces will fly away in the wind! If you lose all your popcorn, you lose a life!
+          🍿 Each time a wind gust hits your box, popcorn flies away!
         </p>
         <p style={{ color: '#10b981', fontSize: 14, fontWeight: 600, margin: 0 }}>
-          Survive for 60 seconds and keep your popcorn safe!
+          Survive for {GAME_DURATION} seconds without losing all your popcorn!
         </p>
       </div>
 
@@ -476,10 +298,10 @@ export default function WindGame({ onClose }) {
             💡 Tips
           </h4>
           <ul style={{ color: '#a7b0b8', fontSize: 14, textAlign: 'left', margin: 0, paddingLeft: 20 }}>
-            <li>Watch for wind warnings (arrows)</li>
-            <li>Drag food to counter wind gusts</li>
-            <li>Keep food on the platform</li>
-            <li>Wind gets stronger over time!</li>
+            <li>Watch for wind direction arrows</li>
+            <li>Move to opposite side of gust</li>
+            <li>Wind gets faster and stronger!</li>
+            <li>Stay away from edges</li>
           </ul>
         </div>
         <div
@@ -491,10 +313,10 @@ export default function WindGame({ onClose }) {
           }}
         >
           <h4 style={{ margin: '0 0 12px', color: '#ef4444', fontSize: 16 }}>
-            ❤️ Lives
+            🍿 Popcorn Count
           </h4>
           <p style={{ color: '#a7b0b8', fontSize: 14, margin: 0 }}>
-            You have 3 lives. Lose a life if your food blows off the screen. Game over when you run out of lives!
+            You start with {STARTING_POPCORN} pieces of popcorn. Game over when you run out!
           </p>
         </div>
       </div>
@@ -528,7 +350,7 @@ export default function WindGame({ onClose }) {
         background: 'linear-gradient(180deg, #87ceeb 0%, #e0f6ff 100%)',
         borderRadius: 12,
         overflow: 'hidden',
-        cursor: dragStart ? 'grabbing' : 'grab',
+        cursor: touchStartPos ? 'grabbing' : 'grab',
         userSelect: 'none',
         touchAction: 'none',
       }}
@@ -579,20 +401,6 @@ export default function WindGame({ onClose }) {
         }} />
       </div>
 
-      {/* Platform */}
-      <div
-        style={{
-          position: 'absolute',
-          top: `${PLATFORM_Y}%`,
-          left: '10%',
-          right: '10%',
-          height: 8,
-          background: 'linear-gradient(180deg, #8b4513 0%, #654321 100%)',
-          borderRadius: 4,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-        }}
-      />
-
       {/* Wind Warning */}
       {windWarning && (
         <div
@@ -601,10 +409,11 @@ export default function WindGame({ onClose }) {
             top: '20%',
             left: windWarning === 'left' ? '10%' : 'auto',
             right: windWarning === 'right' ? '10%' : 'auto',
-            fontSize: 48,
+            fontSize: 64,
             animation: 'pulse 0.5s ease-in-out infinite',
             color: '#ff6b6b',
             textShadow: '0 0 10px rgba(255,107,107,0.5)',
+            fontWeight: 'bold',
           }}
         >
           {windWarning === 'left' ? '←' : '→'}
@@ -631,46 +440,38 @@ export default function WindGame({ onClose }) {
         </div>
       ))}
 
-      {/* Popcorn Pieces */}
-      {currentFood.hasPopcornPieces && popcornPieces.map(piece => {
-        // Check if piece is flying away (near edges)
-        const isFlyingAway = piece.x < 5 || piece.x > 95 || piece.y > 85;
-        return (
-          <div
-            key={piece.id}
-            style={{
-              position: 'absolute',
-              left: `${piece.x}%`,
-              top: `${piece.y}%`,
-              transform: `translate(-50%, -50%) rotate(${piece.x * 3}deg)`,
-              fontSize: POPCORN_SIZE,
-              pointerEvents: 'none',
-              opacity: isFlyingAway ? 0 : 1,
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-              transition: isFlyingAway
-                ? 'left 0.5s ease-out, top 0.5s ease-out, opacity 0.5s ease-out, transform 0.5s ease-out'
-                : 'left 0.1s linear, top 0.1s linear, transform 0.2s linear',
-            }}
-          >
-            🍿
-          </div>
-        );
-      })}
+      {/* Flying Popcorn Pieces */}
+      {flyingPopcorn.map(piece => (
+        <div
+          key={piece.id}
+          style={{
+            position: 'absolute',
+            left: `${piece.x}%`,
+            top: `${piece.y}%`,
+            fontSize: 28,
+            pointerEvents: 'none',
+            animation: `flyAway 2s ease-out forwards`,
+            transformOrigin: 'center',
+          }}
+        >
+          🍿
+        </div>
+      ))}
 
-      {/* Food Item */}
+      {/* Popcorn Box */}
       <div
         style={{
           position: 'absolute',
-          left: `${foodPosition.x}%`,
-          top: `${foodPosition.y}%`,
+          left: `${boxPosition.x}%`,
+          top: `${boxPosition.y}%`,
           transform: 'translate(-50%, -50%)',
-          fontSize: currentFood.size,
+          fontSize: 80,
           pointerEvents: 'none',
-          filter: dragStart ? 'brightness(1.2)' : 'none',
-          transition: dragStart ? 'none' : 'filter 0.2s',
+          filter: touchStartPos ? 'brightness(1.2) drop-shadow(0 0 20px rgba(255,255,0,0.5))' : 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+          transition: touchStartPos ? 'none' : 'filter 0.2s',
         }}
       >
-        {currentFood.emoji}
+        🍿
       </div>
 
       {/* HUD */}
@@ -706,53 +507,23 @@ export default function WindGame({ onClose }) {
         }}>
           🏆 {score}
         </div>
-        {currentFood.hasPopcornPieces && (
-          <div style={{
-            background: 'rgba(0,0,0,0.6)',
-            padding: '8px 16px',
-            borderRadius: 8,
-            color: '#fbbf24',
-            fontWeight: 600,
-            fontSize: 18,
-          }}>
-            🍿 {popcornCount}/{MAX_POPCORN}
-          </div>
-        )}
         <div style={{
-          background: 'rgba(0,0,0,0.6)',
+          background: popcornCount < 5 ? 'rgba(239,68,68,0.8)' : 'rgba(0,0,0,0.6)',
           padding: '8px 16px',
           borderRadius: 8,
-          color: '#ef4444',
+          color: popcornCount < 5 ? '#fff' : '#fbbf24',
           fontWeight: 600,
           fontSize: 18,
+          animation: popcornCount < 5 ? 'pulse 0.5s ease-in-out infinite' : 'none',
         }}>
-          {'❤️'.repeat(lives)}
+          🍿 {popcornCount}/{STARTING_POPCORN}
         </div>
-      </div>
-
-      {/* Current Food Name */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 16,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.6)',
-          padding: '8px 16px',
-          borderRadius: 8,
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: 16,
-          pointerEvents: 'none',
-        }}
-      >
-        {currentFood.name}
       </div>
 
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.2); }
+          50% { opacity: 0.6; transform: scale(1.1); }
         }
         @keyframes windBlowRight {
           0% { transform: translateX(0) scale(0.5); opacity: 0; }
@@ -766,17 +537,28 @@ export default function WindGame({ onClose }) {
           80% { opacity: 0.8; }
           100% { transform: translateX(-120vw) scale(1.2); opacity: 0; }
         }
+        @keyframes flyAway {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(${Math.random() > 0.5 ? '' : '-'}200%, -300%) rotate(${720 + Math.random() * 360}deg) scale(0.3);
+            opacity: 0;
+          }
+        }
       `}</style>
     </div>
   );
 
   const renderFinished = () => {
-    const accuracy = timeLeft > 0 ? ((GAME_DURATION - timeLeft) / GAME_DURATION) * 100 : 100;
+    const survivedTime = GAME_DURATION - timeLeft;
+    const won = popcornCount > 0;
 
     return (
       <div style={{ padding: 40 }}>
         <h2 style={{ margin: '0 0 24px', textAlign: 'center', color: '#f4f6f8', fontSize: 32 }}>
-          🎉 Game Over!
+          {won ? '🎉 You Won!' : '💨 Game Over!'}
         </h2>
 
         <div
@@ -789,19 +571,22 @@ export default function WindGame({ onClose }) {
             textAlign: 'center',
           }}
         >
-          <div style={{ fontSize: 64, marginBottom: 16 }}>{currentFood.emoji}</div>
-          <div style={{ fontSize: 48, fontWeight: 700, color: '#10b981', marginBottom: 16 }}>
+          <div style={{ fontSize: 64, marginBottom: 16 }}>🍿</div>
+          <div style={{ fontSize: 48, fontWeight: 700, color: won ? '#10b981' : '#fbbf24', marginBottom: 16 }}>
             {score.toLocaleString()} points
           </div>
-          <div style={{ color: '#a7b0b8', fontSize: 18 }}>
-            You survived {Math.ceil(GAME_DURATION - timeLeft)} seconds in the Chicago wind!
+          <div style={{ color: '#a7b0b8', fontSize: 18, marginBottom: 8 }}>
+            {won
+              ? `You survived the Chicago wind with ${popcornCount} pieces left!`
+              : `You survived ${Math.ceil(survivedTime)} seconds before running out of popcorn!`
+            }
           </div>
         </div>
 
         <GameLeaderboard
-          game="chicago-wind"
+          game="windy-city-popcorn"
           currentScore={score}
-          currentTime={GAME_DURATION - timeLeft}
+          currentTime={survivedTime}
           viewOnly={false}
         />
 
@@ -842,8 +627,6 @@ export default function WindGame({ onClose }) {
       </div>
     );
   };
-
-  if (!open && gameState === 'instructions') return null;
 
   return (
     <div
