@@ -170,3 +170,107 @@ async function staleWhileRevalidate(request, cacheName, opts = {}) {
   }).catch(() => null);
   return cached || (await netPromise) || Response.error();
 }
+
+/* ---------- Background Sync for Offline Pins ---------- */
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-pins') {
+    event.waitUntil(syncPendingPins());
+  }
+});
+
+async function syncPendingPins() {
+  try {
+    const db = await openIndexedDB();
+    const pendingPins = await getPendingPins(db);
+
+    if (pendingPins.length === 0) {
+      console.log('[SW] No pending pins to sync');
+      return;
+    }
+
+    console.log(`[SW] Syncing ${pendingPins.length} pending pins...`);
+
+    for (const pin of pendingPins) {
+      try {
+        // Post message to all clients to handle the sync
+        // The main app will use Supabase client to insert
+        const clients = await self.clients.matchAll();
+        clients.forEach(client => {
+          client.postMessage({
+            type: 'SYNC_PENDING_PIN',
+            pin: pin
+          });
+        });
+      } catch (error) {
+        console.error('[SW] Failed to sync pin:', error);
+      }
+    }
+  } catch (error) {
+    console.error('[SW] Sync error:', error);
+  }
+}
+
+function openIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('ChiPinsOffline', 1);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getPendingPins(db) {
+  return new Promise((resolve, reject) => {
+    try {
+      const transaction = db.transaction(['pending_pins'], 'readonly');
+      const store = transaction.objectStore('pending_pins');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    } catch (error) {
+      // Store might not exist yet
+      resolve([]);
+    }
+  });
+}
+
+/* ---------- Message Handling ---------- */
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+
+  if (event.data.type === 'CLEAR_TILE_CACHE') {
+    event.waitUntil(
+      caches.delete(TILES_CACHE).then(() => {
+        console.log('[SW] Tile cache cleared');
+      })
+    );
+  }
+
+  if (event.data.type === 'GET_CACHE_SIZE') {
+    event.waitUntil(
+      getCacheSize().then((size) => {
+        event.ports[0].postMessage({ size });
+      })
+    );
+  }
+
+  if (event.data.type === 'TRIGGER_SYNC') {
+    // Manually trigger background sync
+    self.registration.sync.register('sync-pins').catch(err => {
+      console.error('[SW] Background sync registration failed:', err);
+    });
+  }
+});
+
+async function getCacheSize() {
+  if ('storage' in navigator && 'estimate' in navigator.storage) {
+    const estimate = await navigator.storage.estimate();
+    return {
+      usage: estimate.usage,
+      quota: estimate.quota,
+      percentage: (estimate.usage / estimate.quota * 100).toFixed(2)
+    };
+  }
+  return { usage: 0, quota: 0, percentage: 0 };
+}
