@@ -55,6 +55,7 @@ import ZoomGate from './components/ZoomGate';
 import AdminPanel from './components/AdminPanel';
 import PinCodeModal from './components/PinCodeModal';
 import MobilePinsList from './components/MobilePinsList';
+import MobileNavMenu from './components/MobileNavMenu';
 import OrderMenu from './components/OrderMenu';
 import Jukebox from './components/Jukebox';
 import GamesMenu from './components/GamesMenu';
@@ -942,6 +943,15 @@ export default function App() {
 
       {gamesOpen && (
         <GamesMenu onClose={() => setGamesOpen(false)} />
+      )}
+
+      {isMobile && (
+        <MobileNavMenu
+          navSettings={navSettings}
+          setGamesOpen={setGamesOpen}
+          setJukeboxOpen={setJukeboxOpen}
+          setOrderMenuOpen={setOrderMenuOpen}
+        />
       )}
     </div>
   );
