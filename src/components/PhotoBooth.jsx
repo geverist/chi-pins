@@ -37,8 +37,13 @@ export default function PhotoBooth({ onClose }) {
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        // Ensure video plays on iOS/Safari
+        videoRef.current.play().catch(err => {
+          console.warn('Video autoplay prevented:', err);
+        });
       }
       setError(null);
+      console.log('Camera started successfully');
     } catch (err) {
       console.error('Camera error:', err);
       setError('Unable to access camera. Please check permissions.');
@@ -390,10 +395,10 @@ export default function PhotoBooth({ onClose }) {
           {!photo ? (
             <button
               onClick={capturePhoto}
-              disabled={countdown !== null}
+              disabled={countdown !== null || !stream}
               style={{
                 padding: '16px 48px',
-                background: countdown
+                background: (countdown || !stream)
                   ? 'rgba(100,100,100,0.5)'
                   : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 border: 'none',
@@ -401,11 +406,12 @@ export default function PhotoBooth({ onClose }) {
                 color: '#fff',
                 fontSize: 20,
                 fontWeight: 700,
-                cursor: countdown ? 'not-allowed' : 'pointer',
+                cursor: (countdown || !stream) ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
               }}
+              title={!stream ? 'Waiting for camera...' : 'Take a photo'}
             >
-              📸 Take Photo
+              📸 {!stream ? 'Starting Camera...' : 'Take Photo'}
             </button>
           ) : (
             <>

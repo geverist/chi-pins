@@ -893,6 +893,17 @@ export default function App() {
           mainMapRef={mainMapRef}
           baseZoom={submapBaseZoom}
           onCommit={(ll) => {
+            // Check for Lake Michigan before setting draft
+            if (mapMode === 'chicago' && isInLakeMichigan(ll.lat, ll.lng)) {
+              setToast({
+                title: 'Invalid Location',
+                text: 'Cannot place a pin in Lake Michigan! Please select a location on land.'
+              });
+              setTimeout(() => setToast(null), 5000);
+              closeSubmap();
+              return;
+            }
+
             setDraft(ll);
             try {
               const map = mainMapRef.current;

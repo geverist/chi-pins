@@ -1,5 +1,5 @@
 // src/components/WeatherWidget.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function WeatherWidget({ autoDismissOnEdit = false }) {
@@ -16,14 +16,7 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
     }
   }, [autoDismissOnEdit]);
 
-  useEffect(() => {
-    fetchWeather();
-    // Refresh every 30 minutes
-    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchWeather = async () => {
+  const fetchWeather = useCallback(async () => {
     try {
       setLoading(true);
       // Using Open-Meteo API (no API key required)
@@ -46,7 +39,14 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [adminSettings.weatherLat, adminSettings.weatherLng, adminSettings.weatherTimezone]);
+
+  useEffect(() => {
+    fetchWeather();
+    // Refresh every 30 minutes
+    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchWeather]);
 
   const getWeatherEmoji = (weatherCode) => {
     // WMO Weather interpretation codes
