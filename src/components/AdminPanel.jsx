@@ -355,10 +355,15 @@ export default function AdminPanel({ open, onClose }) {
                 </p>
               </Card>
 
-              <Card title="Deep Dish Game Settings">
-                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
-                  Configure falling speed for Deep Dish Toss game
+              <Card title="🎮 Game Settings">
+                <p style={{ ...s.muted, margin: '0 0 24px', fontSize: 12 }}>
+                  Configure difficulty settings for all Chicago-themed games
                 </p>
+
+                {/* Deep Dish Game */}
+                <h4 style={{ color: '#f4f6f8', margin: '0 0 12px', fontSize: 16, borderBottom: '1px solid #2a2f37', paddingBottom: 8 }}>
+                  Deep Dish Toss
+                </h4>
                 <FieldRow label="Start speed">
                   <NumberInput
                     value={settings.deepDishStartSpeed}
@@ -377,15 +382,14 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, deepDishEndSpeed: v }))}
                   />
                 </FieldRow>
-                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                <p style={{ ...s.muted, margin: '8px 0 24px', fontSize: 11 }}>
                   Speed progressively increases from start to end during game
                 </p>
-              </Card>
 
-              <Card title="Popcorn Wind Challenge Settings">
-                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
-                  Configure difficulty settings for the Windy City Popcorn game
-                </p>
+                {/* Popcorn Wind Challenge */}
+                <h4 style={{ color: '#f4f6f8', margin: '0 0 12px', fontSize: 16, borderBottom: '1px solid #2a2f37', paddingBottom: 8 }}>
+                  Windy City Popcorn Challenge
+                </h4>
                 <FieldRow label="Starting popcorn pieces">
                   <NumberInput
                     value={settings.popcornStartingPieces}
