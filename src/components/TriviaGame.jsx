@@ -71,6 +71,11 @@ export default function TriviaGame({ onClose }) {
     if (timerRef.current) clearInterval(timerRef.current);
 
     const currentQuestion = questions[currentQuestionIndex];
+    if (!currentQuestion) {
+      console.error('No current question found at index', currentQuestionIndex);
+      return;
+    }
+
     const questionTime = (Date.now() - questionStartTime.current) / 1000;
     const isCorrect = answerIndex === currentQuestion.correctAnswer;
 
