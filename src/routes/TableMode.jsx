@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css'
 import { supabase } from '../lib/supabase'
 import { parseTableToken } from '../lib/token'
 import { isInLakeMichigan } from '../lib/mapUtils'
+import { notifyPinPlacement, isVestaboardConfigured } from '../lib/vestaboard'
 
 const CHI = { lat: 41.8781, lng: -87.6298 }
 
@@ -86,6 +87,7 @@ export default function TableMode() {
   const [draft, setDraft] = useState({ team: 'cubs', note: '', name: '', neighborhood: '' })
   const [placing, setPlacing] = useState(null)
   const [error, setError] = useState('')
+  const [postToVestaboard, setPostToVestaboard] = useState(true)
   const mapRef = useRef(null)
 
   // … (all your existing effects: token check, load, optional realtime, polling) …
@@ -114,6 +116,17 @@ export default function TableMode() {
 
     const inserted = data?.[0] || rec
     setPins(p => [inserted, ...p])
+
+    // Send to Vestaboard if enabled and configured
+    if (postToVestaboard && isVestaboardConfigured()) {
+      try {
+        await notifyPinPlacement(inserted)
+        console.log('Pin sent to Vestaboard')
+      } catch (err) {
+        console.error('Failed to send to Vestaboard:', err)
+      }
+    }
+
     setPlacing(null) // <- after submit, placing ends; no more dragging
     setDraft({ team: 'cubs', note: '', name: '', neighborhood: '' })
   }
@@ -191,6 +204,23 @@ export default function TableMode() {
             <input placeholder="Neighborhood (optional)" value={draft.neighborhood} onChange={e=>setDraft({ ...draft, neighborhood:e.target.value })}/>
             <input placeholder="Name (optional)" value={draft.name} onChange={e=>setDraft({ ...draft, name:e.target.value })}/>
             <textarea placeholder="Favorite memory (max 280 chars)" value={draft.note} onChange={e=>setDraft({ ...draft, note:e.target.value })}/>
+
+            {isVestaboardConfigured() && (
+              <button
+                onClick={() => setPostToVestaboard(!postToVestaboard)}
+                className={postToVestaboard ? 'on' : ''}
+                style={{
+                  marginBottom: 8,
+                  background: postToVestaboard ? '#3b82f6' : '#2a2f37',
+                  border: postToVestaboard ? '2px solid #60a5fa' : '2px solid #2a2f37',
+                  boxShadow: postToVestaboard ? 'inset 0 2px 4px rgba(0,0,0,0.3)' : 'none',
+                  transform: postToVestaboard ? 'translateY(1px)' : 'none',
+                }}
+              >
+                {postToVestaboard ? '✓ Post to Vestaboard' : 'Post to Vestaboard'}
+              </button>
+            )}
+
             <button onClick={savePin} disabled={!draft.note.trim() || !placing}>Submit Pin</button>
             <button className="cancel" onClick={() => setPlacing(null)}>Cancel</button>
             <small className="muted">Drag the pin to fine-tune before you submit.</small>
