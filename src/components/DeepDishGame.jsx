@@ -5,6 +5,7 @@ import { useAdminSettings } from '../state/useAdminSettings';
 
 const SPAWN_INTERVAL_BASE = 1500; // ms
 const SPAWN_INTERVAL_MIN = 600; // ms
+const FALL_SPEED_BASE = 2; // pixels per frame
 const FALL_SPEED_INCREMENT = 0.15;
 
 // Required ingredients to complete pizza
