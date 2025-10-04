@@ -468,6 +468,12 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, funFactsEnabled: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Pin placement notifications">
+                  <Toggle
+                    checked={settings.notificationsEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, notificationsEnabled: v }))}
+                  />
+                </FieldRow>
               </Card>
 
               {settings.funFactsEnabled && (
@@ -487,6 +493,91 @@ export default function AdminPanel({ open, onClose }) {
                   <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
                     Fun facts appear as a toast notification when users click on locations in Chicago
                   </p>
+                </Card>
+              )}
+
+              {settings.notificationsEnabled && (
+                <Card title="Notification Settings">
+                  <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                    Send notifications when new pins are placed
+                  </p>
+
+                  <FieldRow label="Notification Type">
+                    <select
+                      value={settings.notificationType || 'webhook'}
+                      onChange={(e) => setSettings(s => ({ ...s, notificationType: e.target.value }))}
+                      style={s.input}
+                    >
+                      <option value="webhook">Webhook Only</option>
+                      <option value="sms">SMS Only</option>
+                      <option value="both">Both Webhook & SMS</option>
+                    </select>
+                  </FieldRow>
+
+                  {(settings.notificationType === 'webhook' || settings.notificationType === 'both') && (
+                    <>
+                      <FieldRow label="Webhook URL">
+                        <input
+                          type="url"
+                          value={settings.webhookUrl || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, webhookUrl: e.target.value }))}
+                          placeholder="https://hooks.zapier.com/hooks/catch/..."
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+                      <p style={{ ...s.muted, margin: '4px 0 16px', fontSize: 11 }}>
+                        Sends JSON POST with pin details. Works with Zapier, Make.com, n8n, etc.
+                      </p>
+                    </>
+                  )}
+
+                  {(settings.notificationType === 'sms' || settings.notificationType === 'both') && (
+                    <>
+                      <FieldRow label="Twilio Account SID">
+                        <input
+                          type="text"
+                          value={settings.twilioAccountSid || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, twilioAccountSid: e.target.value }))}
+                          placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          style={{ ...s.input, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
+                        />
+                      </FieldRow>
+
+                      <FieldRow label="Twilio Auth Token">
+                        <input
+                          type="password"
+                          value={settings.twilioAuthToken || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, twilioAuthToken: e.target.value }))}
+                          placeholder="********************************"
+                          style={{ ...s.input, width: '100%', fontFamily: 'monospace', fontSize: 12 }}
+                        />
+                      </FieldRow>
+
+                      <FieldRow label="Twilio Phone Number">
+                        <input
+                          type="tel"
+                          value={settings.twilioPhoneNumber || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, twilioPhoneNumber: e.target.value }))}
+                          placeholder="+1234567890"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <FieldRow label="Recipient Phone Numbers">
+                        <input
+                          type="text"
+                          value={settings.notificationRecipients || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, notificationRecipients: e.target.value }))}
+                          placeholder="+1234567890, +0987654321"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                        ⚠️ Warning: Storing Twilio credentials here is not secure for production. Use environment variables or a backend proxy.
+                      </p>
+                    </>
+                  )}
                 </Card>
               )}
 
