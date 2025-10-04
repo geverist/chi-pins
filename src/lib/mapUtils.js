@@ -103,17 +103,39 @@ function pointInPolygon(lat, lng, polygon) {
  * Uses polygon boundary traced along the Chicago lakefront
  */
 export function isInLakeMichigan(lat, lng) {
-  // Quick bounds check first - entire lake area from shore to Michigan side
-  if (lat < 41.6 || lat > 42.5 || lng < -87.9 || lng > -86.0) {
+  // Quick bounds check first
+  if (lat < 41.6 || lat > 42.5 || lng < -88.0 || lng > -85.5) {
     return false;
   }
 
-  // Create polygon: shoreline + eastern boundary box
+  // Create polygon: Illinois shoreline (west) + Michigan shoreline (east)
+  // Michigan shoreline points (eastern boundary) - approximate, going north to south
+  const michiganShoreline = [
+    [42.50, -86.50],  // Wisconsin border area
+    [42.45, -86.48],
+    [42.40, -86.45],
+    [42.35, -86.43],
+    [42.30, -86.40],
+    [42.25, -86.38],
+    [42.20, -86.35],
+    [42.15, -86.33],
+    [42.10, -86.30],
+    [42.05, -86.28],
+    [42.00, -86.25],
+    [41.95, -86.23],
+    [41.90, -86.20],
+    [41.85, -86.18],
+    [41.80, -86.15],
+    [41.75, -86.13],
+    [41.70, -86.10],
+    [41.65, -86.08],
+    [41.60, -86.05],  // Indiana border area
+  ];
+
   const polygon = [
-    ...LAKE_MICHIGAN_SHORELINE,
-    // Close polygon with eastern boundary (far into the lake)
-    [42.50, -86.0],  // NE corner
-    [41.60, -86.0],  // SE corner
+    ...LAKE_MICHIGAN_SHORELINE,  // West side (Illinois): south to north
+    ...michiganShoreline,         // East side (Michigan): north to south
+    // Auto-closes back to first point
   ];
 
   return pointInPolygon(lat, lng, polygon);
