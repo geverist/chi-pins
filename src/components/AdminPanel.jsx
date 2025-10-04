@@ -477,7 +477,36 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, facebookShareEnabled: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="News ticker">
+                  <Toggle
+                    checked={settings.newsTickerEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, newsTickerEnabled: v }))}
+                  />
+                </FieldRow>
               </Card>
+
+              {settings.newsTickerEnabled && (
+                <Card title="News Ticker Settings">
+                  <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                    Configure the RSS feed URL for the scrolling news ticker
+                  </p>
+                  <FieldRow label="RSS Feed URL">
+                    <input
+                      type="url"
+                      value={settings.newsTickerRssUrl || ''}
+                      onChange={(e) => setSettings(s => ({ ...s, newsTickerRssUrl: e.target.value }))}
+                      placeholder="https://news.google.com/rss/search?q=chicago"
+                      style={{
+                        ...s.input,
+                        width: '100%',
+                      }}
+                    />
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                    Only Chicago news sources and major outlets are permitted
+                  </p>
+                </Card>
+              )}
 
               <Card title="Map constants">
                 <FieldRow label="Initial radius (miles)">
@@ -1182,6 +1211,14 @@ const s = {
     gridTemplateColumns: '120px 1fr auto',
     gap: 8,
     alignItems: 'center'
+  },
+  input: {
+    padding: '8px 12px',
+    background: '#0f1115',
+    border: '1px solid #2a2f37',
+    borderRadius: 6,
+    color: '#f3f5f7',
+    fontSize: 14,
   },
   muted: { color: '#a7b0b8', fontSize: 13, marginTop: 4 }
 }

@@ -42,6 +42,7 @@ import Toast from './components/Toast';
 import AttractorOverlay from './components/AttractorOverlay';
 import GlobalCounters from './components/GlobalCounters';
 import PinShareModal from './components/PinShareModal';
+import NewsTicker from './components/NewsTicker';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -724,6 +725,11 @@ export default function App() {
         willChange: 'transform',
       }}
     >
+      <NewsTicker
+        enabled={adminSettings.newsTickerEnabled}
+        feedUrl={adminSettings.newsTickerRssUrl}
+      />
+
       <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
