@@ -17,25 +17,39 @@ CREATE TABLE IF NOT EXISTS media_files (
 -- Enable RLS
 ALTER TABLE media_files ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow public read access to media_files" ON media_files;
+DROP POLICY IF EXISTS "Allow public insert access to media_files" ON media_files;
+DROP POLICY IF EXISTS "Allow public delete access to media_files" ON media_files;
+DROP POLICY IF EXISTS "Allow public update access to media_files" ON media_files;
+
 -- Allow anyone to read media files (for jukebox playback)
 CREATE POLICY "Allow public read access to media_files"
   ON media_files
   FOR SELECT
-  TO public
+  TO anon, authenticated, public
   USING (true);
 
 -- Allow anyone to insert media files (for kiosk admin uploads)
 CREATE POLICY "Allow public insert access to media_files"
   ON media_files
   FOR INSERT
-  TO public
+  TO anon, authenticated, public
+  WITH CHECK (true);
+
+-- Allow anyone to update media files (for metadata edits)
+CREATE POLICY "Allow public update access to media_files"
+  ON media_files
+  FOR UPDATE
+  TO anon, authenticated, public
+  USING (true)
   WITH CHECK (true);
 
 -- Allow anyone to delete media files (for admin panel management)
 CREATE POLICY "Allow public delete access to media_files"
   ON media_files
   FOR DELETE
-  TO public
+  TO anon, authenticated, public
   USING (true);
 
 -- Create index on storage_path for faster lookups
