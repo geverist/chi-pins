@@ -32,13 +32,54 @@ CREATE POLICY "Customer feedback is viewable by authenticated users only" ON cus
 CREATE POLICY "Anyone can insert customer feedback" ON customer_feedback
   FOR INSERT WITH CHECK (true);
 
--- Add album column to media_files table if it doesn't exist
+-- Add missing columns to media_files table
 DO $$
 BEGIN
+  -- Add album column
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'media_files' AND column_name = 'album'
   ) THEN
     ALTER TABLE media_files ADD COLUMN album TEXT;
+  END IF;
+
+  -- Add license_type column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'media_files' AND column_name = 'license_type'
+  ) THEN
+    ALTER TABLE media_files ADD COLUMN license_type TEXT DEFAULT 'uploaded';
+  END IF;
+
+  -- Add license_verified column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'media_files' AND column_name = 'license_verified'
+  ) THEN
+    ALTER TABLE media_files ADD COLUMN license_verified BOOLEAN DEFAULT false;
+  END IF;
+
+  -- Add license_notes column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'media_files' AND column_name = 'license_notes'
+  ) THEN
+    ALTER TABLE media_files ADD COLUMN license_notes TEXT;
+  END IF;
+
+  -- Add spotify_track_id column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'media_files' AND column_name = 'spotify_track_id'
+  ) THEN
+    ALTER TABLE media_files ADD COLUMN spotify_track_id TEXT;
+  END IF;
+
+  -- Add spotify_track_uri column
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'media_files' AND column_name = 'spotify_track_uri'
+  ) THEN
+    ALTER TABLE media_files ADD COLUMN spotify_track_uri TEXT;
   END IF;
 END $$;
