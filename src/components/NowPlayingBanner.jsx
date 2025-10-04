@@ -15,8 +15,15 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
   // Only show banner if there's currently playing music OR upcoming tracks
   // Don't show if only lastPlayed exists (no active music)
   if (!currentTrack && !nextInQueue) {
+    console.log('NowPlayingBanner - Hidden: no currentTrack or nextInQueue');
     return null;
   }
+
+  console.log('NowPlayingBanner - Showing:', {
+    currentTrack: currentTrack?.title,
+    nextInQueue: nextInQueue?.title,
+    isPlaying
+  });
 
   // Build the display text - only show active music info
   const parts = [];

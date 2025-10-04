@@ -131,13 +131,15 @@ export default function Jukebox({ onClose }) {
         onClose();
       }, 300);
     } else {
-      // Add to queue
-      console.log('Jukebox - Adding to queue');
-      addToQueue(track);
-      // If nothing is playing, start playing
+      // Add to queue or play immediately if nothing playing
       if (!currentTrack) {
-        console.log('Jukebox - No current track, setting current track');
+        // Nothing playing - set as current track (don't add to queue to avoid duplicate)
+        console.log('Jukebox - No current track, setting as current track (not adding to queue)');
         setCurrentTrack(track);
+      } else {
+        // Something already playing - add to queue for later
+        console.log('Jukebox - Adding to queue');
+        addToQueue(track);
       }
       setTimeout(() => {
         console.log('Jukebox - Calling onClose()');

@@ -12,12 +12,26 @@ export default function GlobalAudioPlayer() {
   // Play the current track when it changes
   useEffect(() => {
     console.log('GlobalAudioPlayer - currentTrack changed:', currentTrack);
-    if (!currentTrack || !audioRef.current) return;
+    if (!currentTrack || !audioRef.current) {
+      console.log('GlobalAudioPlayer - No current track or audio ref');
+      return;
+    }
 
     const audio = audioRef.current;
 
     // Determine the source URL based on track type
     let sourceUrl = currentTrack.url;
+
+    console.log('GlobalAudioPlayer - Track URL:', sourceUrl);
+
+    // Validate URL
+    if (!sourceUrl) {
+      console.error('GlobalAudioPlayer - No URL for track:', currentTrack);
+      setIsPlaying(false);
+      // Clear current track if no URL
+      setCurrentTrack(null);
+      return;
+    }
 
     // For Spotify tracks, check if we have a preview URL
     if (currentTrack.music_source === 'spotify' || currentTrack.mime_type === 'audio/spotify') {
@@ -30,6 +44,7 @@ export default function GlobalAudioPlayer() {
     }
 
     audio.src = sourceUrl;
+    console.log('GlobalAudioPlayer - Audio src set to:', audio.src);
 
     // Handle Bluetooth device selection if configured
     const playAudio = async () => {
