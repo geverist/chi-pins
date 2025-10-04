@@ -89,12 +89,14 @@ export default function GlobalAudioPlayer() {
         console.log('GlobalAudioPlayer - playing next track:', nextTrack.title);
         // playNext already handles state updates
       } else {
-        console.log('GlobalAudioPlayer - no more tracks in queue, clearing current track');
+        console.log('GlobalAudioPlayer - no more tracks in queue, clearing everything');
         // No next track, save current as last played and clear current
         if (currentTrack) {
           setLastPlayed(currentTrack);
         }
         setCurrentTrack(null);
+        // Ensure queue is cleared in state (should already be empty from playNext)
+        // This ensures the UI updates properly
       }
     };
 

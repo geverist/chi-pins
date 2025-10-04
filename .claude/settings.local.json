@@ -26,7 +26,8 @@
       "WebFetch(domain:en.wikipedia.org)",
       "Bash(node:*)",
       "Bash(npm run dev:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "Bash(git revert:*)"
     ],
     "deny": [],
     "ask": []
