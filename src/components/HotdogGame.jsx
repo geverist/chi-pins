@@ -17,8 +17,8 @@ const CORRECT_ORDER = [
 
 const INGREDIENTS = [
   { id: 'bun', name: 'Poppy Seed Bun', emoji: '🥖', color: '#f4e4c1' },
-  { id: 'hotdog', name: 'All-Beef Frank', emoji: '🌭', color: '#d4926f' },
-  { id: 'mustard', name: 'Yellow Mustard', emoji: '💛', color: '#ffd700' },
+  { id: 'hotdog', name: 'All-Beef Frank', emoji: '🥩', color: '#d4926f' },
+  { id: 'mustard', name: 'Yellow Mustard', emoji: '🍯', color: '#ffd700' },
   { id: 'relish', name: 'Neon Green Relish', emoji: '🥒', color: '#7cfc00' },
   { id: 'onion', name: 'Chopped Onions', emoji: '🧅', color: '#fff5ee' },
   { id: 'tomato', name: 'Tomato Wedges', emoji: '🍅', color: '#ff6347' },
