@@ -1,7 +1,7 @@
 // src/components/NowPlayingBanner.jsx
 import { useState, useEffect } from 'react';
 
-export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue }) {
+export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue, scrollSpeed = 30, isMobile = false }) {
   const [animate, setAnimate] = useState(false);
 
   // Restart animation when track changes
@@ -63,7 +63,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
           display: 'flex',
           alignItems: 'center',
           height: '100%',
-          animation: animate ? 'scroll-left 30s linear infinite' : 'none',
+          animation: animate ? `scroll-left ${scrollSpeed}s linear infinite` : 'none',
           whiteSpace: 'nowrap',
         }}
       >

@@ -751,6 +751,8 @@ export default function App() {
       <NewsTicker
         enabled={adminSettings.newsTickerEnabled}
         feedUrl={adminSettings.newsTickerRssUrl}
+        scrollSpeed={isMobile ? adminSettings.newsTickerScrollSpeedMobile : adminSettings.newsTickerScrollSpeedKiosk}
+        isMobile={isMobile}
       />
 
       <div
@@ -855,6 +857,8 @@ export default function App() {
         isPlaying={isPlaying}
         lastPlayed={lastPlayed}
         nextInQueue={queue[0] || null}
+        scrollSpeed={isMobile ? adminSettings.nowPlayingScrollSpeedMobile : adminSettings.nowPlayingScrollSpeedKiosk}
+        isMobile={isMobile}
       />
 
       <Footer

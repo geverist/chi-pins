@@ -133,14 +133,17 @@ function GeocoderTopCenter({
       const newMode = isInChicago ? 'chicago' : 'global';
       const newPlaceholder = isInChicago ? 'Search Chicago & nearby…' : 'Search places worldwide…';
 
+      console.log('GeocoderTopCenter: checkBounds - isInChicago:', isInChicago, 'newMode:', newMode, 'currentMode:', dynamicMode);
+
       if (newMode !== dynamicMode) {
-        console.log('GeocoderTopCenter: Switching to', newMode, 'mode');
+        console.log('GeocoderTopCenter: MODE CHANGE - Switching from', dynamicMode, 'to', newMode);
         setDynamicMode(newMode);
         setDynamicPlaceholder(newPlaceholder);
 
         // Update placeholder in the input
         if (inputRef.current) {
           inputRef.current.placeholder = newPlaceholder;
+          console.log('GeocoderTopCenter: Updated input placeholder to:', newPlaceholder);
         }
       }
     };

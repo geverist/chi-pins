@@ -56,6 +56,12 @@ const DEFAULTS = {
   newsTickerEnabled: false,
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
 
+  // Banner Scroll Speeds (seconds for full scroll)
+  newsTickerScrollSpeedKiosk: 30,  // Seconds for news ticker in kiosk mode
+  newsTickerScrollSpeedMobile: 20, // Seconds for news ticker in mobile mode
+  nowPlayingScrollSpeedKiosk: 30,  // Seconds for now playing banner in kiosk mode
+  nowPlayingScrollSpeedMobile: 20, // Seconds for now playing banner in mobile mode
+
   // Audio Output Settings
   audioOutputType: 'local', // 'local' | 'bluetooth' | 'sonos'
   bluetoothDeviceName: '',

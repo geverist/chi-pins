@@ -493,7 +493,7 @@ export default function AdminPanel({ open, onClose }) {
               {settings.newsTickerEnabled && (
                 <Card title="News Ticker Settings">
                   <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
-                    Configure the RSS feed URL for the scrolling news ticker
+                    Configure the RSS feed URL and scroll speeds for the news ticker
                   </p>
                   <FieldRow label="RSS Feed URL">
                     <input
@@ -507,8 +507,35 @@ export default function AdminPanel({ open, onClose }) {
                       }}
                     />
                   </FieldRow>
-                  <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  <p style={{ ...s.muted, margin: '8px 0 0 0', fontSize: 11 }}>
                     Only Chicago news sources and major outlets are permitted
+                  </p>
+
+                  <FieldRow label="Scroll Speed (Kiosk)" style={{ marginTop: 16 }}>
+                    <input
+                      type="number"
+                      min="5"
+                      max="120"
+                      value={settings.newsTickerScrollSpeedKiosk || 30}
+                      onChange={(e) => setSettings(s => ({ ...s, newsTickerScrollSpeedKiosk: parseInt(e.target.value) || 30 }))}
+                      style={{ ...s.input, width: '80px' }}
+                    />
+                    <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                  </FieldRow>
+
+                  <FieldRow label="Scroll Speed (Mobile)">
+                    <input
+                      type="number"
+                      min="5"
+                      max="120"
+                      value={settings.newsTickerScrollSpeedMobile || 20}
+                      onChange={(e) => setSettings(s => ({ ...s, newsTickerScrollSpeedMobile: parseInt(e.target.value) || 20 }))}
+                      style={{ ...s.input, width: '80px' }}
+                    />
+                    <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                    Time for banner to complete one full scroll
                   </p>
                 </Card>
               )}
@@ -601,6 +628,33 @@ export default function AdminPanel({ open, onClose }) {
                 </FieldRow>
                 <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
                   Controls what happens when you select a track in the Jukebox
+                </p>
+
+                <FieldRow label="Now Playing Scroll Speed (Kiosk)" style={{ marginTop: 16 }}>
+                  <input
+                    type="number"
+                    min="5"
+                    max="120"
+                    value={settings.nowPlayingScrollSpeedKiosk || 30}
+                    onChange={(e) => setSettings(s => ({ ...s, nowPlayingScrollSpeedKiosk: parseInt(e.target.value) || 30 }))}
+                    style={{ ...s.input, width: '80px' }}
+                  />
+                  <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                </FieldRow>
+
+                <FieldRow label="Now Playing Scroll Speed (Mobile)">
+                  <input
+                    type="number"
+                    min="5"
+                    max="120"
+                    value={settings.nowPlayingScrollSpeedMobile || 20}
+                    onChange={(e) => setSettings(s => ({ ...s, nowPlayingScrollSpeedMobile: parseInt(e.target.value) || 20 }))}
+                    style={{ ...s.input, width: '80px' }}
+                  />
+                  <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                  Banner scroll speed for currently playing music
                 </p>
               </Card>
 

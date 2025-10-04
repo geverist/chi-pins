@@ -1,7 +1,7 @@
 // src/components/NewsTicker.jsx
 import { useState, useEffect } from 'react';
 
-export default function NewsTicker({ enabled = false, feedUrl = '' }) {
+export default function NewsTicker({ enabled = false, feedUrl = '', scrollSpeed = 60, isMobile = false }) {
   const [newsItems, setNewsItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,7 +59,7 @@ export default function NewsTicker({ enabled = false, feedUrl = '' }) {
           display: 'flex',
           alignItems: 'center',
           height: '100%',
-          animation: 'scroll-left 60s linear infinite',
+          animation: `scroll-left ${scrollSpeed}s linear infinite`,
           whiteSpace: 'nowrap',
         }}
       >
