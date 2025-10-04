@@ -304,61 +304,6 @@ export default function AdminPanel({ open, onClose }) {
         <div style={s.body}>
           {tab === 'general' && (
             <SectionGrid>
-              <Card title="Media Control">
-                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
-                  Control currently playing media and queue
-                </p>
-                <div style={{
-                  padding: '16px',
-                  background: currentTrack || queue.length > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(100, 116, 139, 0.1)',
-                  border: currentTrack || queue.length > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(100, 116, 139, 0.3)',
-                  borderRadius: 8
-                }}>
-                  <div style={{ marginBottom: 12 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
-                      {currentTrack ? '🎵 Now Playing' : queue.length > 0 ? '⏸️ Queue Ready' : '✓ No Active Media'}
-                    </div>
-                    <div style={{ fontSize: 13, color: '#9ca3af' }}>
-                      {currentTrack ? (
-                        <>
-                          <div style={{ fontWeight: 500, color: '#f3f4f6', marginBottom: 2 }}>
-                            {currentTrack.title}
-                            {currentTrack.artist && ` • ${currentTrack.artist}`}
-                          </div>
-                          {queue.length > 0 && <div>+{queue.length} track{queue.length !== 1 ? 's' : ''} in queue</div>}
-                        </>
-                      ) : queue.length > 0 ? (
-                        `${queue.length} track${queue.length !== 1 ? 's' : ''} queued`
-                      ) : (
-                        'No tracks playing or queued'
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (confirm('Stop all playback and clear the entire queue?')) {
-                        stopAll();
-                      }
-                    }}
-                    disabled={!currentTrack && queue.length === 0}
-                    style={{
-                      width: '100%',
-                      padding: '10px 16px',
-                      background: (!currentTrack && queue.length === 0) ? '#4b5563' : '#ef4444',
-                      border: 'none',
-                      borderRadius: 6,
-                      color: '#fff',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: (!currentTrack && queue.length === 0) ? 'not-allowed' : 'pointer',
-                      opacity: (!currentTrack && queue.length === 0) ? 0.5 : 1,
-                    }}
-                  >
-                    ⏹️ Stop All Media & Clear Queue
-                  </button>
-                </div>
-              </Card>
-
               <Card title="Idle / Kiosk">
                 <FieldRow label="Idle attractor (seconds)">
                   <NumberInput
@@ -1680,6 +1625,61 @@ export default function AdminPanel({ open, onClose }) {
 
           {tab === 'media' && (
             <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="Playback Control">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Control currently playing media and queue
+                </p>
+                <div style={{
+                  padding: '16px',
+                  background: currentTrack || queue.length > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(100, 116, 139, 0.1)',
+                  border: currentTrack || queue.length > 0 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(100, 116, 139, 0.3)',
+                  borderRadius: 8
+                }}>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
+                      {currentTrack ? '🎵 Now Playing' : queue.length > 0 ? '⏸️ Queue Ready' : '✓ No Active Media'}
+                    </div>
+                    <div style={{ fontSize: 13, color: '#9ca3af' }}>
+                      {currentTrack ? (
+                        <>
+                          <div style={{ fontWeight: 500, color: '#f3f4f6', marginBottom: 2 }}>
+                            {currentTrack.title}
+                            {currentTrack.artist && ` • ${currentTrack.artist}`}
+                          </div>
+                          {queue.length > 0 && <div>+{queue.length} track{queue.length !== 1 ? 's' : ''} in queue</div>}
+                        </>
+                      ) : queue.length > 0 ? (
+                        `${queue.length} track${queue.length !== 1 ? 's' : ''} queued`
+                      ) : (
+                        'No tracks playing or queued'
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (confirm('Stop all playback and clear the entire queue?')) {
+                        stopAll();
+                      }
+                    }}
+                    disabled={!currentTrack && queue.length === 0}
+                    style={{
+                      width: '100%',
+                      padding: '10px 16px',
+                      background: (!currentTrack && queue.length === 0) ? '#4b5563' : '#ef4444',
+                      border: 'none',
+                      borderRadius: 6,
+                      color: '#fff',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: (!currentTrack && queue.length === 0) ? 'not-allowed' : 'pointer',
+                      opacity: (!currentTrack && queue.length === 0) ? 0.5 : 1,
+                    }}
+                  >
+                    ⏹️ Stop All Media & Clear Queue
+                  </button>
+                </div>
+              </Card>
+
               <Card title="Media Library">
                 <p style={s.muted}>
                   Upload MP3 audio files for the jukebox. Files are stored in Supabase and played locally.
