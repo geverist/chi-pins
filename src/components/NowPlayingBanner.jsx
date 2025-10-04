@@ -47,14 +47,13 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
     <div
       style={{
         position: 'fixed',
-        bottom: 180, // Above footer and pin editor form
+        bottom: 0,
         left: 0,
         right: 0,
         height: 36,
         background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
         borderTop: '2px solid #a78bfa',
-        borderBottom: '2px solid #a78bfa',
-        zIndex: 9998,
+        zIndex: 10000, // Above everything else at the very bottom
         overflow: 'hidden',
         boxShadow: '0 -2px 8px rgba(0,0,0,0.2)',
       }}
