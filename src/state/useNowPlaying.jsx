@@ -415,6 +415,35 @@ export function NowPlayingProvider({ children }) {
     }
   }, []);
 
+  const stopAll = useCallback(async () => {
+    // Stop playback and clear everything
+    setIsPlaying(false);
+    setCurrentTrack(null);
+    await clearQueue();
+
+    // Clear localStorage
+    try {
+      localStorage.setItem(LS_IS_PLAYING, JSON.stringify(false));
+      localStorage.setItem(LS_CURRENT_TRACK, JSON.stringify(null));
+      localStorage.setItem(LS_QUEUE, JSON.stringify([]));
+    } catch (err) {
+      console.error('Failed to clear cache:', err);
+    }
+
+    // Update Supabase
+    try {
+      await updatePlaybackState({
+        is_playing: false,
+        current_track_url: null,
+        current_track_title: null,
+        current_track_artist: null,
+        current_track_album: null,
+      });
+    } catch (err) {
+      console.error('Failed to update playback state:', err);
+    }
+  }, [clearQueue]);
+
   return (
     <NowPlayingContext.Provider value={{
       currentTrack,
@@ -427,6 +456,7 @@ export function NowPlayingProvider({ children }) {
       addToQueue,
       playNext,
       clearQueue,
+      stopAll,
       isOnline,
     }}>
       {children}

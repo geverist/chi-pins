@@ -6,6 +6,7 @@ import { useNavigationSettings } from '../hooks/useNavigationSettings'
 import { useLogo } from '../hooks/useLogo'
 import { useAdminSettings } from '../state/useAdminSettings'
 import { useMediaFiles } from '../hooks/useMediaFiles'
+import { useNowPlaying } from '../state/useNowPlaying'
 import PinCodeModal from './PinCodeModal'
 
 export default function AdminPanel({ open, onClose }) {
@@ -24,6 +25,9 @@ export default function AdminPanel({ open, onClose }) {
 
   // Media files hook
   const { mediaFiles, loading: mediaLoading, uploading: mediaUploading, uploadMediaFile, deleteMediaFile, updateMediaFile } = useMediaFiles()
+
+  // Now Playing hook
+  const { stopAll, currentTrack, queue } = useNowPlaying()
 
   // Navigation settings hook
   const { settings: navSettingsFromHook, updateSettings: updateNavSettingsAPI } = useNavigationSettings()
@@ -747,6 +751,40 @@ export default function AdminPanel({ open, onClose }) {
                 <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
                   Banner scroll speed for currently playing music
                 </p>
+
+                {/* Stop All Media Button */}
+                <div style={{ marginTop: 20, padding: '12px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>Stop All Media</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                        {currentTrack ? `Now playing: ${currentTrack.title}` : 'No media playing'}
+                        {queue.length > 0 && ` • ${queue.length} in queue`}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (confirm('Stop playback and clear the queue?')) {
+                          stopAll();
+                        }
+                      }}
+                      disabled={!currentTrack && queue.length === 0}
+                      style={{
+                        padding: '8px 16px',
+                        background: (!currentTrack && queue.length === 0) ? '#6b7280' : '#ef4444',
+                        border: 'none',
+                        borderRadius: 6,
+                        color: '#fff',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: (!currentTrack && queue.length === 0) ? 'not-allowed' : 'pointer',
+                        opacity: (!currentTrack && queue.length === 0) ? 0.5 : 1,
+                      }}
+                    >
+                      ⏹️ Stop All
+                    </button>
+                  </div>
+                </div>
               </Card>
 
               <Card title="Map constants">
