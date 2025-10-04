@@ -49,25 +49,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No recipients specified' });
     }
 
-    console.log('send-sms: Sending to recipients:', recipients);
-
     // Send SMS to each recipient using Twilio REST API
     const results = await Promise.allSettled(
       recipients.map(async (recipient) => {
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
 
-        console.log('send-sms: Preparing to send SMS', {
-          twilioUrl,
-          to: recipient,
-          from,
-        });
-
         const formData = new URLSearchParams();
         formData.append('To', recipient);
         formData.append('From', twilioPhone);
         formData.append('Body', message);
-
-        console.log('send-sms: Form data prepared');
 
         const response = await fetch(twilioUrl, {
           method: 'POST',
@@ -78,15 +68,9 @@ export default async function handler(req, res) {
           body: formData,
         });
 
-        console.log('send-sms: Twilio API response', {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok,
-        });
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('send-sms: Twilio API error response:', errorText);
+          console.error('send-sms: Twilio API error:', response.status, errorText);
 
           let errorData = {};
           try {
@@ -99,12 +83,6 @@ export default async function handler(req, res) {
         }
 
         const result = await response.json();
-        console.log('send-sms: Message sent successfully', {
-          sid: result.sid,
-          to: result.to,
-          status: result.status,
-        });
-
         return result;
       })
     );

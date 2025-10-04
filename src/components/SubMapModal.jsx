@@ -5,6 +5,9 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { placingIconFor, boundsForMiles } from '../lib/mapUtils';
 import DragTip from './DragTip';
+import { createLogger } from '../lib/logger';
+
+const logger = createLogger('SubMapModal');
 
 function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
   const map = useMap();
@@ -15,21 +18,21 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
   // Create marker on mount
   useEffect(() => {
     if (!map) {
-      console.warn('Boot: map not available');
+      logger.warn('Boot: map not available');
       return;
     }
 
-    console.log('Boot: Creating marker with pos=', pos, 'handoff=', handoff);
+    logger.debug('Boot: Creating marker', { pos, handoff });
 
     // Use pos (which should be the lat/lng)
     const initialPos = pos;
 
     if (!initialPos || !Number.isFinite(initialPos.lat) || !Number.isFinite(initialPos.lng)) {
-      console.error('Boot: Invalid initial position', initialPos);
+      logger.error('Boot: Invalid initial position', initialPos);
       return;
     }
 
-    console.log('Boot: Using position', initialPos);
+    logger.debug('Boot: Using position', initialPos);
 
     // Create marker (non-draggable, we'll handle dragging manually)
     const marker = L.marker([initialPos.lat, initialPos.lng], {
@@ -41,8 +44,7 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
     }).addTo(map);
 
     markerRef.current = marker;
-    console.log('Boot: Marker created and added to map at', [initialPos.lat, initialPos.lng]);
-    console.log('Boot: Marker element:', marker.getElement());
+    logger.debug('Boot: Marker created at', [initialPos.lat, initialPos.lng]);
 
     // Force marker to be visible
     const markerEl = marker.getElement();
@@ -50,7 +52,6 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       markerEl.style.pointerEvents = 'auto';
       markerEl.style.cursor = 'move';
       markerEl.style.zIndex = '10000';
-      console.log('Boot: Marker element styled');
     }
 
     // Set initial view
@@ -65,7 +66,7 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
 
     // If we have handoff coordinates, start dragging immediately
     if (handoff && Number.isFinite(handoff.x) && Number.isFinite(handoff.y)) {
-      console.log('Boot: Starting with handoff, beginning drag immediately');
+      logger.debug('Boot: Starting with handoff');
       isDraggingRef.current = true;
     }
 
@@ -73,7 +74,6 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       isDraggingRef.current = true;
       e.preventDefault();
       e.stopPropagation();
-      console.log('Boot: Drag started on marker');
     };
 
     const onPointerMove = (e) => {
@@ -102,7 +102,6 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       if (!isDraggingRef.current) return;
 
       isDraggingRef.current = false;
-      console.log('Boot: Drag ended');
 
       const ll = markerRef.current.getLatLng();
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) {
@@ -112,7 +111,7 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
         // Auto-commit after short delay
         if (dragTimeoutRef.current) clearTimeout(dragTimeoutRef.current);
         dragTimeoutRef.current = setTimeout(() => {
-          console.log('Boot: Auto-committing position', ll);
+          logger.debug('Boot: Auto-committing position', ll);
           onPointerUpCommit({ lat: ll.lat, lng: ll.lng });
         }, 300);
       }
@@ -136,7 +135,6 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
 
     // Cleanup
     return () => {
-      console.log('Boot: Cleaning up marker');
       if (markerEl) {
         markerEl.removeEventListener('pointerdown', onPointerDown);
       }
@@ -160,9 +158,8 @@ function SetSubMapRef({ submapRef }) {
   useEffect(() => {
     if (map) {
       submapRef.current = map;
-      console.log('SetSubMapRef: submapRef.current set to', map);
     } else {
-      console.warn('SetSubMapRef: map is not available');
+      logger.warn('SetSubMapRef: map is not available');
     }
   }, [map, submapRef]);
   return null;
@@ -182,10 +179,9 @@ export default function SubMapModal({
   const [tilesLoading, setTilesLoading] = useState(true);
   const loadingTimerRef = useRef(null);
 
-  console.log('SubMapModal rendering with:', { center, handoff, team, baseZoom, pos });
+  logger.debug('SubMapModal rendering', { center, handoff, team, baseZoom, pos });
 
   useEffect(() => {
-    console.log('SubMapModal: Setting initial position to center', center);
     setPos(center);
   }, [center]);
 
@@ -201,7 +197,6 @@ export default function SubMapModal({
     const timer = setTimeout(() => {
       if (submapRef.current) {
         submapRef.current.invalidateSize();
-        console.log('SubMapModal: invalidateSize called');
       }
     }, 100);
     return () => clearTimeout(timer);
@@ -210,7 +205,6 @@ export default function SubMapModal({
   // Auto-hide loading after max 1 second
   useEffect(() => {
     loadingTimerRef.current = setTimeout(() => {
-      console.log('SubMapModal: Force hiding loading indicator');
       setTilesLoading(false);
     }, 1000);
 
@@ -260,20 +254,16 @@ export default function SubMapModal({
             doubleClickZoom={true}
             aria-label="Fine-tune map"
             whenCreated={(map) => {
-              console.log('MapContainer created:', map);
               submapRef.current = map;
               setTimeout(() => {
                 map.invalidateSize();
-                console.log('MapContainer size invalidated');
               }, 100);
 
               // Listen for tile load events
               let tilesLoaded = 0;
               const onTileLoad = () => {
                 tilesLoaded++;
-                console.log('SubMapModal: Tiles loaded:', tilesLoaded);
                 if (tilesLoaded >= 2) { // Wait for at least 2 tiles
-                  console.log('SubMapModal: Hiding loading indicator (tiles loaded)');
                   setTilesLoading(false);
                   if (loadingTimerRef.current) {
                     clearTimeout(loadingTimerRef.current);
@@ -285,7 +275,6 @@ export default function SubMapModal({
 
               // Also hide when map is ready
               map.whenReady(() => {
-                console.log('SubMapModal: Map ready');
                 setTimeout(() => {
                   setTilesLoading(false);
                   if (loadingTimerRef.current) {
