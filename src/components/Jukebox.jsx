@@ -69,7 +69,9 @@ export default function Jukebox({ onClose }) {
   }, [playNext]);
 
   const handlePlayNow = async (track) => {
+    console.log('handlePlayNow called with track:', track);
     setCurrentTrack(track);
+    console.log('setCurrentTrack called');
 
     // Handle different audio output types
     if (adminSettings.audioOutputType === 'sonos' && adminSettings.sonosIpAddress) {

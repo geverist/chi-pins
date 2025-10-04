@@ -12,7 +12,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying }) {
       setAnimate(false);
       setTimeout(() => setAnimate(true), 50);
     }
-  }, [currentTrack?.id]);
+  }, [currentTrack?.id, isPlaying]);
 
   if (!currentTrack) {
     console.log('NowPlayingBanner - no current track, hiding banner');
@@ -23,6 +23,8 @@ export default function NowPlayingBanner({ currentTrack, isPlaying }) {
 
   // Duplicate text for seamless scrolling
   const scrollContent = Array(10).fill(displayText).join('   •   ');
+
+  console.log('NowPlayingBanner - RENDERING BANNER with text:', displayText);
 
   return (
     <div
