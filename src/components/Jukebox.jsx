@@ -61,13 +61,56 @@ export default function Jukebox({ onClose }) {
     };
   }, []);
 
-  const handlePlayNow = (track) => {
+  const handlePlayNow = async (track) => {
     setCurrentTrack(track);
-    if (audioRef.current) {
-      audioRef.current.src = track.url;
-      audioRef.current.play().catch(err => {
-        console.error('Failed to play track:', err);
-      });
+
+    // Handle different audio output types
+    if (adminSettings.audioOutputType === 'sonos' && adminSettings.sonosIpAddress) {
+      // Play via Sonos HTTP API
+      try {
+        const response = await fetch('/api/sonos-control', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'play',
+            trackUrl: track.url,
+            ipAddress: adminSettings.sonosIpAddress,
+            roomName: adminSettings.sonosRoomName,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to play on Sonos');
+        }
+
+        setIsPlaying(true);
+      } catch (err) {
+        console.error('Failed to play on Sonos:', err);
+        alert('Failed to play on Sonos. Check your settings and try again.');
+      }
+    } else {
+      // Play locally (works for both 'local' and 'bluetooth')
+      // Bluetooth routing happens at OS level after pairing
+      if (audioRef.current) {
+        audioRef.current.src = track.url;
+
+        // Request audio output device selection if Bluetooth is configured
+        if (adminSettings.audioOutputType === 'bluetooth' && 'setSinkId' in audioRef.current) {
+          try {
+            // Try to set the Bluetooth device if we have an ID stored
+            if (adminSettings.bluetoothDeviceId) {
+              await audioRef.current.setSinkId(adminSettings.bluetoothDeviceId);
+            }
+          } catch (err) {
+            console.warn('Failed to set audio output device:', err);
+            // Fall back to default device
+          }
+        }
+
+        audioRef.current.play().catch(err => {
+          console.error('Failed to play track:', err);
+        });
+      }
     }
   };
 
@@ -198,6 +241,27 @@ export default function Jukebox({ onClose }) {
               outline: 'none',
             }}
           />
+
+          {/* Audio Output Info */}
+          <div style={{
+            marginTop: 8,
+            padding: '8px 12px',
+            background: 'rgba(139,92,246,0.1)',
+            borderRadius: 8,
+            border: '1px solid rgba(139,92,246,0.3)',
+            fontSize: 12,
+            color: '#a78bfa',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}>
+            <span>🔊</span>
+            <span>
+              {adminSettings.audioOutputType === 'bluetooth' && `Bluetooth: ${adminSettings.bluetoothDeviceName || 'Default'}`}
+              {adminSettings.audioOutputType === 'sonos' && `Sonos: ${adminSettings.sonosRoomName || 'Default Room'}`}
+              {adminSettings.audioOutputType === 'local' && 'Playing on this device'}
+            </span>
+          </div>
         </div>
 
         {/* Now Playing Bar */}

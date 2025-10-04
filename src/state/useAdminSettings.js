@@ -56,6 +56,13 @@ const DEFAULTS = {
   newsTickerEnabled: false,
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
 
+  // Audio Output Settings
+  audioOutputType: 'local', // 'local' | 'bluetooth' | 'sonos'
+  bluetoothDeviceName: '',
+  bluetoothDeviceId: '',
+  sonosRoomName: '',
+  sonosIpAddress: '',
+
   // Restaurant Info (for share modal)
   restaurantName: 'Chicago Mike\'s',
   restaurantYelpUrl: '',
