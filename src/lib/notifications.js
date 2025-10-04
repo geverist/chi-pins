@@ -7,7 +7,17 @@
  * @param {object} settings - Admin settings
  */
 export async function sendPinNotification(pin, settings) {
+  console.log('sendPinNotification called:', {
+    notificationsEnabled: settings.notificationsEnabled,
+    notificationType: settings.notificationType,
+    hasTwilioSid: !!settings.twilioAccountSid,
+    hasTwilioToken: !!settings.twilioAuthToken,
+    hasTwilioPhone: !!settings.twilioPhoneNumber,
+    hasRecipients: !!settings.notificationRecipients,
+  });
+
   if (!settings.notificationsEnabled) {
+    console.log('Notifications disabled in settings');
     return { success: true, message: 'Notifications disabled' };
   }
 
@@ -23,6 +33,7 @@ export async function sendPinNotification(pin, settings) {
         settings.notificationType === 'both') &&
       settings.webhookUrl
     ) {
+      console.log('Sending webhook notification to:', settings.webhookUrl);
       results.webhook = await sendWebhook(pin, settings.webhookUrl);
     }
 
@@ -30,9 +41,19 @@ export async function sendPinNotification(pin, settings) {
     if (
       (settings.notificationType === 'sms' ||
         settings.notificationType === 'both') &&
-      settings.twilioEnabled
+      settings.twilioAccountSid &&
+      settings.twilioAuthToken &&
+      settings.twilioPhoneNumber
     ) {
+      console.log('Sending SMS notification to:', settings.notificationRecipients);
       results.sms = await sendSMS(pin, settings);
+      console.log('SMS result:', results.sms);
+    } else if (settings.notificationType === 'sms' || settings.notificationType === 'both') {
+      console.warn('SMS notification skipped - missing Twilio credentials:', {
+        hasSid: !!settings.twilioAccountSid,
+        hasToken: !!settings.twilioAuthToken,
+        hasPhone: !!settings.twilioPhoneNumber,
+      });
     }
 
     return {

@@ -99,8 +99,37 @@ export default function GlobalAudioPlayer() {
     };
 
     const handleError = (e) => {
-      console.error('GlobalAudioPlayer - audio error:', e);
+      const audio = audioRef.current;
+      const errorDetails = {
+        error: e,
+        networkState: audio?.networkState,
+        readyState: audio?.readyState,
+        src: audio?.src,
+        currentTrack: currentTrack?.title,
+      };
+
+      // Get more specific error info
+      if (audio?.error) {
+        errorDetails.code = audio.error.code;
+        errorDetails.message = audio.error.message;
+
+        const errorMessages = {
+          1: 'MEDIA_ERR_ABORTED - Playback aborted',
+          2: 'MEDIA_ERR_NETWORK - Network error',
+          3: 'MEDIA_ERR_DECODE - Decode error',
+          4: 'MEDIA_ERR_SRC_NOT_SUPPORTED - Source not supported',
+        };
+        errorDetails.errorType = errorMessages[audio.error.code] || 'Unknown error';
+      }
+
+      console.error('GlobalAudioPlayer - audio error:', errorDetails);
       setIsPlaying(false);
+
+      // If error is due to bad source, clear track and try next
+      if (audio?.error?.code === 4 || audio?.error?.code === 2) {
+        console.log('GlobalAudioPlayer - Skipping problematic track and playing next');
+        playNext();
+      }
     };
 
     audio.addEventListener('play', handlePlay);
