@@ -13,10 +13,14 @@ export default function AdminPanel({ open, onClose }) {
   const [authenticated, setAuthenticated] = useState(false)
   const [tab, setTab] = useState('general')
 
-  // Reset authentication when panel closes
+  // Reset authentication and initial states when panel closes
   useEffect(() => {
     if (!open) {
       setAuthenticated(false)
+      setInitialSettings(null)
+      setInitialPopularSpots(null)
+      setInitialNavSettings(null)
+      setHasUnsavedChanges(false)
     }
   }, [open])
 
@@ -1294,7 +1298,7 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.photobooth_enabled}
                     onChange={(v) => {
-                      // Update local state only, save happens on "Save & Close"
+                      console.log('[AdminPanel] Photo Booth toggled: was:', navSettings.photobooth_enabled, 'now:', v);
                       setNavSettings({ ...navSettings, photobooth_enabled: v });
                     }}
                   />
@@ -1304,7 +1308,7 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.thenandnow_enabled}
                     onChange={(v) => {
-                      // Update local state only, save happens on "Save & Close"
+                      console.log('[AdminPanel] Then & Now toggled: was:', navSettings.thenandnow_enabled, 'now:', v);
                       setNavSettings({ ...navSettings, thenandnow_enabled: v });
                     }}
                   />

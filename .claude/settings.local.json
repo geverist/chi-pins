@@ -28,7 +28,8 @@
       "Bash(npm run dev:*)",
       "Bash(npx vercel:*)",
       "Bash(git revert:*)",
-      "Bash(curl -s \"https://chi-pins.vercel.app/api/navigation-settings\")"
+      "Bash(curl -s \"https://chi-pins.vercel.app/api/navigation-settings\")",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
