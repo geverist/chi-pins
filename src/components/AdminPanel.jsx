@@ -100,7 +100,7 @@ export default function AdminPanel({ open, onClose }) {
       }
 
       // Initialize navigation settings tracking (only if loaded)
-      if (!navLoading) {
+      if (!navLoading && !initialNavSettings) {
         console.log('[AdminPanel] Setting initial nav settings:', navSettings);
         setInitialNavSettings(navSettings)
       }
@@ -110,11 +110,11 @@ export default function AdminPanel({ open, onClose }) {
       // ignore – fallback to localStorage is already set
       setInitialSettings(adminSettingsFromHook)
       setInitialPopularSpots(popularSpots)
-      if (!navLoading) {
+      if (!navLoading && !initialNavSettings) {
         setInitialNavSettings(navSettings)
       }
     }
-  }, [open, adminSettingsFromHook, navLoading, navSettings])
+  }, [open, adminSettingsFromHook, navLoading])
 
   useEffect(() => { if (open) loadFromSupabase() }, [open, loadFromSupabase])
 
@@ -1315,9 +1315,13 @@ export default function AdminPanel({ open, onClose }) {
                     checked={navSettings.comments_enabled}
                     onChange={(v) => {
                       // Update local state only, save happens on "Save & Close"
-                      console.log('[AdminPanel] Leave Feedback toggled to:', v, 'current navSettings:', navSettings);
+                      console.log('[AdminPanel] Leave Feedback toggled:',
+                        'was:', navSettings.comments_enabled,
+                        'now:', v,
+                        'full navSettings:', navSettings
+                      );
                       const updated = { ...navSettings, comments_enabled: v };
-                      console.log('[AdminPanel] Updated navSettings:', updated);
+                      console.log('[AdminPanel] Updated navSettings.comments_enabled:', updated.comments_enabled);
                       setNavSettings(updated);
                     }}
                   />
