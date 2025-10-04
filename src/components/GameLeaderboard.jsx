@@ -1,5 +1,5 @@
 // src/components/GameLeaderboard.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function GameLeaderboard({
   game,
@@ -14,6 +14,8 @@ export default function GameLeaderboard({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [rank, setRank] = useState(null);
+  const [userEntryId, setUserEntryId] = useState(null);
+  const userRowRef = useRef(null);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -22,7 +24,8 @@ export default function GameLeaderboard({
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/game-leaderboard?game=${game}&limit=10`);
+      // Fetch more entries to show user's position even if not in top 10
+      const response = await fetch(`/api/game-leaderboard?game=${game}&limit=50`);
       if (response.ok) {
         const data = await response.json();
         setLeaderboard(data.scores || []);
@@ -68,10 +71,21 @@ export default function GameLeaderboard({
 
       const data = await response.json();
       setRank(data.rank);
+      setUserEntryId(data.id);
       setSubmitted(true);
 
-      // Refresh leaderboard after a brief delay to ensure DB is updated
-      setTimeout(() => fetchLeaderboard(), 500);
+      // Refresh leaderboard immediately
+      await fetchLeaderboard();
+
+      // Scroll to user's entry after a brief delay to ensure render
+      setTimeout(() => {
+        if (userRowRef.current) {
+          userRowRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }
+      }, 100);
     } catch (err) {
       console.error('Failed to submit score:', err);
       alert('Failed to save score. Please try again.');
@@ -204,47 +218,68 @@ export default function GameLeaderboard({
           <div>Time</div>
         </div>
 
-        {leaderboard.length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
-            No scores yet. Be the first!
-          </div>
-        ) : (
-          leaderboard.map((entry, idx) => (
-            <div
-              key={entry.id}
-              style={{
-                padding: '12px 16px',
-                borderBottom:
-                  idx < leaderboard.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                display: 'grid',
-                gridTemplateColumns: '50px 80px 1fr 80px 80px',
-                gap: 12,
-                fontSize: 14,
-                color: '#f4f6f8',
-                background: idx < 3 ? 'rgba(255,215,0,0.05)' : 'transparent',
-              }}
-            >
-              <div style={{ fontWeight: 600 }}>
-                {idx === 0 && '🥇'}
-                {idx === 1 && '🥈'}
-                {idx === 2 && '🥉'}
-                {idx > 2 && `#${idx + 1}`}
-              </div>
-              <div style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: 16 }}>
-                {entry.initials}
-              </div>
-              <div style={{ fontWeight: 600, color: '#10b981' }}>
-                {entry.score.toLocaleString()}
-              </div>
-              <div style={{ color: '#a7b0b8' }}>
-                {entry.accuracy ? `${entry.accuracy.toFixed(0)}%` : '-'}
-              </div>
-              <div style={{ color: '#a7b0b8' }}>
-                {entry.time ? `${entry.time.toFixed(1)}s` : '-'}
-              </div>
+        {/* Scrollable content */}
+        <div
+          style={{
+            maxHeight: 400,
+            overflowY: 'auto',
+          }}
+        >
+          {leaderboard.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+              No scores yet. Be the first!
             </div>
-          ))
-        )}
+          ) : (
+            leaderboard.map((entry, idx) => {
+              const isUserEntry = submitted && entry.id === userEntryId;
+              return (
+                <div
+                  key={entry.id}
+                  ref={isUserEntry ? userRowRef : null}
+                  style={{
+                    padding: '12px 16px',
+                    borderBottom:
+                      idx < leaderboard.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                    display: 'grid',
+                    gridTemplateColumns: '50px 80px 1fr 80px 80px',
+                    gap: 12,
+                    fontSize: 14,
+                    color: '#f4f6f8',
+                    background: isUserEntry
+                      ? 'rgba(59,130,246,0.2)'
+                      : idx < 3
+                      ? 'rgba(255,215,0,0.05)'
+                      : 'transparent',
+                    border: isUserEntry ? '2px solid rgba(59,130,246,0.5)' : 'none',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  <div style={{ fontWeight: 600 }}>
+                    {idx === 0 && '🥇'}
+                    {idx === 1 && '🥈'}
+                    {idx === 2 && '🥉'}
+                    {idx > 2 && `#${idx + 1}`}
+                  </div>
+                  <div style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: 16 }}>
+                    {entry.initials}
+                    {isUserEntry && (
+                      <span style={{ marginLeft: 4, fontSize: 12, color: '#60a5fa' }}>YOU</span>
+                    )}
+                  </div>
+                  <div style={{ fontWeight: 600, color: '#10b981' }}>
+                    {entry.score.toLocaleString()}
+                  </div>
+                  <div style={{ color: '#a7b0b8' }}>
+                    {entry.accuracy ? `${entry.accuracy.toFixed(0)}%` : '-'}
+                  </div>
+                  <div style={{ color: '#a7b0b8' }}>
+                    {entry.time ? `${entry.time.toFixed(1)}s` : '-'}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
