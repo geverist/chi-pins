@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import GameLeaderboard from './GameLeaderboard';
 
-// Correct order for Chicago-style hot dog
+// Correct order for Chicago-style hot dog (bottom to top)
 const CORRECT_ORDER = [
   'bun',
   'hotdog',
@@ -15,17 +15,26 @@ const CORRECT_ORDER = [
   'celery-salt',
 ];
 
-const INGREDIENTS = [
-  { id: 'bun', name: 'Poppy Seed Bun', emoji: '🥖', color: '#f4e4c1' },
-  { id: 'hotdog', name: 'All-Beef Frank', emoji: '🥩', color: '#d4926f' },
-  { id: 'mustard', name: 'Yellow Mustard', emoji: '🍯', color: '#ffd700' },
-  { id: 'relish', name: 'Neon Green Relish', emoji: '🥒', color: '#7cfc00' },
-  { id: 'onion', name: 'Chopped Onions', emoji: '🧅', color: '#fff5ee' },
-  { id: 'tomato', name: 'Tomato Wedges', emoji: '🍅', color: '#ff6347' },
-  { id: 'pickle', name: 'Pickle Spear', emoji: '🥒', color: '#228b22' },
-  { id: 'sport-pepper', name: 'Sport Peppers', emoji: '🌶️', color: '#ff4500' },
-  { id: 'celery-salt', name: 'Celery Salt', emoji: '🧂', color: '#e0e0e0' },
+const CORRECT_INGREDIENTS = [
+  { id: 'bun', name: 'Poppy Seed Bun', emoji: '🥖', color: '#f4e4c1', isCorrect: true },
+  { id: 'hotdog', name: 'All-Beef Frank', emoji: '🥩', color: '#d4926f', isCorrect: true },
+  { id: 'mustard', name: 'Yellow Mustard', emoji: '🍯', color: '#ffd700', isCorrect: true },
+  { id: 'relish', name: 'Neon Green Relish', emoji: '🥬', color: '#7cfc00', isCorrect: true },
+  { id: 'onion', name: 'Chopped Onions', emoji: '🧅', color: '#fff5ee', isCorrect: true },
+  { id: 'tomato', name: 'Tomato Wedges', emoji: '🍅', color: '#ff6347', isCorrect: true },
+  { id: 'pickle', name: 'Pickle Spear', emoji: '🥒', color: '#228b22', isCorrect: true },
+  { id: 'sport-pepper', name: 'Sport Peppers', emoji: '🌶️', color: '#ff4500', isCorrect: true },
+  { id: 'celery-salt', name: 'Celery Salt', emoji: '🧂', color: '#e0e0e0', isCorrect: true },
 ];
+
+// Wrong ingredients (deduct points!)
+const WRONG_INGREDIENTS = [
+  { id: 'ketchup', name: 'Ketchup (NO!)', emoji: '🔴', color: '#dc2626', isCorrect: false, penalty: -500 },
+  { id: 'sauerkraut', name: 'Sauerkraut', emoji: '🥗', color: '#9ca3af', isCorrect: false, penalty: -300 },
+  { id: 'moldy-onion', name: 'Moldy Onions', emoji: '🧄', color: '#4b5563', isCorrect: false, penalty: -400 },
+];
+
+const INGREDIENTS = [...CORRECT_INGREDIENTS, ...WRONG_INGREDIENTS];
 
 export default function HotdogGame({ onClose, onGameComplete }) {
   const [gameState, setGameState] = useState('instructions'); // instructions, playing, finished
@@ -102,7 +111,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   const handleDrop = (e) => {
     e.preventDefault();
     if (draggedItem && !assembledItems.find(i => i.id === draggedItem.id)) {
-      setAssembledItems([...assembledItems, draggedItem]);
+      // Add to BEGINNING of array so items stack from bottom-up
+      setAssembledItems([draggedItem, ...assembledItems]);
       setAvailableItems(availableItems.filter(i => i.id !== draggedItem.id));
     }
     setDraggedItem(null);
@@ -110,7 +120,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
 
   const handleTouchItem = (item) => {
     if (!assembledItems.find(i => i.id === item.id)) {
-      setAssembledItems([...assembledItems, item]);
+      // Add to BEGINNING of array so items stack from bottom-up
+      setAssembledItems([item, ...assembledItems]);
       setAvailableItems(availableItems.filter(i => i.id !== item.id));
     }
   };
@@ -121,7 +132,9 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   };
 
   useEffect(() => {
-    if (assembledItems.length === INGREDIENTS.length && gameState === 'playing') {
+    // Game ends when all CORRECT ingredients are assembled (ignore wrong ones)
+    const correctItemsUsed = assembledItems.filter(item => item.isCorrect).length;
+    if (correctItemsUsed === CORRECT_INGREDIENTS.length && gameState === 'playing') {
       finishGame();
     }
   }, [assembledItems, gameState]);
@@ -137,22 +150,37 @@ export default function HotdogGame({ onClose, onGameComplete }) {
 
     const timeTaken = (end - startTime) / 1000; // seconds
 
-    // Calculate accuracy
+    // Calculate accuracy - check order of CORRECT ingredients only
     let correctCount = 0;
-    assembledItems.forEach((item, index) => {
+    let orderPenalty = 0;
+
+    // Filter to only correct ingredients in assembled order
+    const correctItemsAssembled = assembledItems.filter(item => item.isCorrect);
+
+    correctItemsAssembled.forEach((item, index) => {
       if (item.id === CORRECT_ORDER[index]) {
         correctCount++;
+      } else {
+        orderPenalty += 50; // Penalty for wrong order
       }
     });
 
-    const accuracyPercent = (correctCount / INGREDIENTS.length) * 100;
+    const accuracyPercent = (correctCount / CORRECT_INGREDIENTS.length) * 100;
     setAccuracy(accuracyPercent);
 
-    // Calculate score: accuracy weighted heavily, speed bonus
+    // Calculate penalties for wrong ingredients
+    let wrongIngredientPenalty = 0;
+    assembledItems.forEach(item => {
+      if (!item.isCorrect) {
+        wrongIngredientPenalty += Math.abs(item.penalty || 0);
+      }
+    });
+
+    // Calculate score: accuracy weighted heavily, speed bonus, minus penalties
     const maxTime = 60; // 60 seconds for max speed bonus
     const speedBonus = Math.max(0, Math.min(1000, ((maxTime - timeTaken) / maxTime) * 1000));
     const accuracyScore = accuracyPercent * 100;
-    const totalScore = Math.round(accuracyScore + speedBonus);
+    const totalScore = Math.max(0, Math.round(accuracyScore + speedBonus - orderPenalty - wrongIngredientPenalty));
 
     setScore(totalScore);
     setGameState('finished');
@@ -182,6 +210,9 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         </p>
         <p style={{ color: '#fbbf24', fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>
           Watch out! Ingredients move to random positions every 5 seconds!
+        </p>
+        <p style={{ color: '#ef4444', fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>
+          ⚠️ AVOID ketchup, sauerkraut, and moldy onions - they deduct points!
         </p>
         <p style={{ color: '#10b981', fontSize: 13, fontWeight: 600, margin: 0 }}>
           The faster and more accurate, the higher your score!
