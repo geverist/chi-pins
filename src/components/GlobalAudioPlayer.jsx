@@ -6,7 +6,7 @@ import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function GlobalAudioPlayer() {
   const audioRef = useRef(null);
-  const { currentTrack, isPlaying, setIsPlaying, playNext } = useNowPlaying();
+  const { currentTrack, isPlaying, setIsPlaying, setLastPlayed, playNext } = useNowPlaying();
   const { settings: adminSettings } = useAdminSettings();
 
   // Play the current track when it changes
@@ -54,6 +54,10 @@ export default function GlobalAudioPlayer() {
     const handleEnded = () => {
       console.log('GlobalAudioPlayer - track ended, trying next...');
       setIsPlaying(false);
+      // Save current track as last played before moving to next
+      if (currentTrack) {
+        setLastPlayed(currentTrack);
+      }
       const nextTrack = playNext();
       if (nextTrack) {
         console.log('GlobalAudioPlayer - playing next track:', nextTrack.title);
@@ -78,7 +82,7 @@ export default function GlobalAudioPlayer() {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [setIsPlaying, playNext]);
+  }, [setIsPlaying, setLastPlayed, playNext, currentTrack]);
 
   // Hidden audio element
   return <audio ref={audioRef} />;

@@ -1,7 +1,7 @@
 // src/components/NowPlayingBanner.jsx
 import { useState, useEffect } from 'react';
 
-export default function NowPlayingBanner({ currentTrack, isPlaying }) {
+export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue }) {
   const [animate, setAnimate] = useState(false);
 
   // Restart animation when track changes
@@ -14,12 +14,27 @@ export default function NowPlayingBanner({ currentTrack, isPlaying }) {
     }
   }, [currentTrack?.id, isPlaying]);
 
-  if (!currentTrack) {
-    console.log('NowPlayingBanner - no current track, hiding banner');
+  if (!currentTrack && !lastPlayed) {
+    console.log('NowPlayingBanner - no current or last track, hiding banner');
     return null;
   }
 
-  const displayText = `${isPlaying ? '♫' : '⏸'} Now Playing: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`;
+  // Build the display text with all three sections
+  const parts = [];
+
+  if (lastPlayed) {
+    parts.push(`Last Played: ${lastPlayed.title}${lastPlayed.artist ? ` - ${lastPlayed.artist}` : ''}`);
+  }
+
+  if (currentTrack) {
+    parts.push(`${isPlaying ? '♫' : '⏸'} Now Playing: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`);
+  }
+
+  if (nextInQueue) {
+    parts.push(`Next: ${nextInQueue.title}${nextInQueue.artist ? ` - ${nextInQueue.artist}` : ''}`);
+  }
+
+  const displayText = parts.join('   •   ');
 
   // Duplicate text for seamless scrolling
   const scrollContent = Array(10).fill(displayText).join('   •   ');
@@ -30,7 +45,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying }) {
     <div
       style={{
         position: 'fixed',
-        bottom: 100, // Above footer (accounting for buttons + padding)
+        bottom: 180, // Above footer and pin editor form
         left: 0,
         right: 0,
         height: 36,

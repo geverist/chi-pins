@@ -87,13 +87,15 @@ export default function App() {
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
   const { settings: adminSettings } = useAdminSettings();
   const { settings: navSettings, enabledCount } = useNavigationSettings();
-  const { currentTrack, isPlaying } = useNowPlaying();
+  const { currentTrack, isPlaying, lastPlayed, queue } = useNowPlaying();
 
   // Debug logging for Now Playing state
   useEffect(() => {
     console.log('App.jsx - currentTrack changed:', currentTrack);
     console.log('App.jsx - isPlaying:', isPlaying);
-  }, [currentTrack, isPlaying]);
+    console.log('App.jsx - lastPlayed:', lastPlayed);
+    console.log('App.jsx - queue:', queue);
+  }, [currentTrack, isPlaying, lastPlayed, queue]);
 
   // map mode
   const [mapMode, setMapMode] = useState('chicago');
@@ -848,7 +850,12 @@ export default function App() {
       )}
 
       <GlobalAudioPlayer />
-      <NowPlayingBanner currentTrack={currentTrack} isPlaying={isPlaying} />
+      <NowPlayingBanner
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        lastPlayed={lastPlayed}
+        nextInQueue={queue[0] || null}
+      />
 
       <Footer
         isMobile={isMobile}

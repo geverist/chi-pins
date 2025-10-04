@@ -17,7 +17,7 @@ export default function Jukebox({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('');
   const { settings: adminSettings } = useAdminSettings();
   const { mediaFiles, loading } = useMediaFiles();
-  const { currentTrack, setCurrentTrack, addToQueue } = useNowPlaying();
+  const { currentTrack, setCurrentTrack, setLastPlayed, addToQueue } = useNowPlaying();
 
   // Idle timeout - close jukebox and return to map
   useFeatureIdleTimeout(
@@ -42,8 +42,11 @@ export default function Jukebox({ onClose }) {
     console.log('Jukebox - AutoPlay mode:', adminSettings.jukeboxAutoPlay);
 
     if (adminSettings.jukeboxAutoPlay) {
-      // Play immediately
+      // Play immediately - save current as last played if exists
       console.log('Jukebox - Setting current track and closing...');
+      if (currentTrack) {
+        setLastPlayed(currentTrack);
+      }
       setCurrentTrack(track);
       setTimeout(() => {
         console.log('Jukebox - Calling onClose()');

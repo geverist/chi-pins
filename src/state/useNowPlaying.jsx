@@ -5,6 +5,7 @@ const NowPlayingContext = createContext();
 
 export function NowPlayingProvider({ children }) {
   const [currentTrack, setCurrentTrack] = useState(null);
+  const [lastPlayed, setLastPlayed] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [queue, setQueue] = useState([]);
 
@@ -15,12 +16,16 @@ export function NowPlayingProvider({ children }) {
   const playNext = useCallback(() => {
     if (queue.length > 0) {
       const [nextTrack, ...remainingQueue] = queue;
+      // Save current track as last played before switching
+      if (currentTrack) {
+        setLastPlayed(currentTrack);
+      }
       setCurrentTrack(nextTrack);
       setQueue(remainingQueue);
       return nextTrack;
     }
     return null;
-  }, [queue]);
+  }, [queue, currentTrack]);
 
   const clearQueue = useCallback(() => {
     setQueue([]);
@@ -30,6 +35,8 @@ export function NowPlayingProvider({ children }) {
     <NowPlayingContext.Provider value={{
       currentTrack,
       setCurrentTrack,
+      lastPlayed,
+      setLastPlayed,
       isPlaying,
       setIsPlaying,
       queue,
