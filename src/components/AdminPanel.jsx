@@ -287,6 +287,7 @@ export default function AdminPanel({ open, onClose }) {
         <div style={s.tabs}>
           <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
           <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>Display</TabBtn>
+          <TabBtn active={tab === 'games'} onClick={() => setTab('games')}>Games</TabBtn>
           <TabBtn active={tab === 'branding'} onClick={() => setTab('branding')}>Branding</TabBtn>
           <TabBtn active={tab === 'navigation'} onClick={() => setTab('navigation')}>Navigation</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
@@ -352,100 +353,6 @@ export default function AdminPanel({ open, onClose }) {
                 </FieldRow>
                 <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
                   Set to 0 to disable timeout for a feature
-                </p>
-              </Card>
-
-              <Card title="🎮 Game Settings">
-                <p style={{ ...s.muted, margin: '0 0 24px', fontSize: 12 }}>
-                  Configure difficulty settings for all Chicago-themed games
-                </p>
-
-                {/* Deep Dish Game */}
-                <h4 style={{ color: '#f4f6f8', margin: '0 0 12px', fontSize: 16, borderBottom: '1px solid #2a2f37', paddingBottom: 8 }}>
-                  Deep Dish Toss
-                </h4>
-                <FieldRow label="Start speed">
-                  <NumberInput
-                    value={settings.deepDishStartSpeed}
-                    min={1}
-                    max={10}
-                    step={0.5}
-                    onChange={(v) => setSettings(s => ({ ...s, deepDishStartSpeed: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="End speed (max)">
-                  <NumberInput
-                    value={settings.deepDishEndSpeed}
-                    min={2}
-                    max={15}
-                    step={0.5}
-                    onChange={(v) => setSettings(s => ({ ...s, deepDishEndSpeed: v }))}
-                  />
-                </FieldRow>
-                <p style={{ ...s.muted, margin: '8px 0 24px', fontSize: 11 }}>
-                  Speed progressively increases from start to end during game
-                </p>
-
-                {/* Popcorn Wind Challenge */}
-                <h4 style={{ color: '#f4f6f8', margin: '0 0 12px', fontSize: 16, borderBottom: '1px solid #2a2f37', paddingBottom: 8 }}>
-                  Windy City Popcorn Challenge
-                </h4>
-                <FieldRow label="Starting popcorn pieces">
-                  <NumberInput
-                    value={settings.popcornStartingPieces}
-                    min={5}
-                    max={50}
-                    step={1}
-                    onChange={(v) => setSettings(s => ({ ...s, popcornStartingPieces: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="Game duration (seconds)">
-                  <NumberInput
-                    value={settings.popcornGameDuration}
-                    min={30}
-                    max={180}
-                    step={10}
-                    onChange={(v) => setSettings(s => ({ ...s, popcornGameDuration: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="Wind start interval (sec)">
-                  <NumberInput
-                    value={settings.popcornWindStartInterval}
-                    min={2}
-                    max={10}
-                    step={0.5}
-                    onChange={(v) => setSettings(s => ({ ...s, popcornWindStartInterval: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="Wind min interval (sec)">
-                  <NumberInput
-                    value={settings.popcornWindMinInterval}
-                    min={1}
-                    max={5}
-                    step={0.5}
-                    onChange={(v) => setSettings(s => ({ ...s, popcornWindMinInterval: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="Wind start speed">
-                  <NumberInput
-                    value={settings.popcornWindStartSpeed}
-                    min={0.1}
-                    max={2}
-                    step={0.1}
-                    onChange={(v) => setSettings(s => ({ ...s, popcornWindStartSpeed: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="Wind max speed">
-                  <NumberInput
-                    value={settings.popcornWindMaxSpeed}
-                    min={0.5}
-                    max={3}
-                    step={0.1}
-                    onChange={(v) => setSettings(s => ({ ...s, popcornWindMaxSpeed: v }))}
-                  />
-                </FieldRow>
-                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                  Wind gust speed and frequency increase during the game
                 </p>
               </Card>
 
@@ -744,6 +651,100 @@ export default function AdminPanel({ open, onClose }) {
                 </FieldRow>
                 <p style={{ ...s.muted, margin: 0, fontSize: 12 }}>
                   Advanced: These control map behavior constants
+                </p>
+              </Card>
+            </SectionGrid>
+          )}
+
+          {tab === 'games' && (
+            <SectionGrid>
+              <Card title="🎮 Deep Dish Toss">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Configure difficulty settings for the Deep Dish pizza catching game
+                </p>
+                <FieldRow label="Start speed">
+                  <NumberInput
+                    value={settings.deepDishStartSpeed}
+                    min={1}
+                    max={10}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, deepDishStartSpeed: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="End speed (max)">
+                  <NumberInput
+                    value={settings.deepDishEndSpeed}
+                    min={2}
+                    max={15}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, deepDishEndSpeed: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Speed progressively increases from start to end during game
+                </p>
+              </Card>
+
+              <Card title="🌬️ Windy City Popcorn Challenge">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Configure difficulty settings for the wind-dodging popcorn game
+                </p>
+                <FieldRow label="Starting popcorn pieces">
+                  <NumberInput
+                    value={settings.popcornStartingPieces}
+                    min={5}
+                    max={50}
+                    step={1}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornStartingPieces: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Game duration (seconds)">
+                  <NumberInput
+                    value={settings.popcornGameDuration}
+                    min={30}
+                    max={180}
+                    step={10}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornGameDuration: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind start interval (sec)">
+                  <NumberInput
+                    value={settings.popcornWindStartInterval}
+                    min={2}
+                    max={10}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindStartInterval: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind min interval (sec)">
+                  <NumberInput
+                    value={settings.popcornWindMinInterval}
+                    min={1}
+                    max={5}
+                    step={0.5}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindMinInterval: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind start speed">
+                  <NumberInput
+                    value={settings.popcornWindStartSpeed}
+                    min={0.1}
+                    max={2}
+                    step={0.1}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindStartSpeed: v }))}
+                  />
+                </FieldRow>
+                <FieldRow label="Wind max speed">
+                  <NumberInput
+                    value={settings.popcornWindMaxSpeed}
+                    min={0.5}
+                    max={3}
+                    step={0.1}
+                    onChange={(v) => setSettings(s => ({ ...s, popcornWindMaxSpeed: v }))}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Wind gust speed and frequency increase during the game
                 </p>
               </Card>
             </SectionGrid>
