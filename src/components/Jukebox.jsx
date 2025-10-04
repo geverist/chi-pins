@@ -301,7 +301,7 @@ export default function Jukebox({ onClose }) {
 
               {!loading && mediaFiles.length === 0 && (
                 <div style={{ textAlign: 'center', padding: 40, color: '#a7b0b8' }}>
-                  No tracks uploaded. Go to Admin Panel > Media to upload MP3 files.
+                  No tracks uploaded. Go to Admin Panel &gt; Media to upload MP3 files.
                 </div>
               )}
 
