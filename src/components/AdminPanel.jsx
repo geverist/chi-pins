@@ -1102,8 +1102,54 @@ export default function AdminPanel({ open, onClose }) {
                   />
                 </FieldRow>
 
+                {settings.showWeatherWidget && (
+                  <>
+                    <FieldRow label="Location Name">
+                      <input
+                        type="text"
+                        value={settings.weatherLocation}
+                        onChange={(e) => setSettings(s => ({ ...s, weatherLocation: e.target.value }))}
+                        placeholder="Chicago, IL"
+                        style={s.input}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Latitude">
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={settings.weatherLat}
+                        onChange={(e) => setSettings(s => ({ ...s, weatherLat: parseFloat(e.target.value) || 0 }))}
+                        placeholder="41.8781"
+                        style={s.input}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Longitude">
+                      <input
+                        type="number"
+                        step="0.0001"
+                        value={settings.weatherLng}
+                        onChange={(e) => setSettings(s => ({ ...s, weatherLng: parseFloat(e.target.value) || 0 }))}
+                        placeholder="-87.6298"
+                        style={s.input}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Timezone">
+                      <input
+                        type="text"
+                        value={settings.weatherTimezone}
+                        onChange={(e) => setSettings(s => ({ ...s, weatherTimezone: e.target.value }))}
+                        placeholder="America/Chicago"
+                        style={s.input}
+                      />
+                    </FieldRow>
+                  </>
+                )}
+
                 <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                  Weather widget shows current Chicago weather with hot dog recommendations
+                  Weather widget shows current weather with hot dog recommendations. Configure location coordinates for accurate weather data.
                 </p>
               </Card>
             </SectionGrid>

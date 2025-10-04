@@ -1,10 +1,13 @@
 // src/components/WeatherWidget.jsx
 import { useState, useEffect } from 'react';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function WeatherWidget() {
+  const { settings: adminSettings } = useAdminSettings();
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
     fetchWeather();
@@ -17,9 +20,12 @@ export default function WeatherWidget() {
     try {
       setLoading(true);
       // Using Open-Meteo API (no API key required)
-      // Chicago coordinates: 41.8781, -87.6298
+      const lat = adminSettings.weatherLat || 41.8781;
+      const lng = adminSettings.weatherLng || -87.6298;
+      const timezone = adminSettings.weatherTimezone || 'America/Chicago';
+
       const response = await fetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=41.8781&longitude=-87.6298&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/Chicago'
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=${encodeURIComponent(timezone)}`
       );
 
       if (!response.ok) throw new Error('Weather fetch failed');
@@ -64,12 +70,16 @@ export default function WeatherWidget() {
     }
   };
 
+  if (isDismissed || error || !weather) {
+    return null;
+  }
+
   if (loading) {
     return (
       <div
         style={{
           position: 'fixed',
-          top: 80,
+          top: 120,
           right: 20,
           background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(37,99,235,0.95) 100%)',
           borderRadius: 16,
@@ -78,7 +88,8 @@ export default function WeatherWidget() {
           border: '1px solid rgba(255,255,255,0.2)',
           color: '#fff',
           minWidth: 200,
-          zIndex: 1000,
+          zIndex: 999,
+          pointerEvents: 'auto',
         }}
       >
         <div style={{ textAlign: 'center' }}>Loading weather...</div>
@@ -86,17 +97,15 @@ export default function WeatherWidget() {
     );
   }
 
-  if (error || !weather) {
-    return null;
-  }
-
   const recommendation = getHotDogRecommendation(weather.temperature_2m, weather.weather_code);
+
+  const locationName = adminSettings.weatherLocation || 'Chicago, IL';
 
   return (
     <div
       style={{
         position: 'fixed',
-        top: 80,
+        top: 120,
         right: 20,
         background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(37,99,235,0.95) 100%)',
         borderRadius: 16,
@@ -107,9 +116,34 @@ export default function WeatherWidget() {
         color: '#fff',
         minWidth: 280,
         maxWidth: 320,
-        zIndex: 1000,
+        zIndex: 999,
+        pointerEvents: 'auto',
       }}
     >
+      {/* Close button */}
+      <button
+        onClick={() => setIsDismissed(true)}
+        style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          width: 24,
+          height: 24,
+          borderRadius: '50%',
+          border: 'none',
+          background: 'rgba(0,0,0,0.3)',
+          color: '#fff',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 14,
+          fontWeight: 'bold',
+        }}
+        title="Dismiss"
+      >
+        ✕
+      </button>
       {/* Weather Info */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <span style={{ fontSize: 48 }}>{getWeatherEmoji(weather.weather_code)}</span>
@@ -171,7 +205,7 @@ export default function WeatherWidget() {
           textAlign: 'center',
         }}
       >
-        📍 Chicago, IL
+        📍 {locationName}
       </div>
     </div>
   );

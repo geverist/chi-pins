@@ -76,6 +76,10 @@ const DEFAULTS = {
 
   // Widget Controls
   showWeatherWidget: true,         // Show weather widget with hot dog recommendations
+  weatherLocation: 'Chicago, IL',  // Display name for weather location
+  weatherLat: 41.8781,             // Latitude for weather data
+  weatherLng: -87.6298,            // Longitude for weather data
+  weatherTimezone: 'America/Chicago', // Timezone for weather data
 
   // Audio Output Settings
   audioOutputType: 'local', // 'local' | 'bluetooth' | 'sonos'
