@@ -15,7 +15,21 @@ export default function GlobalAudioPlayer() {
     if (!currentTrack || !audioRef.current) return;
 
     const audio = audioRef.current;
-    audio.src = currentTrack.url;
+
+    // Determine the source URL based on track type
+    let sourceUrl = currentTrack.url;
+
+    // For Spotify tracks, check if we have a preview URL
+    if (currentTrack.music_source === 'spotify' || currentTrack.mime_type === 'audio/spotify') {
+      if (!currentTrack.url) {
+        console.warn('GlobalAudioPlayer - Spotify track has no preview URL');
+        setIsPlaying(false);
+        return;
+      }
+      console.log('GlobalAudioPlayer - Playing Spotify preview:', currentTrack.title);
+    }
+
+    audio.src = sourceUrl;
 
     // Handle Bluetooth device selection if configured
     const playAudio = async () => {
@@ -34,7 +48,7 @@ export default function GlobalAudioPlayer() {
     };
 
     playAudio();
-  }, [currentTrack, adminSettings.audioOutputType, adminSettings.bluetoothDeviceId]);
+  }, [currentTrack, adminSettings.audioOutputType, adminSettings.bluetoothDeviceId, setIsPlaying]);
 
   // Audio event handlers
   useEffect(() => {

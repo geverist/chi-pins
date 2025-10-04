@@ -90,16 +90,21 @@ export function useMediaFiles() {
       }
 
       // Insert metadata into database
-      const { data: dbData, error: dbError } = await supabase
+      const { data: dbData, error: dbError} = await supabase
         .from('media_files')
         .insert({
           filename: file.name,
           title: metadata.title || file.name.replace(/\.[^/.]+$/, ''),
           artist: metadata.artist || null,
+          album: metadata.album || null,
           duration_seconds: duration,
           file_size_bytes: file.size,
           storage_path: storagePath,
           mime_type: file.type || 'audio/mpeg',
+          music_source: 'local',
+          license_type: metadata.license_type || 'uploaded',
+          license_verified: metadata.license_verified || false,
+          license_notes: metadata.license_notes || null,
         })
         .select()
         .single();
@@ -147,6 +152,44 @@ export function useMediaFiles() {
       await loadMediaFiles();
     } catch (err) {
       console.error('Failed to delete media file:', err);
+      setError(err.message);
+      throw err;
+    }
+  }, [loadMediaFiles]);
+
+  // Add Spotify track to library
+  const addSpotifyTrack = useCallback(async (spotifyTrack) => {
+    try {
+      setError(null);
+
+      const { data: dbData, error: dbError } = await supabase
+        .from('media_files')
+        .insert({
+          filename: `${spotifyTrack.title} - ${spotifyTrack.artist}.spotify`,
+          title: spotifyTrack.title,
+          artist: spotifyTrack.artist,
+          album: spotifyTrack.album || null,
+          duration_seconds: spotifyTrack.duration ? Math.round(spotifyTrack.duration / 1000) : null,
+          storage_path: null, // No local file
+          mime_type: 'audio/spotify',
+          music_source: 'spotify',
+          spotify_track_id: spotifyTrack.id,
+          spotify_track_uri: spotifyTrack.uri,
+          license_type: 'streaming_api',
+          license_verified: true,
+          license_notes: 'Licensed via Spotify API - requires Spotify Premium and business licensing',
+        })
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      // Reload media files
+      await loadMediaFiles();
+
+      return dbData;
+    } catch (err) {
+      console.error('Failed to add Spotify track:', err);
       setError(err.message);
       throw err;
     }
