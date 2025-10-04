@@ -2,12 +2,19 @@
 import { useState, useEffect } from 'react';
 import { useAdminSettings } from '../state/useAdminSettings';
 
-export default function WeatherWidget() {
+export default function WeatherWidget({ autoDismissOnEdit = false }) {
   const { settings: adminSettings } = useAdminSettings();
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // Auto-dismiss when user interacts with pins/editor
+  useEffect(() => {
+    if (autoDismissOnEdit) {
+      setIsDismissed(true);
+    }
+  }, [autoDismissOnEdit]);
 
   useEffect(() => {
     fetchWeather();

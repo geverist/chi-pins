@@ -10,7 +10,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
       setAnimate(false);
       setTimeout(() => setAnimate(true), 50);
     }
-  }, [currentTrack?.id, nextInQueue?.id, isPlaying]);
+  }, [currentTrack?.url, currentTrack?.title, nextInQueue?.url, nextInQueue?.title, isPlaying]);
 
   // Only show banner if there's currently playing music OR upcoming tracks
   // Don't show if only lastPlayed exists (no active music)
