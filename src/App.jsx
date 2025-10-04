@@ -58,6 +58,7 @@ import CommentsModal from './components/CommentsModal';
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
 import PinHeatmap from './components/PinHeatmap';
+import ProgressiveVisualization from './components/ProgressiveVisualization';
 import ZoomGate from './components/ZoomGate';
 
 // Admin panel
@@ -866,10 +867,12 @@ export default function App() {
           {showCommunityPins && !draft && (
             <>
               {adminSettings?.lowZoomVisualization === 'heatmap' ? (
-                <PinHeatmap
+                <ProgressiveVisualization
                   pins={pinsDeduped}
                   enabled={true}
-                  minZoomForPins={13}
+                  heatmapZoom={11}
+                  bubbleZoom={13}
+                  maxZoom={17}
                   radius={adminSettings.heatmapRadius}
                   blur={adminSettings.heatmapBlur}
                   intensity={adminSettings.heatmapIntensity}
