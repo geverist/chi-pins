@@ -6,27 +6,20 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
   // Restart animation when track changes
   useEffect(() => {
-    console.log('NowPlayingBanner - currentTrack:', currentTrack);
-    console.log('NowPlayingBanner - lastPlayed:', lastPlayed);
-    console.log('NowPlayingBanner - nextInQueue:', nextInQueue);
-    console.log('NowPlayingBanner - isPlaying:', isPlaying);
-    if (currentTrack || lastPlayed) {
+    if (currentTrack || nextInQueue) {
       setAnimate(false);
       setTimeout(() => setAnimate(true), 50);
     }
-  }, [currentTrack?.id, lastPlayed?.id, nextInQueue?.id, isPlaying]);
+  }, [currentTrack?.id, nextInQueue?.id, isPlaying]);
 
-  if (!currentTrack && !lastPlayed) {
-    console.log('NowPlayingBanner - no current or last track, hiding banner');
+  // Only show banner if there's currently playing music OR upcoming tracks
+  // Don't show if only lastPlayed exists (no active music)
+  if (!currentTrack && !nextInQueue) {
     return null;
   }
 
-  // Build the display text with all three sections
+  // Build the display text - only show active music info
   const parts = [];
-
-  if (lastPlayed) {
-    parts.push(`Last Played: ${lastPlayed.title}${lastPlayed.artist ? ` - ${lastPlayed.artist}` : ''}`);
-  }
 
   if (currentTrack) {
     parts.push(`${isPlaying ? '♫' : '⏸'} Now Playing: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`);
@@ -40,8 +33,6 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
   // Duplicate text for seamless scrolling - need more copies for smooth loop
   const scrollContent = Array(20).fill(displayText).join('        •        ');
-
-  console.log('NowPlayingBanner - RENDERING BANNER with text:', displayText);
 
   return (
     <div
