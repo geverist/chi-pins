@@ -967,7 +967,7 @@ export default function App() {
       )}
 
       {adminSettings.showWeatherWidget && (
-        <WeatherWidget autoDismissOnEdit={editorOpen || exploreOpen} />
+        <WeatherWidget autoDismissOnEdit={draft !== null || exploring} />
       )}
 
       {isMobile && adminSettings.showNavMenuOnMobile && (
