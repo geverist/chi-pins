@@ -38,6 +38,7 @@ export function useNavigationSettings() {
         throw new Error('Failed to fetch navigation settings');
       }
       const data = await response.json();
+      console.log('[useNavigationSettings] Fetched from API:', data);
       setSettings(data);
       setError(null);
     } catch (err) {
@@ -50,6 +51,8 @@ export function useNavigationSettings() {
 
   const updateSettings = async (newSettings) => {
     try {
+      console.log('[useNavigationSettings] Updating settings:', newSettings);
+
       // Optimistically update UI immediately
       setSettings(newSettings);
 
@@ -68,6 +71,7 @@ export function useNavigationSettings() {
       }
 
       const data = await response.json();
+      console.log('[useNavigationSettings] Update successful, API returned:', data);
       setSettings(data);
       setError(null);
 
