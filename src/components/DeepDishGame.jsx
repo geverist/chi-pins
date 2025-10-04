@@ -484,6 +484,7 @@ export default function DeepDishGame({ onClose }) {
   const renderFinished = () => {
     const timeTaken = endTime && startTime ? (endTime - startTime) / 1000 : 0;
     const isComplete = collectedIngredients.length === REQUIRED_INGREDIENTS.length;
+    const accuracyPercent = (collectedIngredients.length / REQUIRED_INGREDIENTS.length) * 100;
 
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
@@ -548,8 +549,8 @@ export default function DeepDishGame({ onClose }) {
         <GameLeaderboard
           game="deep-dish-toss"
           currentScore={score}
-          currentAccuracy={accuracy}
-          currentTime={GAME_DURATION}
+          currentAccuracy={accuracyPercent}
+          currentTime={timeTaken}
         />
 
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
