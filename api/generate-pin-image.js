@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     // Fetch pin data using sanitized slug
     const { data: pin, error } = await supabase
       .from('pins')
-      .select('slug, name, note, latitude, longitude, icon')
+      .select('slug, name, note, lat, lng, icon')
       .eq('slug', sanitizedSlug)
       .single();
 
@@ -79,8 +79,8 @@ export default async function handler(req, res) {
     }
 
     // Validate coordinates
-    const lat = parseFloat(pin.latitude)
-    const lng = parseFloat(pin.longitude)
+    const lat = parseFloat(pin.lat)
+    const lng = parseFloat(pin.lng)
     if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
       return res.status(400).json({ error: 'Invalid coordinates' });
     }
