@@ -6,13 +6,18 @@ export default function NowPlayingBanner({ currentTrack, isPlaying }) {
 
   // Restart animation when track changes
   useEffect(() => {
+    console.log('NowPlayingBanner - currentTrack changed:', currentTrack);
+    console.log('NowPlayingBanner - isPlaying:', isPlaying);
     if (currentTrack) {
       setAnimate(false);
       setTimeout(() => setAnimate(true), 50);
     }
   }, [currentTrack?.id]);
 
-  if (!currentTrack) return null;
+  if (!currentTrack) {
+    console.log('NowPlayingBanner - no current track, hiding banner');
+    return null;
+  }
 
   const displayText = `${isPlaying ? '♫' : '⏸'} Now Playing: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`;
 

@@ -66,7 +66,7 @@ export default function Jukebox({ onClose }) {
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
     };
-  }, []);
+  }, [playNext]);
 
   const handlePlayNow = async (track) => {
     setCurrentTrack(track);
@@ -413,19 +413,30 @@ export default function Jukebox({ onClose }) {
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
-                onClick={() => {
+                onClick={async () => {
+                  console.log('Track clicked:', track.title);
+                  console.log('AutoPlay mode:', adminSettings.jukeboxAutoPlay);
+
                   if (adminSettings.jukeboxAutoPlay) {
                     // Play immediately and close
-                    handlePlayNow(track);
-                    setTimeout(() => onClose(), 500); // Small delay for feedback
+                    await handlePlayNow(track);
+                    console.log('Closing jukebox in 500ms...');
+                    setTimeout(() => {
+                      console.log('Calling onClose()');
+                      onClose();
+                    }, 500);
                   } else {
                     // Add to queue
                     addToQueue(track);
                     // If nothing is playing, start playing
                     if (!currentTrack) {
-                      handlePlayNow(track);
+                      await handlePlayNow(track);
                     }
-                    setTimeout(() => onClose(), 500);
+                    console.log('Closing jukebox in 500ms...');
+                    setTimeout(() => {
+                      console.log('Calling onClose()');
+                      onClose();
+                    }, 500);
                   }
                 }}
               >
