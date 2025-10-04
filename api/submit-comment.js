@@ -60,8 +60,51 @@ export default async function handler(req, res) {
       throw new Error(error.message || 'Failed to save comment');
     }
 
-    // Optionally send notification to business owner
-    // (You can add Twilio SMS or email notification here if needed)
+    // Send SMS notification to business owner
+    try {
+      // Fetch admin settings to get Twilio config
+      const { data: settingsData } = await supabase
+        .from('settings')
+        .select('*')
+        .single();
+
+      if (settingsData &&
+          settingsData.notifications_enabled &&
+          (settingsData.notification_type === 'sms' || settingsData.notification_type === 'both') &&
+          settingsData.twilio_account_sid &&
+          settingsData.twilio_auth_token &&
+          settingsData.twilio_phone_number &&
+          settingsData.notification_recipients) {
+
+        // Format the SMS message
+        const ratingStars = '⭐'.repeat(rating);
+        const message = `New Customer Feedback!\n\n${ratingStars} (${rating}/5)\n\nFrom: ${name || 'Anonymous'}${contact ? `\nContact: ${contact}` : ''}\n\nComment: ${comment}\n\nSubmitted: ${new Date(timestamp || Date.now()).toLocaleString()}`;
+
+        // Send SMS via our existing send-sms API
+        const smsResponse = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/send-sms`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            accountSid: settingsData.twilio_account_sid,
+            authToken: settingsData.twilio_auth_token,
+            from: settingsData.twilio_phone_number,
+            to: settingsData.notification_recipients.split(',').map(n => n.trim()).filter(n => n),
+            message: message,
+          }),
+        });
+
+        if (!smsResponse.ok) {
+          console.error('Failed to send SMS notification:', await smsResponse.text());
+        } else {
+          console.log('SMS notification sent successfully');
+        }
+      }
+    } catch (notifError) {
+      // Log but don't fail the request if notification fails
+      console.error('Error sending notification:', notifError);
+    }
 
     return res.status(200).json({
       success: true,
