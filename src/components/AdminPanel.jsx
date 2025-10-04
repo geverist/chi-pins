@@ -996,6 +996,68 @@ export default function AdminPanel({ open, onClose }) {
                     <option value="heatmap">Heatmap</option>
                   </select>
                 </FieldRow>
+
+                {settings.lowZoomVisualization === 'heatmap' && (
+                  <>
+                    <FieldRow label={`Heatmap Radius: ${settings.heatmapRadius || 25}`}>
+                      <input
+                        type="range"
+                        min="10"
+                        max="50"
+                        step="1"
+                        value={settings.heatmapRadius || 25}
+                        onChange={(e) => setSettings(s => ({ ...s, heatmapRadius: Number(e.target.value) }))}
+                        style={{ width: '100%' }}
+                      />
+                      <span style={{ fontSize: 12, color: '#888', marginTop: 4, display: 'block' }}>
+                        Size of heat points (10-50)
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={`Heatmap Blur: ${settings.heatmapBlur || 15}`}>
+                      <input
+                        type="range"
+                        min="5"
+                        max="35"
+                        step="1"
+                        value={settings.heatmapBlur || 15}
+                        onChange={(e) => setSettings(s => ({ ...s, heatmapBlur: Number(e.target.value) }))}
+                        style={{ width: '100%' }}
+                      />
+                      <span style={{ fontSize: 12, color: '#888', marginTop: 4, display: 'block' }}>
+                        Blur amount (5-35)
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={`Heatmap Intensity: ${settings.heatmapIntensity?.toFixed(1) || 0.8}`}>
+                      <input
+                        type="range"
+                        min="0.1"
+                        max="2.0"
+                        step="0.1"
+                        value={settings.heatmapIntensity || 0.8}
+                        onChange={(e) => setSettings(s => ({ ...s, heatmapIntensity: Number(e.target.value) }))}
+                        style={{ width: '100%' }}
+                      />
+                      <span style={{ fontSize: 12, color: '#888', marginTop: 4, display: 'block' }}>
+                        Point brightness (0.1-2.0)
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={`Heatmap Max: ${settings.heatmapMax?.toFixed(1) || 2.0}`}>
+                      <input
+                        type="range"
+                        min="0.5"
+                        max="5.0"
+                        step="0.1"
+                        value={settings.heatmapMax || 2.0}
+                        onChange={(e) => setSettings(s => ({ ...s, heatmapMax: Number(e.target.value) }))}
+                        style={{ width: '100%' }}
+                      />
+                      <span style={{ fontSize: 12, color: '#888', marginTop: 4, display: 'block' }}>
+                        Color scaling (0.5-5.0, lower = more vibrant)
+                      </span>
+                    </FieldRow>
+                  </>
+                )}
+
                 <FieldRow label="Label style">
                   <select
                     value={settings.labelStyle}

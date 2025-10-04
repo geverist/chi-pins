@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAdminSettings } from '../state/useAdminSettings';
+import {
+  addPendingPin,
+  getPendingPins,
+  removePendingPin,
+  cachePins,
+  getCachedPins,
+} from '../lib/offlineStorage';
 
 const MAX_ROWS = 1000;
 
@@ -144,6 +151,13 @@ export function usePins(mainMapRef) {
           console.log(`usePins: After dedup, ${seeded.length} new pins added, seen.current.size = ${seen.current.size}`);
           bumpNewest(allData);
           setPins((prev) => mergeRows(prev, seeded));
+
+          // Cache pins to IndexedDB for offline use
+          if (allData.length > 0) {
+            cachePins(allData).catch(err =>
+              console.warn('Failed to cache pins to IndexedDB:', err)
+            );
+          }
         }
       } catch {
         // ignore; polling will retry
@@ -280,12 +294,13 @@ export function usePins(mainMapRef) {
     };
   }, [mainMapRef]);
 
-  // Offline queuing for pin saves
+  // Offline queuing for pin saves with IndexedDB
   const addPin = async (pin) => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-      offlineQueue.current.push(pin);
-      localStorage.setItem('pin-queue', JSON.stringify(offlineQueue.current));
+      // Store in IndexedDB for offline support
+      await addPendingPin(pin);
       setPins((prev) => mergeRows(prev, [pin]));
+      console.log('Pin saved offline to IndexedDB:', pin.slug);
       return pin;
     }
     try {
@@ -295,42 +310,66 @@ export function usePins(mainMapRef) {
       setPins((prev) => mergeRows(prev, [inserted]));
       return inserted;
     } catch (err) {
-      console.error('Pin save failed:', err);
-      offlineQueue.current.push(pin);
-      localStorage.setItem('pin-queue', JSON.stringify(offlineQueue.current));
+      console.error('Pin save failed, storing offline:', err);
+      // Fallback to offline storage on error
+      await addPendingPin(pin);
       setPins((prev) => mergeRows(prev, [pin]));
       return pin;
     }
   };
 
-  // Sync offline queue when back online
+  // Sync offline queue when back online using IndexedDB
   const syncOfflineQueue = async () => {
-    if (offlineQueue.current.length === 0) return;
-    const queue = [...offlineQueue.current];
-    offlineQueue.current = [];
-    localStorage.setItem('pin-queue', JSON.stringify(offlineQueue.current));
-    for (const pin of queue) {
-      try {
-        const { data, error } = await supabase.from('pins').insert([pin]).select();
-        if (error) throw error;
-        setPins((prev) => mergeRows(prev, [data?.[0] || pin]));
-      } catch (err) {
-        console.error('Offline sync failed for pin:', err);
-        offlineQueue.current.push(pin);
-        localStorage.setItem('pin-queue', JSON.stringify(offlineQueue.current));
+    try {
+      const pendingPins = await getPendingPins();
+      if (pendingPins.length === 0) return;
+
+      console.log(`Syncing ${pendingPins.length} offline pins to Supabase...`);
+
+      for (const pin of pendingPins) {
+        try {
+          // Remove IndexedDB id before syncing
+          const { id, synced, ...pinData } = pin;
+
+          const { data, error } = await supabase.from('pins').insert([pinData]).select();
+          if (error) throw error;
+
+          // Remove from pending queue after successful sync
+          await removePendingPin(id);
+          setPins((prev) => mergeRows(prev, [data?.[0] || pin]));
+          console.log(`Synced offline pin: ${pin.slug}`);
+        } catch (err) {
+          console.error('Offline sync failed for pin:', err);
+          // Pin stays in IndexedDB for retry
+        }
       }
+    } catch (err) {
+      console.error('Error syncing offline queue:', err);
     }
   };
 
-  // Load offline queue on mount
+  // Load offline queue on mount and sync if online
   useEffect(() => {
-    const queue = localStorage.getItem('pin-queue');
-    if (queue) {
-      offlineQueue.current = JSON.parse(queue) || [];
-      if (offlineQueue.current.length > 0 && navigator.onLine) {
+    const init = async () => {
+      // If offline, load cached pins from IndexedDB
+      if (!navigator.onLine) {
+        try {
+          const cached = await getCachedPins();
+          if (cached.length > 0) {
+            console.log(`Loaded ${cached.length} cached pins from IndexedDB`);
+            setPins((prev) => mergeRows(prev, cached));
+          }
+        } catch (err) {
+          console.error('Failed to load cached pins:', err);
+        }
+      }
+
+      // Sync offline queue if online
+      if (navigator.onLine) {
         syncOfflineQueue();
       }
-    }
+    };
+    init();
   }, []);
 
   const hotdogSuggestions = useMemo(() => {

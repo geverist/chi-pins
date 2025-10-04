@@ -28,6 +28,7 @@ import { ensureUniqueSlug, makeChiSlug } from './lib/pinsUtils';
 import { postToFacebook } from './lib/facebookShare';
 import { notifyPinPlacement, isVestaboardConfigured } from './lib/vestaboard';
 import { getPinSlugFromUrl } from './lib/pinShare';
+import { sendPinNotification } from './lib/notifications';
 
 // components
 import HeaderBar from './components/HeaderBar';
@@ -49,6 +50,7 @@ import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import PhotoBooth from './components/PhotoBooth';
 import ThenAndNow from './components/ThenAndNow';
 import WeatherWidget from './components/WeatherWidget';
+import OfflineIndicator from './components/OfflineIndicator';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -556,6 +558,19 @@ export default function App() {
         }).catch(err => console.warn('Vestaboard notification failed:', err));
       }
 
+      // Webhook/SMS notification (fire and forget - don't block on errors)
+      if (adminSettings.notificationsEnabled) {
+        sendPinNotification(rec, adminSettings)
+          .then(result => {
+            if (result.success) {
+              console.info('Pin notification sent:', result.results);
+            } else {
+              console.warn('Pin notification failed:', result.error);
+            }
+          })
+          .catch(err => console.warn('Pin notification request failed:', err));
+      }
+
       // Square Loyalty points (fire and forget - don't block on errors)
       if (adminSettings.loyaltyEnabled && form.loyaltyPhone) {
         const phoneE164 = normalizePhoneToE164ish(form.loyaltyPhone);
@@ -820,7 +835,15 @@ export default function App() {
           {showCommunityPins && !draft && (
             <>
               {adminSettings?.lowZoomVisualization === 'heatmap' ? (
-                <PinHeatmap pins={pinsDeduped} enabled={true} minZoomForPins={13} />
+                <PinHeatmap
+                  pins={pinsDeduped}
+                  enabled={true}
+                  minZoomForPins={13}
+                  radius={adminSettings.heatmapRadius}
+                  blur={adminSettings.heatmapBlur}
+                  intensity={adminSettings.heatmapIntensity}
+                  max={adminSettings.heatmapMax}
+                />
               ) : (
                 <PinBubbles pins={pinsDeduped} enabled={true} minZoomForPins={13} maxZoom={17} />
               )}
@@ -1004,6 +1027,8 @@ export default function App() {
           setThenAndNowOpen={setThenAndNowOpen}
         />
       )}
+
+      <OfflineIndicator />
     </div>
   );
 }

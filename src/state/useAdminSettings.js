@@ -59,6 +59,12 @@ const DEFAULTS = {
   lowZoomVisualization: 'bubbles', // 'bubbles' | 'heatmap'
   labelStyle: 'pill', // 'pill' | 'clean'
 
+  // Heatmap settings
+  heatmapRadius: 25,        // Size of heat points (10-50)
+  heatmapBlur: 15,          // Blur amount (5-35)
+  heatmapIntensity: 0.8,    // Point intensity (0.1-2.0)
+  heatmapMax: 2.0,          // Max heat value for color scaling (0.5-5.0)
+
   // Content layers
   showPinsSinceMonths: 24,
   showPopularSpots: true,
