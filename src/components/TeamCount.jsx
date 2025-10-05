@@ -15,20 +15,43 @@ export default function TeamCount({ pins, selectedTeam, onTeamSelect }){
     transition: 'all 0.2s',
   });
 
+  const handleCubsClick = () => {
+    const newValue = selectedTeam === 'cubs' ? null : 'cubs';
+    console.log('[TeamCount] Cubs clicked. Current:', selectedTeam, '→ New:', newValue);
+    onTeamSelect(newValue);
+  };
+
+  const handleSoxClick = () => {
+    const newValue = selectedTeam === 'whitesox' ? null : 'whitesox';
+    console.log('[TeamCount] White Sox clicked. Current:', selectedTeam, '→ New:', newValue);
+    onTeamSelect(newValue);
+  };
+
   return (
     <div className="counts" style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
       <button
-        onClick={() => onTeamSelect(selectedTeam === 'cubs' ? null : 'cubs')}
+        onClick={handleCubsClick}
         style={buttonStyle('cubs')}
       >
         🔵 Cubs: {counts.cubs}
       </button>
       <button
-        onClick={() => onTeamSelect(selectedTeam === 'whitesox' ? null : 'whitesox')}
+        onClick={handleSoxClick}
         style={buttonStyle('whitesox')}
       >
         ⚪ White Sox: {counts.whitesox}
       </button>
+      {selectedTeam === null && (
+        <span style={{
+          padding: '6px 12px',
+          color: '#10b981',
+          fontSize: 14,
+          fontWeight: 600,
+          alignSelf: 'center'
+        }}>
+          ✓ Showing all teams
+        </span>
+      )}
     </div>
   )
 }
