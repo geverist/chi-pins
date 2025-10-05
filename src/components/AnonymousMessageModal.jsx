@@ -14,10 +14,10 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
   const handleSend = async () => {
     setError(null);
 
-    // Validate phone number
-    const normalizedPhone = normalizePhoneToE164ish(senderPhone);
-    if (!normalizedPhone) {
-      setError('Please enter a valid phone number');
+    // Validate phone number (optional - only if provided)
+    const normalizedPhone = senderPhone.trim() ? normalizePhoneToE164ish(senderPhone) : null;
+    if (senderPhone.trim() && !normalizedPhone) {
+      setError('Please enter a valid phone number or leave it blank');
       return;
     }
 
@@ -32,8 +32,8 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
       return;
     }
 
-    // Validate consent
-    if (!consentChecked) {
+    // Validate consent (only if phone number is provided)
+    if (normalizedPhone && !consentChecked) {
       setError('Please confirm you consent to sharing your phone number');
       return;
     }
@@ -133,7 +133,7 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
           <>
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
-                Your Phone Number
+                Your Phone Number <span style={{ color: '#9ca3af', fontWeight: 400 }}>(optional)</span>
               </label>
               <input
                 type="tel"
@@ -152,8 +152,18 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
                   boxSizing: 'border-box',
                 }}
               />
-              <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 6 }}>
-                The recipient will see this number and can reply to you directly via SMS.
+              <div
+                style={{
+                  fontSize: 12,
+                  color: '#fbbf24',
+                  marginTop: 6,
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  padding: '8px 10px',
+                  borderRadius: 6,
+                  border: '1px solid rgba(251, 191, 36, 0.2)',
+                }}
+              >
+                ⚠️ <strong>Privacy Notice:</strong> Providing your number allows the recipient to reply, but may expose you to unwanted messages. Leave blank to remain fully anonymous.
               </div>
             </div>
 
@@ -186,38 +196,40 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
               </div>
             </div>
 
-            <div
-              style={{
-                background: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                borderRadius: 8,
-                padding: 12,
-                marginBottom: 16,
-              }}
-            >
-              <label
+            {senderPhone.trim() && (
+              <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'start',
-                  gap: 10,
-                  cursor: 'pointer',
-                  fontSize: 13,
-                  lineHeight: 1.5,
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: 16,
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={consentChecked}
-                  onChange={(e) => setConsentChecked(e.target.checked)}
-                  disabled={sending}
-                  style={{ marginTop: 3, cursor: 'pointer' }}
-                />
-                <span>
-                  I consent to sharing my phone number with this person so they can reply to my message.
-                  I understand this message will be sent via SMS.
-                </span>
-              </label>
-            </div>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'start',
+                    gap: 10,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={consentChecked}
+                    onChange={(e) => setConsentChecked(e.target.checked)}
+                    disabled={sending}
+                    style={{ marginTop: 3, cursor: 'pointer' }}
+                  />
+                  <span>
+                    I consent to sharing my phone number with this person so they can reply to my message.
+                    I understand this message will be sent via SMS.
+                  </span>
+                </label>
+              </div>
+            )}
 
             {error && (
               <div
