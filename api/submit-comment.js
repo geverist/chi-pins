@@ -77,9 +77,19 @@ export default async function handler(req, res) {
 
       const settings = settingsData?.value || {};
 
+      console.log('[submit-comment] Settings:', {
+        notificationsEnabled: settings.notificationsEnabled,
+        notifyOnFeedback: settings.notifyOnFeedback,
+        notificationType: settings.notificationType,
+        hasNotificationRecipients: !!settings.notificationRecipients,
+        notificationRecipients: settings.notificationRecipients,
+      });
+
       if (settings.notificationsEnabled && settings.notifyOnFeedback !== false) {
         const notificationType = settings.notificationType || 'sms';
         const ratingStars = '⭐'.repeat(rating);
+
+        console.log('[submit-comment] Will attempt to send notifications. Type:', notificationType);
 
         // Format message for notifications
         const messageText = `New Customer Feedback!\n\n${ratingStars} (${rating}/5)\n\nFrom: ${name || 'Anonymous'}${contact ? `\nContact: ${contact}` : ''}\n\nComment: ${comment}\n\nSubmitted: ${new Date(timestamp || Date.now()).toLocaleString()}`;
@@ -100,6 +110,7 @@ export default async function handler(req, res) {
 
         // Send SMS notification
         if ((notificationType === 'sms' || notificationType === 'both' || notificationType === 'all') && settings.notificationRecipients) {
+          console.log('[submit-comment] Sending SMS to:', settings.notificationRecipients);
           try {
             const smsResponse = await fetch(`${baseUrl}/api/send-sms`, {
               method: 'POST',
@@ -110,14 +121,17 @@ export default async function handler(req, res) {
               }),
             });
 
+            const smsResult = await smsResponse.text();
             if (!smsResponse.ok) {
-              console.error('Failed to send SMS notification:', await smsResponse.text());
+              console.error('[submit-comment] Failed to send SMS notification:', smsResult);
             } else {
-              console.log('SMS notification sent successfully');
+              console.log('[submit-comment] SMS notification sent successfully:', smsResult);
             }
           } catch (smsError) {
-            console.error('Error sending SMS notification:', smsError);
+            console.error('[submit-comment] Error sending SMS notification:', smsError);
           }
+        } else {
+          console.log('[submit-comment] SMS notification skipped. Type:', notificationType, 'hasRecipients:', !!settings.notificationRecipients);
         }
 
         // Send Email notification
