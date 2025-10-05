@@ -351,6 +351,7 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
           <TabBtn active={tab === 'thenandnow'} onClick={() => setTab('thenandnow')}>Then & Now</TabBtn>
           <TabBtn active={tab === 'clusters'} onClick={() => setTab('clusters')}>Kiosk Clusters</TabBtn>
+          <TabBtn active={tab === 'notifications'} onClick={() => setTab('notifications')}>Notifications</TabBtn>
           <TabBtn active={tab === 'analytics'} onClick={() => setTab('analytics')}>Analytics</TabBtn>
           <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
           <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>Media</TabBtn>
@@ -557,146 +558,6 @@ export default function AdminPanel({ open, onClose }) {
                 </Card>
               )}
 
-              {settings.notificationsEnabled && (
-                <Card title="Notification Settings">
-                  <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
-                    Get notified about activity on your kiosk
-                  </p>
-
-                  <FieldRow label="Notify Me About">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={settings.notifyOnPinPlacement !== false}
-                          onChange={(e) => setSettings(s => ({ ...s, notifyOnPinPlacement: e.target.checked }))}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>New pin placements</span>
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={settings.notifyOnFeedback !== false}
-                          onChange={(e) => setSettings(s => ({ ...s, notifyOnFeedback: e.target.checked }))}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>Customer feedback</span>
-                      </label>
-                    </div>
-                  </FieldRow>
-
-                  <FieldRow label="Notification Method">
-                    <select
-                      value={settings.notificationType || 'sms'}
-                      onChange={(e) => setSettings(s => ({ ...s, notificationType: e.target.value }))}
-                      style={s.input}
-                    >
-                      <option value="sms">SMS Only</option>
-                      <option value="email">Email Only</option>
-                      <option value="both">Both SMS & Email</option>
-                      <option value="webhook">Webhook Only</option>
-                      <option value="all">All Methods</option>
-                    </select>
-                  </FieldRow>
-
-                  {(settings.notificationType === 'webhook' || settings.notificationType === 'all') && (
-                    <>
-                      <FieldRow label="Webhook URL">
-                        <input
-                          type="url"
-                          value={settings.webhookUrl || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, webhookUrl: e.target.value }))}
-                          placeholder="https://hooks.zapier.com/hooks/catch/..."
-                          style={{ ...s.input, width: '100%' }}
-                        />
-                      </FieldRow>
-                      <p style={{ ...s.muted, margin: '4px 0 16px', fontSize: 11 }}>
-                        Sends JSON POST with event details. Works with Zapier, Make.com, n8n, etc.
-                      </p>
-                    </>
-                  )}
-
-                  {(settings.notificationType === 'sms' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
-                    <>
-                      <div style={{
-                        padding: '12px',
-                        background: 'rgba(59, 130, 246, 0.1)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        borderRadius: 8,
-                        marginBottom: 12,
-                        fontSize: 12,
-                        color: '#93c5fd'
-                      }}>
-                        ℹ️ Twilio credentials are managed securely via environment variables.
-                        <br/>Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in Vercel.
-                      </div>
-
-                      <FieldRow label="SMS Recipients">
-                        <input
-                          type="text"
-                          value={settings.notificationRecipients || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, notificationRecipients: e.target.value }))}
-                          placeholder="+1234567890, +0987654321"
-                          style={{ ...s.input, width: '100%' }}
-                        />
-                      </FieldRow>
-
-                      <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
-                        Comma-separated phone numbers (include country code, e.g. +1)
-                      </p>
-                    </>
-                  )}
-
-                  {(settings.notificationType === 'email' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
-                    <>
-                      <div style={{
-                        padding: '12px',
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        border: '1px solid rgba(139, 92, 246, 0.3)',
-                        borderRadius: 8,
-                        marginBottom: 12,
-                        fontSize: 12,
-                        color: '#c4b5fd'
-                      }}>
-                        ℹ️ Email credentials are managed securely via environment variables.
-                        <br/>Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in Vercel.
-                      </div>
-
-                      <FieldRow label="Email Recipients">
-                        <input
-                          type="text"
-                          value={settings.emailRecipients || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, emailRecipients: e.target.value }))}
-                          placeholder="owner@business.com, manager@business.com"
-                          style={{ ...s.input, width: '100%' }}
-                        />
-                      </FieldRow>
-
-                      <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
-                        Comma-separated email addresses
-                      </p>
-                    </>
-                  )}
-
-                  <FieldRow label="Anonymous Message Rate Limit">
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <input
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={settings.maxAnonymousMessagesPerDay || 5}
-                        onChange={(e) => setSettings(s => ({ ...s, maxAnonymousMessagesPerDay: parseInt(e.target.value) || 5 }))}
-                        style={{ ...s.input, width: '80px' }}
-                      />
-                      <span style={{ fontSize: 13, color: '#a7b0b8' }}>messages per pin per day</span>
-                    </div>
-                  </FieldRow>
-                  <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
-                    Limits how many anonymous messages a single pin can receive per day to prevent spam
-                  </p>
-                </Card>
-              )}
 
               {settings.newsTickerEnabled && (
                 <Card title="News Ticker Settings">
@@ -1419,6 +1280,176 @@ export default function AdminPanel({ open, onClose }) {
                   Weather widget shows current weather with hot dog recommendations. Configure location coordinates for accurate weather data.
                 </p>
               </Card>
+            </SectionGrid>
+          )}
+
+          {tab === 'notifications' && (
+            <SectionGrid>
+              <Card title="Twilio Configuration">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Configure Twilio for SMS notifications
+                </p>
+
+                <FieldRow label="Enable Twilio">
+                  <Toggle
+                    checked={settings.twilioEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, twilioEnabled: v }))}
+                  />
+                </FieldRow>
+
+                {settings.twilioEnabled && (
+                  <>
+                    <FieldRow label="Account SID">
+                      <input
+                        type="text"
+                        value={settings.twilioAccountSid || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, twilioAccountSid: e.target.value }))}
+                        placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        style={{ ...s.input, width: '100%', fontFamily: 'monospace' }}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Auth Token">
+                      <input
+                        type="password"
+                        value={settings.twilioAuthToken || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, twilioAuthToken: e.target.value }))}
+                        placeholder="********************************"
+                        style={{ ...s.input, width: '100%', fontFamily: 'monospace' }}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Phone Number">
+                      <input
+                        type="tel"
+                        value={settings.twilioPhoneNumber || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, twilioPhoneNumber: e.target.value }))}
+                        placeholder="+15551234567"
+                        style={{ ...s.input, width: '100%' }}
+                      />
+                    </FieldRow>
+
+                    <p style={{ ...s.muted, margin: '12px 0 0', fontSize: 11 }}>
+                      Get your Twilio credentials from <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>console.twilio.com</a>
+                    </p>
+                  </>
+                )}
+              </Card>
+
+              {settings.notificationsEnabled && (
+                <Card title="Notification Settings">
+                  <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                    Get notified about activity on your kiosk
+                  </p>
+
+                  <FieldRow label="Notify Me About">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={settings.notifyOnPinPlacement !== false}
+                          onChange={(e) => setSettings(s => ({ ...s, notifyOnPinPlacement: e.target.checked }))}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>New pin placements</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={settings.notifyOnFeedback !== false}
+                          onChange={(e) => setSettings(s => ({ ...s, notifyOnFeedback: e.target.checked }))}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>Customer feedback</span>
+                      </label>
+                    </div>
+                  </FieldRow>
+
+                  <FieldRow label="Notification Method">
+                    <select
+                      value={settings.notificationType || 'sms'}
+                      onChange={(e) => setSettings(s => ({ ...s, notificationType: e.target.value }))}
+                      style={s.input}
+                    >
+                      <option value="sms">SMS Only</option>
+                      <option value="email">Email Only</option>
+                      <option value="both">Both SMS & Email</option>
+                      <option value="webhook">Webhook Only</option>
+                      <option value="all">All Methods</option>
+                    </select>
+                  </FieldRow>
+
+                  {(settings.notificationType === 'webhook' || settings.notificationType === 'all') && (
+                    <>
+                      <FieldRow label="Webhook URL">
+                        <input
+                          type="url"
+                          value={settings.webhookUrl || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, webhookUrl: e.target.value }))}
+                          placeholder="https://hooks.zapier.com/hooks/catch/..."
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+                      <p style={{ ...s.muted, margin: '4px 0 16px', fontSize: 11 }}>
+                        Sends JSON POST with event details. Works with Zapier, Make.com, n8n, etc.
+                      </p>
+                    </>
+                  )}
+
+                  {(settings.notificationType === 'sms' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
+                    <>
+                      <FieldRow label="SMS Recipients">
+                        <input
+                          type="text"
+                          value={settings.notificationRecipients || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, notificationRecipients: e.target.value }))}
+                          placeholder="+1234567890, +0987654321"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+                        Comma-separated phone numbers (include country code, e.g. +1)
+                      </p>
+                    </>
+                  )}
+
+                  {(settings.notificationType === 'email' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
+                    <>
+                      <FieldRow label="Email Recipients">
+                        <input
+                          type="text"
+                          value={settings.emailRecipients || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, emailRecipients: e.target.value }))}
+                          placeholder="owner@business.com, manager@business.com"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                        Comma-separated email addresses
+                      </p>
+                    </>
+                  )}
+
+                  <FieldRow label="Anonymous Message Rate Limit">
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={settings.maxAnonymousMessagesPerDay || 5}
+                        onChange={(e) => setSettings(s => ({ ...s, maxAnonymousMessagesPerDay: parseInt(e.target.value) || 5 }))}
+                        style={{ ...s.input, width: '80px' }}
+                      />
+                      <span style={{ fontSize: 13, color: '#a7b0b8' }}>messages per pin per day</span>
+                    </div>
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                    Limits how many anonymous messages a single pin can receive per day to prevent spam
+                  </p>
+                </Card>
+              )}
             </SectionGrid>
           )}
 
