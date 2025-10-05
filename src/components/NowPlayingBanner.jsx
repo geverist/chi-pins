@@ -25,16 +25,20 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
     isPlaying
   });
 
-  // Build the display text - only show active music info
+  // Build the display text with clear visual separation
   const parts = [];
-  const separator = ' '.repeat(60) + '•' + ' '.repeat(60); // Much more spacing
+  const separator = ' '.repeat(15) + '●●●' + ' '.repeat(15); // Visual separator
+
+  if (lastPlayed) {
+    parts.push(`⏮ Last Played: ${lastPlayed.title}${lastPlayed.artist ? ` - ${lastPlayed.artist}` : ''}`);
+  }
 
   if (currentTrack) {
-    parts.push(`${isPlaying ? '♫' : '⏸'} Now Playing: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`);
+    parts.push(`${isPlaying ? '♫' : '⏸'} NOW PLAYING: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`);
   }
 
   if (nextInQueue) {
-    parts.push(`Next: ${nextInQueue.title}${nextInQueue.artist ? ` - ${nextInQueue.artist}` : ''}`);
+    parts.push(`⏭ Up Next: ${nextInQueue.title}${nextInQueue.artist ? ` - ${nextInQueue.artist}` : ''}`);
   }
 
   const displayText = parts.join(separator);
@@ -48,7 +52,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
         position: 'relative',
         left: 0,
         right: 0,
-        height: 36,
+        height: isMobile ? 40 : 48,
         background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
         borderTop: '2px solid #a78bfa',
         zIndex: 100,
@@ -70,8 +74,9 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
             alignItems: 'center',
             height: '100%',
             color: '#fff',
-            fontSize: 14,
+            fontSize: isMobile ? 15 : 16,
             fontWeight: 600,
+            letterSpacing: '0.3px',
           }}
         >
           {scrollContent}
