@@ -148,7 +148,7 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
         clearTimeout(dragTimeoutRef.current);
       }
     };
-  }, [map]); // Only recreate if map changes
+  }, [map, setPos, onPointerUpCommit, pageTile, handoff]); // Include all dependencies used in handlers
 
   return <DragTip pos={pos} />;
 }

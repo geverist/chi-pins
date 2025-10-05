@@ -89,11 +89,17 @@ export function usePins(mainMapRef) {
   useEffect(() => {
     let cancelled = false;
 
-    // Always clear on mount to ensure fresh load
-    console.log('usePins: Clearing seen set for fresh load');
-    seen.current.clear();
-    newest.current = null;
-    setPins([]);
+    // Only clear on first mount to prevent React Strict Mode double-mount issues
+    const isFirstMount = mountCount.current === 0;
+    if (isFirstMount) {
+      console.log('usePins: First mount - clearing seen set for fresh load');
+      seen.current.clear();
+      newest.current = null;
+      setPins([]);
+    } else {
+      console.log('usePins: Remount detected - keeping existing state');
+    }
+    mountCount.current += 1;
 
     const load = async () => {
       try {

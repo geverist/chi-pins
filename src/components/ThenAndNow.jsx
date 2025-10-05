@@ -1,13 +1,33 @@
 // src/components/ThenAndNow.jsx
 import { useState } from 'react';
+import { useThenAndNow } from '../state/useThenAndNow';
 
 export default function ThenAndNow({ onClose }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Curated collection of Then & Now photos
-  const comparisons = [
+  // Load comparisons from database
+  const { comparisons: dbComparisons, loading, error } = useThenAndNow();
+
+  // Transform database format to component format
+  const comparisons = dbComparisons.map(item => ({
+    id: item.id,
+    location: item.location,
+    then: {
+      year: item.then_year,
+      description: item.then_description,
+      url: item.then_image_url,
+    },
+    now: {
+      year: item.now_year,
+      description: item.now_description,
+      url: item.now_image_url,
+    },
+  }));
+
+  // Fallback data if database is empty or loading
+  const fallbackComparisons = [
     {
       id: 1,
       location: 'State Street',
@@ -81,7 +101,28 @@ export default function ThenAndNow({ onClose }) {
     },
   ];
 
-  const current = comparisons[currentIndex];
+  // Use database comparisons if available, otherwise use fallback
+  const displayComparisons = comparisons.length > 0 ? comparisons : fallbackComparisons;
+  const current = displayComparisons[currentIndex];
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 10000,
+          background: 'rgba(0,0,0,0.95)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ color: '#fff', fontSize: 18 }}>Loading historical photos...</div>
+      </div>
+    );
+  }
 
   const handleSliderChange = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -105,12 +146,12 @@ export default function ThenAndNow({ onClose }) {
   };
 
   const nextComparison = () => {
-    setCurrentIndex((prev) => (prev + 1) % comparisons.length);
+    setCurrentIndex((prev) => (prev + 1) % displayComparisons.length);
     setSliderPosition(50);
   };
 
   const prevComparison = () => {
-    setCurrentIndex((prev) => (prev - 1 + comparisons.length) % comparisons.length);
+    setCurrentIndex((prev) => (prev - 1 + displayComparisons.length) % displayComparisons.length);
     setSliderPosition(50);
   };
 
@@ -184,7 +225,7 @@ export default function ThenAndNow({ onClose }) {
             {current.location}
           </h3>
           <div style={{ color: '#a7b0b8', fontSize: 16 }}>
-            {currentIndex + 1} of {comparisons.length}
+            {currentIndex + 1} of {displayComparisons.length}
           </div>
         </div>
 

@@ -15,6 +15,7 @@ export default function Footer({
   setOrderMenuOpen,
   setPhotoBoothOpen,
   setThenAndNowOpen,
+  setCommentsOpen,
   setExploring,
   setShowAttractor,
   handleFooterClick,
@@ -45,8 +46,8 @@ export default function Footer({
             gap: 8,
           }}
         >
-          {/* Top row: Games, Jukebox, Order Now, Photo Booth, Then & Now */}
-          {(navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled) && (
+          {/* Top row: Games, Jukebox, Order Now, Photo Booth, Then & Now, Leave Feedback */}
+          {(navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled) && (
             <div
               style={{
                 display: 'flex',
@@ -104,6 +105,16 @@ export default function Footer({
                   aria-label="Then & Now Photos"
                 >
                   🏛️ Then & Now
+                </button>
+              )}
+              {navSettings.comments_enabled && (
+                <button
+                  onClick={() => setCommentsOpen(true)}
+                  style={btn3d(false)}
+                  className="btn-kiosk"
+                  aria-label="Leave Feedback"
+                >
+                  💬 Leave Feedback
                 </button>
               )}
             </div>
