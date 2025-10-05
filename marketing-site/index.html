@@ -90,10 +90,40 @@
                 </p>
             </div>
             <div class="hero-visual">
-                <!-- Placeholder for kiosk mockup or demo video -->
-                <div class="video-placeholder">
-                    <div class="play-button">▶</div>
-                    <p>Watch 2-Min Demo</p>
+                <!-- Demo Video + Live Link -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Demo Video -->
+                    <div class="video-container" style="position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+                        <video
+                            controls
+                            poster="logo.png"
+                            style="width: 100%; height: auto; display: block;"
+                        >
+                            <source src="demo.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+
+                    <!-- Live Demo Link -->
+                    <div class="demo-link-container" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 32px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+                        <h3 style="color: white; font-size: 24px; margin-bottom: 12px;">Try It Yourself</h3>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 16px; margin-bottom: 24px;">
+                            Experience the Chicago Mikes kiosk live
+                        </p>
+                        <a
+                            href="https://chi-pins.vercel.app"
+                            target="_blank"
+                            class="cta-button"
+                            style="display: inline-block; background: white; color: #667eea; padding: 14px 28px; border-radius: 50px; font-weight: 600; text-decoration: none; font-size: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: transform 0.2s;"
+                            onmouseover="this.style.transform='scale(1.05)'"
+                            onmouseout="this.style.transform='scale(1)'"
+                        >
+                            Launch Live Demo →
+                        </a>
+                        <p style="color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 16px;">
+                            Works on desktop and mobile • No signup required
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
