@@ -19,9 +19,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env;
+  // Try both VITE_ prefixed and non-prefixed env vars
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('Missing Supabase credentials:', {
+      hasUrl: !!SUPABASE_URL,
+      hasKey: !!SUPABASE_ANON_KEY
+    });
     return res.status(500).json({ error: 'Database not configured' });
   }
 
