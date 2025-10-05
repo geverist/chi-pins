@@ -65,6 +65,7 @@ import ZoomGate from './components/ZoomGate';
 import AdminPanel from './components/AdminPanel';
 import PinCodeModal from './components/PinCodeModal';
 import MobilePinsList from './components/MobilePinsList';
+import MobilePinsTable from './components/MobilePinsTable';
 import MobileNavMenu from './components/MobileNavMenu';
 import OrderMenu from './components/OrderMenu';
 import Jukebox from './components/Jukebox';
@@ -872,6 +873,9 @@ export default function App() {
         onLogoClick={goChicagoZoomedOut}
         continentCounts={continentCounts}
         onContinentClick={handleContinentClick}
+        isMobile={isMobile}
+        showTableView={showMobileList}
+        onToggleView={() => setShowMobileList(!showMobileList)}
       >
         {headerRight}
       </HeaderBar>
@@ -1098,10 +1102,21 @@ export default function App() {
       />
 
       {isMobile && showMobileList && (
-        <MobilePinsList
-          pins={pinsForRender}
-          onClose={() => setShowMobileList(false)}
-        />
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 10000,
+            background: '#0f1117',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <MobilePinsTable pins={pinsForRender} />
+        </div>
       )}
 
       {orderMenuOpen && (
