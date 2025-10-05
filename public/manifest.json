@@ -1,0 +1,56 @@
+{
+  "name": "Chi-Pins - Chicago Interactive Kiosk",
+  "short_name": "Chi-Pins",
+  "description": "Interactive Chicago map kiosk with games, jukebox, and local spots",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1f26",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["entertainment", "lifestyle", "travel"],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Games",
+      "url": "/?open=games",
+      "description": "Play Chicago-themed games"
+    },
+    {
+      "name": "Jukebox",
+      "url": "/?open=jukebox",
+      "description": "Listen to music"
+    },
+    {
+      "name": "Photo Booth",
+      "url": "/?open=photobooth",
+      "description": "Take photos with Chicago filters"
+    }
+  ]
+}

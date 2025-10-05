@@ -6,6 +6,7 @@ import TableMode from './routes/TableMode.jsx'
 import Admin from './routes/Admin.jsx'
 import { NowPlayingProvider } from './state/useNowPlaying.jsx'
 import './styles.css'
+import './styles/transitions.css'
 
 // Set CSS custom property for actual viewport height (fixes Safari)
 function setViewportHeight() {
