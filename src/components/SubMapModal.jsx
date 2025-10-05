@@ -165,6 +165,45 @@ function SetSubMapRef({ submapRef }) {
   return null;
 }
 
+function DisableDragAtMaxZoom() {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const handleZoom = () => {
+      const currentZoom = map.getZoom();
+      const maxZoom = map.getMaxZoom();
+
+      if (currentZoom >= maxZoom) {
+        // Disable map dragging at max zoom
+        map.dragging.disable();
+        logger.debug('DisableDragAtMaxZoom: Dragging disabled at max zoom');
+      } else {
+        // Re-enable dragging when not at max zoom
+        map.dragging.enable();
+        logger.debug('DisableDragAtMaxZoom: Dragging enabled below max zoom');
+      }
+    };
+
+    // Check on mount
+    handleZoom();
+
+    // Listen for zoom changes
+    map.on('zoomend', handleZoom);
+
+    return () => {
+      map.off('zoomend', handleZoom);
+      // Re-enable dragging on unmount
+      if (map.dragging) {
+        map.dragging.enable();
+      }
+    };
+  }, [map]);
+
+  return null;
+}
+
 export default function SubMapModal({
   center,
   team = 'cubs',
@@ -285,6 +324,7 @@ export default function SubMapModal({
             }}
           >
             <SetSubMapRef submapRef={submapRef} />
+            <DisableDragAtMaxZoom />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
