@@ -325,11 +325,15 @@ export default function PhotoBooth({ onClose }) {
           text: 'Check out my photo from Chicago Mike\'s! 🌭'
         });
       } else {
-        downloadPhoto();
+        // Show message that sharing isn't available
+        alert('Sharing is not available on this device. Please use a mobile device to share your photo!');
       }
     } catch (err) {
       console.error('Share failed:', err);
-      downloadPhoto();
+      // Only show error if user didn't cancel
+      if (err.name !== 'AbortError') {
+        alert('Unable to share photo. Please try again.');
+      }
     }
   };
 
@@ -681,21 +685,6 @@ export default function PhotoBooth({ onClose }) {
                 🔄 Retake
               </button>
               <button
-                onClick={downloadPhoto}
-                style={{
-                  padding: '16px 32px',
-                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                  border: 'none',
-                  borderRadius: 12,
-                  color: '#fff',
-                  fontSize: 18,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                💾 Download
-              </button>
-              <button
                 onClick={sharePhoto}
                 style={{
                   padding: '16px 32px',
@@ -708,7 +697,7 @@ export default function PhotoBooth({ onClose }) {
                   cursor: 'pointer',
                 }}
               >
-                📤 Share
+                📤 Share Photo
               </button>
             </>
           )}
