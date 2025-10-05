@@ -198,13 +198,13 @@ export default function AdminPanel({ open, onClose }) {
 
       // Save navigation settings - ensure all fields are present and boolean
       const completeNavSettings = {
-        games_enabled: navSettings.games_enabled ?? true,
-        jukebox_enabled: navSettings.jukebox_enabled ?? true,
-        order_enabled: navSettings.order_enabled ?? true,
-        explore_enabled: navSettings.explore_enabled ?? true,
-        photobooth_enabled: navSettings.photobooth_enabled ?? true,
-        thenandnow_enabled: navSettings.thenandnow_enabled ?? true,
-        comments_enabled: navSettings.comments_enabled ?? true,
+        games_enabled: Boolean(navSettings.games_enabled),
+        jukebox_enabled: Boolean(navSettings.jukebox_enabled),
+        order_enabled: Boolean(navSettings.order_enabled),
+        explore_enabled: Boolean(navSettings.explore_enabled),
+        photobooth_enabled: Boolean(navSettings.photobooth_enabled),
+        thenandnow_enabled: Boolean(navSettings.thenandnow_enabled),
+        comments_enabled: Boolean(navSettings.comments_enabled),
       }
       console.log('[AdminPanel] Saving navigation settings:', completeNavSettings)
       await updateNavSettingsAPI(completeNavSettings)

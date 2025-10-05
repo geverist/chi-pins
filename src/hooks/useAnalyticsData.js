@@ -22,11 +22,16 @@ export function useAnalyticsData(locationId = null, dateRange = 30) {
       startDate.setDate(startDate.getDate() - dateRange);
 
       // Fetch overall metrics
-      const { data: events, error: eventsError } = await supabase
+      let query = supabase
         .from('analytics_events')
         .select('*')
-        .gte('created_at', startDate.toISOString())
-        .eq(locationId ? 'location_id' : 'id', locationId || 'id'); // Filter by location if provided
+        .gte('created_at', startDate.toISOString());
+
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data: events, error: eventsError } = await query;
 
       if (eventsError) throw eventsError;
 
@@ -47,34 +52,49 @@ export function useAnalyticsData(locationId = null, dateRange = 30) {
       setMetrics(metricsData);
 
       // Fetch word cloud data
-      const { data: words, error: wordsError } = await supabase
+      let wordsQuery = supabase
         .from('analytics_word_frequency')
         .select('*')
-        .eq(locationId ? 'location_id' : 'word', locationId || 'word') // Filter if location provided
         .order('count', { ascending: false })
         .limit(50);
+
+      if (locationId) {
+        wordsQuery = wordsQuery.eq('location_id', locationId);
+      }
+
+      const { data: words, error: wordsError } = await wordsQuery;
 
       if (wordsError) throw wordsError;
       setWordCloud(words || []);
 
       // Fetch popular items
-      const { data: popular, error: popularError } = await supabase
+      let popularQuery = supabase
         .from('analytics_popular_items')
         .select('*')
-        .eq(locationId ? 'location_id' : 'item_type', locationId || 'item_type')
         .order('interaction_count', { ascending: false })
         .limit(20);
+
+      if (locationId) {
+        popularQuery = popularQuery.eq('location_id', locationId);
+      }
+
+      const { data: popular, error: popularError } = await popularQuery;
 
       if (popularError) throw popularError;
       setPopularItems(popular || []);
 
       // Fetch daily stats
-      const { data: daily, error: dailyError } = await supabase
+      let dailyQuery = supabase
         .from('analytics_daily_metrics')
         .select('*')
-        .eq(locationId ? 'location_id' : 'date', locationId || new Date().toISOString().split('T')[0])
         .gte('date', startDate.toISOString().split('T')[0])
         .order('date', { ascending: true });
+
+      if (locationId) {
+        dailyQuery = dailyQuery.eq('location_id', locationId);
+      }
+
+      const { data: daily, error: dailyError } = await dailyQuery;
 
       if (dailyError) throw dailyError;
       setDailyStats(daily || []);

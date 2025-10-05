@@ -41,7 +41,7 @@ export default async function handler(req, res) {
 
     // Insert comment into database
     const { data, error } = await supabase
-      .from('customer_feedback')
+      .from('comments')
       .insert([
         {
           name: name || 'Anonymous',
