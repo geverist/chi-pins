@@ -220,7 +220,17 @@ export default function App() {
     const smallestDimension = Math.min(window.innerWidth, window.innerHeight);
     const isSmallScreen = smallestDimension <= 640;
 
-    return (hasTouch && isSmallScreen) || isMobileUA;
+    const detected = (hasTouch && isSmallScreen) || isMobileUA;
+    console.log('[App] Mobile detection:', {
+      hasTouch,
+      isMobileUA,
+      smallestDimension,
+      isSmallScreen,
+      userAgent: navigator.userAgent,
+      detected
+    });
+
+    return detected;
   });
 
   useEffect(() => {
