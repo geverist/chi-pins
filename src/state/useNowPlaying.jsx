@@ -48,7 +48,8 @@ export function NowPlayingProvider({ children }) {
         schema: 'public',
         table: 'music_playback_state'
       }, (payload) => {
-        console.log('Playback state changed:', payload);
+        console.log('[useNowPlaying] Playback state changed:', payload);
+        console.log('[useNowPlaying] Is online:', isOnlineRef.current);
         if (payload.new) {
           const current = payload.new.current_track_url ? {
             url: payload.new.current_track_url,
@@ -62,6 +63,9 @@ export function NowPlayingProvider({ children }) {
             artist: payload.new.last_played_artist,
             album: payload.new.last_played_album,
           } : null;
+
+          console.log('[useNowPlaying] Setting currentTrack:', current);
+          console.log('[useNowPlaying] Setting isPlaying:', payload.new.is_playing);
 
           setCurrentTrack(current);
           setLastPlayed(last);
@@ -77,7 +81,9 @@ export function NowPlayingProvider({ children }) {
           }
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useNowPlaying] Playback channel subscription status:', status);
+      });
 
     // Subscribe to queue changes
     const queueChannel = supabase
@@ -87,10 +93,12 @@ export function NowPlayingProvider({ children }) {
         schema: 'public',
         table: 'music_queue'
       }, () => {
-        console.log('Queue changed, reloading...');
+        console.log('[useNowPlaying] Queue changed, reloading...');
         loadQueue();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[useNowPlaying] Queue channel subscription status:', status);
+      });
 
     return () => {
       playbackChannel.unsubscribe();
