@@ -422,7 +422,10 @@ function MapModeController({ mode, isMobile }) {
     map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
     map.setMaxZoom(CHI_MAX_ZOOM);
     map.setMaxBounds(null);
-    map.fitBounds(CHI_BOUNDS, { animate: false });
+    // On mobile, keep the initial zoom level; on desktop, fit to full metro bounds
+    if (!isMobile) {
+      map.fitBounds(CHI_BOUNDS, { animate: false });
+    }
     map.dragging?.enable();
     map.scrollWheelZoom?.enable();
     map.touchZoom?.enable();
@@ -476,7 +479,13 @@ function CameraReset({ mapMode, resetCameraToken, isMobile }) {
     setTimeout(() => {
       try {
         map.invalidateSize();
-        map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MAX_ZOOM });
+        if (isMobile) {
+          // On mobile, zoom to Chicago proper (zoom 11) instead of full metro bounds
+          map.setView([CHI.lat, CHI.lng], 11, { animate: true });
+        } else {
+          // On desktop, fit to full metro bounds
+          map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MAX_ZOOM });
+        }
         map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
       } catch {}
     }, 300);
@@ -533,8 +542,8 @@ export default function MapShell({
   isMobile,
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
-  // Mobile: zoom 12 (Chicago proper, elicits search bias). Desktop: zoom 9 (full metro)
-  const zoom = useMemo(() => (isMobile ? 12 : 9), [isMobile]);
+  // Mobile: zoom 11 (Chicago proper, shows neighborhoods). Desktop: zoom 9 (full metro)
+  const zoom = useMemo(() => (isMobile ? 11 : 9), [isMobile]);
 
   const whenCreated = (map) => {
     if (mainMapRef && typeof setMapReady === 'function') {

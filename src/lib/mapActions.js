@@ -11,7 +11,13 @@ if (!map) return;
 map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
 map.setMaxZoom(CHI_MAX_ZOOM);
 map.setMaxBounds(null);
-// Zoom out one level from the min zoom (10 → 9)
+if (isMobile) {
+// On mobile, zoom to Chicago proper (zoom 11) for better focus
+const CHI = { lat: 41.8781, lng: -87.6298 };
+map.setView([CHI.lat, CHI.lng], 11, { animate: true });
+} else {
+// Desktop: Zoom out one level from the min zoom (10 → 9) to show full metro
 map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MIN_ZOOM - 1 });
+}
 map.invalidateSize();
 }
