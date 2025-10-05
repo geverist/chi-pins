@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngageOS for Restaurants | Interactive Kiosk Solution</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .hero-industry {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .hero-industry h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .hero-industry .subtitle {
+            font-size: 24px;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto 40px;
+        }
+
+        .demo-cta {
+            display: inline-block;
+            padding: 16px 32px;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .demo-cta:hover {
+            transform: translateY(-2px);
+        }
+
+        .challenges {
+            padding: 60px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .challenges h2 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .challenge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .challenge-card {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 12px;
+            border-left: 4px solid #ef4444;
+        }
+
+        .challenge-card h3 {
+            color: #ef4444;
+            margin-bottom: 12px;
+        }
+
+        .features {
+            background: #f9fafb;
+            padding: 60px 20px;
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+        }
+
+        .benefits {
+            padding: 60px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .benefits h2 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .benefit-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .benefit-item {
+            display: flex;
+            gap: 16px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .benefit-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .roi-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .roi-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 40px auto;
+        }
+
+        .roi-stat {
+            padding: 30px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+
+        .roi-stat .number {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .roi-stat .label {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .screenshot-gallery {
+            padding: 60px 20px;
+            background: #f9fafb;
+        }
+
+        .screenshot-gallery h2 {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .screenshot {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .screenshot img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .cta-final {
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .cta-final h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn-primary {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            padding: 16px 32px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-industry">
+        <div style="font-size: 72px; margin-bottom: 20px;">🍽️</div>
+        <h1>EngageOS for Restaurants</h1>
+        <p class="subtitle">
+            Transform your restaurant's waiting experience into an engagement opportunity.
+            Reduce perceived wait times, increase orders, and delight customers.
+        </p>
+        <a href="https://demo.chi-pins.com?industry=restaurant" class="demo-cta" style="margin-right: 20px;">
+            🎮 Try Live Demo
+        </a>
+        <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Restaurant%20Industry&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20restaurant." class="demo-cta" style="background: #ff6b35; color: white;">
+            📅 Request Personalized Demo
+        </a>
+    </section>
+
+    <!-- Challenges Section -->
+    <section class="challenges">
+        <h2>🎯 Challenges We Solve</h2>
+        <div class="challenge-grid">
+            <div class="challenge-card">
+                <h3>Long Wait Times</h3>
+                <p>Customers get bored and frustrated waiting for tables, leading to negative reviews and walkouts.</p>
+            </div>
+            <div class="challenge-card">
+                <h3>Missed Upsell Opportunities</h3>
+                <p>Staff can't always suggest appetizers, drinks, or desserts to every waiting customer.</p>
+            </div>
+            <div class="challenge-card">
+                <h3>Low Review Volume</h3>
+                <p>Only upset customers leave reviews. Happy customers need prompting to share their experience.</p>
+            </div>
+            <div class="challenge-card">
+                <h3>No Wait Time Entertainment</h3>
+                <p>Customers stare at phones instead of engaging with your brand and menu.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="features-container">
+            <h2>✨ Restaurant-Specific Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎮</div>
+                    <h3>Food Trivia Games</h3>
+                    <p>Engage waiting customers with Chicago food history trivia, menu memory games, and chef challenges. Win prizes like free appetizers or discounts.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Digital Menu</h3>
+                    <p>Interactive menu with photos, allergen filters, and nutritional info. Customers can explore while they wait.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎵</div>
+                    <h3>Jukebox</h3>
+                    <p>Let customers request songs and control the vibe. Includes ASCAP/BMI licensing for legal compliance.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h3>Photo Booth</h3>
+                    <p>Snapchat-style photo booth with food-themed filters. Customers share on social media, giving you free marketing.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>AI Upsell Engine</h3>
+                    <p>Smart recommendations based on wait time and preferences. "Add guacamole for $2?" increases average order value by 18%.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⭐</div>
+                    <h3>Review Funnel</h3>
+                    <p>Happy customers prompted to leave Google/Yelp reviews. Unhappy customers give private feedback directly to you.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎂</div>
+                    <h3>Birthday Club</h3>
+                    <p>Automatic birthday collection and rewards. Free dessert brings customers back month after month.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Wait Time Display</h3>
+                    <p>Real-time queue management. Show accurate wait times and notify customers via SMS when their table is ready.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🗣️</div>
+                    <h3>AI Voice Ordering</h3>
+                    <p>"Hey Kiosk, I'd like the salmon special." Hands-free ordering with natural language processing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits">
+        <h2>💡 Business Benefits</h2>
+        <div class="benefit-list">
+            <div class="benefit-item">
+                <div class="benefit-icon">📈</div>
+                <div>
+                    <h3>Increase Average Order Value</h3>
+                    <p>AI-powered upsells increase orders by $8-12 per customer on average</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">⏱️</div>
+                <div>
+                    <h3>Reduce Perceived Wait Time</h3>
+                    <p>Engaged customers perceive 30% shorter wait times, reducing walkouts</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">⭐</div>
+                <div>
+                    <h3>Boost Online Reviews</h3>
+                    <p>200% increase in positive reviews within first 3 months</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">📸</div>
+                <div>
+                    <h3>Free Social Media Marketing</h3>
+                    <p>Photo booth generates 500+ social shares per month on average</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">🎯</div>
+                <div>
+                    <h3>Customer Data Collection</h3>
+                    <p>Build email/SMS lists for marketing. 40% opt-in rate via birthday club</p>
+                </div>
+            </div>
+
+            <div class="benefit-item">
+                <div class="benefit-icon">💻</div>
+                <div>
+                    <h3>Reduce Staff Burden</h3>
+                    <p>Automated ordering and payments free up staff for better service</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROI Section -->
+    <section class="roi-section">
+        <h2>📊 Proven ROI</h2>
+        <p style="font-size: 20px; max-width: 800px; margin: 0 auto 20px;">
+            Based on average restaurant with 200 customers/day
+        </p>
+
+        <div class="roi-stats">
+            <div class="roi-stat">
+                <div class="number">+$720</div>
+                <div class="label">Additional Monthly Revenue</div>
+            </div>
+
+            <div class="roi-stat">
+                <div class="number">18%</div>
+                <div class="label">Upsell Conversion Rate</div>
+            </div>
+
+            <div class="roi-stat">
+                <div class="number">30%</div>
+                <div class="label">Shorter Perceived Wait</div>
+            </div>
+
+            <div class="roi-stat">
+                <div class="number">200%</div>
+                <div class="label">More Positive Reviews</div>
+            </div>
+        </div>
+
+        <p style="font-size: 18px; margin-top: 30px;">
+            <strong>Bundle Price: $399/month</strong> • ROI in 16 days
+        </p>
+    </section>
+
+    <!-- Screenshots Gallery -->
+    <section class="screenshot-gallery">
+        <h2>📱 See It In Action</h2>
+        <div class="gallery-grid">
+            <div class="screenshot">
+                <img src="https://via.placeholder.com/400x600/667eea/ffffff?text=Food+Trivia+Game" alt="Food Trivia">
+                <div style="padding: 16px; background: white;">
+                    <h4>Food Trivia Game</h4>
+                    <p>Engage customers with fun Chicago food history</p>
+                </div>
+            </div>
+
+            <div class="screenshot">
+                <img src="https://via.placeholder.com/400x600/764ba2/ffffff?text=Digital+Menu" alt="Digital Menu">
+                <div style="padding: 16px; background: white;">
+                    <h4>Interactive Digital Menu</h4>
+                    <p>Browse menu with photos and allergen filters</p>
+                </div>
+            </div>
+
+            <div class="screenshot">
+                <img src="https://via.placeholder.com/400x600/667eea/ffffff?text=Photo+Booth" alt="Photo Booth">
+                <div style="padding: 16px; background: white;">
+                    <h4>Snapchat-Style Photo Booth</h4>
+                    <p>Customers share branded photos on social media</p>
+                </div>
+            </div>
+
+            <div class="screenshot">
+                <img src="https://via.placeholder.com/400x600/764ba2/ffffff?text=Upsell+Engine" alt="Upsell">
+                <div style="padding: 16px; background: white;">
+                    <h4>AI Upsell Prompts</h4>
+                    <p>"Add guacamole for $2?" increases AOV by 18%</p>
+                </div>
+            </div>
+
+            <div class="screenshot">
+                <img src="https://via.placeholder.com/400x600/667eea/ffffff?text=Wait+Time" alt="Wait Time">
+                <div style="padding: 16px; background: white;">
+                    <h4>Real-Time Wait Times</h4>
+                    <p>Transparent queue with SMS notifications</p>
+                </div>
+            </div>
+
+            <div class="screenshot">
+                <img src="https://via.placeholder.com/400x600/764ba2/ffffff?text=Reviews" alt="Reviews">
+                <div style="padding: 16px; background: white;">
+                    <h4>Review Funnel</h4>
+                    <p>Happy customers → public reviews, unhappy → private feedback</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="cta-final">
+        <h2>Ready to Transform Your Restaurant?</h2>
+        <p style="font-size: 20px; color: #6b7280; max-width: 600px; margin: 20px auto;">
+            Join hundreds of restaurants using EngageOS to increase revenue and delight customers.
+        </p>
+
+        <div class="cta-buttons">
+            <a href="https://demo.chi-pins.com?industry=restaurant" class="btn-primary">
+                🎮 Try Live Demo
+            </a>
+            <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Restaurant%20Industry&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20restaurant." class="btn-secondary">
+                📞 Request Personalized Demo
+            </a>
+            <a href="../index.html" class="btn-secondary">
+                ← Back to Home
+            </a>
+        </div>
+
+        <div style="margin-top: 40px; padding: 30px; background: #f9fafb; border-radius: 12px; max-width: 800px; margin-left: auto; margin-right: auto;">
+            <h3 style="margin-bottom: 16px;">🎁 Restaurant Bundle Includes:</h3>
+            <div style="text-align: left; display: inline-block;">
+                <ul style="list-style: none; padding: 0;">
+                    <li>✅ Gaming Widget (Food Trivia, Memory Match)</li>
+                    <li>✅ Survey Widget (Customer Feedback)</li>
+                    <li>✅ Jukebox Widget (Music Requests + Licensing)</li>
+                    <li>✅ Photo Booth Widget (Branded Filters)</li>
+                    <li>✅ Square POS Integration (Order Management)</li>
+                    <li>✅ Email/SMS Widget (1,000 messages/month)</li>
+                    <li>✅ Loyalty Widget (Points & Rewards)</li>
+                    <li>✅ Review Widget (Google, Yelp, TripAdvisor)</li>
+                    <li>✅ Birthday Club Widget (Automatic Campaigns)</li>
+                </ul>
+            </div>
+            <p style="margin-top: 20px; font-size: 24px; font-weight: bold; color: #667eea;">
+                $399/month • Save $154/month vs. à la carte
+            </p>
+        </div>
+    </section>
+
+    <footer style="background: #1f2937; color: white; padding: 40px 20px; text-align: center;">
+        <p>&copy; 2025 EngageOS by Agentiosk. All rights reserved.</p>
+        <p style="margin-top: 12px; opacity: 0.8;">
+            <a href="../index.html" style="color: white; margin: 0 12px;">Home</a>
+            <a href="mailto:sales@engageos.com" style="color: white; margin: 0 12px;">Contact</a>
+            <a href="../privacy.html" style="color: white; margin: 0 12px;">Privacy</a>
+        </p>
+    </footer>
+</body>
+</html>

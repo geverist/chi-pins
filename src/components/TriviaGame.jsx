@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from 'react';
 import { getRandomQuestions } from '../data/chicagoTrivia';
 import GameLeaderboard from './GameLeaderboard';
 import { useAdminSettings } from '../state/useAdminSettings';
+import soundEffects from '../utils/soundEffects';
+import { createSuccessEffect, createErrorEffect } from '../utils/particleEffects';
+import achievementManager from '../utils/achievements';
 
 export default function TriviaGame({ onClose }) {
   const { settings: adminSettings } = useAdminSettings();
@@ -23,8 +26,10 @@ export default function TriviaGame({ onClose }) {
   const gameStartTime = useRef(null);
   const questionStartTime = useRef(null);
   const timerRef = useRef(null);
+  const [quickAnswers, setQuickAnswers] = useState(0);
 
   useEffect(() => {
+    soundEffects.init();
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
@@ -40,8 +45,13 @@ export default function TriviaGame({ onClose }) {
     setScore(0);
     setAccuracy(0);
     setTotalTime(0);
+    setQuickAnswers(0);
     gameStartTime.current = Date.now();
     questionStartTime.current = Date.now();
+
+    soundEffects.playGameStart();
+    soundEffects.vibrateShort();
+
     startTimer();
   };
 
@@ -81,6 +91,11 @@ export default function TriviaGame({ onClose }) {
     const questionTime = (Date.now() - questionStartTime.current) / 1000;
     const isCorrect = answerIndex === currentQuestion.correctAnswer;
 
+    // Track quick answers (< 5 seconds)
+    if (isCorrect && questionTime < 5) {
+      setQuickAnswers(prev => prev + 1);
+    }
+
     const answerData = {
       questionId: currentQuestion.id,
       selectedAnswer: answerIndex,
@@ -91,6 +106,22 @@ export default function TriviaGame({ onClose }) {
 
     setAnswers([...answers, answerData]);
     setShowFeedback(true);
+
+    // Play sound and effects based on correctness
+    if (isCorrect) {
+      soundEffects.playSuccess();
+      soundEffects.vibrateSuccess();
+      // Create effect at center of screen
+      const x = window.innerWidth / 2;
+      const y = window.innerHeight / 2;
+      createSuccessEffect(x, y);
+    } else {
+      soundEffects.playError();
+      soundEffects.vibrateError();
+      const x = window.innerWidth / 2;
+      const y = window.innerHeight / 2;
+      createErrorEffect(x, y);
+    }
 
     // Wait 1.5 seconds to show feedback, then move to next question
     setTimeout(() => {
@@ -136,6 +167,18 @@ export default function TriviaGame({ onClose }) {
     setScore(totalScore);
 
     setGameState('finished');
+
+    // Play game over sound
+    soundEffects.playGameOver();
+    soundEffects.vibrateLong();
+
+    // Check achievements
+    achievementManager.checkTriviaAchievements({
+      correctCount,
+      totalQuestions: finalAnswers.length,
+      quickAnswers,
+      accuracy: accuracyPercent,
+    });
   };
 
   const currentQuestion = questions[currentQuestionIndex];

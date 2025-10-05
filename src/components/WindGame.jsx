@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAdminSettings } from '../state/useAdminSettings';
 import GameLeaderboard from './GameLeaderboard';
+import soundEffects from '../utils/soundEffects';
+import { createSuccessEffect, createErrorEffect } from '../utils/particleEffects';
+import achievementManager from '../utils/achievements';
 
 export default function WindGame({ onClose }) {
   const { settings: adminSettings } = useAdminSettings();
@@ -23,6 +26,8 @@ export default function WindGame({ onClose }) {
   const [windWarning, setWindWarning] = useState(null);
   const [flyingPopcorn, setFlyingPopcorn] = useState([]);
   const [touchStartPos, setTouchStartPos] = useState(null);
+  const [perfectDodges, setPerfectDodges] = useState(0);
+  const [popcornLost, setPopcornLost] = useState(0);
 
   const gameLoopRef = useRef(null);
   const windTimerRef = useRef(null);
@@ -34,6 +39,7 @@ export default function WindGame({ onClose }) {
   const nextPopcornId = useRef(0);
 
   useEffect(() => {
+    soundEffects.init();
     return () => {
       if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
       if (windTimerRef.current) clearTimeout(windTimerRef.current);
@@ -51,10 +57,15 @@ export default function WindGame({ onClose }) {
     setWindWarning(null);
     setFlyingPopcorn([]);
     setTouchStartPos(null);
+    setPerfectDodges(0);
+    setPopcornLost(0);
     nextGustId.current = 0;
     nextPopcornId.current = 0;
     gameStartTime.current = Date.now();
     lastScoreTime.current = Date.now();
+
+    soundEffects.playGameStart();
+    soundEffects.vibrateShort();
 
     startGameLoop();
     scheduleNextWind();
@@ -89,6 +100,10 @@ export default function WindGame({ onClose }) {
       const direction = Math.random() > 0.5 ? 'right' : 'left';
       setWindWarning(direction);
 
+      // Play warning sound
+      soundEffects.playWarning();
+      soundEffects.vibrateShort();
+
       // Trigger wind gust after warning
       setTimeout(() => {
         if (!isPlayingRef.current) return;
@@ -112,6 +127,9 @@ export default function WindGame({ onClose }) {
           });
         }
         setWindGusts(newGusts);
+
+        // Play whoosh sound
+        soundEffects.playWhoosh();
 
         // Check collision with box
         checkWindCollision(windDir, strength);
@@ -141,10 +159,25 @@ export default function WindGame({ onClose }) {
 
     if (isHit) {
       losePopcorn(Math.ceil(strength * 2)); // Lose 1-3 pieces based on wind strength
+      soundEffects.playError();
+      soundEffects.vibrateError();
+    } else {
+      // Perfect dodge!
+      setPerfectDodges(prev => prev + 1);
+      soundEffects.playSuccess();
+      soundEffects.vibrateShort();
+      // Create success effect at box position
+      if (gameContainerRef.current) {
+        const rect = gameContainerRef.current.getBoundingClientRect();
+        const x = rect.left + (boxX / 100) * rect.width;
+        const y = rect.top + (boxPosition.y / 100) * rect.height;
+        createSuccessEffect(x, y);
+      }
     }
   };
 
   const losePopcorn = (count) => {
+    setPopcornLost(prev => prev + count);
     setPopcornCount(prev => {
       const newCount = Math.max(0, prev - count);
 
@@ -199,6 +232,18 @@ export default function WindGame({ onClose }) {
     if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
     if (windTimerRef.current) clearTimeout(windTimerRef.current);
     setGameState('finished');
+
+    // Play game over sound
+    soundEffects.playGameOver();
+    soundEffects.vibrateLong();
+
+    // Check achievements
+    achievementManager.checkWindAchievements({
+      popcornLost,
+      perfectDodges,
+      finalPopcornCount: popcornCount,
+      startingPopcornCount: STARTING_POPCORN,
+    });
   };
 
   const handleTouchStart = (e) => {

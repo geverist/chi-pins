@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import GameLeaderboard from './GameLeaderboard';
 import { useAdminSettings } from '../state/useAdminSettings';
+import soundEffects from '../utils/soundEffects';
+import { createSuccessEffect, createErrorEffect, createComboEffect } from '../utils/particleEffects';
+import achievementManager from '../utils/achievements';
 
 const GAME_DURATION = 90; // 90 seconds (1.5 minutes)
 const SPAWN_INTERVAL_BASE = 1500; // ms
@@ -35,6 +38,9 @@ export default function DeepDishGame({ onClose }) {
   const [scorePopups, setScorePopups] = useState([]);
   const [startTime, setStartTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
+  const [combo, setCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
+  const [caughtPineapple, setCaughtPineapple] = useState(false);
 
   const gameLoopRef = useRef(null);
   const spawnTimerRef = useRef(null);
@@ -46,6 +52,7 @@ export default function DeepDishGame({ onClose }) {
   const isPlayingRef = useRef(false);
 
   useEffect(() => {
+    soundEffects.init();
     return () => {
       if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
       if (spawnTimerRef.current) clearTimeout(spawnTimerRef.current);
@@ -63,12 +70,18 @@ export default function DeepDishGame({ onClose }) {
     setScorePopups([]);
     setStartTime(Date.now());
     setEndTime(null);
+    setCombo(0);
+    setMaxCombo(0);
+    setCaughtPineapple(false);
 
     const startSpeed = adminSettings.deepDishStartSpeed || 2;
     fallSpeedRef.current = startSpeed;
     spawnIntervalRef.current = SPAWN_INTERVAL_BASE;
     gameStartTime.current = Date.now();
     nextItemId.current = 0;
+
+    soundEffects.playGameStart();
+    soundEffects.vibrateShort();
 
     startGameLoop();
     scheduleNextSpawn();
@@ -192,12 +205,28 @@ export default function DeepDishGame({ onClose }) {
 
   const handleCatch = (item) => {
     const isBad = BAD_ITEMS.some(bad => bad.id === item.id);
+    const containerRect = gameContainerRef.current?.getBoundingClientRect();
+    const itemX = containerRect ? containerRect.left + (item.x / 100) * containerRect.width : window.innerWidth / 2;
+    const itemY = containerRect ? containerRect.top + (item.y / 100) * containerRect.height : window.innerHeight / 2;
 
     if (isBad) {
       // Bad item - lose points
       const pointsLost = item.points;
       setScore(prev => Math.max(0, prev + pointsLost));
       showScorePopup(pointsLost, item.x, item.color);
+
+      // Track pineapple
+      if (item.id === 'pineapple') {
+        setCaughtPineapple(true);
+      }
+
+      // Play error sound and effects
+      soundEffects.playError();
+      soundEffects.vibrateError();
+      createErrorEffect(itemX, itemY);
+
+      // Reset combo
+      setCombo(0);
     } else {
       // Good item - add to collected ingredients
       setCollectedIngredients(prev => {
@@ -208,11 +237,33 @@ export default function DeepDishGame({ onClose }) {
       const pointsGained = item.points;
       setScore(prev => prev + pointsGained);
       showScorePopup(`+${pointsGained}`, item.x, item.color);
+
+      // Increase combo
+      setCombo(prev => {
+        const newCombo = prev + 1;
+        setMaxCombo(current => Math.max(current, newCombo));
+
+        // Play combo sound and effects for combos >= 3
+        if (newCombo >= 3) {
+          soundEffects.playCombo(Math.min(newCombo, 5));
+          createComboEffect(itemX, itemY, newCombo);
+        } else {
+          soundEffects.playPop();
+          soundEffects.vibrateShort();
+          createSuccessEffect(itemX, itemY);
+        }
+
+        return newCombo;
+      });
     }
   };
 
   const handleMiss = (item) => {
-    // Missing items doesn't affect score, just continues
+    // Missing good items breaks combo
+    const isBad = BAD_ITEMS.some(bad => bad.id === item.id);
+    if (!isBad) {
+      setCombo(0);
+    }
   };
 
   const showScorePopup = (points, x, color) => {
@@ -236,6 +287,18 @@ export default function DeepDishGame({ onClose }) {
 
     setEndTime(Date.now());
     setGameState('finished');
+
+    // Play game over sound
+    soundEffects.playGameOver();
+    soundEffects.vibrateLong();
+
+    // Check achievements
+    const collectedAll = collectedIngredients.length === REQUIRED_INGREDIENTS.length;
+    achievementManager.checkDeepDishAchievements({
+      collectedAll,
+      maxCombo,
+      caughtPineapple,
+    });
   };
 
   const handleMouseMove = (e) => {
@@ -376,6 +439,19 @@ export default function DeepDishGame({ onClose }) {
           <div style={{ color: '#f4f6f8', fontSize: 32, fontWeight: 700 }}>
             {score}
           </div>
+          {combo >= 3 && (
+            <div
+              style={{
+                color: '#f59e0b',
+                fontSize: 16,
+                fontWeight: 600,
+                marginTop: 4,
+                animation: 'pulse 0.5s ease-in-out infinite',
+              }}
+            >
+              🔥 {combo}x Combo!
+            </div>
+          )}
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: '#a7b0b8', fontSize: 14 }}>Pizza Progress</div>
