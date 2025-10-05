@@ -92,8 +92,11 @@ function GeocoderTopCenter({
   const geocoderRef = useRef(null);
   const inputRef = useRef(null);
   const clearBtnRef = useRef(null);
-  const [dynamicMode, setDynamicMode] = useState(mode);
-  const [dynamicPlaceholder, setDynamicPlaceholder] = useState(placeholder);
+  // Mobile should always start in Chicago mode with zoom 12
+  const initialMode = isMobile ? 'chicago' : mode;
+  const initialPlaceholder = isMobile ? 'Search Chicago & nearby…' : placeholder;
+  const [dynamicMode, setDynamicMode] = useState(initialMode);
+  const [dynamicPlaceholder, setDynamicPlaceholder] = useState(initialPlaceholder);
 
   const debouncedGeocode = useMemo(
     () =>
@@ -154,11 +157,14 @@ function GeocoderTopCenter({
     // Check on zoom/move
     map.on('zoomend', checkBounds);
     map.on('moveend', checkBounds);
-    checkBounds(); // Initial check
+
+    // Initial check with small delay to ensure map is fully initialized
+    const timeoutId = setTimeout(checkBounds, 100);
 
     return () => {
       map.off('zoomend', checkBounds);
       map.off('moveend', checkBounds);
+      clearTimeout(timeoutId);
     };
   }, [isMobile, map, dynamicMode]);
 
