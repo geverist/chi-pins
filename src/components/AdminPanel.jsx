@@ -2519,8 +2519,15 @@ const s = {
   title: { margin: 0, fontSize: 18, letterSpacing: 0.2 },
   tabs: {
     flex: '0 0 auto',
-    display: 'flex', gap: 6, padding: '8px 10px',
-    borderBottom: '1px solid rgba(255,255,255,0.04)'
+    display: 'flex',
+    gap: 6,
+    padding: '8px 10px',
+    borderBottom: '1px solid rgba(255,255,255,0.04)',
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    scrollbarWidth: 'thin',
+    scrollbarColor: 'rgba(255,255,255,0.2) transparent',
+    WebkitOverflowScrolling: 'touch'
   },
   body: {
     flex: '1 1 auto',            // ← fixed outer; this scrolls
