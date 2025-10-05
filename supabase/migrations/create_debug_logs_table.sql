@@ -17,6 +17,10 @@ CREATE INDEX IF NOT EXISTS idx_debug_logs_session_id ON debug_logs(session_id);
 -- Enable RLS (Row Level Security)
 ALTER TABLE debug_logs ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Anyone can insert debug logs" ON debug_logs;
+DROP POLICY IF EXISTS "Anyone can read debug logs" ON debug_logs;
+
 -- Allow anyone to insert debug logs (for debugging purposes)
 CREATE POLICY "Anyone can insert debug logs" ON debug_logs
   FOR INSERT
