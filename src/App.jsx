@@ -50,6 +50,7 @@ import NowPlayingBanner from './components/NowPlayingBanner';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 import PhotoBooth from './components/PhotoBooth';
 import ThenAndNow from './components/ThenAndNow';
+import { initRemoteLogger } from './utils/remoteLogger';
 import WeatherWidget from './components/WeatherWidget';
 import OfflineIndicator from './components/OfflineIndicator';
 import AnonymousMessageModal from './components/AnonymousMessageModal';
@@ -235,6 +236,9 @@ export default function App() {
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
+
+    // Initialize remote logger for debugging
+    initRemoteLogger();
 
     // Set exploring mode based on mobile state
     if (isMobile) {
