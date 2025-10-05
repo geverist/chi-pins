@@ -59,19 +59,22 @@ export default function HotdogGame({ onClose, onGameComplete }) {
     // Calculate evenly spaced positions to prevent overlapping
     const leftCount = mid;
     const rightCount = shuffled.length - mid;
-    const spacing = 70 / Math.max(leftCount, rightCount); // Divide 70% range
+    // Use 80% of available height with minimum spacing of 8%
+    const spacing = Math.max(8, 80 / Math.max(leftCount, rightCount));
 
     setLeftIngredients(
       shuffled.slice(0, mid).map((item, index) => ({
         ...item,
-        top: 10 + (index * spacing) + (Math.random() * (spacing * 0.5)), // Add some randomness within spacing
+        // Evenly distribute with no random variation to prevent overlap
+        top: 5 + (index * spacing),
       }))
     );
 
     setRightIngredients(
       shuffled.slice(mid).map((item, index) => ({
         ...item,
-        top: 10 + (index * spacing) + (Math.random() * (spacing * 0.5)), // Add some randomness within spacing
+        // Evenly distribute with no random variation to prevent overlap
+        top: 5 + (index * spacing),
       }))
     );
   };
@@ -86,10 +89,11 @@ export default function HotdogGame({ onClose, onGameComplete }) {
     setAccuracy(0);
     randomizeIngredientPositions();
 
-    // Reposition ingredients every 5 seconds
+    // Reposition ingredients based on admin setting (default 5 seconds)
+    const repositionSpeed = (adminSettings.hotdogRepositionSpeed || 5) * 1000;
     repositionTimerRef.current = setInterval(() => {
       randomizeIngredientPositions();
-    }, 5000);
+    }, repositionSpeed);
   };
 
   useEffect(() => {
@@ -113,8 +117,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   const handleDrop = (e) => {
     e.preventDefault();
     if (draggedItem && !assembledItems.find(i => i.id === draggedItem.id)) {
-      // Add to BEGINNING of array so items stack from bottom-up
-      setAssembledItems([draggedItem, ...assembledItems]);
+      // Add to END of array to match the CORRECT_ORDER
+      setAssembledItems([...assembledItems, draggedItem]);
       setAvailableItems(availableItems.filter(i => i.id !== draggedItem.id));
     }
     setDraggedItem(null);
@@ -122,8 +126,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
 
   const handleTouchItem = (item) => {
     if (!assembledItems.find(i => i.id === item.id)) {
-      // Add to BEGINNING of array so items stack from bottom-up
-      setAssembledItems([item, ...assembledItems]);
+      // Add to END of array to match the CORRECT_ORDER
+      setAssembledItems([...assembledItems, item]);
       setAvailableItems(availableItems.filter(i => i.id !== item.id));
     }
   };
@@ -216,7 +220,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           Ingredients appear on the left and right sides. Tap them to add to your hot dog.
         </p>
         <p style={{ color: '#fbbf24', fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>
-          Watch out! Ingredients move to random positions every 5 seconds!
+          Watch out! Ingredients move to random positions every {adminSettings.hotdogRepositionSpeed || 5} seconds!
         </p>
         <p style={{ color: '#ef4444', fontSize: 13, fontWeight: 600, margin: '0 0 6px' }}>
           ⚠️ AVOID ketchup, sauerkraut, and moldy onions - they deduct points!

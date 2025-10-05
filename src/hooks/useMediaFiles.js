@@ -231,6 +231,7 @@ export function useMediaFiles() {
     uploading,
     uploadMediaFile,
     deleteMediaFile,
+    addSpotifyTrack,
     updateMediaFile,
     reloadMediaFiles: loadMediaFiles,
   };

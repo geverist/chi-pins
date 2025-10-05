@@ -127,6 +127,7 @@ export default function App() {
   // UI state
   const [toast, setToast] = useState(null);
   const [exploring, setExploring] = useState(false);
+  const [selectedTeamFilter, setSelectedTeamFilter] = useState(null);
 
   // share modal
   const [shareOpen, setShareOpen] = useState(false);
@@ -189,12 +190,13 @@ export default function App() {
 
   // editor form
   const [form, setForm] = useState({
-    team: 'cubs',
+    team: null,
     name: '',
     neighborhood: '',
     hotdog: '',
     note: '',
     photoUrl: null,
+    allowAnonymousMessages: false,
   });
 
   // mobile mode detection - detect mobile device once and stick with it
@@ -381,14 +383,28 @@ export default function App() {
 
   // render-only mapping: color global pins by continent
   const pinsForRender = useMemo(() => {
-    return pinsDeduped.map((p) => {
+    let filtered = pinsDeduped.map((p) => {
       if (p?.source === 'global') {
         const cont = p?.continent || (Number.isFinite(p?.lat) && Number.isFinite(p?.lng) ? continentFor(p.lat, p.lng) : null);
         return { ...p, team: cont || p.team || 'other' };
       }
       return p;
     });
-  }, [pinsDeduped]);
+
+    // Apply team filter in Chicago mode
+    if (mapMode === 'chicago' && selectedTeamFilter) {
+      console.log('Filtering pins by team:', selectedTeamFilter);
+      console.log('Before filter:', filtered.length, 'pins');
+      filtered = filtered.filter(p => {
+        const matches = p.team === selectedTeamFilter;
+        if (matches) console.log('Match:', p.slug, 'team:', p.team);
+        return matches;
+      });
+      console.log('After filter:', filtered.length, 'pins');
+    }
+
+    return filtered;
+  }, [pinsDeduped, mapMode, selectedTeamFilter]);
 
   const [resetCameraToken, setResetCameraToken] = useState(0);
   const [clearSearchToken, setClearSearchToken] = useState(0);
@@ -424,7 +440,16 @@ export default function App() {
       goToChicago(mainMapRef.current, isMobile);
     }
     setResetCameraToken((t) => t + 1);
-    setForm((f) => ({ ...f, name: '', neighborhood: '', hotdog: '', note: '', photoUrl: null }));
+    // Reset form
+    setForm({
+      team: null,
+      name: '',
+      neighborhood: '',
+      hotdog: '',
+      note: '',
+      photoUrl: null,
+      allowAnonymousMessages: false,
+    });
   };
 
   // fun-fact toast
@@ -542,6 +567,14 @@ export default function App() {
       device_id: 'kiosk-1',
       loyalty_phone: loyaltyPhoneNormalized,
       loyalty_opt_in: loyaltyOptIn,
+      allow_anonymous_messages: form.allowAnonymousMessages || false,
+      loyalty_email: form.anonymousContactMethod === 'email' ? form.anonymousContactValue : null,
+      // Store phone in loyalty_phone if they chose phone for anonymous messages
+      // (only if they didn't already provide a loyalty phone)
+      ...(!loyaltyPhoneNormalized && form.anonymousContactMethod === 'phone' && form.anonymousContactValue
+        ? { loyalty_phone: normalizePhoneToE164ish(form.anonymousContactValue) }
+        : {}
+      ),
     };
 
     try {
@@ -718,7 +751,11 @@ export default function App() {
           </button>
         ) : (
           <>
-            <TeamCount pins={pinsDeduped} />
+            <TeamCount
+              pins={pinsDeduped}
+              selectedTeam={selectedTeamFilter}
+              onTeamSelect={setSelectedTeamFilter}
+            />
             <button
               type="button"
               aria-pressed={showPopularSpots}
@@ -1000,6 +1037,7 @@ export default function App() {
         setShareToFb={setShareToFb}
         draft={draft}
         form={form}
+        setForm={setForm}
         mapMode={mapMode}
         facebookShareEnabled={adminSettings.facebookShareEnabled}
       />

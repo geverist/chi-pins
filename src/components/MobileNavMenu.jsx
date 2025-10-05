@@ -52,7 +52,7 @@ export default function MobileNavMenu({
         <div
           style={{
             position: 'fixed',
-            bottom: 80,
+            bottom: 160, // FAB bottom (100) + FAB height (56) + spacing (4)
             right: 16,
             background: 'linear-gradient(135deg, #1a1f26 0%, #242a33 100%)',
             borderRadius: 16,
@@ -61,6 +61,8 @@ export default function MobileNavMenu({
             overflow: 'hidden',
             zIndex: 9999,
             minWidth: 200,
+            maxHeight: 'calc(100vh - 180px)', // Prevent menu from going off top
+            overflowY: 'auto',
           }}
         >
           {navSettings?.games_enabled && (
@@ -208,7 +210,7 @@ export default function MobileNavMenu({
         onClick={() => setMenuOpen(!menuOpen)}
         style={{
           position: 'fixed',
-          bottom: 16,
+          bottom: 100, // Increased to avoid Safari bottom bar and provide more clearance
           right: 16,
           width: 56,
           height: 56,

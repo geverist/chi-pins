@@ -585,6 +585,23 @@ export default function AdminPanel({ open, onClose }) {
                       </p>
                     </>
                   )}
+
+                  <FieldRow label="Anonymous Message Rate Limit">
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        type="number"
+                        min="1"
+                        max="50"
+                        value={settings.maxAnonymousMessagesPerDay || 5}
+                        onChange={(e) => setSettings(s => ({ ...s, maxAnonymousMessagesPerDay: parseInt(e.target.value) || 5 }))}
+                        style={{ ...s.input, width: '80px' }}
+                      />
+                      <span style={{ fontSize: 13, color: '#a7b0b8' }}>messages per pin per day</span>
+                    </div>
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                    Limits how many anonymous messages a single pin can receive per day to prevent spam
+                  </p>
                 </Card>
               )}
 
@@ -812,8 +829,17 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, hotdogKetchupPenalty: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Ingredient reposition speed (seconds)">
+                  <NumberInput
+                    value={settings.hotdogRepositionSpeed}
+                    min={2}
+                    max={30}
+                    step={1}
+                    onChange={(v) => setSettings(s => ({ ...s, hotdogRepositionSpeed: v }))}
+                  />
+                </FieldRow>
                 <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                  Never put ketchup on a Chicago dog! 🚫
+                  Never put ketchup on a Chicago dog! 🚫 | Ingredients shuffle every X seconds
                 </p>
               </Card>
             </SectionGrid>

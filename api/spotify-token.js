@@ -20,8 +20,9 @@ export default async function handler(req, res) {
 
   try {
     // Get Spotify credentials from environment variables (secure, backend-only)
-    const clientId = process.env.SPOTIFY_CLIENT_ID;
-    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+    // Trim to remove any whitespace/newlines that may have been added
+    const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
+    const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
 
     if (!clientId || !clientSecret) {
       console.error('Spotify credentials not configured in environment variables');
