@@ -1,6 +1,6 @@
 // src/hooks/useNavigationSettings.js
 import { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const CACHE_KEY = 'navigation_settings_cache';
