@@ -114,7 +114,7 @@ export default function CommentsModal({ onClose }) {
         justifyContent: 'center',
         zIndex: 9999,
         padding: '10px',
-        overflowY: 'auto',
+        overflow: 'hidden',
       }}
       onClick={onClose}
     >
@@ -125,13 +125,13 @@ export default function CommentsModal({ onClose }) {
           padding: '20px',
           maxWidth: 600,
           width: '100%',
+          maxHeight: '95vh',
           boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
           border: '1px solid #374151',
           color: '#f3f4f6',
-          maxHeight: '95vh',
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          margin: 'auto 0',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -158,11 +158,12 @@ export default function CommentsModal({ onClose }) {
           </button>
         </div>
 
-        <p style={{ margin: '0 0 20px 0', color: '#9ca3af', fontSize: 'clamp(12px, 3vw, 14px)', lineHeight: 1.4 }}>
-          We'd love to hear about your visit! Share your thoughts, suggestions, or any feedback you have.
-        </p>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          <p style={{ margin: '0 0 20px 0', color: '#9ca3af', fontSize: 'clamp(12px, 3vw, 14px)', lineHeight: 1.4 }}>
+            We'd love to hear about your visit! Share your thoughts, suggestions, or any feedback you have.
+          </p>
 
-        <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
           {/* Rating */}
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
@@ -367,6 +368,7 @@ export default function CommentsModal({ onClose }) {
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
