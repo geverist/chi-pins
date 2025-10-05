@@ -141,6 +141,7 @@ export default function ThenAndNow({ onClose }) {
 
   const handleTouchMove = (e) => {
     if (isDragging) {
+      e.preventDefault(); // Prevent scrolling and default touch behavior
       handleSliderChange(e);
     }
   };
@@ -247,6 +248,7 @@ export default function ThenAndNow({ onClose }) {
             handleSliderChange(e);
           }}
           onTouchStart={(e) => {
+            e.preventDefault(); // Prevent default touch behavior
             setIsDragging(true);
             handleSliderChange(e);
           }}
@@ -255,12 +257,16 @@ export default function ThenAndNow({ onClose }) {
           <img
             src={current.now.url}
             alt={`${current.location} - ${current.now.year}`}
+            draggable={false}
             style={{
               position: 'absolute',
               inset: 0,
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              WebkitUserDrag: 'none',
             }}
           />
 
@@ -273,17 +279,22 @@ export default function ThenAndNow({ onClose }) {
               height: '100%',
               clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
               transition: isDragging ? 'none' : 'clip-path 0.1s ease',
+              pointerEvents: 'none',
             }}
           >
             <img
               src={current.then.url}
               alt={`${current.location} - ${current.then.year}`}
+              draggable={false}
               style={{
                 position: 'absolute',
                 inset: 0,
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                pointerEvents: 'none',
+                userSelect: 'none',
+                WebkitUserDrag: 'none',
               }}
             />
           </div>
