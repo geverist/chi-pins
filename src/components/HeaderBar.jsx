@@ -75,6 +75,9 @@ export default function HeaderBar({
   onContinentClick,
   /** Optional: force mobile mode from parent. If omitted, we detect by width. */
   isMobile: isMobileProp,
+  /** Mobile table view toggle */
+  showTableView = false,
+  onToggleView,
 }) {
   // Fetch uploaded logo from Supabase
   const { logoUrl: uploadedLogoUrl } = useLogo()
@@ -106,7 +109,7 @@ export default function HeaderBar({
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   })
 
-  // ---------- Mobile header: title only ----------
+  // ---------- Mobile header: title + view toggle ----------
   if (isMobile) {
     return (
       <header
@@ -130,12 +133,12 @@ export default function HeaderBar({
           >
             <img src={logoSrc} alt="Logo" style={{ height:24, width:'auto', display:'block' }} />
           </button>
-        ) : <span />}
+        ) : <span style={{ width:0 }} />}
 
         <h1
           style={{
             margin:0,
-            fontSize:'clamp(16px, 4.5vw, 22px)',
+            fontSize:'clamp(14px, 4vw, 18px)',
             whiteSpace:'nowrap',
             textAlign:'center',
             flex:1
@@ -144,8 +147,33 @@ export default function HeaderBar({
           Chicago Mike&apos;s Pin Entries
         </h1>
 
-        {/* Right spacer to keep title centered */}
-        <span style={{ width:logoSrc ? 36 : 0 }} />
+        {/* View toggle button */}
+        {onToggleView && (
+          <button
+            onClick={onToggleView}
+            title={showTableView ? 'Show Map View' : 'Show Table View'}
+            aria-label={showTableView ? 'Show Map View' : 'Show Table View'}
+            style={{
+              display:'inline-flex',
+              alignItems:'center',
+              justifyContent:'center',
+              padding:'6px 12px',
+              borderRadius:8,
+              border:'1px solid #2a2f37',
+              background: showTableView
+                ? 'linear-gradient(#242a33, #1a1f26)'
+                : 'linear-gradient(#1f242b, #171b20)',
+              color:'#f4f6f8',
+              cursor:'pointer',
+              fontSize:18,
+              boxShadow: showTableView
+                ? 'inset 0 2px 6px rgba(0,0,0,0.5)'
+                : '0 2px 8px rgba(0,0,0,0.2)',
+            }}
+          >
+            {showTableView ? '🗺️' : '📋'}
+          </button>
+        )}
       </header>
     )
   }
