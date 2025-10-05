@@ -342,25 +342,20 @@ export default function PhotoBooth({ onClose }) {
         background: 'rgba(0,0,0,0.95)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
+        overflow: 'hidden',
       }}
     >
       {/* Header */}
       <div
         style={{
-          position: 'absolute',
-          top: 20,
-          left: 0,
-          right: 0,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '0 20px',
+          padding: '12px 20px',
+          flexShrink: 0,
         }}
       >
-        <h2 style={{ color: '#f4f6f8', fontSize: 28, margin: 0 }}>
+        <h2 style={{ color: '#f4f6f8', fontSize: 'clamp(18px, 4vw, 28px)', margin: 0 }}>
           📸 Photo Booth
         </h2>
         <button
@@ -369,9 +364,9 @@ export default function PhotoBooth({ onClose }) {
             background: 'rgba(239,68,68,0.2)',
             border: '1px solid rgba(239,68,68,0.5)',
             borderRadius: 12,
-            padding: '12px 24px',
+            padding: '8px 16px',
             color: '#fff',
-            fontSize: 18,
+            fontSize: 'clamp(14px, 2vw, 18px)',
             fontWeight: 600,
             cursor: 'pointer',
           }}
@@ -383,13 +378,17 @@ export default function PhotoBooth({ onClose }) {
       {/* Main Content */}
       <div
         style={{
-          marginTop: 80,
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 20,
+          justifyContent: 'center',
+          gap: 'clamp(12px, 2vh, 20px)',
+          padding: '0 20px 20px 20px',
           maxWidth: 1200,
           width: '100%',
+          margin: '0 auto',
+          minHeight: 0,
         }}
       >
         {error && (
