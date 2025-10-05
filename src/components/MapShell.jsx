@@ -128,16 +128,15 @@ function GeocoderTopCenter({
       const chicagoBounds = CHI_BOUNDS;
       const currentZoom = map.getZoom();
 
-      // Check if we're zoomed out enough that Chicago is a small part of the view
-      // If the map view CONTAINS all of Chicago bounds, we're too zoomed out - use global search
-      // Otherwise, if Chicago intersects with the view, use Chicago search
-      const mapContainsAllOfChicago = mapBounds.contains(chicagoBounds);
-      const isInChicago = !mapContainsAllOfChicago && chicagoBounds.intersects(mapBounds);
+      // Use zoom level as primary indicator for mode
+      // Zoom >= 9 = Chicago mode (even if you can see all of Chicago)
+      // Zoom < 9 = Global mode (too zoomed out)
+      const isInChicago = currentZoom >= CHI_MIN_ZOOM && chicagoBounds.intersects(mapBounds);
 
       const newMode = isInChicago ? 'chicago' : 'global';
       const newPlaceholder = isInChicago ? 'Search Chicago & nearby…' : 'Search places worldwide…';
 
-      console.log('GeocoderTopCenter: checkBounds - zoom:', currentZoom, 'mapContainsAllOfChicago:', mapContainsAllOfChicago, 'isInChicago:', isInChicago, 'newMode:', newMode, 'currentMode:', dynamicMode);
+      console.log('GeocoderTopCenter: checkBounds - zoom:', currentZoom, 'CHI_MIN_ZOOM:', CHI_MIN_ZOOM, 'intersects:', chicagoBounds.intersects(mapBounds), 'isInChicago:', isInChicago, 'newMode:', newMode, 'currentMode:', dynamicMode);
 
       if (newMode !== dynamicMode) {
         console.log('GeocoderTopCenter: MODE CHANGE - Switching from', dynamicMode, 'to', newMode);
