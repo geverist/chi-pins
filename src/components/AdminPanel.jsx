@@ -6,6 +6,7 @@ import { useNavigationSettings } from '../hooks/useNavigationSettings'
 import { useLogo } from '../hooks/useLogo'
 import { useAdminSettings } from '../state/useAdminSettings'
 import { useMediaFiles } from '../hooks/useMediaFiles'
+import { useThenAndNow } from '../hooks/useThenAndNow'
 import { useNowPlaying } from '../state/useNowPlaying'
 import PinCodeModal from './PinCodeModal'
 import AnalyticsDashboard from './AnalyticsDashboard'
@@ -30,6 +31,16 @@ export default function AdminPanel({ open, onClose }) {
 
   // Media files hook
   const { mediaFiles, loading: mediaLoading, uploading: mediaUploading, uploadMediaFile, deleteMediaFile, updateMediaFile } = useMediaFiles()
+
+  // Then & Now hook
+  const {
+    comparisons: thenAndNowComparisonsFromHook,
+    loading: thenAndNowLoadingFromHook,
+    addComparison,
+    uploadImage: uploadThenNowImage,
+    deleteComparison,
+    updateComparison
+  } = useThenAndNow()
 
   // Now Playing hook
   const { stopAll, currentTrack, queue } = useNowPlaying()
@@ -83,8 +94,9 @@ export default function AdminPanel({ open, onClose }) {
   const [search, setSearch] = useState('')
 
   // Then & Now comparisons
-  const [thenAndNowComparisons, setThenAndNowComparisons] = useState([])
-  const [thenAndNowLoading, setThenAndNowLoading] = useState(false)
+  // Use hook data directly
+  const thenAndNowComparisons = thenAndNowComparisonsFromHook
+  const thenAndNowLoading = thenAndNowLoadingFromHook
 
   // Kiosk clusters
   const [kioskClusters, setKioskClusters] = useState([])
