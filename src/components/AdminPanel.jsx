@@ -1258,9 +1258,10 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🎮 Games">
                   <Toggle
                     checked={navSettings.games_enabled}
-                    onChange={(v) => {
-                      // Update local state only, save happens on "Save & Close"
-                      setNavSettings({ ...navSettings, games_enabled: v });
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, games_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
                     }}
                   />
                 </FieldRow>
@@ -1268,9 +1269,10 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🎵 Jukebox">
                   <Toggle
                     checked={navSettings.jukebox_enabled}
-                    onChange={(v) => {
-                      // Update local state only, save happens on "Save & Close"
-                      setNavSettings({ ...navSettings, jukebox_enabled: v });
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, jukebox_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
                     }}
                   />
                 </FieldRow>
@@ -1278,9 +1280,10 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🍕 Order Now">
                   <Toggle
                     checked={navSettings.order_enabled}
-                    onChange={(v) => {
-                      // Update local state only, save happens on "Save & Close"
-                      setNavSettings({ ...navSettings, order_enabled: v });
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, order_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
                     }}
                   />
                 </FieldRow>
@@ -1288,9 +1291,10 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🔎 Explore">
                   <Toggle
                     checked={navSettings.explore_enabled}
-                    onChange={(v) => {
-                      // Update local state only, save happens on "Save & Close"
-                      setNavSettings({ ...navSettings, explore_enabled: v });
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, explore_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
                     }}
                   />
                 </FieldRow>
@@ -1298,9 +1302,10 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="📸 Photo Booth">
                   <Toggle
                     checked={navSettings.photobooth_enabled}
-                    onChange={(v) => {
-                      console.log('[AdminPanel] Photo Booth toggled: was:', navSettings.photobooth_enabled, 'now:', v);
-                      setNavSettings({ ...navSettings, photobooth_enabled: v });
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, photobooth_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
                     }}
                   />
                 </FieldRow>
@@ -1308,9 +1313,10 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="🏛️ Then & Now">
                   <Toggle
                     checked={navSettings.thenandnow_enabled}
-                    onChange={(v) => {
-                      console.log('[AdminPanel] Then & Now toggled: was:', navSettings.thenandnow_enabled, 'now:', v);
-                      setNavSettings({ ...navSettings, thenandnow_enabled: v });
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, thenandnow_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
                     }}
                   />
                 </FieldRow>
@@ -1318,16 +1324,10 @@ export default function AdminPanel({ open, onClose }) {
                 <FieldRow label="💬 Leave Feedback">
                   <Toggle
                     checked={navSettings.comments_enabled}
-                    onChange={(v) => {
-                      // Update local state only, save happens on "Save & Close"
-                      console.log('[AdminPanel] Leave Feedback toggled:',
-                        'was:', navSettings.comments_enabled,
-                        'now:', v,
-                        'full navSettings:', navSettings
-                      );
+                    onChange={async (v) => {
                       const updated = { ...navSettings, comments_enabled: v };
-                      console.log('[AdminPanel] Updated navSettings.comments_enabled:', updated.comments_enabled);
                       setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
                     }}
                   />
                 </FieldRow>
