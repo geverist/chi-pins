@@ -178,6 +178,6 @@ export function useSpotify() {
     searchTracks,
     getTrack,
     getTracks,
-    isConfigured: !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET),
+    isConfigured: !!accessToken, // Configured if we successfully got a token
   };
 }
