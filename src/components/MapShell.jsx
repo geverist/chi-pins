@@ -528,7 +528,8 @@ export default function MapShell({
   isMobile,
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
-  const zoom = useMemo(() => 9, []); // Zoom 9 shows full metro area (Kenosha to Joliet)
+  // Mobile: zoom 12 (Chicago proper, elicits search bias). Desktop: zoom 9 (full metro)
+  const zoom = useMemo(() => (isMobile ? 12 : 9), [isMobile]);
 
   const whenCreated = (map) => {
     if (mainMapRef && typeof setMapReady === 'function') {
