@@ -4,8 +4,12 @@ import { useEffect, useRef } from 'react';
 import { useNowPlaying } from '../state/useNowPlaying.jsx';
 import { useAdminSettings } from '../state/useAdminSettings';
 
+const LS_PLAYBACK_POSITION = 'nowPlaying_position';
+const LS_PLAYBACK_URL = 'nowPlaying_positionUrl';
+
 export default function GlobalAudioPlayer() {
   const audioRef = useRef(null);
+  const savePositionIntervalRef = useRef(null);
   const { currentTrack, isPlaying, setIsPlaying, setLastPlayed, setCurrentTrack, playNext } = useNowPlaying();
   const { settings: adminSettings } = useAdminSettings();
 
@@ -46,6 +50,24 @@ export default function GlobalAudioPlayer() {
     audio.src = sourceUrl;
     console.log('GlobalAudioPlayer - Audio src set to:', audio.src);
 
+    // Try to restore playback position if this is the same track (page refresh)
+    const tryRestorePosition = () => {
+      try {
+        const savedUrl = localStorage.getItem(LS_PLAYBACK_URL);
+        const savedPosition = localStorage.getItem(LS_PLAYBACK_POSITION);
+
+        if (savedUrl === sourceUrl && savedPosition) {
+          const position = parseFloat(savedPosition);
+          if (position > 0 && position < audio.duration) {
+            audio.currentTime = position;
+            console.log('GlobalAudioPlayer - Restored playback position:', position);
+          }
+        }
+      } catch (err) {
+        console.error('GlobalAudioPlayer - Failed to restore position:', err);
+      }
+    };
+
     // Handle Bluetooth device selection if configured
     const playAudio = async () => {
       try {
@@ -54,6 +76,15 @@ export default function GlobalAudioPlayer() {
             await audio.setSinkId(adminSettings.bluetoothDeviceId);
           }
         }
+
+        // Wait for metadata to load before restoring position
+        if (audio.readyState < 1) {
+          await new Promise(resolve => {
+            audio.addEventListener('loadedmetadata', resolve, { once: true });
+          });
+        }
+
+        tryRestorePosition();
         await audio.play();
         console.log('GlobalAudioPlayer - playback started');
       } catch (err) {
@@ -73,16 +104,61 @@ export default function GlobalAudioPlayer() {
     const handlePlay = () => {
       console.log('GlobalAudioPlayer - play event');
       setIsPlaying(true);
+
+      // Start saving playback position every 2 seconds
+      if (savePositionIntervalRef.current) {
+        clearInterval(savePositionIntervalRef.current);
+      }
+      savePositionIntervalRef.current = setInterval(() => {
+        if (audio.src && !audio.paused && !audio.ended) {
+          try {
+            localStorage.setItem(LS_PLAYBACK_POSITION, audio.currentTime.toString());
+            localStorage.setItem(LS_PLAYBACK_URL, audio.src);
+          } catch (err) {
+            console.error('Failed to save playback position:', err);
+          }
+        }
+      }, 2000);
     };
 
     const handlePause = () => {
       console.log('GlobalAudioPlayer - pause event');
       setIsPlaying(false);
+
+      // Save position when paused
+      if (audio.src) {
+        try {
+          localStorage.setItem(LS_PLAYBACK_POSITION, audio.currentTime.toString());
+          localStorage.setItem(LS_PLAYBACK_URL, audio.src);
+        } catch (err) {
+          console.error('Failed to save playback position:', err);
+        }
+      }
+
+      // Stop saving position
+      if (savePositionIntervalRef.current) {
+        clearInterval(savePositionIntervalRef.current);
+        savePositionIntervalRef.current = null;
+      }
     };
 
     const handleEnded = async () => {
       console.log('GlobalAudioPlayer - track ended, trying next...');
       setIsPlaying(false);
+
+      // Clear saved position when track ends
+      try {
+        localStorage.removeItem(LS_PLAYBACK_POSITION);
+        localStorage.removeItem(LS_PLAYBACK_URL);
+      } catch (err) {
+        console.error('Failed to clear playback position:', err);
+      }
+
+      // Stop saving position
+      if (savePositionIntervalRef.current) {
+        clearInterval(savePositionIntervalRef.current);
+        savePositionIntervalRef.current = null;
+      }
 
       const nextTrack = await playNext();
       if (nextTrack) {
@@ -144,6 +220,12 @@ export default function GlobalAudioPlayer() {
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
+
+      // Clear interval on cleanup
+      if (savePositionIntervalRef.current) {
+        clearInterval(savePositionIntervalRef.current);
+        savePositionIntervalRef.current = null;
+      }
     };
   }, [setIsPlaying, setLastPlayed, setCurrentTrack, playNext, currentTrack]);
 
