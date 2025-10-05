@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && cp -r marketing-site/* dist/",
     "preview": "vite preview",
     "start": "vite preview --host --port 4173",
     "qr": "node scripts/generate-qr.mjs",
