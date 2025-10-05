@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngageOS for Churches & Synagogues | Interactive Welcome & Engagement</title>
+    <meta name="description" content="Transform your congregation's experience with interactive kiosk for visitor welcome, event announcements, donation collection, and community engagement.">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+            color: #333;
+        }
+
+        .hero-industry {
+            text-align: center;
+            padding: 100px 20px;
+            color: white;
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+        }
+
+        .hero-industry h1 {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            margin: 0 0 40px 0;
+            opacity: 0.9;
+        }
+
+        .demo-cta {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 18px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .demo-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+
+        .content-section {
+            background: white;
+            padding: 80px 20px;
+        }
+
+        .content-section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            color: #7c3aed;
+        }
+
+        .challenges-grid, .features-grid, .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .challenge-card, .feature-card, .benefit-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .content-section:nth-child(even) .challenge-card,
+        .content-section:nth-child(even) .feature-card,
+        .content-section:nth-child(even) .benefit-card {
+            background: white;
+        }
+
+        .challenge-card:hover, .feature-card:hover, .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #7c3aed;
+        }
+
+        .card-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .roi-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .roi-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .roi-stat {
+            padding: 20px;
+        }
+
+        .roi-number {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .roi-label {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .screenshot-card {
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 64px;
+        }
+
+        .screenshot-label {
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pricing-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 50px auto 0;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-box h3 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #7c3aed;
+        }
+
+        .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+
+        .price-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .features-list {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .addon-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .addon-section h4 {
+            color: #7c3aed;
+            margin-bottom: 15px;
+        }
+
+        .addon-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 16px 50px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-industry">
+        <div style="font-size: 72px; margin-bottom: 20px;">⛪</div>
+        <h1>EngageOS for Churches & Synagogues</h1>
+        <p class="subtitle">Welcome visitors, engage your congregation, and build community</p>
+        <a href="https://demo.chi-pins.com?industry=religious" class="demo-cta" style="margin-right: 20px;">🎮 Try Live Demo</a>
+        <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Religious%20Organization&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20our%20congregation." class="demo-cta" style="background: #7c3aed; color: white;">📅 Request Personalized Demo</a>
+    </section>
+
+    <!-- Challenges Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The Congregation Challenge</h2>
+            <div class="challenges-grid">
+                <div class="challenge-card">
+                    <div class="card-icon">👋</div>
+                    <h3 class="card-title">Welcoming First-Time Visitors</h3>
+                    <p class="card-description">New visitors feel awkward, don't know where to go, and often leave without connecting. No systematic way to capture their info or follow up.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">📢</div>
+                    <h3 class="card-title">Event Communication Chaos</h3>
+                    <p class="card-description">Announcements buried in bulletins. Weekly emails ignored. Event signups scattered across email, phone, and paper. Youth programs under-promoted.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">💸</div>
+                    <h3 class="card-title">Declining Donations</h3>
+                    <p class="card-description">Younger members don't carry cash or checks. No convenient digital giving options. Donation opportunities missed during services.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">🤝</div>
+                    <h3 class="card-title">Community Connection</h3>
+                    <p class="card-description">Members feel disconnected between services. Prayer requests not shared. Community needs unknown. Volunteer opportunities unfilled.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The EngageOS Solution</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">Digital Welcome Center</h3>
+                    <p class="card-description">Visitor check-in kiosk: "Welcome! Is this your first time?" Captures contact info, service preferences, and connection interests. Auto-sends welcome email.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">📅</div>
+                    <h3 class="card-title">Event Calendar & Signup</h3>
+                    <p class="card-description">Interactive calendar with upcoming services, Bible studies, youth group, community meals, volunteer opportunities. One-tap signup with SMS reminders.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">💳</div>
+                    <h3 class="card-title">Digital Giving Kiosk</h3>
+                    <p class="card-description">QR code donations, tap-to-pay, recurring giving setup. Transparent fund allocation (building fund, missions, youth ministry). Instant tax receipts via email.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🙏</div>
+                    <h3 class="card-title">Prayer Wall</h3>
+                    <p class="card-description">Submit prayer requests privately or publicly. Community can "lift up" prayers. Pastoral team receives notifications. Creates digital prayer chain.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">📖</div>
+                    <h3 class="card-title">Sermon Archive & Notes</h3>
+                    <p class="card-description">Access past sermons, download study guides, share favorite messages. Scripture lookup, daily devotionals, and sermon series tracking.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">👥</div>
+                    <h3 class="card-title">Small Group Connector</h3>
+                    <p class="card-description">Browse available small groups by interest, location, day of week. Meet the leaders, see member photos. Sign up directly from kiosk.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🎤</div>
+                    <h3 class="card-title">Volunteer Portal</h3>
+                    <p class="card-description">See volunteer needs (greeters, worship team, children's ministry, food bank). Browse opportunities by time commitment. Sign up instantly.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">📸</div>
+                    <h3 class="card-title">Photo Booth Memories</h3>
+                    <p class="card-description">After-service photos with faith-based stickers and frames. Share family moments, VBS memories, mission trips. Auto-posts to congregation gallery.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🔔</div>
+                    <h3 class="card-title">SMS & Email Notifications</h3>
+                    <p class="card-description">Automated service reminders, event confirmations, prayer request updates, giving receipts, and pastoral messages. Multi-language support.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">Ministry Impact</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="card-icon">📈</div>
+                    <h3 class="card-title">Increase Visitor Return Rate</h3>
+                    <p class="card-description">Systematic follow-up with first-time visitors increases return rate by 35%. Automated welcome emails and connection opportunities.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">💰</div>
+                    <h3 class="card-title">Boost Digital Giving</h3>
+                    <p class="card-description">Convenient giving options increase donations by 40%. Younger members can give via mobile. Recurring giving setup boosts monthly contributions.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">🤝</div>
+                    <h3 class="card-title">Strengthen Community</h3>
+                    <p class="card-description">Prayer wall and event calendar increase mid-week engagement. Members feel more connected. Small group participation increases by 50%.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">⏱️</div>
+                    <h3 class="card-title">Reduce Staff Burden</h3>
+                    <p class="card-description">Self-service event signup and volunteer registration save 10 hours/week. Staff can focus on pastoral care instead of administrative tasks.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">Track Engagement Analytics</h3>
+                    <p class="card-description">See which events resonate, who's attending, giving trends, and volunteer participation. Data-driven decisions for ministry planning.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">🌍</div>
+                    <h3 class="card-title">Multi-Language Accessibility</h3>
+                    <p class="card-description">Serve diverse congregations with 50+ language support. Automatic translation for announcements, sermon notes, and prayer requests.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROI Section -->
+    <section class="roi-section">
+        <div class="container">
+            <h2 style="font-size: 42px; margin-bottom: 20px;">Proven Impact for Faith Communities</h2>
+            <p style="font-size: 20px; opacity: 0.9;">Average congregation with 300 members</p>
+            <div class="roi-stats">
+                <div class="roi-stat">
+                    <div class="roi-number">+40%</div>
+                    <div class="roi-label">Increase in Digital Giving</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">35%</div>
+                    <div class="roi-label">Higher Visitor Return Rate</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">50%</div>
+                    <div class="roi-label">More Small Group Signups</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">10 hrs</div>
+                    <div class="roi-label">Staff Time Saved Per Week</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">See It In Action</h2>
+            <div class="screenshots-grid">
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">👋</div>
+                    <div class="screenshot-label">Visitor Welcome Screen</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📅</div>
+                    <div class="screenshot-label">Event Calendar & Signup</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">💳</div>
+                    <div class="screenshot-label">Digital Giving Portal</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🙏</div>
+                    <div class="screenshot-label">Prayer Wall</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">👥</div>
+                    <div class="screenshot-label">Small Group Finder</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🎤</div>
+                    <div class="screenshot-label">Volunteer Opportunities</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="content-section">
+        <div class="container" style="text-align: center;">
+            <h2 class="section-title">Ready to Transform Your Ministry?</h2>
+            <p style="font-size: 20px; margin-bottom: 40px; color: #666;">Join faith communities nationwide strengthening engagement and growing their congregation</p>
+
+            <div class="pricing-box">
+                <h3>Faith Community Bundle</h3>
+                <div class="price">$349<span style="font-size: 24px; color: #666;">/month</span></div>
+                <div class="price-details">All features included • No setup fees • Cancel anytime</div>
+
+                <ul class="features-list" style="list-style: none; padding: 0;">
+                    <li>✅ Digital Welcome Center</li>
+                    <li>✅ Event Calendar & Signup</li>
+                    <li>✅ Digital Giving Kiosk</li>
+                    <li>✅ Prayer Wall & Requests</li>
+                    <li>✅ Sermon Archive & Notes</li>
+                    <li>✅ Small Group Connector</li>
+                    <li>✅ Volunteer Portal</li>
+                    <li>✅ Photo Booth with Faith Stickers</li>
+                    <li>✅ Multi-Language Support (50+ languages)</li>
+                    <li>✅ Engagement Analytics Dashboard</li>
+                </ul>
+
+                <div class="addon-section">
+                    <h4>📱 Optional Communication Add-Ons</h4>
+                    <div class="addon-item">
+                        <span>SMS Notifications (500 messages/month)</span>
+                        <strong>+$29/month</strong>
+                    </div>
+                    <div class="addon-item">
+                        <span>Email Campaigns (Unlimited emails)</span>
+                        <strong>+$19/month</strong>
+                    </div>
+                    <div class="addon-item">
+                        <span>SMS + Email Bundle</span>
+                        <strong>+$39/month</strong>
+                    </div>
+                </div>
+
+                <a href="https://demo.chi-pins.com?industry=religious" class="cta-button" style="margin-right: 15px; margin-top: 30px;">🎮 Try Demo</a>
+                <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Religious%20Organization&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20our%20congregation." class="cta-button" style="background: #7c3aed; margin-top: 30px;">📅 Request Personalized Demo</a>
+                <p style="margin-top: 20px; font-size: 14px; color: #999;">30-day money-back guarantee • Setup in under 1 hour • Special non-profit pricing available</p>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #7c3aed; color: white; padding: 40px 20px; text-align: center;">
+        <p>&copy; 2025 EngageOS by Agentiosk. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="../index.html" style="color: white; margin: 0 15px;">Home</a>
+            <a href="mailto:sales@agentiosk.com" style="color: white; margin: 0 15px;">Contact Sales</a>
+            <a href="../privacy.html" style="color: white; margin: 0 15px;">Privacy Policy</a>
+        </p>
+    </footer>
+</body>
+</html>
