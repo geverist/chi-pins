@@ -33,7 +33,12 @@
       "WebFetch(domain:www.chipublib.org)",
       "WebFetch(domain:commons.wikimedia.org)",
       "Bash(npx supabase db push:*)",
-      "Bash(npx supabase link:*)"
+      "Bash(npx supabase link:*)",
+      "WebFetch(domain:www.chicagomikes.us)",
+      "Bash(python3:*)",
+      "Bash(npm init:*)",
+      "Bash(echo:*)",
+      "Read(//Users/gileseverist/Dev/kiosk/**)"
     ],
     "deny": [],
     "ask": []

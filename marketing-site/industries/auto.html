@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngageOS for Auto Dealerships | Transform Your Service Department</title>
+    <meta name="description" content="Turn service wait times into sales opportunities. Interactive kiosk system for auto dealerships with vehicle configurator, CDK integration, and AI voice assistant.">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+        }
+
+        .hero-industry {
+            text-align: center;
+            padding: 100px 20px;
+            color: white;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .hero-industry h1 {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            margin: 0 0 40px 0;
+            opacity: 0.9;
+        }
+
+        .demo-cta {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 18px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .demo-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+
+        .content-section {
+            background: white;
+            padding: 80px 20px;
+        }
+
+        .content-section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            color: #1e3c72;
+        }
+
+        .challenges-grid, .features-grid, .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .challenge-card, .feature-card, .benefit-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .content-section:nth-child(even) .challenge-card,
+        .content-section:nth-child(even) .feature-card,
+        .content-section:nth-child(even) .benefit-card {
+            background: white;
+        }
+
+        .challenge-card:hover, .feature-card:hover, .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #1e3c72;
+        }
+
+        .card-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .roi-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .roi-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .roi-stat {
+            padding: 20px;
+        }
+
+        .roi-number {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .roi-label {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .screenshot-card {
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 64px;
+        }
+
+        .screenshot-label {
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pricing-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 50px auto 0;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-box h3 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #1e3c72;
+        }
+
+        .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+
+        .price-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .features-list {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 16px 50px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-industry">
+        <div style="font-size: 72px; margin-bottom: 20px;">🚗</div>
+        <h1>EngageOS for Auto Dealerships</h1>
+        <p class="subtitle">Turn service wait times into sales opportunities with AI-powered engagement</p>
+        <a href="https://demo.chi-pins.com?industry=auto" class="demo-cta" style="margin-right: 20px;">🎮 Try Live Demo</a>
+        <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Auto%20Dealership&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20dealership." class="demo-cta" style="background: #1e3c72; color: white;">📅 Request Personalized Demo</a>
+    </section>
+
+    <!-- Challenges Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The Service Department Challenge</h2>
+            <div class="challenges-grid">
+                <div class="challenge-card">
+                    <div class="card-icon">⏰</div>
+                    <h3 class="card-title">Long Service Waits</h3>
+                    <p class="card-description">Customers sitting in waiting rooms with nothing to do but watch the clock. 45-90 minute waits lead to frustration and negative reviews.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">📉</div>
+                    <h3 class="card-title">Missed Upsell Opportunities</h3>
+                    <p class="card-description">Service advisors are busy. Customers don't browse the showroom. New vehicle sales opportunities walk out the door every day.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">❓</div>
+                    <h3 class="card-title">"When Will My Car Be Ready?"</h3>
+                    <p class="card-description">Service desk bombarded with status calls. Advisors interrupted. No real-time visibility for customers waiting at home or work.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">No Customer Data</h3>
+                    <p class="card-description">You know their vehicle VIN, but not their interests, preferences, or buying signals. Generic marketing yields generic results.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The EngageOS Solution</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">Service Check-In Kiosk</h3>
+                    <p class="card-description">Self-service check-in with AI voice: "I'm here for my 10am oil change." Reduces desk congestion, captures customer data, instant SMS confirmation.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🚙</div>
+                    <h3 class="card-title">Vehicle Configurator</h3>
+                    <p class="card-description">Interactive "build your dream car" tool. While waiting for service, customers configure their next vehicle with real inventory, financing, and trade-in estimates.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🔌</div>
+                    <h3 class="card-title">CDK/DMS Integration</h3>
+                    <p class="card-description">Real-time service status from your DMS. Kiosk displays "Your Honda Accord is 60% complete - Est. 25 mins." SMS alerts when ready for pickup.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🎤</div>
+                    <h3 class="card-title">AI Voice Assistant</h3>
+                    <p class="card-description">"Hey Kiosk, when will my car be ready?" Natural language queries pull from your DMS. Reduces service desk calls by 40%.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🎮</div>
+                    <h3 class="card-title">Auto Trivia & Games</h3>
+                    <p class="card-description">Brand-specific trivia (Ford history, Tesla tech, BMW performance). Leaderboards, prizes, and branded engagement make wait times fly by.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">📸</div>
+                    <h3 class="card-title">Snapchat-Style Photo Booth</h3>
+                    <p class="card-description">Take photos with new vehicles, add branded stickers, share to social media. Free UGC marketing with dealership watermark and location tags.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">💬</div>
+                    <h3 class="card-title">AI Service Upsell</h3>
+                    <p class="card-description">"Your Camry is due for brake pads in 2,000 miles. Would you like to add that service today?" Smart recommendations based on VIN and service history.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">⭐</div>
+                    <h3 class="card-title">Review Funnel</h3>
+                    <p class="card-description">After service completion, kiosk prompts: "How was your experience?" Happy customers → Google review. Unhappy → private feedback to manager.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🗺️</div>
+                    <h3 class="card-title">Local Area Guide</h3>
+                    <p class="card-description">Map of nearby restaurants, shopping, coffee shops. Customers can leave the dealership during service and get SMS when ready.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">Business Impact</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="card-icon">💰</div>
+                    <h3 class="card-title">Increase Vehicle Sales</h3>
+                    <p class="card-description">Service customers are warm leads. Interactive configurator generates 12% more test drive requests from existing customers.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">🔧</div>
+                    <h3 class="card-title">Boost Service Revenue</h3>
+                    <p class="card-description">AI-driven upsells increase service ticket average by $87. Customers approve add-on services without sales pressure.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">⏱️</div>
+                    <h3 class="card-title">Reduce Wait Time Perception</h3>
+                    <p class="card-description">Engaged customers feel wait times are 35% shorter. Games, configurators, and real-time status displays reduce complaints.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">📱</div>
+                    <h3 class="card-title">Decrease Service Calls</h3>
+                    <p class="card-description">Real-time status displays and SMS alerts cut "when will my car be ready" calls by 40%. Service advisors stay focused on quality work.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">📈</div>
+                    <h3 class="card-title">Collect Customer Intelligence</h3>
+                    <p class="card-description">Track which models customers configure, features they prioritize, trade-in intent. Sales team gets hot leads with detailed preference data.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">⭐</div>
+                    <h3 class="card-title">Improve Online Reputation</h3>
+                    <p class="card-description">Automated review funnel increases Google reviews by 200%. Negative feedback captured privately before becoming public 1-star reviews.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROI Section -->
+    <section class="roi-section">
+        <div class="container">
+            <h2 style="font-size: 42px; margin-bottom: 20px;">Proven ROI for Auto Dealerships</h2>
+            <p style="font-size: 20px; opacity: 0.9;">Average dealership with 150 service appointments/month</p>
+            <div class="roi-stats">
+                <div class="roi-stat">
+                    <div class="roi-number">+$8,400</div>
+                    <div class="roi-label">Additional Monthly Revenue</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">12%</div>
+                    <div class="roi-label">Service Upsell Conversion</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">35%</div>
+                    <div class="roi-label">Shorter Perceived Wait</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">40%</div>
+                    <div class="roi-label">Fewer Status Calls</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">See It In Action</h2>
+            <div class="screenshots-grid">
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🚙</div>
+                    <div class="screenshot-label">Vehicle Configurator</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📊</div>
+                    <div class="screenshot-label">Service Status Board</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🎯</div>
+                    <div class="screenshot-label">Check-In Kiosk</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🎮</div>
+                    <div class="screenshot-label">Auto Trivia Game</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🗺️</div>
+                    <div class="screenshot-label">Local Area Guide</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">⭐</div>
+                    <div class="screenshot-label">Review Request Flow</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="content-section">
+        <div class="container" style="text-align: center;">
+            <h2 class="section-title">Ready to Transform Your Service Department?</h2>
+            <p style="font-size: 20px; margin-bottom: 40px; color: #666;">Join dealerships nationwide turning service waits into sales opportunities</p>
+
+            <div class="pricing-box">
+                <h3>Auto Dealership Bundle</h3>
+                <div class="price">$449<span style="font-size: 24px; color: #666;">/month</span></div>
+                <div class="price-details">All features included • No setup fees • Cancel anytime</div>
+
+                <ul class="features-list" style="list-style: none; padding: 0;">
+                    <li>✅ Service Check-In Kiosk</li>
+                    <li>✅ Vehicle Configurator</li>
+                    <li>✅ CDK/DMS Integration</li>
+                    <li>✅ AI Voice Assistant</li>
+                    <li>✅ Real-Time Service Status</li>
+                    <li>✅ Auto Trivia & Games</li>
+                    <li>✅ Photo Booth with Branding</li>
+                    <li>✅ AI Service Upsell Engine</li>
+                    <li>✅ Review Funnel</li>
+                    <li>✅ Local Area Guide</li>
+                    <li>✅ Customer Analytics Dashboard</li>
+                </ul>
+
+                <a href="https://demo.chi-pins.com?industry=auto" class="cta-button" style="margin-right: 15px;">🎮 Try Demo</a>
+                <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Auto%20Dealership&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20dealership." class="cta-button" style="background: #1e3c72;">📅 Request Personalized Demo</a>
+                <p style="margin-top: 20px; font-size: 14px; color: #999;">30-day money-back guarantee • Setup in under 1 hour</p>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #1e3c72; color: white; padding: 40px 20px; text-align: center;">
+        <p>&copy; 2025 EngageOS by Agentiosk. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="../index.html" style="color: white; margin: 0 15px;">Home</a>
+            <a href="mailto:sales@agentiosk.com" style="color: white; margin: 0 15px;">Contact Sales</a>
+            <a href="../privacy.html" style="color: white; margin: 0 15px;">Privacy Policy</a>
+        </p>
+    </footer>
+</body>
+</html>

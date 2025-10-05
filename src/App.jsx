@@ -58,6 +58,8 @@ import CommentsModal from './components/CommentsModal';
 import LocationSwitcher from './components/LocationSwitcher';
 import HolidayTheme from './components/HolidayTheme';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import AchievementNotification from './components/AchievementNotification';
+import DemoModeSwitcher from './components/DemoModeSwitcher';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -1178,6 +1180,8 @@ export default function App() {
       <LocationSwitcher />
       <HolidayTheme />
       <PWAInstallPrompt />
+      <AchievementNotification />
+      <DemoModeSwitcher />
     </div>
   );
 }

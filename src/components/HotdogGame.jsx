@@ -2,6 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 import GameLeaderboard from './GameLeaderboard';
 import { useAdminSettings } from '../state/useAdminSettings';
+import soundEffects from '../utils/soundEffects';
+import { createSuccessEffect, createErrorEffect } from '../utils/particleEffects';
+import achievementManager from '../utils/achievements';
 
 // Correct order for Chicago-style hot dog (bottom to top)
 const CORRECT_ORDER = [
@@ -50,7 +53,14 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leftIngredients, setLeftIngredients] = useState([]);
   const [rightIngredients, setRightIngredients] = useState([]);
+  const [mistakes, setMistakes] = useState(0);
+  const [usedKetchup, setUsedKetchup] = useState(false);
   const repositionTimerRef = useRef(null);
+
+  // Initialize sound effects on mount
+  useEffect(() => {
+    soundEffects.init();
+  }, []);
 
   const randomizeIngredientPositions = () => {
     const shuffled = [...INGREDIENTS].sort(() => Math.random() - 0.5);
@@ -87,7 +97,13 @@ export default function HotdogGame({ onClose, onGameComplete }) {
     setEndTime(null);
     setScore(0);
     setAccuracy(0);
+    setMistakes(0);
+    setUsedKetchup(false);
     randomizeIngredientPositions();
+
+    // Play game start sound
+    soundEffects.playGameStart();
+    soundEffects.vibrateShort();
 
     // Reposition ingredients based on admin setting (default 5 seconds)
     const repositionSpeed = (adminSettings.hotdogRepositionSpeed || 5) * 1000;
@@ -117,24 +133,68 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   const handleDrop = (e) => {
     e.preventDefault();
     if (draggedItem && !assembledItems.find(i => i.id === draggedItem.id)) {
-      // Add to END of array to match the CORRECT_ORDER
-      setAssembledItems([...assembledItems, draggedItem]);
-      setAvailableItems(availableItems.filter(i => i.id !== draggedItem.id));
+      addIngredient(draggedItem, e.clientX, e.clientY);
     }
     setDraggedItem(null);
   };
 
-  const handleTouchItem = (item) => {
+  const handleTouchItem = (item, event) => {
     if (!assembledItems.find(i => i.id === item.id)) {
-      // Add to END of array to match the CORRECT_ORDER
-      setAssembledItems([...assembledItems, item]);
-      setAvailableItems(availableItems.filter(i => i.id !== item.id));
+      const rect = event.currentTarget.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      addIngredient(item, x, y);
     }
+  };
+
+  const addIngredient = (item, x, y) => {
+    // Track if ketchup was used
+    if (item.id === 'ketchup') {
+      setUsedKetchup(true);
+    }
+
+    // Check if correct next ingredient
+    const correctItemsAssembled = assembledItems.filter(i => i.isCorrect);
+    const expectedNext = CORRECT_ORDER[correctItemsAssembled.length];
+    const isCorrect = item.isCorrect && item.id === expectedNext;
+
+    if (!item.isCorrect) {
+      // Wrong ingredient (ketchup, etc.)
+      soundEffects.playError();
+      soundEffects.vibrateError();
+      createErrorEffect(x, y);
+      setMistakes(prev => prev + 1);
+    } else if (isCorrect) {
+      // Correct ingredient in correct order
+      soundEffects.playSuccess();
+      soundEffects.vibrateShort();
+      createSuccessEffect(x, y);
+    } else {
+      // Correct ingredient but wrong order
+      soundEffects.playClick();
+      soundEffects.vibrateShort();
+      setMistakes(prev => prev + 1);
+    }
+
+    // Add to END of array to match the CORRECT_ORDER
+    setAssembledItems([...assembledItems, item]);
+    setAvailableItems(availableItems.filter(i => i.id !== item.id));
   };
 
   const removeItem = (item) => {
     setAssembledItems(assembledItems.filter(i => i.id !== item.id));
     setAvailableItems([...availableItems, item]);
+    soundEffects.playClick();
+  };
+
+  const undoLastItem = () => {
+    if (assembledItems.length > 0) {
+      const lastItem = assembledItems[assembledItems.length - 1];
+      setAssembledItems(assembledItems.slice(0, -1));
+      setAvailableItems([...availableItems, lastItem]);
+      soundEffects.playClick();
+      soundEffects.vibrateShort();
+    }
   };
 
   useEffect(() => {
@@ -195,6 +255,17 @@ export default function HotdogGame({ onClose, onGameComplete }) {
 
     setScore(totalScore);
     setGameState('finished');
+
+    // Play game over sound
+    soundEffects.playGameOver();
+    soundEffects.vibrateLong();
+
+    // Check achievements
+    achievementManager.checkHotdogAchievements({
+      mistakes,
+      completionTime: timeTaken * 1000,
+      usedKetchup,
+    });
   };
 
   const renderInstructions = () => (
@@ -328,7 +399,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
               key={item.id}
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
-              onClick={() => handleTouchItem(item)}
+              onClick={(e) => handleTouchItem(item, e)}
               style={{
                 position: 'absolute',
                 top: `${item.top}%`,
@@ -357,7 +428,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           alignItems: 'center',
         }}
       >
-        {/* Timer, Progress, and Quit Button */}
+        {/* Timer, Progress, Undo, and Quit Button */}
         <div
           style={{
             position: 'absolute',
@@ -365,7 +436,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
-            gap: 32,
+            gap: 16,
             alignItems: 'center',
           }}
         >
@@ -375,6 +446,23 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           <div style={{ color: '#10b981', fontSize: 18, fontWeight: 600 }}>
             ⏱ {startTime ? Math.floor((Date.now() - startTime) / 1000) : 0}s
           </div>
+          <button
+            onClick={undoLastItem}
+            disabled={assembledItems.length === 0}
+            style={{
+              padding: '6px 16px',
+              borderRadius: 8,
+              border: '1px solid rgba(245,158,11,0.4)',
+              background: assembledItems.length > 0 ? 'rgba(245,158,11,0.1)' : 'rgba(107,114,128,0.1)',
+              color: assembledItems.length > 0 ? '#fbbf24' : '#6b7280',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: assembledItems.length > 0 ? 'pointer' : 'not-allowed',
+              opacity: assembledItems.length > 0 ? 1 : 0.5,
+            }}
+          >
+            ↶ Undo
+          </button>
           <button
             onClick={() => {
               if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
@@ -481,7 +569,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
               key={item.id}
               draggable
               onDragStart={(e) => handleDragStart(e, item)}
-              onClick={() => handleTouchItem(item)}
+              onClick={(e) => handleTouchItem(item, e)}
               style={{
                 position: 'absolute',
                 top: `${item.top}%`,

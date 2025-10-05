@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngageOS for Healthcare | Transform Your Patient Waiting Experience</title>
+    <meta name="description" content="Reduce perceived wait times and improve patient satisfaction with HIPAA-compliant interactive kiosk system for medical offices, clinics, and hospitals.">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            color: #333;
+        }
+
+        .hero-industry {
+            text-align: center;
+            padding: 100px 20px;
+            color: white;
+            background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+        }
+
+        .hero-industry h1 {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            margin: 0 0 40px 0;
+            opacity: 0.9;
+        }
+
+        .demo-cta {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 18px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .demo-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+
+        .content-section {
+            background: white;
+            padding: 80px 20px;
+        }
+
+        .content-section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            color: #0f766e;
+        }
+
+        .challenges-grid, .features-grid, .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .challenge-card, .feature-card, .benefit-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .content-section:nth-child(even) .challenge-card,
+        .content-section:nth-child(even) .feature-card,
+        .content-section:nth-child(even) .benefit-card {
+            background: white;
+        }
+
+        .challenge-card:hover, .feature-card:hover, .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #0f766e;
+        }
+
+        .card-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .roi-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .roi-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .roi-stat {
+            padding: 20px;
+        }
+
+        .roi-number {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .roi-label {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .screenshot-card {
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 64px;
+        }
+
+        .screenshot-label {
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pricing-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 50px auto 0;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-box h3 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #0f766e;
+        }
+
+        .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+
+        .price-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .features-list {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 16px 50px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+
+        .hipaa-badge {
+            background: #0f766e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-industry">
+        <div style="font-size: 72px; margin-bottom: 20px;">🏥</div>
+        <h1>EngageOS for Healthcare</h1>
+        <p class="subtitle">Transform waiting room anxiety into patient satisfaction</p>
+        <div class="hipaa-badge">🔒 HIPAA Compliant</div>
+        <br><br>
+        <a href="https://demo.chi-pins.com?industry=healthcare" class="demo-cta" style="margin-right: 20px;">🎮 Try Live Demo</a>
+        <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Healthcare%20Practice&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20practice." class="demo-cta" style="background: #0f766e; color: white;">📅 Request Personalized Demo</a>
+    </section>
+
+    <!-- Challenges Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The Patient Experience Challenge</h2>
+            <div class="challenges-grid">
+                <div class="challenge-card">
+                    <div class="card-icon">😰</div>
+                    <h3 class="card-title">Waiting Room Anxiety</h3>
+                    <p class="card-description">Patients stare at walls or outdated magazines. Stress levels increase. 20-45 minute waits feel like hours, leading to negative HCAHPS scores.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">📋</div>
+                    <h3 class="card-title">Endless Paperwork</h3>
+                    <p class="card-description">Clipboards, pens, illegible handwriting. Front desk staff re-entering data. Forms get lost. Patients forget to update insurance information.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">❓</div>
+                    <h3 class="card-title">"How Much Longer?"</h3>
+                    <p class="card-description">Front desk bombarded with status questions. No visibility into provider schedule. Patients don't know if they have time to run errands.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">📱</div>
+                    <h3 class="card-title">Missed Appointment Reminders</h3>
+                    <p class="card-description">15-20% no-show rate costs practices thousands monthly. Phone calls ignored. Generic text messages forgotten. No patient engagement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The EngageOS Solution</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card-icon">📝</div>
+                    <h3 class="card-title">Digital Check-In</h3>
+                    <p class="card-description">Kiosk check-in with voice: "I'm here for my 2pm with Dr. Smith." Instant insurance verification, co-pay collection, and e-signature consent forms.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🔌</div>
+                    <h3 class="card-title">EMR/EHR Integration</h3>
+                    <p class="card-description">Seamless integration with Epic, Cerner, Athenahealth, eClinicalWorks. Patient data flows directly into medical records. Zero duplicate entry.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">Real-Time Wait Display</h3>
+                    <p class="card-description">"Dr. Chen is currently with a patient. Estimated wait: 18 minutes." Transparency reduces perceived wait by 30% and desk interruptions by 50%.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🎤</div>
+                    <h3 class="card-title">AI Voice Assistant</h3>
+                    <p class="card-description">"Hey Kiosk, where is the lab?" Natural language directions, FAQs, appointment scheduling. Reduces front desk burden, ADA-compliant accessibility.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🧘</div>
+                    <h3 class="card-title">Wellness Content</h3>
+                    <p class="card-description">Guided meditation, breathing exercises, health trivia, condition-specific education. Turn anxiety into calm. Patients arrive at exam room relaxed.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">💊</div>
+                    <h3 class="card-title">Medication Reminders</h3>
+                    <p class="card-description">Pre-visit medication review: "Are you still taking Lisinopril 10mg daily?" Updates sent to EMR. Improves medication reconciliation accuracy by 40%.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">📅</div>
+                    <h3 class="card-title">Appointment Scheduling</h3>
+                    <p class="card-description">Self-service booking for follow-ups, preventive care, specialist referrals. Real-time provider availability. Reduces scheduling calls by 60%.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">⭐</div>
+                    <h3 class="card-title">Patient Satisfaction Surveys</h3>
+                    <p class="card-description">Post-visit kiosk survey: "How was your experience?" Instant alerts for negative feedback. Happy patients directed to Google/Healthgrades reviews.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🔔</div>
+                    <h3 class="card-title">SMS Appointment Reminders</h3>
+                    <p class="card-description">Automated multi-touch reminders: 7 days, 1 day, 2 hours before appointment. Include prep instructions, directions, parking info. Reduce no-shows by 40%.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">Clinical & Business Impact</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="card-icon">📈</div>
+                    <h3 class="card-title">Improve HCAHPS Scores</h3>
+                    <p class="card-description">Reduce perceived wait times by 30%. Increase "Communication About Wait" scores. Patients rate overall experience 25% higher.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">💰</div>
+                    <h3 class="card-title">Reduce No-Show Rate</h3>
+                    <p class="card-description">Multi-channel reminders cut no-shows by 40%. At $200 average visit, that's $24,000+ recovered revenue annually for 30 patient/day practice.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">⏱️</div>
+                    <h3 class="card-title">Save Front Desk Time</h3>
+                    <p class="card-description">Self-service check-in and scheduling save 15 hours/week. Reallocate staff to high-value patient care and insurance verification.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">🔒</div>
+                    <h3 class="card-title">Ensure HIPAA Compliance</h3>
+                    <p class="card-description">Encrypted data transmission. No PHI stored locally. BAA included. Regular security audits. AES-256 encryption at rest and in transit.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">Capture Patient Data</h3>
+                    <p class="card-description">Track health interests, educational needs, satisfaction drivers. Personalize care plans and marketing. Improve population health management.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">♿</div>
+                    <h3 class="card-title">ADA Accessibility</h3>
+                    <p class="card-description">Voice navigation, large fonts, high contrast, screen reader support. Wheelchair-accessible kiosk height. Multi-language support (50+ languages).</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROI Section -->
+    <section class="roi-section">
+        <div class="container">
+            <h2 style="font-size: 42px; margin-bottom: 20px;">Proven ROI for Healthcare Practices</h2>
+            <p style="font-size: 20px; opacity: 0.9;">Average 3-provider practice with 75 patients/day</p>
+            <div class="roi-stats">
+                <div class="roi-stat">
+                    <div class="roi-number">+$24K</div>
+                    <div class="roi-label">Annual Revenue from Reduced No-Shows</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">40%</div>
+                    <div class="roi-label">Fewer No-Show Appointments</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">30%</div>
+                    <div class="roi-label">Shorter Perceived Wait</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">15 hrs</div>
+                    <div class="roi-label">Front Desk Time Saved/Week</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">See It In Action</h2>
+            <div class="screenshots-grid">
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📝</div>
+                    <div class="screenshot-label">Digital Check-In Flow</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">⏱️</div>
+                    <div class="screenshot-label">Real-Time Wait Display</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🧘</div>
+                    <div class="screenshot-label">Guided Meditation</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📅</div>
+                    <div class="screenshot-label">Self-Service Scheduling</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">📊</div>
+                    <div class="screenshot-label">EMR Integration Dashboard</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">⭐</div>
+                    <div class="screenshot-label">Patient Satisfaction Survey</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="content-section">
+        <div class="container" style="text-align: center;">
+            <h2 class="section-title">Ready to Transform Your Patient Experience?</h2>
+            <p style="font-size: 20px; margin-bottom: 40px; color: #666;">Join healthcare practices nationwide improving satisfaction and reducing no-shows</p>
+
+            <div class="pricing-box">
+                <div class="hipaa-badge">🔒 HIPAA Compliant & BAA Included</div>
+                <h3>Healthcare Bundle</h3>
+                <div class="price">$399<span style="font-size: 24px; color: #666;">/month</span></div>
+                <div class="price-details">All features included • EMR integration • No setup fees</div>
+
+                <ul class="features-list" style="list-style: none; padding: 0;">
+                    <li>✅ Digital Check-In Kiosk</li>
+                    <li>✅ EMR/EHR Integration (Epic, Cerner, Athenahealth, etc.)</li>
+                    <li>✅ Real-Time Wait Display</li>
+                    <li>✅ AI Voice Assistant</li>
+                    <li>✅ Wellness Content & Meditation</li>
+                    <li>✅ Medication Reconciliation</li>
+                    <li>✅ Self-Service Appointment Scheduling</li>
+                    <li>✅ Patient Satisfaction Surveys</li>
+                    <li>✅ SMS Appointment Reminders</li>
+                    <li>✅ HIPAA Compliance & BAA</li>
+                    <li>✅ Multi-Language Support (50+ languages)</li>
+                    <li>✅ ADA Accessibility Features</li>
+                </ul>
+
+                <a href="https://demo.chi-pins.com?industry=healthcare" class="cta-button" style="margin-right: 15px;">🎮 Try Demo</a>
+                <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Healthcare%20Practice&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20practice." class="cta-button" style="background: #0f766e;">📅 Request Personalized Demo</a>
+                <p style="margin-top: 20px; font-size: 14px; color: #999;">30-day money-back guarantee • HIPAA-compliant setup in under 2 hours</p>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #0f766e; color: white; padding: 40px 20px; text-align: center;">
+        <p>&copy; 2025 EngageOS by Agentiosk. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="../index.html" style="color: white; margin: 0 15px;">Home</a>
+            <a href="mailto:sales@agentiosk.com" style="color: white; margin: 0 15px;">Contact Sales</a>
+            <a href="../privacy.html" style="color: white; margin: 0 15px;">Privacy Policy</a>
+        </p>
+    </footer>
+</body>
+</html>
