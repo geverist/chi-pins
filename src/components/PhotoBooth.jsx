@@ -1,5 +1,6 @@
 // src/components/PhotoBooth.jsx
 import { useState, useRef, useEffect } from 'react';
+import { useBackgroundImages } from '../hooks/useBackgroundImages';
 
 export default function PhotoBooth({ onClose }) {
   const videoRef = useRef(null);
@@ -9,9 +10,13 @@ export default function PhotoBooth({ onClose }) {
   const [stream, setStream] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState(null);
+  const [selectedBackground, setSelectedBackground] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [error, setError] = useState(null);
   const [filterPreviews, setFilterPreviews] = useState({});
+
+  // Load backgrounds from admin panel
+  const { backgrounds, loading: bgLoading } = useBackgroundImages();
 
   const filters = [
     { id: 'hotdog', name: 'Hot Dog Hat', emoji: '🌭', overlay: 'hotdog' },
@@ -27,7 +32,7 @@ export default function PhotoBooth({ onClose }) {
     return () => stopCamera();
   }, []);
 
-  // Generate live preview on main canvas with selected filter
+  // Generate live preview on main canvas with selected filter and background
   useEffect(() => {
     if (!videoRef.current || !livePreviewCanvasRef.current || !stream || photo) return;
 
@@ -40,8 +45,25 @@ export default function PhotoBooth({ onClose }) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      // Draw video frame
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      // Draw background image if selected
+      if (selectedBackground) {
+        const bgImg = new Image();
+        bgImg.crossOrigin = 'anonymous';
+        bgImg.src = selectedBackground.url;
+        if (bgImg.complete) {
+          ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      // Draw video frame (if no background, this fills the canvas)
+      if (!selectedBackground) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      } else {
+        // With background, draw video in center or apply chroma key
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+      }
 
       // Apply selected filter overlay if any
       if (selectedFilter) {
@@ -55,7 +77,7 @@ export default function PhotoBooth({ onClose }) {
     return () => {
       clearInterval(interval);
     };
-  }, [stream, selectedFilter, photo]);
+  }, [stream, selectedFilter, selectedBackground, photo]);
 
   // Generate filter previews from video feed
   useEffect(() => {
@@ -132,7 +154,7 @@ export default function PhotoBooth({ onClose }) {
     }
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     // Start countdown
     setCountdown(3);
     const interval = setInterval(() => {
@@ -147,7 +169,7 @@ export default function PhotoBooth({ onClose }) {
     }, 1000);
   };
 
-  const takePhoto = () => {
+  const takePhoto = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
@@ -157,8 +179,32 @@ export default function PhotoBooth({ onClose }) {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    // Draw video frame
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Draw background image if selected
+    if (selectedBackground) {
+      const bgImg = new Image();
+      bgImg.crossOrigin = 'anonymous';
+      bgImg.src = selectedBackground.url;
+
+      // Wait for image to load
+      await new Promise((resolve) => {
+        if (bgImg.complete) {
+          resolve();
+        } else {
+          bgImg.onload = resolve;
+          bgImg.onerror = resolve;
+        }
+      });
+
+      context.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
+      // Draw video with transparency
+      context.globalAlpha = 0.9;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      context.globalAlpha = 1.0;
+    } else {
+      // No background - just draw video
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
 
     // Apply filter overlay
     if (selectedFilter) {
@@ -517,6 +563,81 @@ export default function PhotoBooth({ onClose }) {
                 </button>
               ))}
             </div>
+
+            {/* Background Selection */}
+            {backgrounds.length > 0 && (
+              <>
+                <h3 style={{ color: '#f4f6f8', marginTop: 20, marginBottom: 12, fontSize: 18 }}>
+                  Choose a Background:
+                </h3>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: 12,
+                  }}
+                >
+                  {/* None option */}
+                  <button
+                    onClick={() => setSelectedBackground(null)}
+                    style={{
+                      padding: 12,
+                      background: !selectedBackground
+                        ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                        : 'rgba(255,255,255,0.1)',
+                      border: !selectedBackground
+                        ? '3px solid #60a5fa'
+                        : '2px solid rgba(255,255,255,0.2)',
+                      borderRadius: 12,
+                      color: '#fff',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 8,
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <div style={{ fontSize: 32 }}>🚫</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>None</div>
+                  </button>
+
+                  {backgrounds.map((bg) => (
+                    <button
+                      key={bg.id}
+                      onClick={() => setSelectedBackground(bg)}
+                      style={{
+                        padding: 12,
+                        background: selectedBackground?.id === bg.id
+                          ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                          : 'rgba(255,255,255,0.1)',
+                        border: selectedBackground?.id === bg.id
+                          ? '3px solid #60a5fa'
+                          : '2px solid rgba(255,255,255,0.2)',
+                        borderRadius: 12,
+                        color: '#fff',
+                        cursor: 'pointer',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <img
+                        src={bg.thumbnail_url || bg.url}
+                        alt={bg.name}
+                        style={{
+                          width: '100%',
+                          aspectRatio: '16/9',
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}
+                      />
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{bg.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
