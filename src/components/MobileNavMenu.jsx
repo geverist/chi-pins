@@ -20,8 +20,15 @@ export default function MobileNavMenu({
     (navSettings?.thenandnow_enabled ? 1 : 0) +
     (navSettings?.comments_enabled ? 1 : 0);
 
-  // Don't show if no features are enabled
-  if (enabledCount === 0) return null;
+  console.log('[MobileNavMenu] navSettings:', navSettings);
+  console.log('[MobileNavMenu] enabledCount:', enabledCount);
+
+  // Don't show if no features are enabled AND settings have loaded
+  // If settings haven't loaded yet (navSettings is undefined), show the menu
+  if (navSettings && enabledCount === 0) {
+    console.log('[MobileNavMenu] Hiding menu - no features enabled');
+    return null;
+  }
 
   const handleItemClick = (action) => {
     action();

@@ -1144,17 +1144,21 @@ export default function App() {
         <WeatherWidget autoDismissOnEdit={draft !== null || exploring} />
       )}
 
-      {isMobile && adminSettings.showNavMenuOnMobile && (
-        <MobileNavMenu
-          navSettings={navSettings}
-          setGamesOpen={setGamesOpen}
-          setJukeboxOpen={setJukeboxOpen}
-          setOrderMenuOpen={setOrderMenuOpen}
-          setPhotoBoothOpen={setPhotoBoothOpen}
-          setThenAndNowOpen={setThenAndNowOpen}
-          setCommentsOpen={setCommentsOpen}
-        />
-      )}
+      {(() => {
+        const shouldShow = isMobile && adminSettings.showNavMenuOnMobile;
+        console.log('[App] MobileNavMenu render check:', { isMobile, showNavMenuOnMobile: adminSettings.showNavMenuOnMobile, shouldShow });
+        return shouldShow ? (
+          <MobileNavMenu
+            navSettings={navSettings}
+            setGamesOpen={setGamesOpen}
+            setJukeboxOpen={setJukeboxOpen}
+            setOrderMenuOpen={setOrderMenuOpen}
+            setPhotoBoothOpen={setPhotoBoothOpen}
+            setThenAndNowOpen={setThenAndNowOpen}
+            setCommentsOpen={setCommentsOpen}
+          />
+        ) : null;
+      })()}
 
       <OfflineIndicator />
       <LocationSwitcher />
