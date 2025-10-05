@@ -560,22 +560,47 @@ export default function AdminPanel({ open, onClose }) {
               {settings.notificationsEnabled && (
                 <Card title="Notification Settings">
                   <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
-                    Send notifications when new pins are placed
+                    Get notified about activity on your kiosk
                   </p>
 
-                  <FieldRow label="Notification Type">
+                  <FieldRow label="Notify Me About">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={settings.notifyOnPinPlacement !== false}
+                          onChange={(e) => setSettings(s => ({ ...s, notifyOnPinPlacement: e.target.checked }))}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>New pin placements</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={settings.notifyOnFeedback !== false}
+                          onChange={(e) => setSettings(s => ({ ...s, notifyOnFeedback: e.target.checked }))}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>Customer feedback</span>
+                      </label>
+                    </div>
+                  </FieldRow>
+
+                  <FieldRow label="Notification Method">
                     <select
-                      value={settings.notificationType || 'webhook'}
+                      value={settings.notificationType || 'sms'}
                       onChange={(e) => setSettings(s => ({ ...s, notificationType: e.target.value }))}
                       style={s.input}
                     >
-                      <option value="webhook">Webhook Only</option>
                       <option value="sms">SMS Only</option>
-                      <option value="both">Both Webhook & SMS</option>
+                      <option value="email">Email Only</option>
+                      <option value="both">Both SMS & Email</option>
+                      <option value="webhook">Webhook Only</option>
+                      <option value="all">All Methods</option>
                     </select>
                   </FieldRow>
 
-                  {(settings.notificationType === 'webhook' || settings.notificationType === 'both') && (
+                  {(settings.notificationType === 'webhook' || settings.notificationType === 'all') && (
                     <>
                       <FieldRow label="Webhook URL">
                         <input
@@ -587,12 +612,12 @@ export default function AdminPanel({ open, onClose }) {
                         />
                       </FieldRow>
                       <p style={{ ...s.muted, margin: '4px 0 16px', fontSize: 11 }}>
-                        Sends JSON POST with pin details. Works with Zapier, Make.com, n8n, etc.
+                        Sends JSON POST with event details. Works with Zapier, Make.com, n8n, etc.
                       </p>
                     </>
                   )}
 
-                  {(settings.notificationType === 'sms' || settings.notificationType === 'both') && (
+                  {(settings.notificationType === 'sms' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
                     <>
                       <div style={{
                         padding: '12px',
@@ -603,11 +628,11 @@ export default function AdminPanel({ open, onClose }) {
                         fontSize: 12,
                         color: '#93c5fd'
                       }}>
-                        ℹ️ Twilio credentials are now managed securely via environment variables on the server.
-                        <br/>Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in your deployment settings.
+                        ℹ️ Twilio credentials are managed securely via environment variables.
+                        <br/>Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in Vercel.
                       </div>
 
-                      <FieldRow label="Recipient Phone Numbers">
+                      <FieldRow label="SMS Recipients">
                         <input
                           type="text"
                           value={settings.notificationRecipients || ''}
@@ -617,8 +642,39 @@ export default function AdminPanel({ open, onClose }) {
                         />
                       </FieldRow>
 
+                      <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+                        Comma-separated phone numbers (include country code, e.g. +1)
+                      </p>
+                    </>
+                  )}
+
+                  {(settings.notificationType === 'email' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
+                    <>
+                      <div style={{
+                        padding: '12px',
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: 8,
+                        marginBottom: 12,
+                        fontSize: 12,
+                        color: '#c4b5fd'
+                      }}>
+                        ℹ️ Email credentials are managed securely via environment variables.
+                        <br/>Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in Vercel.
+                      </div>
+
+                      <FieldRow label="Email Recipients">
+                        <input
+                          type="text"
+                          value={settings.emailRecipients || ''}
+                          onChange={(e) => setSettings(s => ({ ...s, emailRecipients: e.target.value }))}
+                          placeholder="owner@business.com, manager@business.com"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
                       <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
-                        ⚠️ Warning: Storing Twilio credentials here is not secure for production. Use environment variables or a backend proxy.
+                        Comma-separated email addresses
                       </p>
                     </>
                   )}
@@ -641,95 +697,6 @@ export default function AdminPanel({ open, onClose }) {
                   </p>
                 </Card>
               )}
-
-              <Card title="💬 Feedback Notification Settings">
-                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
-                  Get notified when customers submit feedback
-                </p>
-
-                <FieldRow label="Enable Feedback Notifications">
-                  <Toggle
-                    checked={settings.feedbackNotificationsEnabled || false}
-                    onChange={(v) => setSettings(s => ({ ...s, feedbackNotificationsEnabled: v }))}
-                  />
-                </FieldRow>
-
-                {settings.feedbackNotificationsEnabled && (
-                  <>
-                    <FieldRow label="Notification Method">
-                      <select
-                        value={settings.feedbackNotificationType || 'sms'}
-                        onChange={(e) => setSettings(s => ({ ...s, feedbackNotificationType: e.target.value }))}
-                        style={s.input}
-                      >
-                        <option value="sms">SMS Only</option>
-                        <option value="email">Email Only</option>
-                        <option value="both">Both SMS & Email</option>
-                      </select>
-                    </FieldRow>
-
-                    {(settings.feedbackNotificationType === 'sms' || settings.feedbackNotificationType === 'both') && (
-                      <>
-                        <div style={{
-                          padding: '12px',
-                          background: 'rgba(59, 130, 246, 0.1)',
-                          border: '1px solid rgba(59, 130, 246, 0.3)',
-                          borderRadius: 8,
-                          marginBottom: 12,
-                          fontSize: 12,
-                          color: '#93c5fd'
-                        }}>
-                          ℹ️ Twilio credentials are managed securely via environment variables.
-                          <br/>Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in Vercel.
-                        </div>
-
-                        <FieldRow label="SMS Recipients">
-                          <input
-                            type="text"
-                            value={settings.feedbackSmsRecipients || ''}
-                            onChange={(e) => setSettings(s => ({ ...s, feedbackSmsRecipients: e.target.value }))}
-                            placeholder="+1234567890, +0987654321"
-                            style={{ ...s.input, width: '100%' }}
-                          />
-                        </FieldRow>
-                        <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
-                          Comma-separated list of phone numbers (include country code)
-                        </p>
-                      </>
-                    )}
-
-                    {(settings.feedbackNotificationType === 'email' || settings.feedbackNotificationType === 'both') && (
-                      <>
-                        <div style={{
-                          padding: '12px',
-                          background: 'rgba(139, 92, 246, 0.1)',
-                          border: '1px solid rgba(139, 92, 246, 0.3)',
-                          borderRadius: 8,
-                          marginBottom: 12,
-                          fontSize: 12,
-                          color: '#c4b5fd'
-                        }}>
-                          ℹ️ Email credentials are managed securely via environment variables.
-                          <br/>Configure SMTP settings (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM) in Vercel.
-                        </div>
-
-                        <FieldRow label="Email Recipients">
-                          <input
-                            type="text"
-                            value={settings.feedbackEmailRecipients || ''}
-                            onChange={(e) => setSettings(s => ({ ...s, feedbackEmailRecipients: e.target.value }))}
-                            placeholder="owner@business.com, manager@business.com"
-                            style={{ ...s.input, width: '100%' }}
-                          />
-                        </FieldRow>
-                        <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
-                          Comma-separated list of email addresses
-                        </p>
-                      </>
-                    )}
-                  </>
-                )}
-              </Card>
 
               {settings.newsTickerEnabled && (
                 <Card title="News Ticker Settings">
