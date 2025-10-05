@@ -113,7 +113,7 @@ export default function CommentsModal({ onClose }) {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
-        padding: 20,
+        padding: '10px',
         overflowY: 'auto',
       }}
       onClick={onClose}
@@ -122,19 +122,21 @@ export default function CommentsModal({ onClose }) {
         style={{
           background: 'linear-gradient(to bottom, #1f2937, #111827)',
           borderRadius: 16,
-          padding: 24,
+          padding: '20px',
           maxWidth: 600,
           width: '100%',
           boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
           border: '1px solid #374151',
           color: '#f3f4f6',
-          maxHeight: '90vh',
+          maxHeight: '95vh',
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          margin: 'auto 0',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexShrink: 0 }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: 700 }}>
             💬 Leave a Comment
           </h2>
           <button
@@ -149,13 +151,14 @@ export default function CommentsModal({ onClose }) {
               width: 32,
               height: 32,
               lineHeight: '32px',
+              flexShrink: 0,
             }}
           >
             ×
           </button>
         </div>
 
-        <p style={{ margin: '0 0 24px 0', color: '#9ca3af', fontSize: 14 }}>
+        <p style={{ margin: '0 0 20px 0', color: '#9ca3af', fontSize: 'clamp(12px, 3vw, 14px)', lineHeight: 1.4 }}>
           We'd love to hear about your visit! Share your thoughts, suggestions, or any feedback you have.
         </p>
 
