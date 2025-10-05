@@ -31,7 +31,9 @@
       "Bash(curl -s \"https://chi-pins.vercel.app/api/navigation-settings\")",
       "Bash(curl:*)",
       "WebFetch(domain:www.chipublib.org)",
-      "WebFetch(domain:commons.wikimedia.org)"
+      "WebFetch(domain:commons.wikimedia.org)",
+      "Bash(npx supabase db push:*)",
+      "Bash(npx supabase link:*)"
     ],
     "deny": [],
     "ask": []
