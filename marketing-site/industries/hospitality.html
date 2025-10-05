@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngageOS for Hotels & Resorts | Guest Experience Platform</title>
+    <meta name="description" content="Transform your hotel lobby with interactive guest services, local guides, concierge booking, and upsell opportunities. Enhance guest satisfaction.">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+            color: #333;
+        }
+        .hero-industry {
+            text-align: center;
+            padding: 100px 20px;
+            color: white;
+            background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+        }
+        .hero-industry h1 { font-size: 48px; margin: 0 0 20px 0; font-weight: 700; }
+        .subtitle { font-size: 24px; margin: 0 0 40px 0; opacity: 0.9; }
+        .demo-cta {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 18px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+        .demo-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6); }
+        .content-section { background: white; padding: 80px 20px; }
+        .content-section:nth-child(even) { background: #f8f9fa; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section-title { text-align: center; font-size: 42px; margin-bottom: 60px; color: #0891b2; }
+        .features-grid, .benefits-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 40px; }
+        .feature-card, .benefit-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s; }
+        .content-section:nth-child(even) .feature-card, .content-section:nth-child(even) .benefit-card { background: white; }
+        .feature-card:hover, .benefit-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); }
+        .card-icon { font-size: 48px; margin-bottom: 20px; }
+        .card-title { font-size: 24px; font-weight: 600; margin-bottom: 15px; color: #0891b2; }
+        .card-description { font-size: 16px; line-height: 1.6; color: #666; }
+        .pricing-box { background: white; padding: 40px; border-radius: 12px; max-width: 600px; margin: 50px auto 0; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); }
+        .pricing-box h3 { font-size: 32px; margin-bottom: 20px; color: #0891b2; }
+        .price { font-size: 48px; font-weight: 700; color: #ff6b35; margin-bottom: 10px; }
+        .features-list { text-align: left; margin-bottom: 30px; }
+        .features-list li { padding: 10px 0; border-bottom: 1px solid #eee; }
+        .addon-section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .addon-section h4 { color: #0891b2; margin-bottom: 15px; }
+        .addon-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; }
+        .cta-button { display: inline-block; background: #ff6b35; color: white; padding: 16px 50px; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; transition: transform 0.2s; }
+        .cta-button:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <section class="hero-industry">
+        <div style="font-size: 72px; margin-bottom: 20px;">🏨</div>
+        <h1>EngageOS for Hotels & Resorts</h1>
+        <p class="subtitle">Transform your lobby into a digital concierge</p>
+        <a href="https://demo.chi-pins.com?industry=hospitality" class="demo-cta" style="margin-right: 20px;">🎮 Try Live Demo</a>
+        <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Hotel&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20hotel." class="demo-cta" style="background: #0891b2; color: white;">📅 Request Personalized Demo</a>
+    </section>
+
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The EngageOS Solution</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">Digital Check-In/Out</h3>
+                    <p class="card-description">Express check-in kiosk with ID scan, payment processing, room key printing. Check-out with bill review and email receipts. Reduces front desk lines.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-icon">🗺️</div>
+                    <h3 class="card-title">Local Area Guide</h3>
+                    <p class="card-description">Interactive map with restaurants, attractions, shopping, nightlife. Filter by distance, rating, price. Get directions, hours, and make reservations.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-icon">🍽️</div>
+                    <h3 class="card-title">Hotel Amenity Booking</h3>
+                    <p class="card-description">Reserve spa appointments, restaurant tables, golf tee times, pool cabanas. Real-time availability and confirmation. Charge to room instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-icon">🎫</div>
+                    <h3 class="card-title">Concierge Services</h3>
+                    <p class="card-description">Book tours, buy attraction tickets, arrange transportation, request wake-up calls. AI assistant answers FAQs about hotel and area.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-icon">🛎️</div>
+                    <h3 class="card-title">Room Service & Upsells</h3>
+                    <p class="card-description">Order room service, request housekeeping, report maintenance. Upsell room upgrades, late checkout, minibar items. Charge to room automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-icon">📸</div>
+                    <h3 class="card-title">Vacation Photo Booth</h3>
+                    <p class="card-description">Guests take branded photos with hotel/destination stickers. Share on social media with geotags. Free marketing and memorable experiences.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-icon">⭐</div>
+                    <h3 class="card-title">Guest Satisfaction Surveys</h3>
+                    <p class="card-description">Post-stay surveys at checkout. Happy guests → TripAdvisor/Google reviews. Issues → private escalation to management before they become bad reviews.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="card-icon">💳</div>
+                    <h3 class="card-title">Loyalty Program Enrollment</h3>
+                    <p class="card-description">Sign up for hotel rewards program. View points balance, redeem rewards, see member benefits. Increases repeat bookings and brand loyalty.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">Business Impact</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="card-icon">💰</div>
+                    <h3 class="card-title">Increase Ancillary Revenue by 30%</h3>
+                    <p class="card-description">Easy booking for spa, dining, activities drives more on-property spending. Upsell room upgrades and premium services.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="card-icon">⏱️</div>
+                    <h3 class="card-title">Reduce Check-In Time by 60%</h3>
+                    <p class="card-description">Express kiosks eliminate front desk bottlenecks. Guests get to rooms faster, staff handles complex requests only.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="card-icon">📈</div>
+                    <h3 class="card-title">Boost TripAdvisor Reviews by 200%</h3>
+                    <p class="card-description">Automated review requests at checkout. More positive reviews improve rankings and drive bookings.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section">
+        <div class="container" style="text-align: center;">
+            <h2 class="section-title">Ready to Transform Your Hotel?</h2>
+            <div class="pricing-box">
+                <h3>Hotel & Resort Bundle</h3>
+                <div class="price">$499<span style="font-size: 24px; color: #666;">/month</span></div>
+                <p style="font-size: 16px; color: #666; margin-bottom: 30px;">All features included • No setup fees • Cancel anytime</p>
+                <ul class="features-list" style="list-style: none; padding: 0;">
+                    <li>✅ Digital Check-In/Out Kiosk</li>
+                    <li>✅ Local Area Guide & Maps</li>
+                    <li>✅ Hotel Amenity Booking (Spa, Dining, Golf)</li>
+                    <li>✅ Concierge Services & Tours</li>
+                    <li>✅ Room Service Ordering</li>
+                    <li>✅ Vacation Photo Booth</li>
+                    <li>✅ Guest Satisfaction Surveys</li>
+                    <li>✅ Loyalty Program Enrollment</li>
+                    <li>✅ Analytics Dashboard</li>
+                </ul>
+                <div class="addon-section">
+                    <h4>📱 Optional Add-Ons</h4>
+                    <div class="addon-item"><span>SMS Notifications (1,000 messages/month)</span><strong>+$29/month</strong></div>
+                    <div class="addon-item"><span>Email Campaigns (Unlimited emails)</span><strong>+$19/month</strong></div>
+                    <div class="addon-item"><span>🌍 Multi-Language Translation (50+ languages)</span><strong>+$49/month</strong></div>
+                    <div class="addon-item"><span>Communication + Translation Bundle</span><strong style="color: #0891b2;">+$79/month (save $18)</strong></div>
+                </div>
+                <a href="https://demo.chi-pins.com?industry=hospitality" class="cta-button" style="margin-right: 15px; margin-top: 30px;">🎮 Try Demo</a>
+                <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Hotel&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20hotel." class="cta-button" style="background: #0891b2; margin-top: 30px;">📅 Request Demo</a>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #0891b2; color: white; padding: 40px 20px; text-align: center;">
+        <p>&copy; 2025 EngageOS by Agentiosk. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="../index.html" style="color: white; margin: 0 15px;">Home</a>
+            <a href="mailto:sales@agentiosk.com" style="color: white; margin: 0 15px;">Contact Sales</a>
+        </p>
+    </footer>
+</body>
+</html>
