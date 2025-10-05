@@ -111,7 +111,7 @@ export default function GamesMenu({ onClose }) {
           background: 'linear-gradient(135deg, #1a1f26 0%, #242a33 100%)',
           borderRadius: 20,
           maxWidth: '95vw',
-          maxHeight: '90vh',
+          maxHeight: '95vh',
           width: 900,
           display: 'flex',
           flexDirection: 'column',
@@ -124,18 +124,19 @@ export default function GamesMenu({ onClose }) {
         {/* Header */}
         <div
           style={{
-            padding: '20px 24px',
+            padding: '16px',
             borderBottom: '1px solid rgba(255,255,255,0.1)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexShrink: 0,
           }}
         >
-          <div>
-            <h2 style={{ margin: 0, color: '#f4f6f8', fontSize: 28 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{ margin: 0, color: '#f4f6f8', fontSize: 'clamp(18px, 5vw, 28px)' }}>
               🎮 Chicago Mike's Games
             </h2>
-            <p style={{ margin: '4px 0 0', color: '#a7b0b8', fontSize: 14 }}>
+            <p style={{ margin: '4px 0 0', color: '#a7b0b8', fontSize: 'clamp(11px, 3vw, 14px)' }}>
               Test your skills and compete for the high score!
             </p>
           </div>
@@ -149,6 +150,8 @@ export default function GamesMenu({ onClose }) {
               padding: '8px 16px',
               cursor: 'pointer',
               fontSize: 16,
+              flexShrink: 0,
+              marginLeft: 12,
             }}
             aria-label="Close games menu"
           >
@@ -157,56 +160,43 @@ export default function GamesMenu({ onClose }) {
         </div>
 
         {/* Games Grid */}
-        <div style={{ flex: 1, overflow: 'auto', padding: 24 }}>
+        <div
+          style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: 16,
+            WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+          }}
+        >
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))',
               gap: 20,
             }}
           >
             {GAMES.map((game) => (
               <div
                 key={game.id}
-                onClick={() => !game.comingSoon && setSelectedGame(game.id)}
+                onClick={() => setSelectedGame(game.id)}
                 style={{
                   background: `linear-gradient(135deg, ${game.color}22 0%, ${game.color}11 100%)`,
                   borderRadius: 16,
-                  padding: 24,
+                  padding: 20,
                   border: `2px solid ${game.color}44`,
-                  cursor: game.comingSoon ? 'not-allowed' : 'pointer',
+                  cursor: 'pointer',
                   transition: 'transform 0.2s, box-shadow 0.2s',
                   position: 'relative',
-                  opacity: game.comingSoon ? 0.6 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  if (!game.comingSoon) {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = `0 12px 24px ${game.color}44`;
-                  }
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                  e.currentTarget.style.boxShadow = `0 12px 24px ${game.color}44`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {game.comingSoon && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      background: 'rgba(0,0,0,0.7)',
-                      padding: '4px 12px',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: '#fbbf24',
-                    }}
-                  >
-                    COMING SOON
-                  </div>
-                )}
 
                 <div
                   style={{
