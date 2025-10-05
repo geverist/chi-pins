@@ -1,6 +1,8 @@
 // api/send-sms.js
 // Vercel serverless function to send SMS via Twilio
 
+import { createClient } from '@supabase/supabase-js';
+
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -18,16 +20,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get Twilio credentials from environment variables (secure, backend-only)
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+    let accountSid = process.env.TWILIO_ACCOUNT_SID;
+    let authToken = process.env.TWILIO_AUTH_TOKEN;
+    let twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+
+    // If not in env vars, try to get from admin settings in database
+    if (!accountSid || !authToken || !twilioPhone) {
+      console.log('Twilio credentials not in env vars, checking admin settings...');
+
+      const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const { data: settingsData } = await supabase
+          .from('settings')
+          .select('value')
+          .eq('key', 'app')
+          .single();
+
+        const settings = settingsData?.value || {};
+
+        if (settings.twilioEnabled) {
+          accountSid = settings.twilioAccountSid;
+          authToken = settings.twilioAuthToken;
+          twilioPhone = settings.twilioPhoneNumber;
+          console.log('Using Twilio credentials from admin settings');
+        }
+      }
+    }
 
     if (!accountSid || !authToken || !twilioPhone) {
-      console.error('Twilio credentials not configured in environment variables');
+      console.error('Twilio credentials not configured');
       return res.status(500).json({
         error: 'SMS service not configured',
-        details: 'Administrator needs to configure Twilio credentials'
+        details: 'Administrator needs to configure Twilio credentials in Admin Panel'
       });
     }
 
