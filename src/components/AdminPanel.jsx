@@ -638,124 +638,6 @@ export default function AdminPanel({ open, onClose }) {
                 </Card>
               )}
 
-              <Card title="Audio Output Settings">
-                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
-                  Configure how audio plays from the Jukebox
-                </p>
-                <FieldRow label="Audio Output">
-                  <select
-                    value={settings.audioOutputType || 'local'}
-                    onChange={(e) => setSettings(s => ({ ...s, audioOutputType: e.target.value }))}
-                    style={{
-                      ...s.input,
-                      width: '100%',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <option value="local">Local Device (Browser)</option>
-                    <option value="bluetooth">Bluetooth Device</option>
-                    <option value="sonos">Sonos Speaker</option>
-                  </select>
-                </FieldRow>
-
-                {settings.audioOutputType === 'bluetooth' && (
-                  <>
-                    <FieldRow label="Device Name">
-                      <input
-                        type="text"
-                        value={settings.bluetoothDeviceName || ''}
-                        onChange={(e) => setSettings(s => ({ ...s, bluetoothDeviceName: e.target.value }))}
-                        placeholder="My Bluetooth Speaker"
-                        style={{
-                          ...s.input,
-                          width: '100%',
-                        }}
-                      />
-                    </FieldRow>
-                    <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                      Note: Bluetooth pairing must be done through your device's system settings first
-                    </p>
-                  </>
-                )}
-
-                {settings.audioOutputType === 'sonos' && (
-                  <>
-                    <FieldRow label="Room Name">
-                      <input
-                        type="text"
-                        value={settings.sonosRoomName || ''}
-                        onChange={(e) => setSettings(s => ({ ...s, sonosRoomName: e.target.value }))}
-                        placeholder="Living Room"
-                        style={{
-                          ...s.input,
-                          width: '100%',
-                        }}
-                      />
-                    </FieldRow>
-                    <FieldRow label="IP Address">
-                      <input
-                        type="text"
-                        value={settings.sonosIpAddress || ''}
-                        onChange={(e) => setSettings(s => ({ ...s, sonosIpAddress: e.target.value }))}
-                        placeholder="192.168.1.100"
-                        style={{
-                          ...s.input,
-                          width: '100%',
-                        }}
-                      />
-                    </FieldRow>
-                    <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                      Requires Sonos HTTP API running on the network
-                    </p>
-                  </>
-                )}
-
-                <FieldRow label="Jukebox Behavior">
-                  <select
-                    value={settings.jukeboxAutoPlay ? 'play' : 'queue'}
-                    onChange={(e) => setSettings(s => ({ ...s, jukeboxAutoPlay: e.target.value === 'play' }))}
-                    style={{
-                      ...s.input,
-                      width: '100%',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <option value="play">Play Immediately & Close</option>
-                    <option value="queue">Add to Queue</option>
-                  </select>
-                </FieldRow>
-                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                  Controls what happens when you select a track in the Jukebox
-                </p>
-
-                <FieldRow label="Now Playing Scroll Speed (Kiosk)" style={{ marginTop: 16 }}>
-                  <input
-                    type="number"
-                    min="5"
-                    max="120"
-                    value={settings.nowPlayingScrollSpeedKiosk || 30}
-                    onChange={(e) => setSettings(s => ({ ...s, nowPlayingScrollSpeedKiosk: parseInt(e.target.value) || 30 }))}
-                    style={{ ...s.input, width: '80px' }}
-                  />
-                  <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
-                </FieldRow>
-
-                <FieldRow label="Now Playing Scroll Speed (Mobile)">
-                  <input
-                    type="number"
-                    min="5"
-                    max="120"
-                    value={settings.nowPlayingScrollSpeedMobile || 20}
-                    onChange={(e) => setSettings(s => ({ ...s, nowPlayingScrollSpeedMobile: parseInt(e.target.value) || 20 }))}
-                    style={{ ...s.input, width: '80px' }}
-                  />
-                  <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
-                </FieldRow>
-                <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
-                  Banner scroll speed for currently playing music
-                </p>
-              </Card>
-
               <Card title="Map constants">
                 <FieldRow label="Initial radius (miles)">
                   <NumberInput
@@ -1667,6 +1549,124 @@ export default function AdminPanel({ open, onClose }) {
                     ⏹️ Stop All Media & Clear Queue
                   </button>
                 </div>
+              </Card>
+
+              <Card title="Audio Output Settings">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Configure how audio plays from the Jukebox
+                </p>
+                <FieldRow label="Audio Output">
+                  <select
+                    value={settings.audioOutputType || 'local'}
+                    onChange={(e) => setSettings(s => ({ ...s, audioOutputType: e.target.value }))}
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="local">Local Device (Browser)</option>
+                    <option value="bluetooth">Bluetooth Device</option>
+                    <option value="sonos">Sonos Speaker</option>
+                  </select>
+                </FieldRow>
+
+                {settings.audioOutputType === 'bluetooth' && (
+                  <>
+                    <FieldRow label="Device Name">
+                      <input
+                        type="text"
+                        value={settings.bluetoothDeviceName || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, bluetoothDeviceName: e.target.value }))}
+                        placeholder="My Bluetooth Speaker"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                      Note: Bluetooth pairing must be done through your device's system settings first
+                    </p>
+                  </>
+                )}
+
+                {settings.audioOutputType === 'sonos' && (
+                  <>
+                    <FieldRow label="Room Name">
+                      <input
+                        type="text"
+                        value={settings.sonosRoomName || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, sonosRoomName: e.target.value }))}
+                        placeholder="Living Room"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <FieldRow label="IP Address">
+                      <input
+                        type="text"
+                        value={settings.sonosIpAddress || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, sonosIpAddress: e.target.value }))}
+                        placeholder="192.168.1.100"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                      Requires Sonos HTTP API running on the network
+                    </p>
+                  </>
+                )}
+
+                <FieldRow label="Jukebox Behavior">
+                  <select
+                    value={settings.jukeboxAutoPlay ? 'play' : 'queue'}
+                    onChange={(e) => setSettings(s => ({ ...s, jukeboxAutoPlay: e.target.value === 'play' }))}
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="play">Play Immediately & Close</option>
+                    <option value="queue">Add to Queue</option>
+                  </select>
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Controls what happens when you select a track in the Jukebox
+                </p>
+
+                <FieldRow label="Now Playing Scroll Speed (Kiosk)" style={{ marginTop: 16 }}>
+                  <input
+                    type="number"
+                    min="5"
+                    max="120"
+                    value={settings.nowPlayingScrollSpeedKiosk || 30}
+                    onChange={(e) => setSettings(s => ({ ...s, nowPlayingScrollSpeedKiosk: parseInt(e.target.value) || 30 }))}
+                    style={{ ...s.input, width: '80px' }}
+                  />
+                  <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                </FieldRow>
+
+                <FieldRow label="Now Playing Scroll Speed (Mobile)">
+                  <input
+                    type="number"
+                    min="5"
+                    max="120"
+                    value={settings.nowPlayingScrollSpeedMobile || 20}
+                    onChange={(e) => setSettings(s => ({ ...s, nowPlayingScrollSpeedMobile: parseInt(e.target.value) || 20 }))}
+                    style={{ ...s.input, width: '80px' }}
+                  />
+                  <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                  Banner scroll speed for currently playing music
+                </p>
               </Card>
 
               <Card title="Media Library">
