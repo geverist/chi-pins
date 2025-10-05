@@ -198,7 +198,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
   };
 
   const renderInstructions = () => (
-    <div style={{ padding: '24px 40px', textAlign: 'center', overflow: 'hidden' }}>
+    <div style={{ padding: '24px 40px', textAlign: 'center', overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <h2 style={{ margin: '0 0 16px', color: '#f4f6f8', fontSize: 28 }}>
         🌭 Build a Chicago Dog!
       </h2>
