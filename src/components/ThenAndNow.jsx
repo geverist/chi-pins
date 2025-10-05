@@ -166,8 +166,10 @@ export default function ThenAndNow({ onClose }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         padding: 20,
+        overflowY: 'auto',
+        overflowX: 'hidden',
       }}
       onMouseMove={handleMouseMove}
       onTouchMove={handleTouchMove}
@@ -212,6 +214,7 @@ export default function ThenAndNow({ onClose }) {
       <div
         style={{
           marginTop: 80,
+          marginBottom: 40,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
