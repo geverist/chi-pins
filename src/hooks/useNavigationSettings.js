@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const CACHE_KEY = 'navigation_settings_cache';
-const CACHE_VERSION = 2; // Increment to invalidate old caches
+const CACHE_VERSION = 1; // Increment to invalidate old caches
 const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
 
 const DEFAULT_SETTINGS = {
@@ -25,7 +25,8 @@ export function useNavigationSettings() {
       if (cached) {
         const { data, timestamp, version } = JSON.parse(cached);
         // Check cache version - invalidate if old version
-        if (version === CACHE_VERSION) {
+        // Accept undefined version (from before versioning was added) or matching version
+        if (version === undefined || version === CACHE_VERSION) {
           // Use cache regardless of age - API fetch will update it
           console.log('[useNavigationSettings] Initializing with cached settings:', data);
           return data;
