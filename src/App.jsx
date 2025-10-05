@@ -1106,7 +1106,10 @@ export default function App() {
             flexDirection: 'column',
           }}
         >
-          <MobilePinsTable pins={pinsForRender} />
+          <MobilePinsTable
+            pins={pinsForRender}
+            onClose={() => setShowMobileList(false)}
+          />
         </div>
       )}
 

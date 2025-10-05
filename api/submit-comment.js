@@ -71,11 +71,14 @@ export default async function handler(req, res) {
       // Fetch admin settings to get notification config
       const { data: settingsData } = await supabase
         .from('settings')
-        .select('*')
+        .select('value')
+        .eq('key', 'app')
         .single();
 
-      if (settingsData && settingsData.notificationsEnabled && settingsData.notifyOnFeedback !== false) {
-        const notificationType = settingsData.notificationType || 'sms';
+      const settings = settingsData?.value || {};
+
+      if (settings.notificationsEnabled && settings.notifyOnFeedback !== false) {
+        const notificationType = settings.notificationType || 'sms';
         const ratingStars = '⭐'.repeat(rating);
 
         // Format message for notifications
@@ -96,13 +99,13 @@ export default async function handler(req, res) {
         const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
 
         // Send SMS notification
-        if ((notificationType === 'sms' || notificationType === 'both' || notificationType === 'all') && settingsData.notificationRecipients) {
+        if ((notificationType === 'sms' || notificationType === 'both' || notificationType === 'all') && settings.notificationRecipients) {
           try {
             const smsResponse = await fetch(`${baseUrl}/api/send-sms`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                to: settingsData.notificationRecipients.split(',').map(n => n.trim()).filter(n => n),
+                to: settings.notificationRecipients.split(',').map(n => n.trim()).filter(n => n),
                 message: messageText,
               }),
             });
@@ -118,13 +121,13 @@ export default async function handler(req, res) {
         }
 
         // Send Email notification
-        if ((notificationType === 'email' || notificationType === 'both' || notificationType === 'all') && settingsData.emailRecipients) {
+        if ((notificationType === 'email' || notificationType === 'both' || notificationType === 'all') && settings.emailRecipients) {
           try {
             const emailResponse = await fetch(`${baseUrl}/api/send-email`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                to: settingsData.emailRecipients.split(',').map(e => e.trim()).filter(e => e),
+                to: settings.emailRecipients.split(',').map(e => e.trim()).filter(e => e),
                 subject: `⭐ New Feedback: ${rating}/5 - ${name || 'Anonymous'}`,
                 html: messageHtml,
                 text: messageText,
