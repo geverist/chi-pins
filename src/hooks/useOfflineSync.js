@@ -190,7 +190,7 @@ export function useOfflineSync() {
       console.log('Online - triggering auto-sync');
       syncAll();
     }
-  }, [isOnline]);
+  }, [isOnline, isSyncing, syncAll]);
 
   // Periodic sync check (every 5 minutes when online)
   useEffect(() => {

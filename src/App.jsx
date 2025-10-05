@@ -54,6 +54,7 @@ import WeatherWidget from './components/WeatherWidget';
 import OfflineIndicator from './components/OfflineIndicator';
 import AnonymousMessageModal from './components/AnonymousMessageModal';
 import CommentsModal from './components/CommentsModal';
+import LocationSwitcher from './components/LocationSwitcher';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -231,16 +232,6 @@ export default function App() {
       setExploring(false);
       console.log('App: Desktop mode - exploring disabled');
     }
-
-    // Handle resize for map invalidation only, don't change mobile mode
-    const handleResize = () => {
-      if (mainMapRef.current) {
-        setTimeout(() => mainMapRef.current.invalidateSize(), 300);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, [isMobile]);
 
   // kiosk state
@@ -290,16 +281,8 @@ export default function App() {
     };
   }, []);
 
-  // Set mapReady when mainMapRef is initialized
-  useEffect(() => {
-    if (mainMapRef.current) {
-      console.log('App: mainMapRef set, enabling mapReady');
-      setMapReady(true);
-      setTimeout(() => mainMapRef.current.invalidateSize(), 300);
-    } else {
-      console.warn('App: mainMapRef not set yet');
-    }
-  }, [mainMapRef.current]);
+  // Note: mapReady is set by MapShell's SetMapRef component when map initializes
+  // No need for a separate effect here as it would have stale ref dependency
 
   // Mobile mode zoom and mode switching
   useEffect(() => {
@@ -1027,6 +1010,7 @@ export default function App() {
         setOrderMenuOpen={setOrderMenuOpen}
         setPhotoBoothOpen={setPhotoBoothOpen}
         setThenAndNowOpen={setThenAndNowOpen}
+        setCommentsOpen={setCommentsOpen}
         setExploring={setExploring}
         setShowAttractor={setShowAttractor}
         handleFooterClick={handleFooterClick}
@@ -1168,6 +1152,7 @@ export default function App() {
       )}
 
       <OfflineIndicator />
+      <LocationSwitcher />
     </div>
   );
 }

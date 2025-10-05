@@ -8,6 +8,7 @@ import { useAdminSettings } from '../state/useAdminSettings'
 import { useMediaFiles } from '../hooks/useMediaFiles'
 import { useNowPlaying } from '../state/useNowPlaying'
 import PinCodeModal from './PinCodeModal'
+import AnalyticsDashboard from './AnalyticsDashboard'
 
 export default function AdminPanel({ open, onClose }) {
   const [authenticated, setAuthenticated] = useState(false)
@@ -81,6 +82,14 @@ export default function AdminPanel({ open, onClose }) {
   const [modRows, setModRows] = useState([]) // live pins from supabase
   const [search, setSearch] = useState('')
 
+  // Then & Now comparisons
+  const [thenAndNowComparisons, setThenAndNowComparisons] = useState([])
+  const [thenAndNowLoading, setThenAndNowLoading] = useState(false)
+
+  // Kiosk clusters
+  const [kioskClusters, setKioskClusters] = useState([])
+  const [kioskClustersLoading, setKioskClustersLoading] = useState(false)
+
   // ---------- Load from Supabase when panel opens ----------
   const loadFromSupabase = useCallback(async () => {
     if (!open) return
@@ -107,6 +116,29 @@ export default function AdminPanel({ open, onClose }) {
       if (!navLoading && !initialNavSettings) {
         console.log('[AdminPanel] Setting initial nav settings:', navSettings);
         setInitialNavSettings(navSettings)
+      }
+
+      // Then & Now comparisons
+      const { data: thenAndNowData, error: thenAndNowErr } = await supabase
+        .from('then_and_now')
+        .select('*')
+        .order('display_order', { ascending: true })
+
+      if (!thenAndNowErr && Array.isArray(thenAndNowData)) {
+        setThenAndNowComparisons(thenAndNowData)
+      }
+
+      // Kiosk clusters with locations
+      const { data: clustersData, error: clustersErr } = await supabase
+        .from('kiosk_clusters')
+        .select(`
+          *,
+          locations:kiosk_locations(*)
+        `)
+        .order('name', { ascending: true })
+
+      if (!clustersErr && Array.isArray(clustersData)) {
+        setKioskClusters(clustersData)
       }
 
       setHasUnsavedChanges(false)
@@ -315,6 +347,9 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'branding'} onClick={() => setTab('branding')}>Branding</TabBtn>
           <TabBtn active={tab === 'navigation'} onClick={() => setTab('navigation')}>Navigation</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
+          <TabBtn active={tab === 'thenandnow'} onClick={() => setTab('thenandnow')}>Then & Now</TabBtn>
+          <TabBtn active={tab === 'clusters'} onClick={() => setTab('clusters')}>Kiosk Clusters</TabBtn>
+          <TabBtn active={tab === 'analytics'} onClick={() => setTab('analytics')}>Analytics</TabBtn>
           <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
           <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>Media</TabBtn>
           <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
@@ -1393,6 +1428,433 @@ export default function AdminPanel({ open, onClose }) {
                   </button>
                 </div>
               </Card>
+            </div>
+          )}
+
+          {tab === 'thenandnow' && (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="Then & Now Historical Photos">
+                <p style={s.muted}>
+                  Manage historical photo comparisons showing Chicago's transformation over time. Each comparison shows a "then" and "now" photo of the same location.
+                </p>
+
+                {thenAndNowLoading ? (
+                  <div style={{ padding: '40px 0', textAlign: 'center', color: '#9ca3af' }}>
+                    Loading comparisons...
+                  </div>
+                ) : thenAndNowComparisons.length === 0 ? (
+                  <div style={{
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: 8,
+                    marginTop: 16
+                  }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🏛️</div>
+                    <div style={{ color: '#93c5fd', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+                      No comparisons yet
+                    </div>
+                    <div style={{ color: '#9ca3af', fontSize: 14 }}>
+                      Run the SQL migration in Supabase to create the then_and_now table, then add your first historical photo comparison.
+                    </div>
+                    <div style={{
+                      marginTop: 16,
+                      padding: 12,
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      color: '#d1d5db',
+                      textAlign: 'left'
+                    }}>
+                      File: create-then-and-now-table.sql
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{
+                      display: 'grid',
+                      gap: 12,
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
+                    }}>
+                      {thenAndNowComparisons.map((comparison) => (
+                        <div
+                          key={comparison.id}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: 8,
+                            padding: 12,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 8
+                          }}
+                        >
+                          <div style={{
+                            fontWeight: 600,
+                            fontSize: 14,
+                            color: '#f3f4f6',
+                            marginBottom: 4
+                          }}>
+                            {comparison.location}
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{
+                                fontSize: 11,
+                                color: '#c4b5fd',
+                                fontWeight: 600,
+                                marginBottom: 4
+                              }}>
+                                THEN ({comparison.then_year})
+                              </div>
+                              {comparison.then_image_url && (
+                                <img
+                                  src={comparison.then_image_url}
+                                  alt={`${comparison.location} in ${comparison.then_year}`}
+                                  style={{
+                                    width: '100%',
+                                    height: 80,
+                                    objectFit: 'cover',
+                                    borderRadius: 4,
+                                    marginBottom: 4
+                                  }}
+                                />
+                              )}
+                              <div style={{ fontSize: 11, color: '#9ca3af' }}>
+                                {comparison.then_description}
+                              </div>
+                            </div>
+
+                            <div style={{ flex: 1 }}>
+                              <div style={{
+                                fontSize: 11,
+                                color: '#93c5fd',
+                                fontWeight: 600,
+                                marginBottom: 4
+                              }}>
+                                NOW ({comparison.now_year})
+                              </div>
+                              {comparison.now_image_url && (
+                                <img
+                                  src={comparison.now_image_url}
+                                  alt={`${comparison.location} in ${comparison.now_year}`}
+                                  style={{
+                                    width: '100%',
+                                    height: 80,
+                                    objectFit: 'cover',
+                                    borderRadius: 4,
+                                    marginBottom: 4
+                                  }}
+                                />
+                              )}
+                              <div style={{ fontSize: 11, color: '#9ca3af' }}>
+                                {comparison.now_description}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{
+                            display: 'flex',
+                            gap: 4,
+                            marginTop: 8,
+                            paddingTop: 8,
+                            borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                          }}>
+                            <div style={{
+                              fontSize: 11,
+                              color: '#9ca3af',
+                              flex: 1
+                            }}>
+                              Order: {comparison.display_order}
+                            </div>
+                            <div style={{
+                              fontSize: 11,
+                              color: comparison.active ? '#10b981' : '#ef4444'
+                            }}>
+                              {comparison.active ? '✓ Active' : '✕ Inactive'}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{
+                      marginTop: 20,
+                      padding: 16,
+                      background: 'rgba(59, 130, 246, 0.1)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      borderRadius: 8
+                    }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#93c5fd' }}>
+                        📝 Manage via Supabase
+                      </div>
+                      <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.5 }}>
+                        To add, edit, or delete historical photo comparisons, use the Supabase dashboard to modify the <code style={{
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          padding: '2px 6px',
+                          borderRadius: 3,
+                          fontFamily: 'monospace'
+                        }}>then_and_now</code> table directly. Changes will appear here and on the kiosk in real-time.
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {tab === 'clusters' && (
+            <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="Kiosk Clusters & Multi-Location Management">
+                <p style={s.muted}>
+                  Manage multi-location kiosk deployments. Group locations under a single restaurant/owner to share branding, settings, and allow customers to find other locations.
+                </p>
+
+                {kioskClustersLoading ? (
+                  <div style={{ padding: '40px 0', textAlign: 'center', color: '#9ca3af' }}>
+                    Loading clusters...
+                  </div>
+                ) : kioskClusters.length === 0 ? (
+                  <div style={{
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    borderRadius: 8,
+                    marginTop: 16
+                  }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🏪</div>
+                    <div style={{ color: '#c4b5fd', fontSize: 16, fontWeight: 600, marginBottom: 8 }}>
+                      No clusters configured
+                    </div>
+                    <div style={{ color: '#9ca3af', fontSize: 14, marginBottom: 12 }}>
+                      Create your first kiosk cluster to manage multiple locations.
+                    </div>
+                    <div style={{
+                      marginTop: 16,
+                      padding: 12,
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      borderRadius: 6,
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                      color: '#d1d5db',
+                      textAlign: 'left'
+                    }}>
+                      <div>1. Run SQL migration: create-kiosk-clusters-table.sql</div>
+                      <div>2. Add cluster via Supabase dashboard</div>
+                      <div>3. Add locations to cluster</div>
+                      <div>4. Use ?location=[ID] in kiosk URL</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 16 }}>
+                    {kioskClusters.map((cluster) => (
+                      <div
+                        key={cluster.id}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: 12,
+                          padding: 16,
+                          marginBottom: 16
+                        }}
+                      >
+                        {/* Cluster Header */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 16,
+                          marginBottom: 16,
+                          paddingBottom: 16,
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
+                        }}>
+                          {cluster.logo_url && (
+                            <img
+                              src={cluster.logo_url}
+                              alt={cluster.name}
+                              style={{
+                                width: 60,
+                                height: 60,
+                                objectFit: 'contain',
+                                borderRadius: 8,
+                                background: 'rgba(255, 255, 255, 0.1)'
+                              }}
+                            />
+                          )}
+                          <div style={{ flex: 1 }}>
+                            <div style={{
+                              fontSize: 18,
+                              fontWeight: 600,
+                              color: '#f3f4f6',
+                              marginBottom: 4
+                            }}>
+                              {cluster.name}
+                            </div>
+                            {cluster.description && (
+                              <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 8 }}>
+                                {cluster.description}
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#9ca3af' }}>
+                              {cluster.owner_name && (
+                                <div>👤 {cluster.owner_name}</div>
+                              )}
+                              {cluster.owner_email && (
+                                <div>✉️ {cluster.owner_email}</div>
+                              )}
+                              <div style={{
+                                padding: '2px 8px',
+                                borderRadius: 4,
+                                background: cluster.primary_color || '#3b82f6',
+                                color: '#fff',
+                                fontSize: 11
+                              }}>
+                                {cluster.locations?.length || 0} location{cluster.locations?.length !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{
+                            fontSize: 11,
+                            color: cluster.active ? '#10b981' : '#ef4444',
+                            fontWeight: 600
+                          }}>
+                            {cluster.active ? '✓ Active' : '✕ Inactive'}
+                          </div>
+                        </div>
+
+                        {/* Locations List */}
+                        {cluster.locations && cluster.locations.length > 0 && (
+                          <div style={{ display: 'grid', gap: 8 }}>
+                            <div style={{
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: '#9ca3af',
+                              marginBottom: 4
+                            }}>
+                              LOCATIONS
+                            </div>
+                            {cluster.locations
+                              .sort((a, b) => a.display_order - b.display_order)
+                              .map((location) => (
+                                <div
+                                  key={location.id}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 12,
+                                    padding: 12,
+                                    background: 'rgba(0, 0, 0, 0.2)',
+                                    borderRadius: 8,
+                                    border: location.is_primary ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid transparent'
+                                  }}
+                                >
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{
+                                      fontSize: 14,
+                                      fontWeight: 500,
+                                      color: '#f3f4f6',
+                                      marginBottom: 2
+                                    }}>
+                                      {location.location_name}
+                                      {location.is_primary && (
+                                        <span style={{
+                                          marginLeft: 8,
+                                          fontSize: 11,
+                                          padding: '2px 6px',
+                                          borderRadius: 3,
+                                          background: 'rgba(139, 92, 246, 0.3)',
+                                          color: '#c4b5fd'
+                                        }}>
+                                          PRIMARY
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: 12, color: '#9ca3af' }}>
+                                      {location.address}
+                                      {location.phone && ` • ${location.phone}`}
+                                    </div>
+                                  </div>
+                                  <div style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-end',
+                                    gap: 4
+                                  }}>
+                                    <div style={{
+                                      fontSize: 11,
+                                      fontFamily: 'monospace',
+                                      color: '#6b7280',
+                                      background: 'rgba(0, 0, 0, 0.3)',
+                                      padding: '2px 6px',
+                                      borderRadius: 3
+                                    }}>
+                                      ?location={location.id.slice(0, 8)}...
+                                    </div>
+                                    <div style={{
+                                      fontSize: 11,
+                                      color: location.active ? '#10b981' : '#ef4444'
+                                    }}>
+                                      {location.active ? '●' : '○'} {location.active ? 'Active' : 'Inactive'}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+
+                        {/* Quick Actions */}
+                        <div style={{
+                          marginTop: 16,
+                          padding: 12,
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: '#93c5fd'
+                        }}>
+                          <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                            🔗 How to use this cluster:
+                          </div>
+                          <div style={{ color: '#9ca3af', lineHeight: 1.5 }}>
+                            Add <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: 3, fontFamily: 'monospace' }}>
+                              ?location=[location-id]
+                            </code> to your kiosk URL to activate cluster mode with location switching.
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div style={{
+                      marginTop: 20,
+                      padding: 16,
+                      background: 'rgba(139, 92, 246, 0.1)',
+                      border: '1px solid rgba(139, 92, 246, 0.3)',
+                      borderRadius: 8
+                    }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#c4b5fd' }}>
+                        📝 Manage Clusters
+                      </div>
+                      <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.5 }}>
+                        Use the Supabase dashboard to manage clusters, locations, and settings:
+                        <div style={{ marginTop: 8, fontFamily: 'monospace', fontSize: 12 }}>
+                          • <code>kiosk_clusters</code> - Business/restaurant info<br />
+                          • <code>kiosk_locations</code> - Individual locations<br />
+                          • <code>kiosk_location_settings</code> - Per-location config
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {tab === 'analytics' && (
+            <div style={{ padding: '0 4px' }}>
+              <AnalyticsDashboard />
             </div>
           )}
 
