@@ -106,11 +106,14 @@ export default async function handler(req, res) {
           <p style="color: #888; font-size: 12px;">Submitted: ${new Date(timestamp || Date.now()).toLocaleString()}</p>
         `;
 
-        const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+        // Use the production URL directly - VERCEL_URL can be unreliable in serverless functions
+        const baseUrl = 'https://chi-pins.vercel.app';
 
         // Send SMS notification
         if ((notificationType === 'sms' || notificationType === 'both' || notificationType === 'all') && settings.notificationRecipients) {
           console.log('[submit-comment] Sending SMS to:', settings.notificationRecipients);
+          console.log('[submit-comment] SMS URL:', `${baseUrl}/api/send-sms`);
+          console.log('[submit-comment] Message preview:', messageText.substring(0, 100));
           try {
             const smsResponse = await fetch(`${baseUrl}/api/send-sms`, {
               method: 'POST',
@@ -121,14 +124,17 @@ export default async function handler(req, res) {
               }),
             });
 
+            console.log('[submit-comment] SMS response status:', smsResponse.status);
             const smsResult = await smsResponse.text();
+            console.log('[submit-comment] SMS response body:', smsResult);
+
             if (!smsResponse.ok) {
-              console.error('[submit-comment] Failed to send SMS notification:', smsResult);
+              console.error('[submit-comment] Failed to send SMS notification. Status:', smsResponse.status, 'Body:', smsResult);
             } else {
-              console.log('[submit-comment] SMS notification sent successfully:', smsResult);
+              console.log('[submit-comment] SMS notification sent successfully!');
             }
           } catch (smsError) {
-            console.error('[submit-comment] Error sending SMS notification:', smsError);
+            console.error('[submit-comment] Error sending SMS notification:', smsError.message, smsError.stack);
           }
         } else {
           console.log('[submit-comment] SMS notification skipped. Type:', notificationType, 'hasRecipients:', !!settings.notificationRecipients);
