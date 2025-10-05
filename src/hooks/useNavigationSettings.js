@@ -17,26 +17,11 @@ const DEFAULT_SETTINGS = {
 };
 
 export function useNavigationSettings() {
-  const [settings, setSettings] = useState(() => {
-    // Load from cache on initial mount
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      try {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          console.log('[useNavigationSettings] Loaded from cache:', data);
-          return data;
-        }
-      } catch (err) {
-        console.error('[useNavigationSettings] Error loading cache:', err);
-      }
-    }
-    return DEFAULT_SETTINGS;
-  });
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch settings on mount
+  // Fetch settings on mount - always fetch fresh data
   useEffect(() => {
     fetchSettings();
   }, []);
