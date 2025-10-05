@@ -17,11 +17,25 @@ const DEFAULT_SETTINGS = {
 };
 
 export function useNavigationSettings() {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  // Initialize with cached data if available, otherwise use defaults
+  const [settings, setSettings] = useState(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        // Use cache regardless of age - API fetch will update it
+        console.log('[useNavigationSettings] Initializing with cached settings:', data);
+        return data;
+      }
+    } catch (err) {
+      console.warn('[useNavigationSettings] Failed to load cache:', err);
+    }
+    return DEFAULT_SETTINGS;
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch settings on mount - always fetch fresh data
+  // Fetch settings on mount - always fetch fresh data to update cache
   useEffect(() => {
     fetchSettings();
   }, []);
