@@ -33,17 +33,33 @@ export function useNavigationSettings() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
+      console.log('[useNavigationSettings] Fetching from API:', `${API_BASE}/api/navigation-settings`);
       const response = await fetch(`${API_BASE}/api/navigation-settings`);
+      console.log('[useNavigationSettings] Response status:', response.status);
       if (!response.ok) {
-        throw new Error('Failed to fetch navigation settings');
+        const errorText = await response.text();
+        console.error('[useNavigationSettings] API error:', errorText);
+        throw new Error(`Failed to fetch navigation settings: ${response.status}`);
       }
       const data = await response.json();
       console.log('[useNavigationSettings] Fetched from API:', data);
+      console.log('[useNavigationSettings] games_enabled:', data.games_enabled);
       setSettings(data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching navigation settings:', err);
+      console.error('[useNavigationSettings] Error fetching navigation settings:', err);
       setError(err.message);
+      // Use default settings on error
+      console.log('[useNavigationSettings] Using default settings due to error');
+      setSettings({
+        games_enabled: true,
+        jukebox_enabled: true,
+        order_enabled: true,
+        explore_enabled: true,
+        photobooth_enabled: true,
+        thenandnow_enabled: true,
+        comments_enabled: true,
+      });
     } finally {
       setLoading(false);
     }

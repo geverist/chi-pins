@@ -108,7 +108,7 @@ export default function App() {
     console.log('App.jsx - queue:', queue);
   }, [currentTrack, isPlaying, lastPlayed, queue]);
 
-  // map mode
+  // map mode - mobile always starts in Chicago mode with closer zoom
   const [mapMode, setMapMode] = useState('chicago');
 
   // fun facts (DB-backed with fallback to 150 Chicago metro towns)
