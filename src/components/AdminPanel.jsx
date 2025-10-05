@@ -130,16 +130,6 @@ export default function AdminPanel({ open, onClose }) {
         setInitialNavSettings(navSettings)
       }
 
-      // Then & Now comparisons
-      const { data: thenAndNowData, error: thenAndNowErr } = await supabase
-        .from('then_and_now')
-        .select('*')
-        .order('display_order', { ascending: true })
-
-      if (!thenAndNowErr && Array.isArray(thenAndNowData)) {
-        setThenAndNowComparisons(thenAndNowData)
-      }
-
       // Kiosk clusters with locations
       const { data: clustersData, error: clustersErr } = await supabase
         .from('kiosk_clusters')
@@ -1445,6 +1435,142 @@ export default function AdminPanel({ open, onClose }) {
 
           {tab === 'thenandnow' && (
             <div style={{ display: 'grid', gap: 12 }}>
+              <Card title="Add New Then & Now Comparison">
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+
+                  try {
+                    const thenFile = formData.get('then_image');
+                    const nowFile = formData.get('now_image');
+
+                    if (!thenFile || !nowFile) {
+                      alert('Please select both Then and Now images');
+                      return;
+                    }
+
+                    // Upload images
+                    const thenUrl = await uploadThenNowImage(thenFile, 'then');
+                    const nowUrl = await uploadThenNowImage(nowFile, 'now');
+
+                    // Add comparison
+                    await addComparison({
+                      location: formData.get('location'),
+                      thenYear: formData.get('then_year'),
+                      thenDescription: formData.get('then_description'),
+                      thenImageUrl: thenUrl,
+                      nowYear: formData.get('now_year') || '2024',
+                      nowDescription: formData.get('now_description'),
+                      nowImageUrl: nowUrl
+                    });
+
+                    // Reset form
+                    e.target.reset();
+                    alert('Comparison added successfully!');
+                  } catch (err) {
+                    console.error('Failed to add comparison:', err);
+                    alert('Failed to add comparison: ' + err.message);
+                  }
+                }}>
+                  <div style={{ display: 'grid', gap: 16 }}>
+                    {/* Location */}
+                    <FieldRow label="Location Name">
+                      <input
+                        type="text"
+                        name="location"
+                        required
+                        placeholder="e.g., Willis Tower"
+                        style={{ ...s.input, width: '100%' }}
+                      />
+                    </FieldRow>
+
+                    {/* Then Section */}
+                    <div style={{
+                      padding: 12,
+                      background: 'rgba(196, 181, 253, 0.1)',
+                      border: '1px solid rgba(196, 181, 253, 0.3)',
+                      borderRadius: 8
+                    }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: 14, color: '#c4b5fd' }}>THEN (Historical Photo)</h4>
+
+                      <FieldRow label="Year">
+                        <input
+                          type="text"
+                          name="then_year"
+                          required
+                          placeholder="e.g., 1974"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <FieldRow label="Description">
+                        <input
+                          type="text"
+                          name="then_description"
+                          required
+                          placeholder="e.g., Tower just completed"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <FieldRow label="Image">
+                        <input
+                          type="file"
+                          name="then_image"
+                          accept="image/*"
+                          required
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+                    </div>
+
+                    {/* Now Section */}
+                    <div style={{
+                      padding: 12,
+                      background: 'rgba(147, 197, 253, 0.1)',
+                      border: '1px solid rgba(147, 197, 253, 0.3)',
+                      borderRadius: 8
+                    }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: 14, color: '#93c5fd' }}>NOW (Modern Photo)</h4>
+
+                      <FieldRow label="Year">
+                        <input
+                          type="text"
+                          name="now_year"
+                          placeholder="e.g., 2024"
+                          defaultValue="2024"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <FieldRow label="Description">
+                        <input
+                          type="text"
+                          name="now_description"
+                          required
+                          placeholder="e.g., Modern skyline"
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+
+                      <FieldRow label="Image">
+                        <input
+                          type="file"
+                          name="now_image"
+                          accept="image/*"
+                          required
+                          style={{ ...s.input, width: '100%' }}
+                        />
+                      </FieldRow>
+                    </div>
+
+                    <button type="submit" style={btn.primary}>
+                      📸 Add Comparison
+                    </button>
+                  </div>
+                </form>
+              </Card>
+
               <Card title="Then & Now Historical Photos">
                 <p style={s.muted}>
                   Manage historical photo comparisons showing Chicago's transformation over time. Each comparison shows a "then" and "now" photo of the same location.
@@ -1570,10 +1696,11 @@ export default function AdminPanel({ open, onClose }) {
 
                           <div style={{
                             display: 'flex',
-                            gap: 4,
+                            gap: 8,
                             marginTop: 8,
                             paddingTop: 8,
-                            borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                            alignItems: 'center'
                           }}>
                             <div style={{
                               fontSize: 11,
@@ -1588,6 +1715,28 @@ export default function AdminPanel({ open, onClose }) {
                             }}>
                               {comparison.active ? '✓ Active' : '✕ Inactive'}
                             </div>
+                            <button
+                              onClick={async () => {
+                                if (confirm(`Delete "${comparison.location}"?`)) {
+                                  try {
+                                    await deleteComparison(
+                                      comparison.id,
+                                      comparison.then_image_url,
+                                      comparison.now_image_url
+                                    );
+                                  } catch (err) {
+                                    alert('Failed to delete: ' + err.message);
+                                  }
+                                }
+                              }}
+                              style={{
+                                ...btn.danger,
+                                padding: '4px 8px',
+                                fontSize: 11
+                              }}
+                            >
+                              Delete
+                            </button>
                           </div>
                         </div>
                       ))}

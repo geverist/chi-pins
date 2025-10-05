@@ -29,7 +29,9 @@
       "Bash(npx vercel:*)",
       "Bash(git revert:*)",
       "Bash(curl -s \"https://chi-pins.vercel.app/api/navigation-settings\")",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:www.chipublib.org)",
+      "WebFetch(domain:commons.wikimedia.org)"
     ],
     "deny": [],
     "ask": []
