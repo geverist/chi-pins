@@ -909,9 +909,11 @@ export default function App() {
           mapReady={mapReady}
           isMobile={isMobile}
         >
-          {!isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (
-            <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" />
-          )}
+          {(() => {
+            const shouldShow = !isMobile && showPopularSpots && mapMode === 'chicago' && !draft;
+            console.log('PopularSpots check:', { isMobile, showPopularSpots, mapMode, hasDraft: !!draft, shouldShow });
+            return shouldShow ? <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" /> : null;
+          })()}
           {showCommunityPins && !draft && (
             <>
               {adminSettings?.lowZoomVisualization === 'heatmap' ? (
