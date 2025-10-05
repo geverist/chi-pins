@@ -36,9 +36,9 @@ CREATE POLICY "Allow public read for comments"
   USING (true);
 
 -- Sample comments for testing
-INSERT INTO comments (name, email, rating, comment)
+INSERT INTO comments (name, contact, contact_type, rating, comment)
 VALUES
-  ('John Doe', 'john@example.com', 5, 'Amazing experience! The games were so fun.'),
-  ('Jane Smith', NULL, 4, 'Great food recommendations, loved the photo booth!'),
-  ('Anonymous', NULL, 5, 'Best kiosk ever! The jukebox is awesome.')
+  ('John Doe', 'john@example.com', 'email', 5, 'Amazing experience! The games were so fun.'),
+  ('Jane Smith', NULL, NULL, 4, 'Great food recommendations, loved the photo booth!'),
+  ('Anonymous', NULL, NULL, 5, 'Best kiosk ever! The jukebox is awesome.')
 ON CONFLICT DO NOTHING;
