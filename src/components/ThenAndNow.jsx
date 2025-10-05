@@ -165,11 +165,7 @@ export default function ThenAndNow({ onClose }) {
         background: 'rgba(0,0,0,0.95)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        padding: 20,
-        overflowY: 'auto',
-        overflowX: 'hidden',
+        overflow: 'hidden',
       }}
       onMouseMove={handleMouseMove}
       onTouchMove={handleTouchMove}
@@ -179,18 +175,14 @@ export default function ThenAndNow({ onClose }) {
       {/* Header */}
       <div
         style={{
-          position: 'absolute',
-          top: 20,
-          left: 0,
-          right: 0,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '0 20px',
-          zIndex: 10,
+          padding: '12px 20px',
+          flexShrink: 0,
         }}
       >
-        <h2 style={{ color: '#f4f6f8', fontSize: 28, margin: 0 }}>
+        <h2 style={{ color: '#f4f6f8', fontSize: 'clamp(18px, 4vw, 28px)', margin: 0 }}>
           🏛️ Chicago: Then & Now
         </h2>
         <button
@@ -199,9 +191,9 @@ export default function ThenAndNow({ onClose }) {
             background: 'rgba(239,68,68,0.2)',
             border: '1px solid rgba(239,68,68,0.5)',
             borderRadius: 12,
-            padding: '12px 24px',
+            padding: '8px 16px',
             color: '#fff',
-            fontSize: 18,
+            fontSize: 'clamp(14px, 2vw, 18px)',
             fontWeight: 600,
             cursor: 'pointer',
           }}
@@ -213,22 +205,25 @@ export default function ThenAndNow({ onClose }) {
       {/* Main Content */}
       <div
         style={{
-          marginTop: 80,
-          marginBottom: 40,
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 20,
+          justifyContent: 'center',
+          gap: 'clamp(8px, 2vh, 20px)',
+          padding: '0 20px 20px 20px',
           maxWidth: 1200,
           width: '100%',
+          margin: '0 auto',
+          minHeight: 0,
         }}
       >
         {/* Location Title */}
-        <div style={{ textAlign: 'center' }}>
-          <h3 style={{ color: '#f4f6f8', fontSize: 32, margin: '0 0 8px 0' }}>
+        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+          <h3 style={{ color: '#f4f6f8', fontSize: 'clamp(20px, 4vw, 32px)', margin: '0 0 4px 0' }}>
             {current.location}
           </h3>
-          <div style={{ color: '#a7b0b8', fontSize: 16 }}>
+          <div style={{ color: '#a7b0b8', fontSize: 'clamp(12px, 2vw, 16px)' }}>
             {currentIndex + 1} of {displayComparisons.length}
           </div>
         </div>
@@ -239,8 +234,11 @@ export default function ThenAndNow({ onClose }) {
             position: 'relative',
             width: '100%',
             maxWidth: 900,
+            flex: '1 1 auto',
+            minHeight: 0,
+            maxHeight: '50vh',
             aspectRatio: '16/10',
-            borderRadius: 16,
+            borderRadius: 12,
             overflow: 'hidden',
             boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
             cursor: 'ew-resize',
@@ -341,14 +339,14 @@ export default function ThenAndNow({ onClose }) {
           <div
             style={{
               position: 'absolute',
-              top: 20,
-              left: 20,
+              top: 12,
+              left: 12,
               background: 'rgba(0,0,0,0.7)',
               backdropFilter: 'blur(4px)',
-              padding: '8px 16px',
+              padding: '6px 12px',
               borderRadius: 8,
               color: '#fff',
-              fontSize: 16,
+              fontSize: 'clamp(12px, 2vw, 16px)',
               fontWeight: 600,
             }}
           >
@@ -357,14 +355,14 @@ export default function ThenAndNow({ onClose }) {
           <div
             style={{
               position: 'absolute',
-              top: 20,
-              right: 20,
+              top: 12,
+              right: 12,
               background: 'rgba(0,0,0,0.7)',
               backdropFilter: 'blur(4px)',
-              padding: '8px 16px',
+              padding: '6px 12px',
               borderRadius: 8,
               color: '#fff',
-              fontSize: 16,
+              fontSize: 'clamp(12px, 2vw, 16px)',
               fontWeight: 600,
             }}
           >
@@ -377,50 +375,51 @@ export default function ThenAndNow({ onClose }) {
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: 20,
+            gap: 'clamp(8px, 2vw, 20px)',
             width: '100%',
             maxWidth: 900,
+            flexShrink: 0,
           }}
         >
           <div
             style={{
               background: 'rgba(139,92,246,0.2)',
               border: '1px solid rgba(139,92,246,0.4)',
-              borderRadius: 12,
-              padding: 16,
+              borderRadius: 8,
+              padding: 'clamp(8px, 2vw, 16px)',
             }}
           >
-            <div style={{ color: '#c4b5fd', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ color: '#c4b5fd', fontSize: 'clamp(10px, 1.5vw, 12px)', fontWeight: 600, marginBottom: 2 }}>
               THEN
             </div>
-            <div style={{ color: '#f4f6f8', fontSize: 14 }}>{current.then.description}</div>
+            <div style={{ color: '#f4f6f8', fontSize: 'clamp(11px, 2vw, 14px)' }}>{current.then.description}</div>
           </div>
           <div
             style={{
               background: 'rgba(59,130,246,0.2)',
               border: '1px solid rgba(59,130,246,0.4)',
-              borderRadius: 12,
-              padding: 16,
+              borderRadius: 8,
+              padding: 'clamp(8px, 2vw, 16px)',
             }}
           >
-            <div style={{ color: '#93c5fd', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ color: '#93c5fd', fontSize: 'clamp(10px, 1.5vw, 12px)', fontWeight: 600, marginBottom: 2 }}>
               NOW
             </div>
-            <div style={{ color: '#f4f6f8', fontSize: 14 }}>{current.now.description}</div>
+            <div style={{ color: '#f4f6f8', fontSize: 'clamp(11px, 2vw, 14px)' }}>{current.now.description}</div>
           </div>
         </div>
 
         {/* Navigation */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+        <div style={{ display: 'flex', gap: 'clamp(8px, 2vw, 12px)', flexShrink: 0 }}>
           <button
             onClick={prevComparison}
             style={{
-              padding: '16px 32px',
+              padding: 'clamp(8px, 2vw, 16px) clamp(16px, 4vw, 32px)',
               background: 'rgba(255,255,255,0.1)',
               border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: 12,
               color: '#fff',
-              fontSize: 18,
+              fontSize: 'clamp(14px, 2vw, 18px)',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -430,12 +429,12 @@ export default function ThenAndNow({ onClose }) {
           <button
             onClick={nextComparison}
             style={{
-              padding: '16px 32px',
+              padding: 'clamp(8px, 2vw, 16px) clamp(16px, 4vw, 32px)',
               background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
               border: 'none',
               borderRadius: 12,
               color: '#fff',
-              fontSize: 18,
+              fontSize: 'clamp(14px, 2vw, 18px)',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -448,9 +447,9 @@ export default function ThenAndNow({ onClose }) {
         <div
           style={{
             color: '#a7b0b8',
-            fontSize: 14,
+            fontSize: 'clamp(11px, 1.5vw, 14px)',
             textAlign: 'center',
-            marginTop: 8,
+            flexShrink: 0,
           }}
         >
           💡 Click and drag the slider to compare then and now
