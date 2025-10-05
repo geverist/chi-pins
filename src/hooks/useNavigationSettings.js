@@ -1,17 +1,37 @@
 // src/hooks/useNavigationSettings.js
 import { useState, useEffect } from 'react';
+import { supabase } from '../utils/supabaseClient';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const CACHE_KEY = 'navigation_settings_cache';
+const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
+
+const DEFAULT_SETTINGS = {
+  games_enabled: true,
+  jukebox_enabled: true,
+  order_enabled: true,
+  explore_enabled: true,
+  photobooth_enabled: true,
+  thenandnow_enabled: true,
+  comments_enabled: true,
+};
 
 export function useNavigationSettings() {
-  const [settings, setSettings] = useState({
-    games_enabled: true,
-    jukebox_enabled: true,
-    order_enabled: true,
-    explore_enabled: true,
-    photobooth_enabled: true,
-    thenandnow_enabled: true,
-    comments_enabled: true,
+  const [settings, setSettings] = useState(() => {
+    // Load from cache on initial mount
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          console.log('[useNavigationSettings] Loaded from cache:', data);
+          return data;
+        }
+      } catch (err) {
+        console.error('[useNavigationSettings] Error loading cache:', err);
+      }
+    }
+    return DEFAULT_SETTINGS;
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,9 +45,46 @@ export function useNavigationSettings() {
   useEffect(() => {
     const handleUpdate = (event) => {
       setSettings(event.detail);
+      // Update cache when settings change
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data: event.detail,
+        timestamp: Date.now()
+      }));
     };
     window.addEventListener('navigation-settings-updated', handleUpdate);
     return () => window.removeEventListener('navigation-settings-updated', handleUpdate);
+  }, []);
+
+  // Real-time subscription to navigation_settings table
+  useEffect(() => {
+    console.log('[useNavigationSettings] Setting up real-time subscription');
+    const channel = supabase
+      .channel('navigation_settings_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'navigation_settings'
+      }, (payload) => {
+        console.log('[useNavigationSettings] Real-time change detected:', payload);
+        if (payload.new) {
+          setSettings(payload.new);
+          // Update cache
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data: payload.new,
+            timestamp: Date.now()
+          }));
+          // Notify other instances
+          window.dispatchEvent(new CustomEvent('navigation-settings-updated', { detail: payload.new }));
+        }
+      })
+      .subscribe((status) => {
+        console.log('[useNavigationSettings] Subscription status:', status);
+      });
+
+    return () => {
+      console.log('[useNavigationSettings] Cleaning up subscription');
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSettings = async () => {
@@ -46,20 +103,24 @@ export function useNavigationSettings() {
       console.log('[useNavigationSettings] games_enabled:', data.games_enabled);
       setSettings(data);
       setError(null);
+
+      // Update cache
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
     } catch (err) {
       console.error('[useNavigationSettings] Error fetching navigation settings:', err);
       setError(err.message);
       // Use default settings on error
       console.log('[useNavigationSettings] Using default settings due to error');
-      setSettings({
-        games_enabled: true,
-        jukebox_enabled: true,
-        order_enabled: true,
-        explore_enabled: true,
-        photobooth_enabled: true,
-        thenandnow_enabled: true,
-        comments_enabled: true,
-      });
+      setSettings(DEFAULT_SETTINGS);
+
+      // Cache default settings
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data: DEFAULT_SETTINGS,
+        timestamp: Date.now()
+      }));
     } finally {
       setLoading(false);
     }
