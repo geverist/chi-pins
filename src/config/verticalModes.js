@@ -885,7 +885,7 @@ export const VERTICAL_MODES = {
           items: ['🩹 Bandages', '💊 Pain Relief', '🌡️ Thermometer', '🧴 Antiseptic', '📋 Emergency Contacts'],
         }
       },
-    },
+    ],
 
     sampleMetrics: {
       avgWaitTime: '125 minutes (ER avg)',
@@ -943,7 +943,7 @@ export const VERTICAL_MODES = {
           items: ['🍿 Popcorn', '🥤 Soda', '🍬 Candy', '🌭 Hotdog', '🧈 Butter'],
         }
       },
-    },
+    ],
 
     concessionIntegration: {
       enabled: true,
