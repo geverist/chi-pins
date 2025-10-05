@@ -4,11 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 export default function PhotoBooth({ onClose }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const previewCanvasRefs = useRef({});
   const [stream, setStream] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [error, setError] = useState(null);
+  const [filterPreviews, setFilterPreviews] = useState({});
 
   const filters = [
     { id: 'hotdog', name: 'Hot Dog Hat', emoji: '🌭', overlay: 'hotdog' },
@@ -23,6 +25,48 @@ export default function PhotoBooth({ onClose }) {
     startCamera();
     return () => stopCamera();
   }, []);
+
+  // Generate filter previews from video feed
+  useEffect(() => {
+    if (!videoRef.current || !stream) return;
+
+    const generatePreviews = () => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) return;
+
+      filters.forEach(filter => {
+        const canvas = previewCanvasRefs.current[filter.id];
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200;
+        canvas.height = 112; // 16:9 aspect ratio
+
+        // Draw video frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Apply filter overlay
+        applyFilter(ctx, canvas.width, canvas.height, filter);
+
+        // Update preview state
+        setFilterPreviews(prev => ({
+          ...prev,
+          [filter.id]: canvas.toDataURL('image/jpeg', 0.7)
+        }));
+      });
+    };
+
+    // Update previews every 100ms
+    const interval = setInterval(generatePreviews, 100);
+
+    // Initial generation after a short delay to ensure video is ready
+    const timeout = setTimeout(generatePreviews, 500);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [stream]);
 
   const startCamera = async () => {
     try {
@@ -355,7 +399,7 @@ export default function PhotoBooth({ onClose }) {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                 gap: 12,
               }}
             >
@@ -364,15 +408,15 @@ export default function PhotoBooth({ onClose }) {
                   key={filter.id}
                   onClick={() => setSelectedFilter(filter)}
                   style={{
-                    padding: 16,
+                    padding: 12,
                     background:
                       selectedFilter?.id === filter.id
                         ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
                         : 'rgba(255,255,255,0.1)',
                     border:
                       selectedFilter?.id === filter.id
-                        ? '2px solid #60a5fa'
-                        : '1px solid rgba(255,255,255,0.2)',
+                        ? '3px solid #60a5fa'
+                        : '2px solid rgba(255,255,255,0.2)',
                     borderRadius: 12,
                     color: '#fff',
                     cursor: 'pointer',
@@ -380,10 +424,51 @@ export default function PhotoBooth({ onClose }) {
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: 8,
+                    transition: 'all 0.2s',
                   }}
                 >
-                  <span style={{ fontSize: 40 }}>{filter.emoji}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>{filter.name}</span>
+                  {/* Preview Image */}
+                  <div style={{
+                    width: '100%',
+                    aspectRatio: '16/9',
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    background: '#000',
+                    position: 'relative',
+                  }}>
+                    {filterPreviews[filter.id] ? (
+                      <img
+                        src={filterPreviews[filter.id]}
+                        alt={filter.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 48,
+                      }}>
+                        {filter.emoji}
+                      </div>
+                    )}
+                    {/* Hidden canvas for preview generation */}
+                    <canvas
+                      ref={el => previewCanvasRefs.current[filter.id] = el}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+
+                  {/* Filter Name */}
+                  <span style={{ fontSize: 14, fontWeight: 600, textAlign: 'center' }}>
+                    {filter.name}
+                  </span>
                 </button>
               ))}
             </div>
