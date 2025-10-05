@@ -52,7 +52,7 @@ export default function MobileNavMenu({
         <div
           style={{
             position: 'fixed',
-            bottom: 200, // FAB bottom (140) + FAB height (56) + spacing (4)
+            bottom: 92, // FAB bottom (24) + FAB height (56) + spacing (12)
             right: 16,
             background: 'linear-gradient(135deg, #1a1f26 0%, #242a33 100%)',
             borderRadius: 16,
@@ -61,7 +61,7 @@ export default function MobileNavMenu({
             overflow: 'hidden',
             zIndex: 9999,
             minWidth: 200,
-            maxHeight: 'calc(100vh - 220px)', // Prevent menu from going off top
+            maxHeight: 'calc(100vh - 112px)', // Prevent menu from going off top
             overflowY: 'auto',
           }}
         >
@@ -210,7 +210,7 @@ export default function MobileNavMenu({
         onClick={() => setMenuOpen(!menuOpen)}
         style={{
           position: 'fixed',
-          bottom: 140, // Increased to clear Safari bottom bar (was 100)
+          bottom: 24, // Lower position for better mobile ergonomics
           right: 16,
           width: 56,
           height: 56,
