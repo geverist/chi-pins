@@ -1551,6 +1551,51 @@ export default function AdminPanel({ open, onClose }) {
                 </div>
               </Card>
 
+              <Card title="Spotify Integration">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Search and play music from Spotify's catalog
+                </p>
+                <div style={{
+                  padding: '12px',
+                  background: 'rgba(30, 215, 96, 0.1)',
+                  border: '1px solid rgba(30, 215, 96, 0.3)',
+                  borderRadius: 8,
+                  marginBottom: 12,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 20 }}>🎧</span>
+                    <span style={{ fontWeight: 600, color: '#1ed760' }}>Spotify Connected</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#9ca3af' }}>
+                    Spotify credentials are configured via Vercel environment variables:
+                    <br/>
+                    <code style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      fontSize: 11,
+                      marginTop: 4,
+                      display: 'inline-block'
+                    }}>
+                      SPOTIFY_CLIENT_ID
+                    </code>
+                    {' and '}
+                    <code style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      fontSize: 11
+                    }}>
+                      SPOTIFY_CLIENT_SECRET
+                    </code>
+                  </div>
+                </div>
+                <p style={{ ...s.muted, margin: '0', fontSize: 11 }}>
+                  The Spotify tab in the Jukebox allows searching millions of songs.
+                  Preview clips (30 seconds) will be saved to your Media Library for playback.
+                </p>
+              </Card>
+
               <Card title="Audio Output Settings">
                 <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
                   Configure how audio plays from the Jukebox
