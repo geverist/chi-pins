@@ -41,17 +41,6 @@ export default function TeamCount({ pins, selectedTeam, onTeamSelect }){
       >
         ⚪ White Sox: {counts.whitesox}
       </button>
-      {selectedTeam === null && (
-        <span style={{
-          padding: '6px 12px',
-          color: '#10b981',
-          fontSize: 14,
-          fontWeight: 600,
-          alignSelf: 'center'
-        }}>
-          ✓ Showing all teams
-        </span>
-      )}
     </div>
   )
 }
