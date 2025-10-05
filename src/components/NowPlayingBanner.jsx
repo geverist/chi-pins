@@ -27,6 +27,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
   // Build the display text - only show active music info
   const parts = [];
+  const separator = ' '.repeat(60) + '•' + ' '.repeat(60); // Much more spacing
 
   if (currentTrack) {
     parts.push(`${isPlaying ? '♫' : '⏸'} Now Playing: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`);
@@ -36,10 +37,10 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
     parts.push(`Next: ${nextInQueue.title}${nextInQueue.artist ? ` - ${nextInQueue.artist}` : ''}`);
   }
 
-  const displayText = parts.join('                    •                    '); // More spacing between items
+  const displayText = parts.join(separator);
 
   // Duplicate text for seamless scrolling - need more copies for smooth loop
-  const scrollContent = Array(20).fill(displayText).join('                    •                    ');
+  const scrollContent = Array(20).fill(displayText).join(separator);
 
   return (
     <div

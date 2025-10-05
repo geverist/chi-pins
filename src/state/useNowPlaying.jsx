@@ -92,8 +92,10 @@ export function NowPlayingProvider({ children }) {
         event: '*',
         schema: 'public',
         table: 'music_queue'
-      }, () => {
-        console.log('[useNowPlaying] Queue changed, reloading...');
+      }, (payload) => {
+        console.log('[useNowPlaying] Queue changed:', payload);
+        console.log('[useNowPlaying] Event type:', payload.eventType);
+        console.log('[useNowPlaying] Reloading queue...');
         loadQueue();
       })
       .subscribe((status) => {
@@ -155,6 +157,7 @@ export function NowPlayingProvider({ children }) {
 
   const loadQueue = async () => {
     try {
+      console.log('[useNowPlaying] Loading queue from database...');
       const { data, error } = await supabase
         .from('music_queue')
         .select('*')
@@ -168,6 +171,11 @@ export function NowPlayingProvider({ children }) {
         artist: item.track_artist,
         album: item.track_album,
       }));
+
+      console.log('[useNowPlaying] Loaded', queueData.length, 'tracks in queue');
+      queueData.forEach((track, i) => {
+        console.log(`  [${i}] ${track.title} - ${track.artist || 'Unknown'}`);
+      });
 
       setQueue(queueData);
 
