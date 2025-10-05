@@ -32,10 +32,12 @@ export default function Jukebox({ onClose }) {
   const [activeTab, setActiveTab] = useState('library'); // 'library' or 'spotify'
   const [spotifyResults, setSpotifyResults] = useState([]);
   const [spotifySearching, setSpotifySearching] = useState(false);
+  const [topTracks, setTopTracks] = useState([]);
+  const [loadingTopTracks, setLoadingTopTracks] = useState(false);
   const { settings: adminSettings } = useAdminSettings();
   const { mediaFiles, loading, addSpotifyTrack } = useMediaFiles();
   const { currentTrack, setCurrentTrack, setLastPlayed, addToQueue } = useNowPlaying();
-  const { searchTracks, isConfigured: isSpotifyConfigured } = useSpotify();
+  const { searchTracks, getTopTracks, isConfigured: isSpotifyConfigured } = useSpotify();
   const searchTimeoutRef = useRef(null);
 
   // Idle timeout - close jukebox and return to map
@@ -60,6 +62,20 @@ export default function Jukebox({ onClose }) {
       track.filename?.toLowerCase().includes(query)
     );
   });
+
+  // Load top tracks when Spotify tab is opened
+  useEffect(() => {
+    if (activeTab === 'spotify' && topTracks.length === 0 && !loadingTopTracks) {
+      setLoadingTopTracks(true);
+      getTopTracks(10).then(tracks => {
+        setTopTracks(tracks);
+        setLoadingTopTracks(false);
+      }).catch(err => {
+        console.error('Failed to load top tracks:', err);
+        setLoadingTopTracks(false);
+      });
+    }
+  }, [activeTab, getTopTracks, topTracks.length, loadingTopTracks]);
 
   // Spotify search with debounce
   useEffect(() => {
@@ -505,10 +521,129 @@ export default function Jukebox({ onClose }) {
           {/* Spotify Tab */}
           {activeTab === 'spotify' && (
             <>
+              {/* Info banner */}
+              <div style={{
+                padding: 12,
+                background: 'rgba(59,130,246,0.1)',
+                border: '1px solid rgba(59,130,246,0.3)',
+                borderRadius: 8,
+                color: '#93c5fd',
+                fontSize: 13,
+                marginBottom: 16,
+                lineHeight: 1.5,
+              }}>
+                ℹ️ <strong>30-Second Previews:</strong> We only show Spotify tracks with available preview clips.
+                Some songs may not appear if Spotify doesn't provide a preview.
+              </div>
+
               {!searchQuery && (
-                <div style={{ textAlign: 'center', padding: 40, color: '#a7b0b8' }}>
-                  Start typing to search Spotify...
-                </div>
+                <>
+                  {loadingTopTracks && (
+                    <div style={{ textAlign: 'center', padding: 40, color: '#a7b0b8' }}>
+                      Loading top tracks...
+                    </div>
+                  )}
+
+                  {!loadingTopTracks && topTracks.length > 0 && (
+                    <div>
+                      <h3 style={{ margin: '0 0 16px', color: '#f3f5f7', fontSize: 18, fontWeight: 600 }}>
+                        🔥 Top 10 Most Played (with previews)
+                      </h3>
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        {topTracks.map((track, index) => (
+                          <div
+                            key={track.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 12,
+                              padding: 12,
+                              background: 'rgba(29,185,84,0.08)',
+                              borderRadius: 10,
+                              border: '1px solid rgba(29,185,84,0.2)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                            onClick={() => handleSelectTrack(track, true)}
+                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(29,185,84,0.15)'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(29,185,84,0.08)'}
+                          >
+                            <div style={{
+                              fontSize: 18,
+                              fontWeight: 700,
+                              color: '#1ed760',
+                              minWidth: 30,
+                              textAlign: 'center',
+                            }}>
+                              #{index + 1}
+                            </div>
+                            {track.albumArt && (
+                              <img
+                                src={track.albumArt}
+                                alt={track.album}
+                                style={{
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 6,
+                                  objectFit: 'cover',
+                                }}
+                              />
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div
+                                style={{
+                                  color: '#f4f6f8',
+                                  fontSize: 14,
+                                  fontWeight: 600,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {track.title}
+                                <span style={{ marginLeft: 6, fontSize: 10, color: '#1ed760' }}>🎧</span>
+                              </div>
+                              <div style={{ color: '#a7b0b8', fontSize: 12 }}>
+                                {track.artist}
+                              </div>
+                            </div>
+                            <div style={{
+                              padding: '6px 12px',
+                              borderRadius: 6,
+                              background: 'rgba(29,185,84,0.2)',
+                              color: '#1ed760',
+                              fontSize: 11,
+                              fontWeight: 600,
+                            }}>
+                              + Add
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{
+                        marginTop: 24,
+                        padding: 16,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid #2a2f37',
+                        borderRadius: 8,
+                        textAlign: 'center',
+                      }}>
+                        <div style={{ color: '#f3f5f7', fontSize: 14, marginBottom: 8 }}>
+                          🔍 Search for more songs
+                        </div>
+                        <div style={{ color: '#a7b0b8', fontSize: 12 }}>
+                          Type in the search box above to find specific tracks
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!loadingTopTracks && topTracks.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: 40, color: '#a7b0b8' }}>
+                      Start typing to search Spotify...
+                    </div>
+                  )}
+                </>
               )}
 
               {spotifySearching && (
@@ -523,8 +658,14 @@ export default function Jukebox({ onClose }) {
                 </div>
               )}
 
+              {searchQuery && !spotifySearching && spotifyResults.length > 0 && spotifyResults.filter(t => t.previewUrl).length === 0 && (
+                <div style={{ textAlign: 'center', padding: 40, color: '#a7b0b8' }}>
+                  No playable tracks found. Spotify only provides 30-second previews for some songs.
+                </div>
+              )}
+
               <div style={{ display: 'grid', gap: 8 }}>
-                {spotifyResults.map(track => (
+                {spotifyResults.filter(track => track.previewUrl).map(track => (
                   <div
                     key={track.id}
                     style={{
@@ -539,6 +680,8 @@ export default function Jukebox({ onClose }) {
                       transition: 'all 0.2s',
                     }}
                     onClick={() => handleSelectTrack(track, true)}
+                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(29,185,84,0.15)'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(29,185,84,0.08)'}
                   >
                     {track.albumArt && (
                       <img
@@ -582,7 +725,7 @@ export default function Jukebox({ onClose }) {
                       fontSize: 11,
                       fontWeight: 600,
                     }}>
-                      {track.previewUrl ? '+ Add' : '⚠️ No Preview'}
+                      + Add
                     </div>
                   </div>
                 ))}

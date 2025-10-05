@@ -36,10 +36,10 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
     parts.push(`Next: ${nextInQueue.title}${nextInQueue.artist ? ` - ${nextInQueue.artist}` : ''}`);
   }
 
-  const displayText = parts.join('        •        ');
+  const displayText = parts.join('                    •                    '); // More spacing between items
 
   // Duplicate text for seamless scrolling - need more copies for smooth loop
-  const scrollContent = Array(20).fill(displayText).join('        •        ');
+  const scrollContent = Array(20).fill(displayText).join('                    •                    ');
 
   return (
     <div

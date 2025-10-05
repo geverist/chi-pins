@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export default function ShareConfirmModal({
   open,
   onCancel,
@@ -6,9 +8,14 @@ export default function ShareConfirmModal({
   setShareToFb,
   draft,
   form,
+  setForm,
   mapMode,
   facebookShareEnabled = false
 }) {
+  const [allowMessages, setAllowMessages] = useState(false);
+  const [contactMethod, setContactMethod] = useState(''); // 'email' or 'phone'
+  const [contactValue, setContactValue] = useState('');
+
   if (!open) return null
   return (
     <div
@@ -64,6 +71,138 @@ export default function ShareConfirmModal({
             <span>Share pin card image to Chicago Mike's Facebook page</span>
           </label>
         )}
+
+        {/* Anonymous Messaging Opt-in */}
+        <div style={{
+          marginTop: 12,
+          padding: 12,
+          background: '#171a21',
+          border: '1px solid #2a2f37',
+          borderRadius: 8,
+        }}>
+          <label style={{display:'flex', gap:10, alignItems:'start', cursor:'pointer'}}>
+            <input
+              type="checkbox"
+              checked={allowMessages}
+              onChange={(e)=> {
+                const checked = e.target.checked;
+                setAllowMessages(checked);
+                if (!checked) {
+                  setContactMethod('');
+                  setContactValue('');
+                  // Clear anonymous messaging from form immediately
+                  setForm(f => ({
+                    ...f,
+                    allowAnonymousMessages: false,
+                    anonymousContactMethod: null,
+                    anonymousContactValue: null,
+                  }));
+                }
+              }}
+              style={{ marginTop:4 }}
+            />
+            <div style={{ flex: 1 }}>
+              <span style={{ fontWeight: 600 }}>💬 Allow visitors to message me anonymously (optional)</span>
+              <div style={{ fontSize: 12, color: '#a7b0b8', marginTop: 4 }}>
+                Other users can send you anonymous messages about this pin
+              </div>
+            </div>
+          </label>
+
+          {allowMessages && (
+            <div style={{ marginTop: 12, marginLeft: 28 }}>
+              <div style={{ fontSize: 13, marginBottom: 8, color: '#c8ccd2' }}>
+                How should we contact you?
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="contactMethod"
+                    value="email"
+                    checked={contactMethod === 'email'}
+                    onChange={(e) => {
+                      setContactMethod(e.target.value);
+                      setContactValue('');
+                    }}
+                  />
+                  <span>Email</span>
+                </label>
+                <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="radio"
+                    name="contactMethod"
+                    value="phone"
+                    checked={contactMethod === 'phone'}
+                    onChange={(e) => {
+                      setContactMethod(e.target.value);
+                      setContactValue('');
+                    }}
+                  />
+                  <span>Text/SMS</span>
+                </label>
+              </div>
+              {contactMethod === 'email' && (
+                <input
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={contactValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setContactValue(value);
+                    // Update form immediately with contact info
+                    if (value.trim()) {
+                      setForm(f => ({
+                        ...f,
+                        allowAnonymousMessages: true,
+                        anonymousContactMethod: 'email',
+                        anonymousContactValue: value.trim(),
+                      }));
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    background: '#11141a',
+                    border: '1px solid #2a2f37',
+                    borderRadius: 6,
+                    color: '#f3f5f7',
+                    fontSize: 14,
+                  }}
+                />
+              )}
+              {contactMethod === 'phone' && (
+                <input
+                  type="tel"
+                  placeholder="(312) 555-1234"
+                  value={contactValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setContactValue(value);
+                    // Update form immediately with contact info
+                    if (value.trim()) {
+                      setForm(f => ({
+                        ...f,
+                        allowAnonymousMessages: true,
+                        anonymousContactMethod: 'phone',
+                        anonymousContactValue: value.trim(),
+                      }));
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    background: '#11141a',
+                    border: '1px solid #2a2f37',
+                    borderRadius: 6,
+                    color: '#f3f5f7',
+                    fontSize: 14,
+                  }}
+                />
+              )}
+            </div>
+          )}
+        </div>
 
         <div style={{
           marginTop:8, padding:'8px 10px', borderRadius:8,

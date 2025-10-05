@@ -46,6 +46,7 @@ const DEFAULTS = {
   hotdogTimeLimit: 90,         // Time limit in seconds to assemble the hot dog
   hotdogPerfectOrderBonus: 1000, // Bonus points for perfect order
   hotdogKetchupPenalty: -500,  // Penalty for using ketchup
+  hotdogRepositionSpeed: 5,    // Seconds between ingredient repositioning
 
   // Security PINs
   adminPanelPin: '1111',      // 4-digit PIN for admin panel access

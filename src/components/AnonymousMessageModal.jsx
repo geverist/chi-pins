@@ -39,7 +39,7 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
     }
 
     // Check if recipient has opted in
-    if (!recipientPin.loyalty_opt_in || !recipientPin.loyalty_phone) {
+    if (!recipientPin.allow_anonymous_messages || (!recipientPin.loyalty_phone && !recipientPin.loyalty_email)) {
       setError('This user has not opted in to receive messages');
       return;
     }
@@ -49,8 +49,10 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
       await onSend({
         senderPhone: normalizedPhone,
         recipientPhone: recipientPin.loyalty_phone,
+        recipientEmail: recipientPin.loyalty_email,
         message: message.trim(),
         pinId: recipientPin.id,
+        pinSlug: recipientPin.slug,
       });
       onClose();
     } catch (err) {
@@ -61,7 +63,7 @@ export default function AnonymousMessageModal({ recipientPin, onClose, onSend })
   };
 
   // Check if recipient can receive messages
-  const recipientCanReceive = recipientPin.loyalty_opt_in && recipientPin.loyalty_phone;
+  const recipientCanReceive = recipientPin.allow_anonymous_messages && (recipientPin.loyalty_phone || recipientPin.loyalty_email);
 
   return (
     <div

@@ -243,10 +243,20 @@ export default function SavedPins({
                     <div style={{ marginTop: 6 }}>{p.note}</div>
                   ) : null}
 
-                  {onMessage && (
+                  {/* Debug: show what values we have */}
+                  {exploring && process.env.NODE_ENV === 'development' && (
+                    <div style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
+                      [Debug] allow_msg: {String(p.allow_anonymous_messages)},
+                      phone: {p.loyalty_phone ? 'yes' : 'no'},
+                      email: {p.loyalty_email ? 'yes' : 'no'}
+                    </div>
+                  )}
+
+                  {onMessage && p.allow_anonymous_messages && (p.loyalty_phone || p.loyalty_email) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log('Anonymous message button clicked for pin:', p.slug);
                         onMessage(p);
                       }}
                       style={{

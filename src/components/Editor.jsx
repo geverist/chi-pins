@@ -1,8 +1,6 @@
 // src/components/Editor.jsx
-import { useState, useRef, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { v4 as uuidv4 } from 'uuid'; // s Requires npm install uuid@9.0.1
-import { useBackgroundImages } from '../hooks/useBackgroundImages';
+import { useState } from 'react';
+import PhotoCaptureModal from './PhotoCaptureModal';
 
 export default function Editor({
   mapMode,
@@ -19,116 +17,41 @@ export default function Editor({
   const digitsOnly = String(form.loyaltyPhone || '').replace(/\D+/g, '');
   const phoneLooksValid = digitsOnly.length >= 10 && digitsOnly.length <= 15;
 
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [cameraError, setCameraError] = useState(null);
-  const [isCameraReady, setIsCameraReady] = useState(false);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
-  // Background images
-  const { backgrounds } = useBackgroundImages();
-  const [selectedBg, setSelectedBg] = useState(null);
+  // Calculate total characters for Vestaboard
+  // Vestaboard is 22 chars wide x 6 rows = 132 chars total
+  // Layout: Line 1: name (or slug), Line 2+: note, optional: neighborhood, team (if room)
+  const VESTABOARD_WIDTH = 22;
+  const VESTABOARD_ROWS = 6;
+  const VESTABOARD_LIMIT = VESTABOARD_WIDTH * VESTABOARD_ROWS; // 132
 
-  // Start camera on user interaction
-  const startCamera = async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setCameraError('Camera not supported in this browser');
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play().catch((e) => setCameraError(`Failed to play video: ${e.message}`));
-          setIsCameraReady(true);
-        };
-        streamRef.current = stream;
-      } else {
-        setCameraError('Video element not available');
-        stream.getTracks().forEach(track => track.stop());
-      }
-    } catch (e) {
-      setCameraError('Camera access failed. Please allow permissions or try again.');
-      console.error('Camera error:', e);
-    }
-  };
+  const nameOrSlug = (form.name || slug || '').substring(0, VESTABOARD_WIDTH);
+  const nameLength = nameOrSlug.length;
+  const noteLength = (form.note || '').length;
+  const neighborhoodLength = (form.neighborhood || '').length;
+  const teamLength = form.team ? form.team.length : 0;
 
-  // Stop camera
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsCameraReady(false);
-    setPhotoPreview(null);
-  };
+  // Calculate how many rows each part needs (wraps at 22 chars per line)
+  const nameRows = nameLength > 0 ? 1 : 0;
+  const noteRows = noteLength > 0 ? Math.ceil(noteLength / VESTABOARD_WIDTH) : 0;
+  const neighborhoodRows = neighborhoodLength > 0 ? Math.ceil(neighborhoodLength / VESTABOARD_WIDTH) : 0;
+  const teamRows = teamLength > 0 ? 1 : 0;
 
-  // Capture photo and upload to Supabase
-  const capturePhoto = async () => {
-    if (!videoRef.current || !canvasRef.current || !isCameraReady) {
-      setCameraError('Camera not ready. Please try again.');
-      return;
-    }
-    try {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+  // Calculate total rows needed
+  let usedRows = nameRows + noteRows;
+  const neighborhoodFits = (usedRows + neighborhoodRows) <= VESTABOARD_ROWS;
+  if (neighborhoodFits && neighborhoodLength > 0) {
+    usedRows += neighborhoodRows;
+  }
+  const teamFits = (usedRows + teamRows) <= VESTABOARD_ROWS && teamLength > 0;
+  if (teamFits) {
+    usedRows += teamRows;
+  }
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      // If a background is selected, composite it
-      if (selectedBg) {
-        // Load background image
-        const bgImage = new Image();
-        bgImage.crossOrigin = 'anonymous';
-
-        await new Promise((resolve, reject) => {
-          bgImage.onload = resolve;
-          bgImage.onerror = reject;
-          bgImage.src = selectedBg.url;
-        });
-
-        // Draw background first (scaled to canvas size)
-        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-
-        // Draw video on top with some transparency or use CSS blend mode
-        ctx.globalAlpha = 0.7; // Make video slightly transparent
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        ctx.globalAlpha = 1.0;
-      } else {
-        // No background - just draw the video
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      }
-
-      const dataUrl = canvas.toDataURL('image/jpeg');
-      setPhotoPreview(dataUrl);
-
-      // Upload to Supabase
-      const fileName = `pin-${slug || (typeof uuidv4 === 'function' ? uuidv4() : Date.now())}.jpg`;
-      const blob = await (await fetch(dataUrl)).blob();
-      const { error } = await supabase.storage
-        .from('pin-photos')
-        .upload(fileName, blob, { contentType: 'image/jpeg' });
-      if (error) throw error;
-      const publicUrl = supabase.storage.from('pin-photos').getPublicUrl(fileName).data.publicUrl;
-      update({ photoUrl: publicUrl });
-      stopCamera();
-    } catch (e) {
-      setCameraError(`Failed to upload photo: ${e.message}`);
-      console.error('Photo upload error:', e);
-    }
-  };
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => stopCamera();
-  }, []);
+  const totalChars = nameLength + noteLength + (neighborhoodFits ? neighborhoodLength : 0) + (teamFits ? teamLength : 0);
+  const charsRemaining = VESTABOARD_LIMIT - totalChars;
+  const isOverLimit = usedRows > VESTABOARD_ROWS;
 
   const commonSlugBadge = (
     <div className="slug-badge" title="This is the permanent ID for your pin" style={{
@@ -145,9 +68,26 @@ export default function Editor({
     </div>
   );
 
+  const CharCounter = (
+    <div style={{
+      fontSize: 13,
+      color: isOverLimit ? '#f87171' : usedRows > 5 ? '#fbbf24' : '#9ca3af',
+      fontWeight: isOverLimit ? 600 : 400,
+      whiteSpace: 'nowrap',
+    }}>
+      {isOverLimit ? '⚠️ ' : ''}
+      {usedRows}/{VESTABOARD_ROWS} rows
+      {neighborhoodFits && neighborhoodLength > 0 ? ' +area' : ''}
+      {teamFits && form.team ? ' +team' : ''}
+      {isOverLimit && ' (too long)'}
+    </div>
+  );
+
   const ActionButtons = (
     <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
-      <button onClick={onOpenShare}>Add My Pin</button>
+      <button onClick={onOpenShare} disabled={isOverLimit} style={{ opacity: isOverLimit ? 0.5 : 1, cursor: isOverLimit ? 'not-allowed' : 'pointer' }}>
+        Add My Pin
+      </button>
       <button className="cancel" onClick={onCancel}>Cancel</button>
     </div>
   );
@@ -160,88 +100,31 @@ export default function Editor({
       alignItems: 'center',
       gap: 10,
     }}>
-      <button onClick={startCamera} disabled={isCameraReady || !!photoPreview} aria-label="Start camera">📸 Start Camera</button>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <button
+          onClick={() => setPhotoModalOpen(true)}
+          disabled={!!form.photoUrl}
+          aria-label="Add photo"
+          title={form.photoUrl ? 'Photo attached' : 'Add photo'}
+          style={{
+            background: !form.photoUrl ? '#0ea5e9' : '#22c55e',
+            padding: '8px 12px',
+            fontSize: 20,
+            minWidth: 'auto',
+            border: 'none',
+            borderRadius: 6,
+            cursor: form.photoUrl ? 'default' : 'pointer',
+          }}
+        >
+          {form.photoUrl ? '✓' : '📸'}
+        </button>
+      </div>
       {commonSlugBadge}
       {ActionButtons}
     </div>
   );
 
-  const CameraSection = photoBackgroundsEnabled && (isCameraReady || photoPreview) ? (
-    <div style={{
-      gridColumn: '1 / -1',
-      border: '1px solid #2a2f37',
-      borderRadius: 12,
-      padding: 12,
-      background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02))',
-      display: 'grid',
-      gap: 12,
-    }}>
-      {/* Background selector */}
-      {isCameraReady && !photoPreview && backgrounds.length > 0 && (
-        <div>
-          <div style={{ marginBottom: 8, fontSize: 14, fontWeight: 500 }}>Select Background (optional)</div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
-            <button
-              onClick={() => setSelectedBg(null)}
-              style={{
-                minWidth: 80,
-                height: 60,
-                background: !selectedBg ? '#0ea5e9' : '#1a1d24',
-                border: '2px solid ' + (!selectedBg ? '#0ea5e9' : '#2a2f37'),
-                borderRadius: 8,
-                fontSize: 12,
-              }}
-            >
-              None
-            </button>
-            {backgrounds.map((bg) => (
-              <button
-                key={bg.id}
-                onClick={() => setSelectedBg(bg)}
-                style={{
-                  minWidth: 80,
-                  height: 60,
-                  padding: 0,
-                  background: `url(${bg.thumbnail_url || bg.url}) center/cover`,
-                  border: '2px solid ' + (selectedBg?.id === bg.id ? '#0ea5e9' : '#2a2f37'),
-                  borderRadius: 8,
-                }}
-                title={bg.name}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Video preview */}
-      {isCameraReady && !photoPreview && (
-        <div style={{ position: 'relative' }}>
-          <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', borderRadius: 8 }} />
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
-          <div style={{ marginTop: 8, display: 'flex', gap: 8, justifyContent: 'center' }}>
-            <button onClick={capturePhoto} style={{ background: '#0ea5e9' }}>📸 Take Picture</button>
-            <button onClick={stopCamera} className="cancel">Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {/* Photo preview */}
-      {photoPreview && (
-        <div>
-          <img src={photoPreview} alt="Captured photo" style={{ width: '100%', borderRadius: 8 }} />
-          <div style={{ marginTop: 8, display: 'flex', gap: 8, justifyContent: 'center' }}>
-            <button onClick={() => { setPhotoPreview(null); update({ photoUrl: null }); startCamera(); }}>
-              🔄 Retake
-            </button>
-          </div>
-        </div>
-      )}
-
-      {cameraError && (
-        <div style={{ color: '#ef4444', fontSize: 14 }}>{cameraError}</div>
-      )}
-    </div>
-  ) : null;
+  // Camera is now in a modal, no inline camera section needed
 
   const InlineFieldsChicago = (
     <div style={{
@@ -258,7 +141,7 @@ export default function Editor({
           {hotdogSuggestions.map((s) => <option key={s} value={s} />)}
         </datalist>
       </div>
-      <input placeholder="Leave a note for other guests (optional, 280 chars)" maxLength={280} value={form.note || ''} onChange={(e) => update({ note: e.target.value })} aria-label="Note" />
+      <input placeholder="Leave a note for other guests (optional)" value={form.note || ''} onChange={(e) => update({ note: e.target.value })} aria-label="Note" />
     </div>
   );
 
@@ -276,7 +159,7 @@ export default function Editor({
           {hotdogSuggestions.map((s) => <option key={s} value={s} />)}
         </datalist>
       </div>
-      <input placeholder="Leave a note for other guests (optional, 280 chars)" maxLength={280} value={form.note || ''} onChange={(e) => update({ note: e.target.value })} aria-label="Note" />
+      <input placeholder="Leave a note for other guests (optional)" value={form.note || ''} onChange={(e) => update({ note: e.target.value })} aria-label="Note" />
     </div>
   );
 
@@ -311,6 +194,44 @@ export default function Editor({
 
   if (mapMode === 'chicago') {
     return (
+      <>
+        <div className="form" style={{
+          display: 'grid',
+          gap: 10,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))',
+          overflow: 'visible',
+          paddingTop: 2,
+        }}>
+          {IdAndActionsRow}
+          <div style={{
+            gridColumn: '1 / -1',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            alignItems: 'center',
+            gap: 10,
+          }}>
+            {['cubs', 'whitesox'].map((t) => (
+              <button key={t} onClick={() => update({ team: form.team === t ? null : t })} style={{ background: form.team === t ? '#0ea5e9' : 'transparent' }}>
+                {t.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          {InlineFieldsChicago}
+          {LoyaltySection}
+        </div>
+
+        <PhotoCaptureModal
+          open={photoModalOpen}
+          onClose={() => setPhotoModalOpen(false)}
+          onPhotoTaken={(photoUrl) => update({ photoUrl })}
+          slug={slug}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
       <div className="form" style={{
         display: 'grid',
         gap: 10,
@@ -319,38 +240,16 @@ export default function Editor({
         paddingTop: 2,
       }}>
         {IdAndActionsRow}
-        {CameraSection}
-        <div style={{
-          gridColumn: '1 / -1',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          alignItems: 'center',
-          gap: 10,
-        }}>
-          {['cubs', 'whitesox', 'other'].map((t) => (
-            <button key={t} onClick={() => update({ team: t })} style={{ background: form.team === t ? '#0ea5e9' : 'transparent' }}>
-              {t.toUpperCase()}
-            </button>
-          ))}
-        </div>
-        {InlineFieldsChicago}
+        {InlineFieldsGlobal}
         {LoyaltySection}
       </div>
-    );
-  }
 
-  return (
-    <div className="form" style={{
-      display: 'grid',
-      gap: 10,
-      gridTemplateColumns: 'repeat(auto-fit, minmax(220px,1fr))',
-      overflow: 'visible',
-      paddingTop: 2,
-    }}>
-      {IdAndActionsRow}
-      {CameraSection}
-      {InlineFieldsGlobal}
-      {LoyaltySection}
-    </div>
+      <PhotoCaptureModal
+        open={photoModalOpen}
+        onClose={() => setPhotoModalOpen(false)}
+        onPhotoTaken={(photoUrl) => update({ photoUrl })}
+        slug={slug}
+      />
+    </>
   );
 }
