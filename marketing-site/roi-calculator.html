@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROI Calculator - EngageOS™</title>
+    <meta name="description" content="Calculate your potential ROI with EngageOS. See how much revenue you could generate in Year 1.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .calculator-container {
+            max-width: 1000px;
+            margin: 60px auto;
+            padding: 0 24px;
+        }
+
+        .calculator-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .calculator-header h1 {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .calculator-header p {
+            font-size: 20px;
+            color: var(--gray);
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .calculator-inputs {
+            background: var(--light-gray);
+            padding: 40px;
+            border-radius: 20px;
+        }
+
+        .vertical-selector {
+            margin-bottom: 32px;
+        }
+
+        .vertical-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .vertical-selector select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .vertical-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .input-group {
+            margin-bottom: 28px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .input-hint {
+            font-size: 12px;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+
+        .calculator-results {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            padding: 40px;
+            border-radius: 20px;
+            color: white;
+            position: sticky;
+            top: 100px;
+        }
+
+        .results-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .result-item {
+            margin-bottom: 28px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .result-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .result-subtext {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .roi-highlight {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .roi-highlight .roi-number {
+            font-size: 56px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .roi-highlight .roi-label {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 60px;
+            padding: 60px 40px;
+            background: var(--light-gray);
+            border-radius: 20px;
+        }
+
+        .cta-section h2 {
+            font-size: 36px;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            color: var(--gray);
+            margin-bottom: 32px;
+        }
+
+        .assumptions {
+            margin-top: 60px;
+            padding: 40px;
+            background: var(--light-gray);
+            border-radius: 20px;
+        }
+
+        .assumptions h3 {
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+
+        .assumptions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .assumption-item {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .assumption-item strong {
+            color: var(--dark);
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calculator-results {
+                position: static;
+            }
+
+            .assumptions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container nav-container">
+            <div class="logo">
+                <a href="index.html"><span class="logo-text">EngageOS™</span></a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html#verticals">Industries</a></li>
+                <li><a href="index.html#how-it-works">How It Works</a></li>
+                <li><a href="index.html#pricing">Pricing</a></li>
+                <li><a href="index.html#demo" class="btn btn-primary-small">Book Demo</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="calculator-container">
+        <div class="calculator-header">
+            <h1>ROI Calculator</h1>
+            <p>See how much revenue EngageOS could generate for your business in Year 1</p>
+        </div>
+
+        <div class="calculator-grid">
+            <!-- Inputs -->
+            <div class="calculator-inputs">
+                <div class="vertical-selector">
+                    <label>Select Your Industry</label>
+                    <select id="vertical">
+                        <option value="restaurant">Restaurant & QSR</option>
+                        <option value="medspa">Med Spa & Wellness</option>
+                        <option value="banking">Bank / Credit Union</option>
+                        <option value="healthcare">Healthcare / Medical</option>
+                        <option value="auto">Auto Dealership</option>
+                        <option value="retail">Retail & Fashion</option>
+                        <option value="fitness">Fitness Center / Gym</option>
+                        <option value="hotel">Hotel / Resort</option>
+                        <option value="events">Events & Weddings</option>
+                    </select>
+                </div>
+
+                <div id="dynamicInputs">
+                    <!-- Dynamic inputs will be injected here based on vertical -->
+                </div>
+
+                <div class="input-group" style="margin-top: 32px; padding: 20px; background: #f1f5f9; border-radius: 12px; border: 2px solid #6366f1;">
+                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 8px;">
+                        <input type="checkbox" id="aiVoiceEnabled" style="width: auto; transform: scale(1.4);" onchange="calculate()">
+                        <span style="font-size: 16px; font-weight: 700; color: #6366f1;">🆕 Enable AI Voice Agent (+$149/month)</span>
+                    </label>
+                    <div class="input-hint" style="margin-left: 32px;">
+                        Conversational ordering, 18% higher AOV, 72% faster ordering, 45 languages, accessibility
+                    </div>
+                </div>
+
+                <button onclick="calculate()" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                    Calculate My ROI
+                </button>
+            </div>
+
+            <!-- Results -->
+            <div class="calculator-results">
+                <div class="results-title">Your Projected Results</div>
+
+                <div class="result-item">
+                    <div class="result-label">Annual Revenue Impact</div>
+                    <div class="result-value" id="revenueImpact">$0</div>
+                    <div class="result-subtext">From upsells, cost savings, and new customers</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">EngageOS Investment</div>
+                    <div class="result-value" id="investment">$0</div>
+                    <div class="result-subtext" id="investmentBreakdown">Hardware + software + commission</div>
+                </div>
+
+                <div class="result-item">
+                    <div class="result-label">Net Annual Gain</div>
+                    <div class="result-value" id="netGain">$0</div>
+                    <div class="result-subtext">Revenue - investment</div>
+                </div>
+
+                <div class="roi-highlight">
+                    <div class="roi-number" id="roiPercent">0%</div>
+                    <div class="roi-label">First-Year ROI</div>
+                </div>
+
+                <div style="margin-top: 24px; text-align: center; font-size: 14px; opacity: 0.9;">
+                    Payback Period: <strong id="payback">0 months</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+            <h2>Ready to See This ROI in Action?</h2>
+            <p>Book a 20-minute demo and we'll show you exactly how EngageOS works for your business.</p>
+            <a href="index.html#demo" class="btn btn-primary btn-large">Book Your Demo</a>
+        </div>
+
+        <!-- Assumptions -->
+        <div class="assumptions" id="assumptions">
+            <h3>Calculation Assumptions</h3>
+            <div class="assumptions-grid" id="assumptionsList">
+                <!-- Assumptions will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom" style="border-top: none; padding-top: 0;">
+                <p>&copy; 2025 EngageOS™. All rights reserved.</p>
+                <p><a href="index.html" style="color: var(--primary);">← Back to Home</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Vertical-specific configurations
+        const verticalConfigs = {
+            restaurant: {
+                inputs: [
+                    { id: 'locations', label: 'Number of Locations', type: 'number', defaultValue: 10, hint: 'How many restaurant locations?' },
+                    { id: 'dailyCustomers', label: 'Daily Customers (per location)', type: 'number', defaultValue: 250, hint: 'Average customers per day' },
+                    { id: 'avgTicket', label: 'Average Ticket Size', type: 'number', defaultValue: 24, hint: 'Current average order value' },
+                    { id: 'hostLaborCost', label: 'Monthly Host Labor Cost (per location)', type: 'number', defaultValue: 3000, hint: 'What do you pay host staff?' }
+                ],
+                calculate: (inputs) => {
+                    const locations = inputs.locations;
+                    const dailyCustomers = inputs.dailyCustomers;
+                    const avgTicket = inputs.avgTicket;
+                    const hostLaborCost = inputs.hostLaborCost;
+
+                    // AI Voice enabled check
+                    const aiVoiceEnabled = document.getElementById('aiVoiceEnabled')?.checked || false;
+                    const aiVoiceMultiplier = aiVoiceEnabled ? 1.18 : 1.0; // 18% AOV increase
+                    const aiVoiceFee = aiVoiceEnabled ? 149 : 0;
+
+                    // Labor savings
+                    const monthlyLaborSavings = (hostLaborCost - 349 - aiVoiceFee) * locations;
+                    const annualLaborSavings = monthlyLaborSavings * 12;
+
+                    // Walkout reduction
+                    const walkoutRate = 0.18;
+                    const walkoutReduction = aiVoiceEnabled ? 0.42 : 0.35; // AI Voice improves by 7 points
+                    const customersPerMonth = dailyCustomers * 30 * locations;
+                    const walksOutsSaved = customersPerMonth * walkoutRate * walkoutReduction;
+                    const walkoutRevenue = walksOutsSaved * avgTicket * 12;
+
+                    // Upsell revenue
+                    const upsellRate = aiVoiceEnabled ? 0.28 : 0.22; // AI Voice increases conversion 22% → 28%
+                    const avgUpsell = 8.50 * aiVoiceMultiplier; // Higher AOV with AI Voice
+                    const monthlyUpsells = dailyCustomers * 30 * upsellRate * locations;
+                    const annualUpsellRevenue = monthlyUpsells * avgUpsell * 12;
+
+                    const totalRevenue = annualLaborSavings + walkoutRevenue + annualUpsellRevenue;
+
+                    // Investment
+                    const hardware = 2700 * locations;
+                    const software = (349 + aiVoiceFee) * locations * 12;
+                    const totalInvestment = hardware + software;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    const assumptions = [
+                        `Host staff replacement saves $${(hostLaborCost - 349 - aiVoiceFee).toLocaleString()}/month per location`,
+                        `${walkoutReduction * 100}% reduction in customer walkouts during peak hours${aiVoiceEnabled ? ' (AI Voice: 72% faster ordering)' : ''}`,
+                        `${(upsellRate * 100).toFixed(0)}% of customers accept upsell prompts (avg $${avgUpsell.toFixed(2)})${aiVoiceEnabled ? ' — AI Voice conversational upsells' : ''}`,
+                        `Software: $${349 + aiVoiceFee}/month per location${aiVoiceEnabled ? ' (includes AI Voice)' : ''}`,
+                        `Hardware: $2,700 one-time per location`,
+                        `Email capture builds marketing list for future campaigns`
+                    ];
+
+                    if (aiVoiceEnabled) {
+                        assumptions.push(`🆕 AI Voice: 18% higher AOV, 45 languages, full accessibility (ADA-compliant)`);
+                    }
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: assumptions
+                    };
+                }
+            },
+
+            medspa: {
+                inputs: [
+                    { id: 'locations', label: 'Number of Locations', type: 'number', defaultValue: 1, hint: 'How many med spa locations?' },
+                    { id: 'dailyAppointments', label: 'Daily Appointments', type: 'number', defaultValue: 80, hint: 'Average appointments per day' },
+                    { id: 'avgTreatment', label: 'Average Treatment Cost', type: 'number', defaultValue: 450, hint: 'Current average treatment price' },
+                    { id: 'membershipPrice', label: 'Monthly Membership Price', type: 'number', defaultValue: 199, hint: 'If you have a membership program' }
+                ],
+                calculate: (inputs) => {
+                    const locations = inputs.locations;
+                    const dailyAppointments = inputs.dailyAppointments;
+                    const avgTreatment = inputs.avgTreatment;
+                    const membershipPrice = inputs.membershipPrice;
+
+                    // Upsell revenue
+                    const kioskEngagement = 0.30;
+                    const upsellInterest = 0.42;
+                    const upsellConversion = 0.60;
+                    const avgUpsell = 400;
+                    const monthlyAppointments = dailyAppointments * 30;
+                    const monthlyUpsells = monthlyAppointments * kioskEngagement * upsellInterest * upsellConversion;
+                    const monthlyUpsellRevenue = monthlyUpsells * avgUpsell;
+                    const annualUpsellRevenue = monthlyUpsellRevenue * 12 * locations;
+
+                    // Commission paid to EngageOS
+                    const commissionRate = 0.05;
+                    const annualCommission = annualUpsellRevenue * commissionRate;
+
+                    // Membership growth
+                    const membershipConversions = monthlyAppointments * kioskEngagement * 0.15;
+                    const annualMembershipRevenue = membershipConversions * membershipPrice * 12 * locations;
+
+                    // Social proof (new clients from Instagram shares)
+                    const photosShared = 40 * 12; // per year
+                    const avgFollowers = 500;
+                    const bookingRate = 0.02;
+                    const consultationConversion = 0.65;
+                    const newClients = photosShared * avgFollowers * bookingRate * consultationConversion;
+                    const newClientRevenue = newClients * avgTreatment * locations;
+
+                    const totalRevenue = (annualUpsellRevenue - annualCommission) + annualMembershipRevenue + newClientRevenue;
+
+                    // Investment
+                    const hardware = 2700 * locations;
+                    const software = 799 * locations * 12;
+                    const totalInvestment = hardware + software + annualCommission;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `30% of waiting clients engage with kiosk`,
+                            `42% express interest in add-on treatments`,
+                            `60% of interests convert to booked treatments (avg add-on: $${avgUpsell})`,
+                            `15% of kiosk users enroll in membership program`,
+                            `5% commission on treatment upsells attributed to kiosk`,
+                            `Photo booth generates Instagram UGC → new consultations`
+                        ]
+                    };
+                }
+            },
+
+            banking: {
+                inputs: [
+                    { id: 'branches', label: 'Number of Branches', type: 'number', defaultValue: 10, hint: 'How many branch locations?' },
+                    { id: 'dailyVisitors', label: 'Daily Visitors (per branch)', type: 'number', defaultValue: 150, hint: 'Average daily foot traffic' },
+                    { id: 'avgProductRevenue', label: 'Avg Monthly Revenue per Product', type: 'number', defaultValue: 75, hint: 'Savings account, credit card, etc.' }
+                ],
+                calculate: (inputs) => {
+                    const branches = inputs.branches;
+                    const dailyVisitors = inputs.dailyVisitors;
+                    const avgProductRevenue = inputs.avgProductRevenue;
+
+                    // Cross-sell increase
+                    const baselineCrossSell = 0.18;
+                    const newCrossSell = 0.30;
+                    const increase = newCrossSell - baselineCrossSell;
+                    const monthlyVisits = dailyVisitors * 30 * branches;
+                    const newConversations = monthlyVisits * increase;
+                    const conversionRate = 0.08;
+                    const newProducts = newConversations * conversionRate;
+                    const annualProductRevenue = newProducts * avgProductRevenue * 12;
+
+                    // Digital adoption savings
+                    const digitalShift = 0.22;
+                    const transactionsSaved = monthlyVisits * digitalShift;
+                    const savingsPerTransaction = 4.25;
+                    const annualSavings = transactionsSaved * savingsPerTransaction * 12;
+
+                    const totalRevenue = annualProductRevenue + annualSavings;
+
+                    // Investment
+                    const hardware = 2700 * branches;
+                    const software = 549 * branches * 12;
+                    const totalInvestment = hardware + software;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `Cross-sell rate increases from 18% → 30% (12-point lift)`,
+                            `8% of cross-sell conversations convert to new products`,
+                            `22% of branch visitors shift to digital banking`,
+                            `Cost savings: $${savingsPerTransaction} per transaction (branch vs digital)`,
+                            `Financial literacy games improve product understanding`,
+                            `Email capture builds marketing list for future campaigns`
+                        ]
+                    };
+                }
+            },
+
+            healthcare: {
+                inputs: [
+                    { id: 'locations', label: 'Number of Locations', type: 'number', defaultValue: 3, hint: 'Clinics, offices, or waiting rooms' },
+                    { id: 'dailyPatients', label: 'Daily Patients (per location)', type: 'number', defaultValue: 120, hint: 'Average patient visits per day' },
+                    { id: 'avgWaitTime', label: 'Average Wait Time (minutes)', type: 'number', defaultValue: 32, hint: 'Current average wait time' }
+                ],
+                calculate: (inputs) => {
+                    const locations = inputs.locations;
+                    const dailyPatients = inputs.dailyPatients;
+
+                    // HCAHPS improvement → Medicare reimbursement increase
+                    const hcahpsPoints = 8;
+                    const reimbursementIncrease = 0.015; // 1.5% increase
+                    const avgAnnualReimbursement = 2500000; // per location
+                    const reimbursementGain = avgAnnualReimbursement * reimbursementIncrease * locations;
+
+                    // Patient portal registration increase
+                    const baselinePortal = 0.40;
+                    const newPortal = 0.52;
+                    const portalIncrease = newPortal - baselinePortal;
+                    const monthlyPatients = dailyPatients * 22 * locations; // 22 working days
+                    const newRegistrations = monthlyPatients * portalIncrease;
+                    const costSavingsPerPortalUser = 180; // annually (fewer phone calls, better engagement)
+                    const annualPortalSavings = newRegistrations * costSavingsPerPortalUser * 12;
+
+                    const totalRevenue = reimbursementGain + annualPortalSavings;
+
+                    // Investment
+                    const hardware = 2700 * locations;
+                    const software = 699 * locations * 12;
+                    const totalInvestment = hardware + software;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `8-point HCAHPS improvement → 1.5% Medicare reimbursement increase`,
+                            `Patient portal registration increases from 40% → 52%`,
+                            `Portal users save $180/year in support costs (fewer calls)`,
+                            `Reduced perceived wait time improves satisfaction scores`,
+                            `Health trivia games educate patients on conditions/treatments`,
+                            `HIPAA-compliant data capture for patient engagement`
+                        ]
+                    };
+                }
+            },
+
+            auto: {
+                inputs: [
+                    { id: 'locations', label: 'Number of Dealerships', type: 'number', defaultValue: 1, hint: 'Service center locations' },
+                    { id: 'dailyServiceAppointments', label: 'Daily Service Appointments', type: 'number', defaultValue: 35, hint: 'Cars serviced per day' },
+                    { id: 'avgServiceTicket', label: 'Average Service Ticket', type: 'number', defaultValue: 450, hint: 'Current average service cost' }
+                ],
+                calculate: (inputs) => {
+                    const locations = inputs.locations;
+                    const dailyServiceAppointments = inputs.dailyServiceAppointments;
+                    const avgServiceTicket = inputs.avgServiceTicket;
+
+                    // Parts upsell increase
+                    const upsellRate = 0.25;
+                    const avgPartsUpsell = 280;
+                    const monthlyAppointments = dailyServiceAppointments * 26 * locations; // 26 working days
+                    const monthlyUpsells = monthlyAppointments * upsellRate;
+                    const annualUpsellRevenue = monthlyUpsells * avgPartsUpsell * 12;
+
+                    // Commission to EngageOS
+                    const commissionRate = 0.05;
+                    const annualCommission = annualUpsellRevenue * commissionRate;
+
+                    const totalRevenue = annualUpsellRevenue - annualCommission;
+
+                    // Investment
+                    const hardware = 2700 * locations;
+                    const software = 899 * locations * 12;
+                    const totalInvestment = hardware + software + annualCommission;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `25% of service customers accept parts/service upsells`,
+                            `Average upsell: $${avgPartsUpsell} (air filter, cabin filter, wiper blades, etc.)`,
+                            `5% commission on upsells attributed to kiosk`,
+                            `Service status updates reduce customer anxiety`,
+                            `Kiosk handles loaner car requests → frees up advisors`,
+                            `Car trivia keeps customers engaged during long waits`
+                        ]
+                    };
+                }
+            },
+
+            retail: {
+                inputs: [
+                    { id: 'locations', label: 'Number of Stores', type: 'number', defaultValue: 5, hint: 'How many retail locations?' },
+                    { id: 'dailyFootTraffic', label: 'Daily Foot Traffic', type: 'number', defaultValue: 180, hint: 'Average daily visitors per store' },
+                    { id: 'conversionRate', label: 'Current Conversion Rate (%)', type: 'number', defaultValue: 22, hint: 'Percentage of visitors who buy' },
+                    { id: 'avgPurchase', label: 'Average Purchase Value', type: 'number', defaultValue: 85, hint: 'Current average transaction' }
+                ],
+                calculate: (inputs) => {
+                    const locations = inputs.locations;
+                    const dailyFootTraffic = inputs.dailyFootTraffic;
+                    const conversionRate = inputs.conversionRate / 100;
+                    const avgPurchase = inputs.avgPurchase;
+
+                    // Dwell time increase → conversion lift
+                    const dwellTimeIncrease = 0.18;
+                    const conversionLift = 0.18; // 18% more conversions
+                    const monthlyVisitors = dailyFootTraffic * 30 * locations;
+                    const baselineConverters = monthlyVisitors * conversionRate;
+                    const newConverters = baselineConverters * conversionLift;
+                    const annualConversionRevenue = newConverters * avgPurchase * 12;
+
+                    // Instagram UGC → new customers
+                    const photosShared = 30 * 12 * locations; // per year
+                    const avgFollowers = 400;
+                    const bookingRate = 0.015;
+                    const newCustomers = photosShared * avgFollowers * bookingRate;
+                    const newCustomerRevenue = newCustomers * avgPurchase;
+
+                    const totalRevenue = annualConversionRevenue + newCustomerRevenue;
+
+                    // Investment
+                    const hardware = 2700 * locations;
+                    const software = 449 * locations * 12;
+                    const totalInvestment = hardware + software;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `18% increase in dwell time → 18% conversion rate improvement`,
+                            `Style quizzes recommend products → higher basket size`,
+                            `Photo booth generates Instagram UGC → new customers`,
+                            `Loyalty integration captures email/phone for remarketing`,
+                            `Fashion trivia builds brand affinity with shoppers`,
+                            `Kiosk positioned near fitting rooms for max engagement`
+                        ]
+                    };
+                }
+            },
+
+            fitness: {
+                inputs: [
+                    { id: 'locations', label: 'Number of Gyms', type: 'number', defaultValue: 2, hint: 'Gym/fitness center locations' },
+                    { id: 'members', label: 'Total Members (all locations)', type: 'number', defaultValue: 2000, hint: 'Current membership base' },
+                    { id: 'monthlyDues', label: 'Average Monthly Dues', type: 'number', defaultValue: 50, hint: 'Membership fee per member' },
+                    { id: 'churnRate', label: 'Current Monthly Churn Rate (%)', type: 'number', defaultValue: 3.75, hint: 'Members who cancel each month' }
+                ],
+                calculate: (inputs) => {
+                    const locations = inputs.locations;
+                    const members = inputs.members;
+                    const monthlyDues = inputs.monthlyDues;
+                    const churnRate = inputs.churnRate / 100;
+
+                    // Churn reduction
+                    const churnReduction = 0.12; // 12% reduction
+                    const currentChurn = members * churnRate;
+                    const newChurn = currentChurn * (1 - churnReduction);
+                    const membersSaved = (currentChurn - newChurn) * 12; // annually
+                    const LTV = monthlyDues * 24; // 24-month avg lifetime
+                    const annualChurnSavings = membersSaved * LTV;
+
+                    // PT lead generation
+                    const kioskEngagement = 0.20; // 20% of members use kiosk
+                    const ptInterest = 0.15; // 15% interested in PT after fitness quiz
+                    const ptConversion = 0.30;
+                    const monthlyPTLeads = members * kioskEngagement * ptInterest;
+                    const ptBookings = monthlyPTLeads * ptConversion;
+                    const avgPTRevenue = 600; // 10 sessions @ $60
+                    const annualPTRevenue = ptBookings * avgPTRevenue * 12;
+
+                    const totalRevenue = annualChurnSavings + annualPTRevenue;
+
+                    // Investment
+                    const hardware = 2700 * locations;
+                    const software = (499 * locations * 12) + (0.50 * members * 12); // base + per-member tracking
+                    const totalInvestment = hardware + software;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `12% reduction in monthly churn (industry game-changer)`,
+                            `Saved members have 24-month avg lifetime value`,
+                            `Fitness quizzes identify injury risk → PT consultation leads`,
+                            `15% of kiosk users interested in PT, 30% convert`,
+                            `Challenge enrollment (30-day plank, etc.) improves retention`,
+                            `Class sign-ups via kiosk increase attendance`
+                        ]
+                    };
+                }
+            },
+
+            hotel: {
+                inputs: [
+                    { id: 'rooms', label: 'Number of Rooms', type: 'number', defaultValue: 200, hint: 'Total hotel rooms' },
+                    { id: 'occupancy', label: 'Average Occupancy Rate (%)', type: 'number', defaultValue: 75, hint: 'Percentage of rooms occupied' },
+                    { id: 'avgNightlyRate', label: 'Average Nightly Rate', type: 'number', defaultValue: 180, hint: 'Current room rate' }
+                ],
+                calculate: (inputs) => {
+                    const rooms = inputs.rooms;
+                    const occupancy = inputs.occupancy / 100;
+                    const avgNightlyRate = inputs.avgNightlyRate;
+
+                    // Ancillary revenue increase
+                    const annualGuests = rooms * occupancy * 365;
+                    const kioskEngagement = 0.25;
+                    const bookingRate = 0.18; // 18% book spa/dining/activity via kiosk
+                    const avgAncillarySpend = 85; // spa, restaurant, tour booking
+                    const annualAncillaryRevenue = annualGuests * kioskEngagement * bookingRate * avgAncillarySpend;
+
+                    // Commission to EngageOS
+                    const commissionRate = 0.03;
+                    const annualCommission = annualAncillaryRevenue * commissionRate;
+
+                    // Guest satisfaction → repeat bookings
+                    const satisfactionIncrease = 0.08;
+                    const repeatBookingIncrease = 0.12;
+                    const currentRepeats = annualGuests * 0.30; // 30% are repeat guests
+                    const newRepeats = currentRepeats * repeatBookingIncrease;
+                    const avgStayRevenue = avgNightlyRate * 2.5; // avg 2.5-night stay
+                    const repeatGuestRevenue = newRepeats * avgStayRevenue;
+
+                    const totalRevenue = (annualAncillaryRevenue - annualCommission) + repeatGuestRevenue;
+
+                    // Investment
+                    const hardware = 2700 * 2; // 2 kiosks (lobby + pool area)
+                    const software = 599 * 12;
+                    const totalInvestment = hardware + software + annualCommission;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `25% of guests engage with lobby kiosk during check-in queue`,
+                            `18% book spa/dining/activities via kiosk (avg spend: $${avgAncillarySpend})`,
+                            `3% commission on ancillary bookings attributed to kiosk`,
+                            `Improved guest satisfaction → 12% increase in repeat bookings`,
+                            `Destination trivia entertains guests during check-in waits`,
+                            `World map pin drop encourages guest conversation`
+                        ]
+                    };
+                }
+            },
+
+            events: {
+                inputs: [
+                    { id: 'eventsPerYear', label: 'Events Per Year', type: 'number', defaultValue: 30, hint: 'Weddings, corporate events, conferences' },
+                    { id: 'avgGuests', label: 'Average Guests Per Event', type: 'number', defaultValue: 150, hint: 'Average event attendance' },
+                    { id: 'rentalFee', label: 'Kiosk Rental Fee (per event)', type: 'number', defaultValue: 1200, hint: 'What you charge clients' }
+                ],
+                calculate: (inputs) => {
+                    const eventsPerYear = inputs.eventsPerYear;
+                    const avgGuests = inputs.avgGuests;
+                    const rentalFee = inputs.rentalFee;
+
+                    // Revenue from event rentals (event planner perspective)
+                    const annualRentalRevenue = eventsPerYear * rentalFee;
+
+                    // EngageOS cost (white-label model)
+                    const whiteLabelFee = 1999 * 12;
+
+                    // Additional value: Client retention increase
+                    const clientRetentionIncrease = 0.20;
+                    const avgEventValue = 8000; // avg planner fee
+                    const currentClients = eventsPerYear / 2; // avg 2 events per client
+                    const retainedClients = currentClients * clientRetentionIncrease;
+                    const retentionValue = retainedClients * avgEventValue;
+
+                    const totalRevenue = annualRentalRevenue + retentionValue;
+                    const totalInvestment = whiteLabelFee;
+
+                    const netGain = totalRevenue - totalInvestment;
+                    const roi = (netGain / totalInvestment * 100).toFixed(0);
+                    const paybackMonths = (whiteLabelFee / (totalRevenue / 12)).toFixed(1);
+
+                    return {
+                        revenueImpact: totalRevenue,
+                        investment: totalInvestment,
+                        netGain: netGain,
+                        roi: roi,
+                        payback: paybackMonths,
+                        assumptions: [
+                            `White-label license: $1,999/month for unlimited events`,
+                            `Charge clients $${rentalFee.toLocaleString()}/event for kiosk rental`,
+                            `70% guest engagement rate (play trivia, photo booth)`,
+                            `3x increase in social media posts per event`,
+                            `20% increase in client retention (clients love unique experience)`,
+                            `Email capture builds guest list for future event marketing`
+                        ]
+                    };
+                }
+            }
+        };
+
+        // Initialize with default vertical
+        function init() {
+            const vertical = document.getElementById('vertical').value;
+            renderInputs(vertical);
+        }
+
+        // Render inputs based on selected vertical
+        function renderInputs(vertical) {
+            const config = verticalConfigs[vertical];
+            const container = document.getElementById('dynamicInputs');
+
+            container.innerHTML = config.inputs.map(input => `
+                <div class="input-group">
+                    <label>${input.label}</label>
+                    <input type="${input.type}" id="${input.id}" value="${input.defaultValue}" min="0" step="${input.type === 'number' ? '1' : 'any'}">
+                    <div class="input-hint">${input.hint}</div>
+                </div>
+            `).join('');
+        }
+
+        // Calculate ROI
+        function calculate() {
+            const vertical = document.getElementById('vertical').value;
+            const config = verticalConfigs[vertical];
+
+            // Gather inputs
+            const inputs = {};
+            config.inputs.forEach(input => {
+                inputs[input.id] = parseFloat(document.getElementById(input.id).value) || 0;
+            });
+
+            // Calculate results
+            const results = config.calculate(inputs);
+
+            // Display results
+            document.getElementById('revenueImpact').textContent = '$' + results.revenueImpact.toLocaleString();
+            document.getElementById('investment').textContent = '$' + results.investment.toLocaleString();
+            document.getElementById('netGain').textContent = '$' + results.netGain.toLocaleString();
+            document.getElementById('roiPercent').textContent = results.roi + '%';
+            document.getElementById('payback').textContent = results.payback + ' months';
+
+            // Display assumptions
+            const assumptionsList = document.getElementById('assumptionsList');
+            assumptionsList.innerHTML = results.assumptions.map(assumption => `
+                <div class="assumption-item">• ${assumption}</div>
+            `).join('');
+
+            // Scroll to results on mobile
+            if (window.innerWidth <= 768) {
+                document.querySelector('.calculator-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Listen for vertical changes
+        document.getElementById('vertical').addEventListener('change', (e) => {
+            renderInputs(e.target.value);
+        });
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>
