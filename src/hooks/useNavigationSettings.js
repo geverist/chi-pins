@@ -163,6 +163,13 @@ export function useNavigationSettings() {
       setSettings(data);
       setError(null);
 
+      // Update cache immediately
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: Date.now(),
+        version: CACHE_VERSION
+      }));
+
       // Trigger a global event to notify other hook instances
       window.dispatchEvent(new CustomEvent('navigation-settings-updated', { detail: data }));
 

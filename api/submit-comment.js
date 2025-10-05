@@ -66,39 +66,79 @@ export default async function handler(req, res) {
       throw new Error(error.message || 'Failed to save comment');
     }
 
-    // Send SMS notification to business owner
+    // Send notifications to business owner
     try {
-      // Fetch admin settings to get Twilio config
+      // Fetch admin settings to get notification config
       const { data: settingsData } = await supabase
         .from('settings')
         .select('*')
         .single();
 
-      if (settingsData &&
-          settingsData.notifications_enabled &&
-          (settingsData.notification_type === 'sms' || settingsData.notification_type === 'both') &&
-          settingsData.notification_recipients) {
-
-        // Format the SMS message
+      if (settingsData && settingsData.feedbackNotificationsEnabled) {
+        const notificationType = settingsData.feedbackNotificationType || 'sms';
         const ratingStars = '⭐'.repeat(rating);
-        const message = `New Customer Feedback!\n\n${ratingStars} (${rating}/5)\n\nFrom: ${name || 'Anonymous'}${contact ? `\nContact: ${contact}` : ''}\n\nComment: ${comment}\n\nSubmitted: ${new Date(timestamp || Date.now()).toLocaleString()}`;
 
-        // Send SMS via our existing send-sms API (credentials managed on backend)
-        const smsResponse = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/send-sms`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            to: settingsData.notification_recipients.split(',').map(n => n.trim()).filter(n => n),
-            message: message,
-          }),
-        });
+        // Format message for notifications
+        const messageText = `New Customer Feedback!\n\n${ratingStars} (${rating}/5)\n\nFrom: ${name || 'Anonymous'}${contact ? `\nContact: ${contact}` : ''}\n\nComment: ${comment}\n\nSubmitted: ${new Date(timestamp || Date.now()).toLocaleString()}`;
 
-        if (!smsResponse.ok) {
-          console.error('Failed to send SMS notification:', await smsResponse.text());
-        } else {
-          console.log('SMS notification sent successfully');
+        const messageHtml = `
+          <h2>🎉 New Customer Feedback!</h2>
+          <p><strong>Rating:</strong> ${ratingStars} (${rating}/5)</p>
+          <p><strong>From:</strong> ${name || 'Anonymous'}</p>
+          ${contact ? `<p><strong>Contact:</strong> ${contact}</p>` : ''}
+          <p><strong>Comment:</strong></p>
+          <blockquote style="border-left: 3px solid #3b82f6; padding-left: 12px; margin: 12px 0; color: #555;">
+            ${comment}
+          </blockquote>
+          <p style="color: #888; font-size: 12px;">Submitted: ${new Date(timestamp || Date.now()).toLocaleString()}</p>
+        `;
+
+        const baseUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+
+        // Send SMS notification
+        if ((notificationType === 'sms' || notificationType === 'both') && settingsData.feedbackSmsRecipients) {
+          try {
+            const smsResponse = await fetch(`${baseUrl}/api/send-sms`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: settingsData.feedbackSmsRecipients.split(',').map(n => n.trim()).filter(n => n),
+                message: messageText,
+              }),
+            });
+
+            if (!smsResponse.ok) {
+              console.error('Failed to send SMS notification:', await smsResponse.text());
+            } else {
+              console.log('SMS notification sent successfully');
+            }
+          } catch (smsError) {
+            console.error('Error sending SMS notification:', smsError);
+          }
+        }
+
+        // Send Email notification
+        if ((notificationType === 'email' || notificationType === 'both') && settingsData.feedbackEmailRecipients) {
+          try {
+            const emailResponse = await fetch(`${baseUrl}/api/send-email`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: settingsData.feedbackEmailRecipients.split(',').map(e => e.trim()).filter(e => e),
+                subject: `⭐ New Feedback: ${rating}/5 - ${name || 'Anonymous'}`,
+                html: messageHtml,
+                text: messageText,
+              }),
+            });
+
+            if (!emailResponse.ok) {
+              console.error('Failed to send email notification:', await emailResponse.text());
+            } else {
+              console.log('Email notification sent successfully');
+            }
+          } catch (emailError) {
+            console.error('Error sending email notification:', emailError);
+          }
         }
       }
     } catch (notifError) {
