@@ -478,9 +478,9 @@ export default function App() {
     }
   }
 
-  // Handle any map click for fun facts
+  // Handle any map click for fun facts (desktop only)
   function handleMapClick(ll) {
-    if (mapMode === 'chicago' && adminSettings.funFactsEnabled) {
+    if (mapMode === 'chicago' && adminSettings.funFactsEnabled && !isMobile) {
       showNearestTownFact(ll.lat, ll.lng);
     }
   }
