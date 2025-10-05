@@ -260,26 +260,6 @@ export default function GamesMenu({ onClose }) {
               </div>
             ))}
           </div>
-
-          {/* Placeholder for future games */}
-          <div
-            style={{
-              marginTop: 32,
-              padding: 24,
-              background: 'rgba(255,255,255,0.03)',
-              borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.1)',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🎯</div>
-            <h3 style={{ margin: '0 0 8px', color: '#f4f6f8', fontSize: 18 }}>
-              More Games Coming Soon!
-            </h3>
-            <p style={{ margin: 0, color: '#a7b0b8', fontSize: 14 }}>
-              Check back for new challenges and compete with other customers
-            </p>
-          </div>
         </div>
       </div>
     </div>
