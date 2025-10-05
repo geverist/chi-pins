@@ -141,7 +141,7 @@ export default function TriviaGame({ onClose }) {
   const currentQuestion = questions[currentQuestionIndex];
 
   const renderInstructions = () => (
-    <div style={{ padding: 40, textAlign: 'center' }}>
+    <div style={{ padding: 40, textAlign: 'center', overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <h2 style={{ margin: '0 0 24px', color: '#f4f6f8', fontSize: 32 }}>
         🧠 Chicago Trivia Challenge!
       </h2>
