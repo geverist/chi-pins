@@ -78,22 +78,33 @@ export default function PopularSpotsOverlay({
     try { return (map?.getZoom?.() ?? 12) >= minLabelZoom } catch { return true }
   })
 
-  // Fetch from `popular_spots` (id, label, category, lat, lng). Falls back to in-file list.
+  // Fetch from `popular_spots` (id, name, category, lat, lng). Falls back to in-file list.
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       let dbRows = null
       try {
+        console.log('[PopularSpotsOverlay] Fetching from popular_spots table...');
         const { data, error } = await supabase
           .from('popular_spots')
-          .select('id,label,category,lat,lng')
+          .select('id,name,category,lat,lng')
           .limit(1000)
-        if (!error && Array.isArray(data)) {
-          // Map 'label' to 'name' for compatibility
-          dbRows = data.map(r => ({ ...r, name: r.label }))
+        if (error) {
+          console.warn('[PopularSpotsOverlay] DB error:', error);
+        } else if (Array.isArray(data) && data.length > 0) {
+          console.log('[PopularSpotsOverlay] Loaded', data.length, 'spots from database');
+          dbRows = data;
+        } else {
+          console.log('[PopularSpotsOverlay] No spots in database, using fallback');
         }
-      } catch {}
-      if (!cancelled) setRows(dbRows && dbRows.length ? dbRows : FALLBACK_SPOTS)
+      } catch (err) {
+        console.error('[PopularSpotsOverlay] Fetch error:', err);
+      }
+      if (!cancelled) {
+        const spots = dbRows && dbRows.length ? dbRows : FALLBACK_SPOTS;
+        console.log('[PopularSpotsOverlay] Setting', spots.length, 'spots');
+        setRows(spots);
+      }
     })()
     return () => { cancelled = true }
   }, [])
