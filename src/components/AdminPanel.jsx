@@ -642,6 +642,95 @@ export default function AdminPanel({ open, onClose }) {
                 </Card>
               )}
 
+              <Card title="💬 Feedback Notification Settings">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Get notified when customers submit feedback
+                </p>
+
+                <FieldRow label="Enable Feedback Notifications">
+                  <Toggle
+                    checked={settings.feedbackNotificationsEnabled || false}
+                    onChange={(v) => setSettings(s => ({ ...s, feedbackNotificationsEnabled: v }))}
+                  />
+                </FieldRow>
+
+                {settings.feedbackNotificationsEnabled && (
+                  <>
+                    <FieldRow label="Notification Method">
+                      <select
+                        value={settings.feedbackNotificationType || 'sms'}
+                        onChange={(e) => setSettings(s => ({ ...s, feedbackNotificationType: e.target.value }))}
+                        style={s.input}
+                      >
+                        <option value="sms">SMS Only</option>
+                        <option value="email">Email Only</option>
+                        <option value="both">Both SMS & Email</option>
+                      </select>
+                    </FieldRow>
+
+                    {(settings.feedbackNotificationType === 'sms' || settings.feedbackNotificationType === 'both') && (
+                      <>
+                        <div style={{
+                          padding: '12px',
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: 8,
+                          marginBottom: 12,
+                          fontSize: 12,
+                          color: '#93c5fd'
+                        }}>
+                          ℹ️ Twilio credentials are managed securely via environment variables.
+                          <br/>Configure TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in Vercel.
+                        </div>
+
+                        <FieldRow label="SMS Recipients">
+                          <input
+                            type="text"
+                            value={settings.feedbackSmsRecipients || ''}
+                            onChange={(e) => setSettings(s => ({ ...s, feedbackSmsRecipients: e.target.value }))}
+                            placeholder="+1234567890, +0987654321"
+                            style={{ ...s.input, width: '100%' }}
+                          />
+                        </FieldRow>
+                        <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+                          Comma-separated list of phone numbers (include country code)
+                        </p>
+                      </>
+                    )}
+
+                    {(settings.feedbackNotificationType === 'email' || settings.feedbackNotificationType === 'both') && (
+                      <>
+                        <div style={{
+                          padding: '12px',
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          borderRadius: 8,
+                          marginBottom: 12,
+                          fontSize: 12,
+                          color: '#c4b5fd'
+                        }}>
+                          ℹ️ Email credentials are managed securely via environment variables.
+                          <br/>Configure SMTP settings (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM) in Vercel.
+                        </div>
+
+                        <FieldRow label="Email Recipients">
+                          <input
+                            type="text"
+                            value={settings.feedbackEmailRecipients || ''}
+                            onChange={(e) => setSettings(s => ({ ...s, feedbackEmailRecipients: e.target.value }))}
+                            placeholder="owner@business.com, manager@business.com"
+                            style={{ ...s.input, width: '100%' }}
+                          />
+                        </FieldRow>
+                        <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                          Comma-separated list of email addresses
+                        </p>
+                      </>
+                    )}
+                  </>
+                )}
+              </Card>
+
               {settings.newsTickerEnabled && (
                 <Card title="News Ticker Settings">
                   <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
