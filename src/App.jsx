@@ -130,6 +130,11 @@ export default function App() {
   const [exploring, setExploring] = useState(false);
   const [selectedTeamFilter, setSelectedTeamFilter] = useState(null);
 
+  // Log team filter changes
+  useEffect(() => {
+    console.log('[App] Team filter changed to:', selectedTeamFilter);
+  }, [selectedTeamFilter]);
+
   // share modal
   const [shareOpen, setShareOpen] = useState(false);
   const [shareToFb, setShareToFb] = useState(false);
