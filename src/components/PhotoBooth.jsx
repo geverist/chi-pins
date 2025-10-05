@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 export default function PhotoBooth({ onClose }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const livePreviewCanvasRef = useRef(null);
   const previewCanvasRefs = useRef({});
   const [stream, setStream] = useState(null);
   const [photo, setPhoto] = useState(null);
@@ -25,6 +26,36 @@ export default function PhotoBooth({ onClose }) {
     startCamera();
     return () => stopCamera();
   }, []);
+
+  // Generate live preview on main canvas with selected filter
+  useEffect(() => {
+    if (!videoRef.current || !livePreviewCanvasRef.current || !stream || photo) return;
+
+    const generateLivePreview = () => {
+      const video = videoRef.current;
+      const canvas = livePreviewCanvasRef.current;
+      if (!video || !canvas || video.readyState < 2) return;
+
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Draw video frame
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Apply selected filter overlay if any
+      if (selectedFilter) {
+        applyFilter(ctx, canvas.width, canvas.height, selectedFilter);
+      }
+    };
+
+    // Update live preview continuously (30 FPS)
+    const interval = setInterval(generateLivePreview, 33);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [stream, selectedFilter, photo]);
 
   // Generate filter previews from video feed
   useEffect(() => {
@@ -345,17 +376,30 @@ export default function PhotoBooth({ onClose }) {
         >
           {!photo ? (
             <>
+              {/* Hidden video element for camera feed */}
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
                 style={{
+                  display: selectedFilter ? 'none' : 'block',
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
                 }}
               />
+              {/* Live preview canvas with filter applied */}
+              {selectedFilter && (
+                <canvas
+                  ref={livePreviewCanvasRef}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              )}
               {countdown && (
                 <div
                   style={{
@@ -369,6 +413,7 @@ export default function PhotoBooth({ onClose }) {
                     fontWeight: 'bold',
                     color: '#fff',
                     animation: 'pulse 0.5s ease-in-out',
+                    zIndex: 10,
                   }}
                 >
                   {countdown}
