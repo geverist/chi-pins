@@ -10,6 +10,7 @@ import {
   cachePins,
   getCachedPins,
 } from '../lib/offlineStorage';
+import { playPinDropSound, showConfetti } from '../lib/effects';
 
 const MAX_ROWS = 1000;
 
@@ -302,6 +303,9 @@ export function usePins(mainMapRef) {
 
   // Offline queuing for pin saves with IndexedDB
   const addPin = async (pin) => {
+    // Play pin drop sound effect
+    playPinDropSound();
+
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       // Store in IndexedDB for offline support
       await addPendingPin(pin);
@@ -314,6 +318,14 @@ export function usePins(mainMapRef) {
       if (error) throw error;
       const inserted = data?.[0] || pin;
       setPins((prev) => mergeRows(prev, [inserted]));
+
+      // Show confetti on first pin or milestone pins (10, 25, 50, 100)
+      const currentPinCount = pins.length + 1;
+      const milestones = [1, 10, 25, 50, 100];
+      if (milestones.includes(currentPinCount)) {
+        setTimeout(() => showConfetti(), 200);
+      }
+
       return inserted;
     } catch (err) {
       console.error('Pin save failed, storing offline:', err);

@@ -55,6 +55,8 @@ import OfflineIndicator from './components/OfflineIndicator';
 import AnonymousMessageModal from './components/AnonymousMessageModal';
 import CommentsModal from './components/CommentsModal';
 import LocationSwitcher from './components/LocationSwitcher';
+import HolidayTheme from './components/HolidayTheme';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -1153,6 +1155,8 @@ export default function App() {
 
       <OfflineIndicator />
       <LocationSwitcher />
+      <HolidayTheme />
+      <PWAInstallPrompt />
     </div>
   );
 }
