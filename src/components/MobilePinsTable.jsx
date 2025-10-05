@@ -36,32 +36,77 @@ export default function MobilePinsTable({ pins, onPinClick, onClose }) {
     <div
       style={{
         height: '100%',
-        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
         background: '#0f1117',
       }}
     >
-      {/* Table Header */}
+      {/* Navigation Header */}
+      {onClose && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #1a1f26 0%, #242a33 100%)',
+            borderBottom: '1px solid #2a2f37',
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: '1px solid #2a2f37',
+              borderRadius: 8,
+              color: '#f3f4f6',
+              padding: '8px 12px',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span>←</span>
+            <span>Back to Map</span>
+          </button>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#f3f4f6' }}>
+            Pins List ({pins.length})
+          </h2>
+        </div>
+      )}
+
+      {/* Scrollable Content */}
       <div
         style={{
-          position: 'sticky',
-          top: 0,
-          background: 'linear-gradient(135deg, #1a1f26 0%, #242a33 100%)',
-          borderBottom: '2px solid #2a2f37',
-          padding: '12px 16px',
-          display: 'grid',
-          gridTemplateColumns: '1fr auto',
-          gap: 12,
-          fontSize: 12,
-          fontWeight: 700,
-          color: '#9ca3af',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          zIndex: 10,
+          flex: 1,
+          overflow: 'auto',
         }}
       >
-        <div>Pin Details</div>
-        <div>Date</div>
-      </div>
+        {/* Table Header */}
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            background: 'linear-gradient(135deg, #1a1f26 0%, #242a33 100%)',
+            borderBottom: '2px solid #2a2f37',
+            padding: '12px 16px',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto',
+            gap: 12,
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#9ca3af',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            zIndex: 10,
+          }}
+        >
+          <div>Pin Details</div>
+          <div>Date</div>
+        </div>
 
       {/* Rows */}
       {sortedPins.length === 0 ? (
@@ -222,6 +267,7 @@ export default function MobilePinsTable({ pins, onPinClick, onClose }) {
           </div>
         ))
       )}
+      </div>
     </div>
   );
 }

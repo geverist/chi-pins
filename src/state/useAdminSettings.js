@@ -93,6 +93,8 @@ const DEFAULTS = {
   twilioAuthToken: '',             // Twilio Auth Token
   twilioPhoneNumber: '',           // Twilio phone number (from)
   notificationRecipients: '+17204507540', // Default notification destination phone number
+  notifyOnFeedback: true,          // Send notifications for customer feedback/comments
+  emailRecipients: '',             // Email addresses for notifications (comma-separated)
 
   // Banner Scroll Speeds (seconds for full scroll)
   newsTickerScrollSpeedKiosk: 30,  // Seconds for news ticker in kiosk mode
