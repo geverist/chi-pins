@@ -1,7 +1,11 @@
 // src/components/MobilePinsTable.jsx
 import { useState } from 'react';
 
-export default function MobilePinsTable({ pins, onPinClick }) {
+function titleFromSlug(slug) {
+  return slug ? slug.split('-').map(w => w[0]?.toUpperCase() + w.slice(1)).join(' ') : '';
+}
+
+export default function MobilePinsTable({ pins, onPinClick, onClose }) {
   const [selectedPin, setSelectedPin] = useState(null);
 
   // Sort pins by created_at descending (most recent first)
@@ -145,54 +149,74 @@ export default function MobilePinsTable({ pins, onPinClick }) {
                   borderTop: '1px solid #2a2f37',
                 }}
               >
+                {/* ID */}
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>
+                    ID
+                  </div>
+                  <div style={{ fontSize: 12, color: '#e5e7eb' }}>
+                    {titleFromSlug(pin.slug || '')}
+                  </div>
+                </div>
+
+                {/* Team/Region */}
+                {pin.team && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>
+                      Team
+                    </div>
+                    <div style={{ fontSize: 12, color: '#e5e7eb' }}>
+                      {pin.team}
+                    </div>
+                  </div>
+                )}
+
+                {pin.continent && !pin.team && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>
+                      Region
+                    </div>
+                    <div style={{ fontSize: 12, color: '#e5e7eb' }}>
+                      {pin.continent}
+                    </div>
+                  </div>
+                )}
+
+                {/* Hot Dog Stand */}
+                {pin.hotdog && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>
+                      🌭 Favorite Hot Dog Stand
+                    </div>
+                    <div style={{ fontSize: 12, color: '#e5e7eb' }}>
+                      {pin.hotdog}
+                    </div>
+                  </div>
+                )}
+
+                {/* Note/Comments */}
                 {pin.note && (
                   <div style={{ marginBottom: 8 }}>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: '#9ca3af',
-                        marginBottom: 4,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}
-                    >
-                      Note
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>
+                      Comments
                     </div>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        color: '#e5e7eb',
-                        lineHeight: 1.5,
-                      }}
-                    >
+                    <div style={{ fontSize: 13, color: '#e5e7eb', lineHeight: 1.5 }}>
                       {pin.note}
                     </div>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 12,
-                    fontSize: 12,
-                  }}
-                >
-                  {pin.hotdog && (
-                    <div>
-                      <div style={{ color: '#9ca3af', marginBottom: 2 }}>Hot Dog</div>
-                      <div style={{ color: '#f3f4f6' }}>{pin.hotdog}</div>
+                {/* Coordinates */}
+                {pin.lat && pin.lng && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 2 }}>
+                      Coordinates
                     </div>
-                  )}
-                  {pin.lat && pin.lng && (
-                    <div>
-                      <div style={{ color: '#9ca3af', marginBottom: 2 }}>Coordinates</div>
-                      <div style={{ color: '#f3f4f6', fontSize: 11 }}>
-                        {pin.lat.toFixed(4)}, {pin.lng.toFixed(4)}
-                      </div>
+                    <div style={{ fontSize: 11, color: '#e5e7eb' }}>
+                      {pin.lat.toFixed(5)}, {pin.lng.toFixed(5)}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
