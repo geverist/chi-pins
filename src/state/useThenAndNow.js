@@ -1,6 +1,6 @@
 // src/state/useThenAndNow.js
 import { useState, useEffect } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 const CACHE_KEY = 'then_and_now_cache';
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
