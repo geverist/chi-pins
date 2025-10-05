@@ -393,14 +393,25 @@ export default function App() {
 
     // Apply team filter in Chicago mode
     if (mapMode === 'chicago' && selectedTeamFilter) {
-      console.log('Filtering pins by team:', selectedTeamFilter);
+      console.log('=== TEAM FILTER ACTIVE ===');
+      console.log('Selected team filter:', selectedTeamFilter);
       console.log('Before filter:', filtered.length, 'pins');
+
+      // Log all team values to see what's in the data
+      const teamCounts = {};
+      filtered.forEach(p => {
+        const team = p.team || 'null';
+        teamCounts[team] = (teamCounts[team] || 0) + 1;
+      });
+      console.log('Team distribution:', teamCounts);
+
       filtered = filtered.filter(p => {
         const matches = p.team === selectedTeamFilter;
-        if (matches) console.log('Match:', p.slug, 'team:', p.team);
+        if (matches) console.log('✓ Match:', p.slug, 'team:', p.team);
         return matches;
       });
       console.log('After filter:', filtered.length, 'pins');
+      console.log('======================');
     }
 
     return filtered;
