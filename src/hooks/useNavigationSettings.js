@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const CACHE_KEY = 'navigation_settings_cache';
+const CACHE_VERSION = 2; // Increment to invalidate old caches
 const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
 
 const DEFAULT_SETTINGS = {
@@ -22,10 +23,16 @@ export function useNavigationSettings() {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        // Use cache regardless of age - API fetch will update it
-        console.log('[useNavigationSettings] Initializing with cached settings:', data);
-        return data;
+        const { data, timestamp, version } = JSON.parse(cached);
+        // Check cache version - invalidate if old version
+        if (version === CACHE_VERSION) {
+          // Use cache regardless of age - API fetch will update it
+          console.log('[useNavigationSettings] Initializing with cached settings:', data);
+          return data;
+        } else {
+          console.log('[useNavigationSettings] Cache version mismatch, clearing cache');
+          localStorage.removeItem(CACHE_KEY);
+        }
       }
     } catch (err) {
       console.warn('[useNavigationSettings] Failed to load cache:', err);
@@ -47,7 +54,8 @@ export function useNavigationSettings() {
       // Update cache when settings change
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         data: event.detail,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        version: CACHE_VERSION
       }));
     };
     window.addEventListener('navigation-settings-updated', handleUpdate);
@@ -70,7 +78,8 @@ export function useNavigationSettings() {
           // Update cache
           localStorage.setItem(CACHE_KEY, JSON.stringify({
             data: payload.new,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            version: CACHE_VERSION
           }));
           // Notify other instances
           window.dispatchEvent(new CustomEvent('navigation-settings-updated', { detail: payload.new }));
@@ -106,7 +115,8 @@ export function useNavigationSettings() {
       // Update cache
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         data,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        version: CACHE_VERSION
       }));
     } catch (err) {
       console.error('[useNavigationSettings] Error fetching navigation settings:', err);
@@ -118,7 +128,8 @@ export function useNavigationSettings() {
       // Cache default settings
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         data: DEFAULT_SETTINGS,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        version: CACHE_VERSION
       }));
     } finally {
       setLoading(false);
