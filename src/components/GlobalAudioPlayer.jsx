@@ -160,19 +160,22 @@ export default function GlobalAudioPlayer() {
         savePositionIntervalRef.current = null;
       }
 
+      // Save current track as last played before moving to next
+      if (currentTrack) {
+        setLastPlayed(currentTrack);
+      }
+
       const nextTrack = await playNext();
       if (nextTrack) {
         console.log('GlobalAudioPlayer - playing next track:', nextTrack.title);
-        // playNext already handles state updates
+        // playNext updates the database, but we also update local state
+        // for immediate UI response (subscription will sync it again)
+        setCurrentTrack(nextTrack);
       } else {
-        console.log('GlobalAudioPlayer - no more tracks in queue, clearing everything');
-        // No next track, save current as last played and clear current
-        if (currentTrack) {
-          setLastPlayed(currentTrack);
-        }
+        console.log('GlobalAudioPlayer - no more tracks in queue, stopping playback');
+        // No next track, clear current
         setCurrentTrack(null);
-        // Ensure queue is cleared in state (should already be empty from playNext)
-        // This ensures the UI updates properly
+        setIsPlaying(false);
       }
     };
 
