@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EngageOS for Retail Stores | Interactive Shopping Experience</title>
+    <meta name="description" content="Transform your retail store with interactive kiosks for product discovery, virtual try-on, endless aisle, and customer engagement. Increase sales and reduce staff burden.">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            color: #333;
+        }
+
+        .hero-industry {
+            text-align: center;
+            padding: 100px 20px;
+            color: white;
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+        }
+
+        .hero-industry h1 {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            margin: 0 0 40px 0;
+            opacity: 0.9;
+        }
+
+        .demo-cta {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 18px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .demo-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
+        }
+
+        .content-section {
+            background: white;
+            padding: 80px 20px;
+        }
+
+        .content-section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            color: #ec4899;
+        }
+
+        .challenges-grid, .features-grid, .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .challenge-card, .feature-card, .benefit-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .content-section:nth-child(even) .challenge-card,
+        .content-section:nth-child(even) .feature-card,
+        .content-section:nth-child(even) .benefit-card {
+            background: white;
+        }
+
+        .challenge-card:hover, .feature-card:hover, .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #ec4899;
+        }
+
+        .card-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .roi-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .roi-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .roi-stat {
+            padding: 20px;
+        }
+
+        .roi-number {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .roi-label {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .screenshot-card {
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 64px;
+        }
+
+        .screenshot-label {
+            padding: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pricing-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 50px auto 0;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-box h3 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #ec4899;
+        }
+
+        .price {
+            font-size: 48px;
+            font-weight: 700;
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+
+        .price-details {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .features-list {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .addon-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .addon-section h4 {
+            color: #ec4899;
+            margin-bottom: 15px;
+        }
+
+        .addon-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 16px 50px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-industry">
+        <div style="font-size: 72px; margin-bottom: 20px;">🛍️</div>
+        <h1>EngageOS for Retail Stores</h1>
+        <p class="subtitle">Transform browsers into buyers with interactive product discovery</p>
+        <a href="https://demo.chi-pins.com?industry=retail" class="demo-cta" style="margin-right: 20px;">🎮 Try Live Demo</a>
+        <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Retail%20Store&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20retail%20store." class="demo-cta" style="background: #ec4899; color: white;">📅 Request Personalized Demo</a>
+    </section>
+
+    <!-- Challenges Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The Retail Challenge</h2>
+            <div class="challenges-grid">
+                <div class="challenge-card">
+                    <div class="card-icon">👻</div>
+                    <h3 class="card-title">Showrooming & Ghost Customers</h3>
+                    <p class="card-description">Customers browse in-store, scan barcodes, then buy online for cheaper. You provide the experience, Amazon gets the sale.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">📦</div>
+                    <h3 class="card-title">Limited Shelf Space</h3>
+                    <p class="card-description">Can't stock every size, color, and variant. Customers leave when you don't have their size. Missed sales from limited inventory visibility.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">🙋</div>
+                    <h3 class="card-title">"Where's a Sales Associate?"</h3>
+                    <p class="card-description">Staff overwhelmed at peak times. Customers can't find help, can't find products, can't check stock. Long checkout lines drive abandonment.</p>
+                </div>
+
+                <div class="challenge-card">
+                    <div class="card-icon">📊</div>
+                    <h3 class="card-title">No Customer Data</h3>
+                    <p class="card-description">Browsers leave no trace. No email, no preferences, no follow-up opportunity. Can't build relationships or personalize marketing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">The EngageOS Solution</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="card-icon">🔍</div>
+                    <h3 class="card-title">Product Discovery Kiosk</h3>
+                    <p class="card-description">Voice search: "Show me red summer dresses under $100." Browse full catalog with filters, reviews, and recommendations. Find products instantly.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🏬</div>
+                    <h3 class="card-title">Endless Aisle</h3>
+                    <p class="card-description">Don't have their size? Order from kiosk for home delivery or store pickup. Access your entire warehouse and online inventory in-store.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">👗</div>
+                    <h3 class="card-title">Virtual Try-On (AR)</h3>
+                    <p class="card-description">See how clothes, makeup, or accessories look without physically trying on. Take photos, share with friends, save favorites for later.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">📱</div>
+                    <h3 class="card-title">Scan & Learn</h3>
+                    <p class="card-description">Scan product barcode to see full details, customer reviews, styling tips, size guides, and available colors. No need to find an associate.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">AI Style Recommendations</h3>
+                    <p class="card-description">"Complete the look" suggestions based on what they're browsing. Upsell complementary items. "Customers who bought this also bought..."</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">💳</div>
+                    <h3 class="card-title">Self-Checkout Kiosk</h3>
+                    <p class="card-description">Scan items, apply coupons, pay with tap, collect loyalty points. No lines. Reduces checkout time by 60%.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🎁</div>
+                    <h3 class="card-title">Loyalty Program Signup</h3>
+                    <p class="card-description">Instant loyalty enrollment at kiosk. Capture email, birthday, style preferences. Automated birthday discounts and personalized offers.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">⭐</div>
+                    <h3 class="card-title">Review Collection</h3>
+                    <p class="card-description">After purchase, kiosk prompts: "How was your experience?" Happy customers → Google review. Unhappy → private feedback to manager.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-icon">🔔</div>
+                    <h3 class="card-title">Back-in-Stock Alerts</h3>
+                    <p class="card-description">Out of their size? Kiosk captures email/SMS for restock alerts. Turn "not available" into a future sale.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">Business Impact</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="card-icon">💰</div>
+                    <h3 class="card-title">Increase Average Order Value</h3>
+                    <p class="card-description">AI recommendations and "complete the look" upsells increase basket size by 25%. Customers discover products they didn't know you carried.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">📦</div>
+                    <h3 class="card-title">Never Lose a Sale to Stock-Outs</h3>
+                    <p class="card-description">Endless aisle captures 15% more revenue from out-of-stock scenarios. Order for delivery instead of sending customers to competitors.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">⏱️</div>
+                    <h3 class="card-title">Reduce Staff Burden</h3>
+                    <p class="card-description">Self-service product discovery, stock checks, and checkout save 20 hours/week. Staff focuses on high-value customer service.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">📈</div>
+                    <h3 class="card-title">Capture Customer Data</h3>
+                    <p class="card-description">Loyalty signups, email captures, style preferences. Build a database of customers even if they don't buy today. Retarget with personalized offers.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">🎯</div>
+                    <h3 class="card-title">Compete with Online</h3>
+                    <p class="card-description">Provide Amazon-level product discovery with instant gratification. Customers get the item today, not in 2 days. Reduce showrooming.</p>
+                </div>
+
+                <div class="benefit-card">
+                    <div class="card-icon">⭐</div>
+                    <h3 class="card-title">Boost Online Reputation</h3>
+                    <p class="card-description">Automated review requests increase Google reviews by 200%. Positive reviews drive more foot traffic and online purchases.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ROI Section -->
+    <section class="roi-section">
+        <div class="container">
+            <h2 style="font-size: 42px; margin-bottom: 20px;">Proven ROI for Retail Stores</h2>
+            <p style="font-size: 20px; opacity: 0.9;">Average boutique with $50K monthly revenue</p>
+            <div class="roi-stats">
+                <div class="roi-stat">
+                    <div class="roi-number">+$12.5K</div>
+                    <div class="roi-label">Additional Monthly Revenue</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">25%</div>
+                    <div class="roi-label">Higher Average Order Value</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">15%</div>
+                    <div class="roi-label">More Sales from Endless Aisle</div>
+                </div>
+                <div class="roi-stat">
+                    <div class="roi-number">20 hrs</div>
+                    <div class="roi-label">Staff Time Saved Per Week</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="content-section">
+        <div class="container">
+            <h2 class="section-title">See It In Action</h2>
+            <div class="screenshots-grid">
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🔍</div>
+                    <div class="screenshot-label">Product Search & Discovery</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🏬</div>
+                    <div class="screenshot-label">Endless Aisle Ordering</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">👗</div>
+                    <div class="screenshot-label">Virtual Try-On</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">💳</div>
+                    <div class="screenshot-label">Self-Checkout</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🎯</div>
+                    <div class="screenshot-label">AI Style Recommendations</div>
+                </div>
+                <div class="screenshot-card">
+                    <div class="screenshot-placeholder">🎁</div>
+                    <div class="screenshot-label">Loyalty Program Signup</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="content-section">
+        <div class="container" style="text-align: center;">
+            <h2 class="section-title">Ready to Transform Your Retail Store?</h2>
+            <p style="font-size: 20px; margin-bottom: 40px; color: #666;">Join retail stores nationwide competing with online and increasing in-store revenue</p>
+
+            <div class="pricing-box">
+                <h3>Retail Store Bundle</h3>
+                <div class="price">$429<span style="font-size: 24px; color: #666;">/month</span></div>
+                <div class="price-details">All features included • No setup fees • Cancel anytime</div>
+
+                <ul class="features-list" style="list-style: none; padding: 0;">
+                    <li>✅ Product Discovery Kiosk with Voice Search</li>
+                    <li>✅ Endless Aisle (Full Catalog Access)</li>
+                    <li>✅ Virtual Try-On (AR)</li>
+                    <li>✅ Scan & Learn Product Info</li>
+                    <li>✅ AI Style Recommendations</li>
+                    <li>✅ Self-Checkout Kiosk</li>
+                    <li>✅ Loyalty Program Signup</li>
+                    <li>✅ Review Collection</li>
+                    <li>✅ Back-in-Stock Alerts</li>
+                    <li>✅ Customer Analytics Dashboard</li>
+                </ul>
+
+                <div class="addon-section">
+                    <h4>📱 Optional Communication Add-Ons</h4>
+                    <div class="addon-item">
+                        <span>SMS Notifications (1,000 messages/month)</span>
+                        <strong>+$29/month</strong>
+                    </div>
+                    <div class="addon-item">
+                        <span>Email Campaigns (Unlimited emails)</span>
+                        <strong>+$19/month</strong>
+                    </div>
+                    <div class="addon-item">
+                        <span>SMS + Email Bundle</span>
+                        <strong>+$39/month (save $9)</strong>
+                    </div>
+                </div>
+
+                <a href="https://demo.chi-pins.com?industry=retail" class="cta-button" style="margin-right: 15px; margin-top: 30px;">🎮 Try Demo</a>
+                <a href="mailto:sales@agentiosk.com?subject=Demo%20Request%20-%20Retail%20Store&body=I'd%20like%20to%20schedule%20a%20personalized%20demo%20for%20my%20retail%20store." class="cta-button" style="background: #ec4899; margin-top: 30px;">📅 Request Personalized Demo</a>
+                <p style="margin-top: 20px; font-size: 14px; color: #999;">30-day money-back guarantee • Setup in under 2 hours</p>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #ec4899; color: white; padding: 40px 20px; text-align: center;">
+        <p>&copy; 2025 EngageOS by Agentiosk. All rights reserved.</p>
+        <p style="margin-top: 10px;">
+            <a href="../index.html" style="color: white; margin: 0 15px;">Home</a>
+            <a href="mailto:sales@agentiosk.com" style="color: white; margin: 0 15px;">Contact Sales</a>
+            <a href="../privacy.html" style="color: white; margin: 0 15px;">Privacy Policy</a>
+        </p>
+    </footer>
+</body>
+</html>
