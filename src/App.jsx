@@ -916,7 +916,7 @@ export default function App() {
             <>
               {adminSettings?.lowZoomVisualization === 'heatmap' ? (
                 <ProgressiveVisualization
-                  pins={pinsDeduped}
+                  pins={pinsForRender}
                   enabled={true}
                   heatmapZoom={11}
                   bubbleZoom={13}
@@ -927,7 +927,7 @@ export default function App() {
                   max={adminSettings.heatmapMax}
                 />
               ) : (
-                <PinBubbles pins={pinsDeduped} enabled={true} minZoomForPins={13} maxZoom={17} />
+                <PinBubbles pins={pinsForRender} enabled={true} minZoomForPins={13} maxZoom={17} />
               )}
             </>
           )}
