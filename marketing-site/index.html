@@ -93,22 +93,27 @@
                 <!-- Demo Video + Live Link -->
                 <div style="display: flex; flex-direction: column; gap: 24px;">
                     <!-- Demo Video -->
-                    <div class="video-container" style="position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
-                        <video
-                            id="demoVideo"
-                            controls
-                            preload="metadata"
-                            style="width: 100%; height: auto; display: block; background: #000;"
-                        >
-                            <source src="demo.mp4" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                const video = document.getElementById('demoVideo');
-                                video.playbackRate = 3.0;
-                            });
-                        </script>
+                    <div class="video-container">
+                        <div style="position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+                            <video
+                                id="demoVideo"
+                                controls
+                                preload="metadata"
+                                style="width: 100%; height: auto; display: block; background: #000;"
+                            >
+                                <source src="demo.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const video = document.getElementById('demoVideo');
+                                    video.playbackRate = 3.0;
+                                });
+                            </script>
+                        </div>
+                        <p style="text-align: center; margin-top: 12px; color: #6b7280; font-size: 14px;">
+                            📹 Full feature walkthrough • Playing at 3x speed
+                        </p>
                     </div>
 
                     <!-- Live Demo Link -->
