@@ -225,17 +225,17 @@ export default function VoiceAssistant({
 
   return (
     <>
-      {/* Floating Voice Button */}
+      {/* Small, subtle floating voice button - minimally intrusive */}
       <button
         style={styles.floatingButton}
         onClick={() => setIsOpen(true)}
-        aria-label="Open Voice Assistant"
+        aria-label="Voice Assistant"
+        title="Voice Assistant - Ask questions"
       >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
           <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
         </svg>
-        <span style={styles.floatingButtonText}>Ask AI</span>
       </button>
 
       {/* Modal Overlay */}
@@ -370,27 +370,22 @@ function Spinner({ size = 24 }) {
 const styles = {
   floatingButton: {
     position: 'fixed',
-    bottom: '30px',
-    right: '30px',
-    width: '140px',
-    height: '56px',
-    borderRadius: '28px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    border: 'none',
+    bottom: '20px',
+    right: '20px',
+    width: '44px',
+    height: '44px',
+    borderRadius: '50%',
+    background: 'rgba(102, 126, 234, 0.9)',
+    border: '2px solid white',
     color: 'white',
     cursor: 'pointer',
-    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px',
-    transition: 'all 0.3s ease',
-    zIndex: 9999,
-    fontWeight: '600',
-    fontSize: '15px',
-  },
-  floatingButtonText: {
-    display: 'block',
+    transition: 'all 0.2s ease',
+    zIndex: 1000,
+    opacity: 0.7,
   },
   modalOverlay: {
     position: 'fixed',
@@ -638,8 +633,9 @@ if (typeof document !== 'undefined') {
     }
 
     button[style*="floatingButton"]:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+      opacity: 1 !important;
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
     }
   `;
   document.head.appendChild(style);
