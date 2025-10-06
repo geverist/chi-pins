@@ -484,6 +484,30 @@ export const TRIVIA_QUESTIONS = [
   },
 ];
 
+// Shuffle answer options for a single question
+function shuffleAnswers(question) {
+  const { options, correctAnswer } = question;
+
+  // Create array of indices and shuffle them
+  const indices = options.map((_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+
+  // Reorder options based on shuffled indices
+  const shuffledOptions = indices.map(i => options[i]);
+
+  // Find new position of correct answer
+  const newCorrectAnswer = indices.indexOf(correctAnswer);
+
+  return {
+    ...question,
+    options: shuffledOptions,
+    correctAnswer: newCorrectAnswer,
+  };
+}
+
 // Shuffle and select N questions for a game
 export function getRandomQuestions(count = 10, difficulty = 'all') {
   let pool = [...TRIVIA_QUESTIONS];
@@ -492,11 +516,16 @@ export function getRandomQuestions(count = 10, difficulty = 'all') {
     pool = pool.filter(q => q.difficulty === difficulty);
   }
 
-  // Shuffle
+  // Shuffle questions
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
 
-  return pool.slice(0, Math.min(count, pool.length));
+  // Shuffle answer options for each question
+  const shuffledQuestions = pool
+    .slice(0, Math.min(count, pool.length))
+    .map(question => shuffleAnswers(question));
+
+  return shuffledQuestions;
 }
