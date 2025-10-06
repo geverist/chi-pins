@@ -74,6 +74,7 @@ import ZoomGate from './components/ZoomGate';
 
 // Admin panel
 import AdminPanel from './components/AdminPanel';
+import OfflineMapDownloader from './components/OfflineMapDownloader';
 import AdminRoute from './components/AdminRoute';
 import PinCodeModal from './components/PinCodeModal';
 import MobilePinsList from './components/MobilePinsList';
@@ -1427,6 +1428,11 @@ export default function App() {
           onPlacePin={handleVoicePlacePin}
           shouldShow={voiceAssistantVisible}
         />
+      )}
+
+      {/* Offline Map Downloader - Auto-starts in native app, hidden in browser */}
+      {adminSettings.showOfflineMapDownloader !== false && (
+        <OfflineMapDownloader autoStart={true} />
       )}
 
       {/* Industry Demo Switcher - Press D-E-M-O to open */}
