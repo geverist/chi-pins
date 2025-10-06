@@ -15,6 +15,11 @@ const DEFAULT_SETTINGS = {
   photobooth_enabled: true,
   thenandnow_enabled: true,
   comments_enabled: true,
+  recommendations_enabled: false,
+  appointment_checkin_enabled: false,
+  reservation_checkin_enabled: false,
+  guestbook_enabled: false,
+  default_navigation_app: 'map',
 };
 
 export function useNavigationSettings() {

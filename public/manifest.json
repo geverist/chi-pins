@@ -3,10 +3,10 @@
   "short_name": "Chi-Pins",
   "description": "Interactive Chicago map kiosk with games, jukebox, and local spots",
   "start_url": "/",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#1a1f26",
   "theme_color": "#3b82f6",
-  "orientation": "any",
+  "orientation": "landscape",
   "icons": [
     {
       "src": "/icon-192.png",

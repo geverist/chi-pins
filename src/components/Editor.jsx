@@ -1,6 +1,7 @@
 // src/components/Editor.jsx
 import { useState } from 'react';
 import PhotoCaptureModal from './PhotoCaptureModal';
+import VoiceInput from './VoiceInput';
 
 export default function Editor({
   mapMode,
@@ -133,15 +134,15 @@ export default function Editor({
       gap: 10,
       gridTemplateColumns: 'minmax(180px,1fr) minmax(180px,1fr) minmax(200px,1fr) minmax(260px,2fr)',
     }}>
-      <input placeholder="Your name (optional)" value={form.name || ''} onChange={(e) => update({ name: e.target.value })} aria-label="Your name" />
-      <input placeholder="Neighborhood (optional)" value={form.neighborhood || ''} onChange={(e) => update({ neighborhood: e.target.value })} aria-label="Neighborhood" />
+      <VoiceInput placeholder="Your name (optional)" value={form.name || ''} onChange={(e) => update({ name: e.target.value })} ariaLabel="Your name" />
+      <VoiceInput placeholder="Neighborhood (optional)" value={form.neighborhood || ''} onChange={(e) => update({ neighborhood: e.target.value })} ariaLabel="Neighborhood" />
       <div style={{ display: 'contents' }}>
-        <input list="hotdog-stand-suggestions" placeholder="Favorite hot dog stand (search or create)" value={form.hotdog || ''} onChange={(e) => update({ hotdog: e.target.value })} aria-label="Favorite hot dog stand" />
+        <VoiceInput list="hotdog-stand-suggestions" placeholder="Favorite hot dog stand (search or create)" value={form.hotdog || ''} onChange={(e) => update({ hotdog: e.target.value })} ariaLabel="Favorite hot dog stand" />
         <datalist id="hotdog-stand-suggestions">
           {hotdogSuggestions.map((s) => <option key={s} value={s} />)}
         </datalist>
       </div>
-      <input placeholder="Leave a note for other guests (optional)" value={form.note || ''} onChange={(e) => update({ note: e.target.value })} aria-label="Note" />
+      <VoiceInput placeholder="Leave a note for other guests (optional)" value={form.note || ''} onChange={(e) => update({ note: e.target.value })} ariaLabel="Note" />
     </div>
   );
 
@@ -152,14 +153,14 @@ export default function Editor({
       gap: 10,
       gridTemplateColumns: 'minmax(180px,1fr) minmax(200px,1fr) minmax(260px,2fr)',
     }}>
-      <input placeholder="Your name (optional)" value={form.name || ''} onChange={(e) => update({ name: e.target.value })} aria-label="Your name" />
+      <VoiceInput placeholder="Your name (optional)" value={form.name || ''} onChange={(e) => update({ name: e.target.value })} ariaLabel="Your name" />
       <div style={{ display: 'contents' }}>
-        <input list="hotdog-stand-suggestions" placeholder="Favorite hot dog stand (search or create)" value={form.hotdog || ''} onChange={(e) => update({ hotdog: e.target.value })} aria-label="Favorite hot dog stand" />
+        <VoiceInput list="hotdog-stand-suggestions" placeholder="Favorite hot dog stand (search or create)" value={form.hotdog || ''} onChange={(e) => update({ hotdog: e.target.value })} ariaLabel="Favorite hot dog stand" />
         <datalist id="hotdog-stand-suggestions">
           {hotdogSuggestions.map((s) => <option key={s} value={s} />)}
         </datalist>
       </div>
-      <input placeholder="Leave a note for other guests (optional)" value={form.note || ''} onChange={(e) => update({ note: e.target.value })} aria-label="Note" />
+      <VoiceInput placeholder="Leave a note for other guests (optional)" value={form.note || ''} onChange={(e) => update({ note: e.target.value })} ariaLabel="Note" />
     </div>
   );
 
@@ -184,7 +185,7 @@ export default function Editor({
         gridTemplateColumns: 'minmax(220px,1fr) auto',
         alignItems: 'center',
       }}>
-        <input type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} aria-label="Loyalty phone number" />
+        <VoiceInput type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} ariaLabel="Loyalty phone number" />
         <span style={{ fontSize: 13, color: phoneLooksValid ? '#9AE6B4' : '#a7b0b8' }}>
           {phoneLooksValid ? '⭐ You\'ll earn a star for linking' : 'Enter at least 10 digits'}
         </span>

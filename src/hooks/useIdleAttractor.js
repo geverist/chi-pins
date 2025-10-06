@@ -15,7 +15,7 @@ export function useIdleAttractor({
   timeoutMs = 60_000,
   onIdle, // <-- NEW
 }) {
-  const [showAttractor, setShowAttractor] = useState(false)
+  const [showAttractor, setShowAttractor] = useState(true) // Show on page load
   const timerRef = useRef(null)
 
   const bump = useCallback(() => {
