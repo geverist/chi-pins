@@ -336,7 +336,7 @@ export default function VoiceAssistant({
 
             {/* Dismiss Hint */}
             <div style={styles.dismissHint}>
-              Tap anywhere outside to dismiss
+              Tap anywhere outside to close
             </div>
           </div>
         </div>
