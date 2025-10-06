@@ -132,7 +132,20 @@ export default function VoiceAssistant({
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error);
-      setError(`Recognition error: ${event.error}`);
+
+      // Handle specific error types with user-friendly messages
+      if (event.error === 'not-allowed' || event.error === 'not_allowed') {
+        console.warn('[VoiceAssistant] Microphone permission denied - clearing error');
+        // Don't show error to user, just stop listening
+        setError(null);
+      } else if (event.error === 'no-speech') {
+        setError('No speech detected. Try again.');
+      } else if (event.error === 'audio-capture') {
+        setError('Microphone not available');
+      } else {
+        setError(`Recognition error: ${event.error}`);
+      }
+
       setIsListening(false);
     };
 
@@ -220,11 +233,34 @@ export default function VoiceAssistant({
     });
   }
 
-  function startListening() {
+  async function startListening() {
     setTranscript('');
     setResponse('');
     setError(null);
-    recognitionRef.current?.start();
+
+    // Check microphone permission first (for browsers that support it)
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+        if (permissionStatus.state === 'denied') {
+          console.warn('[VoiceAssistant] Microphone permission denied by user');
+          setError(null); // Don't show error, just don't start
+          return;
+        }
+      } catch (err) {
+        // Permission API not supported or failed, continue anyway
+        console.log('[VoiceAssistant] Permission check not available, attempting recognition');
+      }
+    }
+
+    try {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    } catch (err) {
+      console.error('[VoiceAssistant] Failed to start recognition:', err);
+      setError(null); // Don't show error to user
+      setIsListening(false);
+    }
   }
 
   function handlePromptClick(prompt) {
