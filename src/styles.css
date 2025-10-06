@@ -48,6 +48,23 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 28px); }
 }
 .leaflet-control-container { z-index: 3500; }
 
+/* Map tile performance optimizations */
+.map-tiles {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  will-change: transform;
+  transform: translateZ(0);  /* Force GPU acceleration */
+  backface-visibility: hidden;
+}
+.leaflet-tile-container {
+  transform: translateZ(0);  /* Force GPU acceleration for tile container */
+}
+.leaflet-tile {
+  will-change: transform, opacity;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
 /* ---------- Glass utility (reusable) ---------- */
 .glass {
   background: rgba(16, 17, 20, 0.45);

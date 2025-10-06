@@ -51,25 +51,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Map tiles - cache first, long TTL
+  // Map tiles - cache first, long TTL, aggressive caching
   if (url.hostname.includes('tile.openstreetmap.org') ||
       url.hostname.includes('tiles.stadiamaps.com') ||
       url.hostname.includes('tile.opentopomap.org')) {
     event.respondWith(
       caches.open(MAP_TILES_CACHE).then(cache => {
         return cache.match(request).then(response => {
+          // Serve from cache immediately if available
           if (response) {
             return response;
           }
-          return fetch(request).then(networkResponse => {
+
+          // Fetch from network with optimizations
+          return fetch(request, {
+            // Performance hints
+            cache: 'force-cache',  // Use browser cache aggressively
+            priority: 'low',  // Lower priority for tiles
+          }).then(networkResponse => {
             // Only cache successful responses
             if (networkResponse && networkResponse.status === 200) {
-              cache.put(request, networkResponse.clone());
+              // Clone response before caching
+              const responseToCache = networkResponse.clone();
+
+              // Cache in background (non-blocking)
+              cache.put(request, responseToCache).catch(err => {
+                console.warn('[Service Worker] Failed to cache tile:', err);
+              });
             }
             return networkResponse;
           }).catch(() => {
-            // Return a placeholder tile if offline
-            return new Response('', { status: 404 });
+            // Return a blank transparent tile if offline
+            return new Response(
+              atob('R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='),
+              {
+                status: 200,
+                statusText: 'OK',
+                headers: { 'Content-Type': 'image/gif' }
+              }
+            );
           });
         });
       })
