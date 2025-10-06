@@ -5,6 +5,7 @@ import App from './App.jsx'
 import TableMode from './routes/TableMode.jsx'
 import Admin from './routes/Admin.jsx'
 import { NowPlayingProvider } from './state/useNowPlaying.jsx'
+import { registerServiceWorker } from './registerServiceWorker.js'
 import './styles.css'
 import './styles/transitions.css'
 
@@ -29,11 +30,8 @@ const router = createBrowserRouter(
   { future: { v7_startTransition: true } }
 );
 
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-   window.addEventListener('load', () => {
-     navigator.serviceWorker.register('/sw.js')
-   })
- }
+// Register PWA service worker
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

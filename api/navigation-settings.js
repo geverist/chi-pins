@@ -68,6 +68,11 @@ export default async function handler(req, res) {
           photobooth_enabled: true,
           thenandnow_enabled: true,
           comments_enabled: true,
+          recommendations_enabled: false,
+          appointment_checkin_enabled: false,
+          reservation_checkin_enabled: false,
+          guestbook_enabled: false,
+          default_navigation_app: 'map',
         });
       }
 
@@ -83,7 +88,12 @@ export default async function handler(req, res) {
         explore_enabled,
         photobooth_enabled,
         thenandnow_enabled,
-        comments_enabled
+        comments_enabled,
+        recommendations_enabled,
+        appointment_checkin_enabled,
+        reservation_checkin_enabled,
+        guestbook_enabled,
+        default_navigation_app
       } = req.body;
 
       // Validate input - must be booleans
@@ -94,9 +104,19 @@ export default async function handler(req, res) {
         typeof explore_enabled !== 'boolean' ||
         typeof photobooth_enabled !== 'boolean' ||
         typeof thenandnow_enabled !== 'boolean' ||
-        typeof comments_enabled !== 'boolean'
+        typeof comments_enabled !== 'boolean' ||
+        (recommendations_enabled !== undefined && typeof recommendations_enabled !== 'boolean') ||
+        (appointment_checkin_enabled !== undefined && typeof appointment_checkin_enabled !== 'boolean') ||
+        (reservation_checkin_enabled !== undefined && typeof reservation_checkin_enabled !== 'boolean') ||
+        (guestbook_enabled !== undefined && typeof guestbook_enabled !== 'boolean')
       ) {
         return res.status(400).json({ error: 'Invalid input: all fields must be boolean' });
+      }
+
+      // Validate default_navigation_app if provided
+      const validApps = ['map', 'games', 'jukebox', 'order', 'photobooth', 'thenandnow'];
+      if (default_navigation_app !== undefined && !validApps.includes(default_navigation_app)) {
+        return res.status(400).json({ error: `Invalid default_navigation_app: must be one of ${validApps.join(', ')}` });
       }
 
       // First, get the existing record
@@ -108,18 +128,27 @@ export default async function handler(req, res) {
 
       if (existing) {
         // Update existing record
+        const updateData = {
+          games_enabled,
+          jukebox_enabled,
+          order_enabled,
+          explore_enabled,
+          photobooth_enabled,
+          thenandnow_enabled,
+          comments_enabled,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Include new optional fields if provided
+        if (recommendations_enabled !== undefined) updateData.recommendations_enabled = recommendations_enabled;
+        if (appointment_checkin_enabled !== undefined) updateData.appointment_checkin_enabled = appointment_checkin_enabled;
+        if (reservation_checkin_enabled !== undefined) updateData.reservation_checkin_enabled = reservation_checkin_enabled;
+        if (guestbook_enabled !== undefined) updateData.guestbook_enabled = guestbook_enabled;
+        if (default_navigation_app !== undefined) updateData.default_navigation_app = default_navigation_app;
+
         const { data, error } = await supabase
           .from('navigation_settings')
-          .update({
-            games_enabled,
-            jukebox_enabled,
-            order_enabled,
-            explore_enabled,
-            photobooth_enabled,
-            thenandnow_enabled,
-            comments_enabled,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', existing.id)
           .select()
           .single();
@@ -132,17 +161,26 @@ export default async function handler(req, res) {
         return res.status(200).json(data);
       } else {
         // Insert new record if none exists
+        const insertData = {
+          games_enabled,
+          jukebox_enabled,
+          order_enabled,
+          explore_enabled,
+          photobooth_enabled,
+          thenandnow_enabled,
+          comments_enabled,
+        };
+
+        // Include new optional fields if provided
+        if (recommendations_enabled !== undefined) insertData.recommendations_enabled = recommendations_enabled;
+        if (appointment_checkin_enabled !== undefined) insertData.appointment_checkin_enabled = appointment_checkin_enabled;
+        if (reservation_checkin_enabled !== undefined) insertData.reservation_checkin_enabled = reservation_checkin_enabled;
+        if (guestbook_enabled !== undefined) insertData.guestbook_enabled = guestbook_enabled;
+        if (default_navigation_app !== undefined) insertData.default_navigation_app = default_navigation_app;
+
         const { data, error } = await supabase
           .from('navigation_settings')
-          .insert({
-            games_enabled,
-            jukebox_enabled,
-            order_enabled,
-            explore_enabled,
-            photobooth_enabled,
-            thenandnow_enabled,
-            comments_enabled,
-          })
+          .insert(insertData)
           .select()
           .single();
 

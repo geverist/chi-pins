@@ -176,7 +176,21 @@ export default function MarketplaceAdmin() {
 // ============================================================================
 
 function WidgetsTab({ widgets, onEdit, onDelete, onSave, editingWidget, onCancelEdit }) {
-  const categories = [...new Set(widgets.map(w => w.category))];
+  // Define category order and display names
+  const categoryOrder = [
+    { key: 'scroll-bars', label: 'Scroll Bars' },
+    { key: 'overlay-widgets', label: 'Overlay Widgets' },
+    { key: 'navigation-items', label: 'Navigation Items' },
+    { key: 'integration', label: 'Integrations' },
+    { key: 'analytics', label: 'Analytics' },
+    { key: 'marketing', label: 'Marketing' },
+    { key: 'ai', label: 'AI' }
+  ];
+
+  // Get unique categories that exist in widgets
+  const existingCategories = categoryOrder.filter(cat =>
+    widgets.some(w => w.category === cat.key)
+  );
 
   return (
     <div style={styles.tabContent}>
@@ -185,7 +199,7 @@ function WidgetsTab({ widgets, onEdit, onDelete, onSave, editingWidget, onCancel
         <button style={styles.btnPrimary} onClick={() => onEdit({
           name: '',
           slug: '',
-          category: 'content',
+          category: 'scroll-bars',
           description: '',
           price_monthly: 49,
           features: [],
@@ -204,13 +218,13 @@ function WidgetsTab({ widgets, onEdit, onDelete, onSave, editingWidget, onCancel
         />
       )}
 
-      {categories.map(category => (
-        <div key={category} style={styles.categorySection}>
+      {existingCategories.map(category => (
+        <div key={category.key} style={styles.categorySection}>
           <h3 style={styles.categoryTitle}>
-            {getCategoryIcon(category)} {category.toUpperCase()} WIDGETS
+            {getCategoryIcon(category.key)} {category.label.toUpperCase()}
           </h3>
           <div style={styles.widgetGrid}>
-            {widgets.filter(w => w.category === category).map(widget => (
+            {widgets.filter(w => w.category === category.key).map(widget => (
               <WidgetCard
                 key={widget.id}
                 widget={widget}
@@ -314,14 +328,12 @@ function WidgetEditor({ widget, onSave, onCancel }) {
                 style={styles.input}
                 required
               >
-                <option value="content">Content</option>
+                <option value="scroll-bars">Scroll Bars</option>
+                <option value="overlay-widgets">Overlay Widgets</option>
+                <option value="navigation-items">Navigation Items</option>
                 <option value="integration">Integration</option>
                 <option value="analytics">Analytics</option>
                 <option value="marketing">Marketing</option>
-                <option value="revenue">Revenue</option>
-                <option value="operations">Operations</option>
-                <option value="customer">Customer</option>
-                <option value="compliance">Compliance</option>
                 <option value="ai">AI</option>
               </select>
             </label>
@@ -615,14 +627,12 @@ function AnalyticsTab() {
 
 function getCategoryIcon(category) {
   const icons = {
-    content: '🎮',
+    'scroll-bars': '📰',
+    'overlay-widgets': '🔲',
+    'navigation-items': '🧭',
     integration: '🔌',
     analytics: '📊',
     marketing: '🎯',
-    revenue: '💰',
-    operations: '🛠️',
-    customer: '💬',
-    compliance: '🔒',
     ai: '🤖'
   };
   return icons[category] || '📦';

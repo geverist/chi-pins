@@ -61,7 +61,10 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 28px); }
 /* Transparent, pass-through screensaver overlay */
 .attractor-overlay {
   position: absolute; inset: 0;
-  display: grid; place-items: center;
+  display: grid;
+  place-items: center;
+  align-content: start;
+  padding-top: 20vh;
   pointer-events: none;
   z-index: 3600;
   background: transparent;

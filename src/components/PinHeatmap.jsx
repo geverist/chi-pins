@@ -22,6 +22,12 @@ export default function PinHeatmap({
   useEffect(() => {
     if (!enabled || !map) return;
 
+    // Ensure map container has valid dimensions
+    const container = map.getContainer();
+    if (!container || container.offsetHeight === 0 || container.offsetWidth === 0) {
+      return;
+    }
+
     // Get current zoom
     const zoom = map.getZoom();
 

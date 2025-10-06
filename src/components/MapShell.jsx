@@ -85,6 +85,7 @@ function GeocoderTopCenter({
   mode = 'chicago',
   clearToken = 0,
   isMobile = false,
+  onSearchInteraction,
 }) {
   const map = useMap();
   const hostRef = useRef(null);
@@ -286,6 +287,19 @@ function GeocoderTopCenter({
           ev.stopPropagation();
           clearAll();
         }
+      });
+      // Track if this is the initial focus (auto-focus on mount)
+      let hasInteracted = false;
+
+      // Dismiss overlays when user interacts with search (not on auto-focus)
+      input.addEventListener('focus', () => {
+        if (hasInteracted) {
+          onSearchInteraction?.();
+        }
+        hasInteracted = true;
+      });
+      input.addEventListener('input', () => {
+        onSearchInteraction?.();
       });
       input.focus();
     } else {
@@ -547,6 +561,7 @@ export default function MapShell({
   clearSearchToken = 0,
   mapReady,
   isMobile,
+  onSearchInteraction,
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   // Mobile: zoom 11 (Chicago proper, shows neighborhoods). Desktop: zoom 9 (full metro)
@@ -600,6 +615,7 @@ export default function MapShell({
             mode={mapMode === 'global' ? 'global' : 'chicago'}
             clearToken={clearSearchToken}
             isMobile={isMobile}
+            onSearchInteraction={onSearchInteraction}
           />
         )}
         <TapToPlace onPick={onPick} onMapClick={onMapClick} disabled={exploring} mapReady={mapReady} />

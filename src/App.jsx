@@ -9,6 +9,7 @@ import { useIdleAttractor } from './hooks/useIdleAttractor';
 import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useHighlightPin } from './hooks/useHighlightPin';
 import { useQuadrantTouch } from './hooks/useQuadrantTouch';
+import { useTouchSequence } from './hooks/useTouchSequence';
 
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo';
@@ -54,6 +55,7 @@ import ThenAndNow from './components/ThenAndNow';
 import { initRemoteLogger } from './utils/remoteLogger';
 import WeatherWidget from './components/WeatherWidget';
 import OfflineIndicator from './components/OfflineIndicator';
+import TouchSequenceIndicator from './components/TouchSequenceIndicator';
 import AnonymousMessageModal from './components/AnonymousMessageModal';
 import CommentsModal from './components/CommentsModal';
 import LocationSwitcher from './components/LocationSwitcher';
@@ -193,6 +195,9 @@ export default function App() {
   // comments modal
   const [commentsOpen, setCommentsOpen] = useState(false);
 
+  // voice assistant visibility
+  const [voiceAssistantVisible, setVoiceAssistantVisible] = useState(true);
+
   // layer toggles
   const [showPopularSpots, setShowPopularSpots] = useState(true);
   const [showCommunityPins, setShowCommunityPins] = useState(true);
@@ -236,19 +241,33 @@ export default function App() {
   // mobile mode detection - detect mobile device once and stick with it
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
-    // Detect if this is a mobile device based on:
-    // 1. Touch capability
-    // 2. User agent contains mobile indicators
-    // 3. Screen size (use the smaller dimension to handle rotation)
+
+    // For kiosk tablets (like Fully Kiosk Browser on Android tablets),
+    // prioritize screen size over user agent to avoid false positives
+    const smallestDimension = Math.min(window.innerWidth, window.innerHeight);
+    const isSmallScreen = smallestDimension <= 768; // Increased threshold for tablets
+
     const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const isMobileUA = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const smallestDimension = Math.min(window.innerWidth, window.innerHeight);
-    const isSmallScreen = smallestDimension <= 640;
 
-    const detected = (hasTouch && isSmallScreen) || isMobileUA;
+    // Check if running in Fully Kiosk Browser (common kiosk app)
+    const isFullyKiosk = /Fully/i.test(navigator.userAgent);
+
+    // Tablet detection (iPad or Android tablets with larger screens)
+    const isTablet = /iPad/i.test(navigator.userAgent) ||
+                     (/Android/i.test(navigator.userAgent) && smallestDimension > 768);
+
+    // Only consider it mobile if:
+    // - Has a small screen (<=768px), OR
+    // - Is a mobile phone user agent AND has small screen
+    // - NOT a tablet or kiosk browser with larger screen
+    const detected = isSmallScreen && !isTablet && !isFullyKiosk;
+
     console.log('[App] Mobile detection:', {
       hasTouch,
       isMobileUA,
+      isFullyKiosk,
+      isTablet,
       smallestDimension,
       isSmallScreen,
       userAgent: navigator.userAgent,
@@ -349,6 +368,27 @@ export default function App() {
     };
   }, [isMobile, mapMode, mainMapRef]);
 
+  // Dismiss overlays on map zoom/pan
+  useEffect(() => {
+    if (!mainMapRef.current) return;
+
+    const map = mainMapRef.current;
+
+    const dismissOverlays = () => {
+      setShowAttractor(false);
+      setVoiceAssistantVisible(false);
+    };
+
+    // Listen for zoom/pan events
+    map.on('zoomstart', dismissOverlays);
+    map.on('movestart', dismissOverlays);
+
+    return () => {
+      map.off('zoomstart', dismissOverlays);
+      map.off('movestart', dismissOverlays);
+    };
+  }, [mainMapRef]);
+
   const startKioskNow = async () => {
     await enterFullscreen();
     await ensureWakeLock();
@@ -360,39 +400,42 @@ export default function App() {
     setNeedsKioskStart(false);
   };
 
-  // Hidden key sequence to toggle kiosk mode (press 'k' 3 times within 1 second)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // Touch sequence to toggle kiosk mode (double-tap opposite corners)
+  useTouchSequence(() => {
+    console.log('Double-tap corners detected - toggling kiosk mode');
+    if (isFullscreen) {
+      // Show PIN modal to exit kiosk mode
+      setShowKioskExitPin(true);
+    } else {
+      startKioskNow();
+    }
+  }, {
+    sequence: 'double-tap-corners',
+    timeoutMs: 2000,
+    enabled: true
+  });
 
-    let keyPresses = [];
-    const SEQUENCE_KEY = 'k';
-    const SEQUENCE_LENGTH = 3;
-    const TIMEOUT_MS = 1000;
-
-    const handleKeyPress = (e) => {
-      if (e.key.toLowerCase() === SEQUENCE_KEY) {
-        const now = Date.now();
-        keyPresses.push(now);
-
-        // Remove old presses outside the timeout window
-        keyPresses = keyPresses.filter(time => now - time < TIMEOUT_MS);
-
-        // Check if we have the right number of presses
-        if (keyPresses.length >= SEQUENCE_LENGTH) {
-          keyPresses = [];
-          if (isFullscreen) {
-            // Show PIN modal to exit kiosk mode
-            setShowKioskExitPin(true);
-          } else {
-            startKioskNow();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isFullscreen]);
+  // Touch sequence to refresh page (touch all four corners)
+  useTouchSequence(() => {
+    console.log('Four corners touched - refreshing page');
+    // Clear service worker cache if available
+    if ('serviceWorker' in navigator && 'caches' in window) {
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      }).then(() => {
+        console.log('Cache cleared, reloading...');
+        window.location.reload(true);
+      });
+    } else {
+      window.location.reload(true);
+    }
+  }, {
+    sequence: 'corners',
+    timeoutMs: 3000,
+    enabled: true
+  });
 
   // dedupe pins
   const pinsDeduped = useMemo(() => {
@@ -458,8 +501,24 @@ export default function App() {
     exploring,
     timeoutMs: 60 * 1000,
     onIdle: () => {
+      // Close all modals and reset to main map
       cancelEditing();
       setClearSearchToken((t) => t + 1);
+      setVoiceAssistantVisible(true);
+
+      // Close all navigation modals
+      setGamesOpen(false);
+      setJukeboxOpen(false);
+      setOrderMenuOpen(false);
+      setPhotoBoothOpen(false);
+      setThenAndNowOpen(false);
+      setCommentsOpen(false);
+      setRecommendationsOpen(false);
+      setAppointmentCheckInOpen(false);
+      setReservationCheckInOpen(false);
+      setGuestBookOpen(false);
+      setAnonymousMessageOpen(false);
+      setAdminOpen(false);
     },
   });
 
@@ -523,9 +582,66 @@ export default function App() {
     }
   }
 
+  // Voice-triggered pin placement
+  async function handleVoicePlacePin(ll) {
+    console.log('App: handleVoicePlacePin called with latlng=', ll);
+
+    // Dismiss voice assistant when placing pin
+    setVoiceAssistantVisible(false);
+    setShowAttractor(false);
+
+    if (!mapReady) return;
+
+    // Prevent placing pins in Lake Michigan
+    if (isInLakeMichigan(ll.lat, ll.lng)) {
+      setToast({
+        title: 'Invalid Location',
+        text: 'Cannot place a pin in Lake Michigan! Please select a location on land.'
+      });
+      setTimeout(() => setToast(null), 5000);
+      return;
+    }
+
+    try {
+      const map = mainMapRef.current;
+      if (!map) {
+        console.warn('App: mainMapRef.current is null in handleVoicePlacePin');
+        return;
+      }
+      const cz = map.getZoom() ?? 10;
+      const tenMileBounds = boundsForMiles(ll, 10);
+      map.fitBounds(tenMileBounds, { animate: false });
+      const tenMileZoom = map.getZoom();
+      map.setZoom(cz, { animate: false });
+      if (cz < tenMileZoom) {
+        map.fitBounds(tenMileBounds, { animate: true });
+      } else {
+        map.setView([ll.lat, ll.lng], cz, { animate: true });
+      }
+      setDraft(ll);
+      if (mapMode === 'chicago') {
+        showNearestTownFact(ll.lat, ll.lng);
+      }
+      if (!slug) {
+        const fresh = await ensureUniqueSlug(makeChiSlug());
+        setSlug(fresh);
+      }
+      setExploring(false);
+      setShowAttractor(false);
+    } catch (err) {
+      console.error('Voice pin placement failed:', err);
+      setToast({ title: 'Error', text: 'Failed to place pin. Please try again.' });
+    }
+  }
+
   // map click
   async function handlePick(ll) {
     console.log('App: handlePick called with latlng=', ll, 'mapReady=', mapReady, 'isMobile=', isMobile);
+
+    // Dismiss voice assistant when placing pin
+    setVoiceAssistantVisible(false);
+    setShowAttractor(false);
+
     if (isMobile || !mapReady) return;
 
     // Prevent placing pins in Lake Michigan
@@ -724,6 +840,8 @@ export default function App() {
     setDraft(null);
     setSlug(null);
     setSubmapCenter(null);
+    setVoiceAssistantVisible(false); // Dismiss voice assistant in global mode
+    setShowAttractor(false); // Dismiss tap/pinch hints in global mode
     setHandoff(null);
     setSubmapBaseZoom(null);
     setShowAttractor(false);
@@ -1089,6 +1207,7 @@ export default function App() {
         setCommentsOpen={setCommentsOpen}
         setExploring={setExploring}
         setShowAttractor={setShowAttractor}
+        setVoiceAssistantVisible={setVoiceAssistantVisible}
         handleFooterClick={handleFooterClick}
         handleFooterTouch={handleFooterTouch}
         slug={slug}
@@ -1154,9 +1273,7 @@ export default function App() {
       )}
 
       {adminOpen && (
-        <AdminRoute>
-          <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
-        </AdminRoute>
+        <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
       )}
 
       <PinCodeModal
@@ -1234,26 +1351,32 @@ export default function App() {
             setPhotoBoothOpen={setPhotoBoothOpen}
             setThenAndNowOpen={setThenAndNowOpen}
             setCommentsOpen={setCommentsOpen}
+            setVoiceAssistantVisible={setVoiceAssistantVisible}
           />
         ) : null;
       })()}
 
       <OfflineIndicator />
+      <TouchSequenceIndicator />
       <LocationSwitcher />
       <HolidayTheme />
       <PWAInstallPrompt />
       <AchievementNotification />
       <DemoModeSwitcher />
 
-      {/* Voice AI Agent - enabled for all demos and industries */}
-      <VoiceAssistant
-        locationId={isDemoMode ? `demo-${industryConfig.industry}` : 'default'}
-        industry={isDemoMode ? industryConfig.industry : 'default'}
-        enabled={true}
-        language="en-US"
-        enabledFeatures={isDemoMode ? industryConfig.enabledFeatures : {}}
-        navSettings={navSettings}
-      />
+      {/* Voice AI Agent - enabled for all demos and industries, hidden in admin panel */}
+      {!adminOpen && (
+        <VoiceAssistant
+          locationId={isDemoMode ? `demo-${industryConfig.industry}` : 'default'}
+          industry={isDemoMode ? industryConfig.industry : 'default'}
+          enabled={true}
+          language="en-US"
+          enabledFeatures={isDemoMode ? industryConfig.enabledFeatures : {}}
+          navSettings={navSettings}
+          onPlacePin={handleVoicePlacePin}
+          shouldShow={voiceAssistantVisible}
+        />
+      )}
 
       {/* Industry Demo Switcher - Press D-E-M-O to open */}
       <IndustryDemoSwitcherModal

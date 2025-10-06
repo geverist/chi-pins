@@ -71,7 +71,7 @@ export function IndustryDemoSwitcherModal({ isOpen, onClose, onSwitch }) {
   const industries = [
     { id: 'restaurant', name: 'Restaurant', icon: '🍔', color: '#ef4444' },
     { id: 'medspa', name: 'Med Spa', icon: '💆', color: '#ec4899' },
-    { id: 'auto', name: 'Auto Shop', icon: '🚗', color: '#3b82f6' },
+    { id: 'auto', name: 'Auto Dealership', icon: '🚗', color: '#3b82f6' },
     { id: 'healthcare', name: 'Healthcare', icon: '💊', color: '#10b981' },
     { id: 'fitness', name: 'Fitness', icon: '💪', color: '#f59e0b' },
     { id: 'retail', name: 'Retail', icon: '🛍️', color: '#8b5cf6' },

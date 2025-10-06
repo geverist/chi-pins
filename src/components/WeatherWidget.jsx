@@ -1,9 +1,12 @@
 // src/components/WeatherWidget.jsx
 import { useState, useEffect, useCallback } from 'react';
 import { useAdminSettings } from '../state/useAdminSettings';
+import { isIndustryDemo } from '../config/industryConfigs';
 
 export default function WeatherWidget({ autoDismissOnEdit = false }) {
   const { settings: adminSettings } = useAdminSettings();
+  const isDemoMode = isIndustryDemo();
+  const newsTickerEnabled = adminSettings.newsTickerEnabled && adminSettings.newsTickerRssUrl;
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -84,12 +87,20 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
     return null;
   }
 
+  // Calculate top position: header + demo banner + news ticker
+  // Header: ~60-70px
+  // Demo banner: ~50px
+  // News ticker: 40px height + 2px border + spacing = ~50px
+  let topPosition = 80; // Base header height
+  if (isDemoMode) topPosition += 52; // Demo banner with border
+  if (newsTickerEnabled) topPosition += 60; // News ticker: 40px + 2px border + 18px spacing
+
   if (loading) {
     return (
       <div
         style={{
           position: 'fixed',
-          top: 120,
+          top: topPosition,
           right: 20,
           background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(37,99,235,0.95) 100%)',
           borderRadius: 16,
@@ -98,7 +109,7 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
           border: '1px solid rgba(255,255,255,0.2)',
           color: '#fff',
           minWidth: 200,
-          zIndex: 999,
+          zIndex: 900,
           pointerEvents: 'auto',
         }}
       >
@@ -115,7 +126,7 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
     <div
       style={{
         position: 'fixed',
-        top: 120,
+        top: topPosition,
         right: 20,
         background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(37,99,235,0.95) 100%)',
         borderRadius: 16,
@@ -126,7 +137,7 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
         color: '#fff',
         minWidth: 280,
         maxWidth: 320,
-        zIndex: 999,
+        zIndex: 900,
         pointerEvents: 'auto',
       }}
     >

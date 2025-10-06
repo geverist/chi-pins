@@ -8,7 +8,8 @@ export default function MobileNavMenu({
   setOrderMenuOpen,
   setPhotoBoothOpen,
   setThenAndNowOpen,
-  setCommentsOpen
+  setCommentsOpen,
+  setVoiceAssistantVisible
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -33,6 +34,7 @@ export default function MobileNavMenu({
   const handleItemClick = (action) => {
     action();
     setMenuOpen(false);
+    setVoiceAssistantVisible?.(false);
   };
 
   return (

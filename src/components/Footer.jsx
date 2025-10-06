@@ -16,8 +16,13 @@ export default function Footer({
   setPhotoBoothOpen,
   setThenAndNowOpen,
   setCommentsOpen,
+  setRecommendationsOpen,
+  setAppointmentCheckInOpen,
+  setReservationCheckInOpen,
+  setGuestBookOpen,
   setExploring,
   setShowAttractor,
+  setVoiceAssistantVisible,
   handleFooterClick,
   handleFooterTouch,
   // Editor props
@@ -33,7 +38,7 @@ export default function Footer({
 
   return (
     <footer
-      style={{ padding: '10px 14px' }}
+      style={{ padding: '20px 24px' }}
       onClick={handleFooterClick}
       onTouchStart={handleFooterTouch}
       aria-label="Footer controls"
@@ -46,20 +51,23 @@ export default function Footer({
             gap: 8,
           }}
         >
-          {/* Top row: Games, Jukebox, Order Now, Photo Booth, Then & Now, Leave Feedback */}
-          {(navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled) && (
+          {/* Top row: Games, Jukebox, Order Now, Photo Booth, Then & Now, Leave Feedback, and new items */}
+          {(navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled || navSettings.appointment_checkin_enabled || navSettings.reservation_checkin_enabled || navSettings.guestbook_enabled) && (
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'center',
-                gap: 10,
+                gap: 18,
                 flexWrap: 'wrap',
               }}
               data-no-admin-tap
             >
               {navSettings.games_enabled && (
                 <button
-                  onClick={() => setGamesOpen(true)}
+                  onClick={() => {
+                    setGamesOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
                   style={btn3d(false)}
                   className="btn-kiosk"
                   aria-label="Play Games"
@@ -69,7 +77,10 @@ export default function Footer({
               )}
               {navSettings.jukebox_enabled && (
                 <button
-                  onClick={() => setJukeboxOpen(true)}
+                  onClick={() => {
+                    setJukeboxOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
                   style={btn3d(false)}
                   className="btn-kiosk"
                   aria-label="Open Jukebox"
@@ -79,7 +90,10 @@ export default function Footer({
               )}
               {navSettings.order_enabled && (
                 <button
-                  onClick={() => setOrderMenuOpen(true)}
+                  onClick={() => {
+                    setOrderMenuOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
                   style={btn3d(false)}
                   className="btn-kiosk"
                   aria-label="Order from Chicago Mike's"
@@ -89,7 +103,10 @@ export default function Footer({
               )}
               {navSettings.photobooth_enabled && (
                 <button
-                  onClick={() => setPhotoBoothOpen(true)}
+                  onClick={() => {
+                    setPhotoBoothOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
                   style={btn3d(false)}
                   className="btn-kiosk"
                   aria-label="Photo Booth"
@@ -99,7 +116,10 @@ export default function Footer({
               )}
               {navSettings.thenandnow_enabled && (
                 <button
-                  onClick={() => setThenAndNowOpen(true)}
+                  onClick={() => {
+                    setThenAndNowOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
                   style={btn3d(false)}
                   className="btn-kiosk"
                   aria-label="Then & Now Photos"
@@ -109,12 +129,67 @@ export default function Footer({
               )}
               {navSettings.comments_enabled && (
                 <button
-                  onClick={() => setCommentsOpen(true)}
+                  onClick={() => {
+                    setCommentsOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
                   style={btn3d(false)}
                   className="btn-kiosk"
                   aria-label="Leave Feedback"
                 >
                   💬 Leave Feedback
+                </button>
+              )}
+              {navSettings.recommendations_enabled && (
+                <button
+                  onClick={() => {
+                    setRecommendationsOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
+                  style={btn3d(false)}
+                  className="btn-kiosk"
+                  aria-label="Local Recommendations"
+                >
+                  🗺️ Recommendations
+                </button>
+              )}
+              {navSettings.appointment_checkin_enabled && (
+                <button
+                  onClick={() => {
+                    setAppointmentCheckInOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
+                  style={btn3d(false)}
+                  className="btn-kiosk"
+                  aria-label="Appointment Check-In"
+                >
+                  📋 Check-In
+                </button>
+              )}
+              {navSettings.reservation_checkin_enabled && (
+                <button
+                  onClick={() => {
+                    setReservationCheckInOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
+                  style={btn3d(false)}
+                  className="btn-kiosk"
+                  aria-label="Reservation Check-In"
+                >
+                  🍽️ Reservation
+                </button>
+              )}
+              {navSettings.guestbook_enabled && (
+                <button
+                  onClick={() => {
+                    setGuestBookOpen(true);
+                    setVoiceAssistantVisible?.(false);
+                  }}
+                  style={btn3d(false)}
+                  className="btn-kiosk"
+                  aria-label="Guest Book"
+                >
+                  📖 Guest Book
                 </button>
               )}
             </div>
@@ -156,6 +231,7 @@ export default function Footer({
                     onClick={() => {
                       setExploring(true);
                       setShowAttractor(false);
+                      setVoiceAssistantVisible?.(false);
                     }}
                     className="btn-kiosk"
                     aria-label="Explore community pins"
@@ -164,7 +240,10 @@ export default function Footer({
                   </button>
                 ) : (
                   <button
-                    onClick={() => setExploring(false)}
+                    onClick={() => {
+                      setExploring(false);
+                      setVoiceAssistantVisible?.(false);
+                    }}
                     className="btn-kiosk"
                     aria-label="Close explore mode"
                   >

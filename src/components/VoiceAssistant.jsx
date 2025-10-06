@@ -18,9 +18,11 @@ export default function VoiceAssistant({
   enabled = false,
   language = 'en-US',
   enabledFeatures = {},
-  navSettings = {}
+  navSettings = {},
+  onPlacePin = null,
+  shouldShow = true
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true); // Show on page load
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -39,15 +41,21 @@ export default function VoiceAssistant({
     initializeSpeechSynthesis();
     generateDynamicPrompts();
 
-    // Auto-open modal when component mounts
-    setIsOpen(true);
-
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
     };
   }, [enabled, language, enabledFeatures, navSettings]);
+
+  // Respond to shouldShow prop changes
+  useEffect(() => {
+    if (!shouldShow) {
+      setIsOpen(false);
+    } else {
+      setIsOpen(true);
+    }
+  }, [shouldShow]);
 
   function generateDynamicPrompts() {
     const prompts = [];
@@ -137,7 +145,9 @@ export default function VoiceAssistant({
 
   function initializeSpeechSynthesis() {
     if (!('speechSynthesis' in window)) {
-      setError('Speech synthesis not supported in this browser');
+      console.warn('[VoiceAssistant] Speech synthesis not supported - voice responses disabled');
+      // Don't show error to user, just disable speech output
+      synthRef.current = null;
       return;
     }
     synthRef.current = window.speechSynthesis;
@@ -228,13 +238,10 @@ export default function VoiceAssistant({
 
   return (
     <>
-      {/* Centered Semi-Transparent Modal - auto-opens on component mount */}
+      {/* Voice Assistant - just microphone and horizontal scrolling prompts */}
       {isOpen && (
-        <div
-          style={styles.modalOverlay}
-          onClick={() => !isListening && !isProcessing && !isSpeaking && setIsOpen(false)}
-        >
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContent}>
 
             {/* Central Microphone Icon */}
             <div style={styles.microphoneContainer}>
@@ -305,10 +312,11 @@ export default function VoiceAssistant({
               </div>
             )}
 
-            {/* Scrolling Suggested Prompts */}
+            {/* Horizontal Scrolling Prompts */}
             <div style={styles.promptsContainer}>
               <div style={styles.promptsList}>
-                {suggestedPrompts.map((prompt, index) => (
+                {/* Duplicate prompts for continuous scroll effect */}
+                {[...suggestedPrompts, ...suggestedPrompts].map((prompt, index) => (
                   <button
                     key={index}
                     style={styles.promptChip}
@@ -365,26 +373,26 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.7)',
+    background: 'transparent',
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'center',
     zIndex: 10000,
     padding: '20px',
-    backdropFilter: 'blur(8px)',
+    paddingBottom: '20vh',
+    pointerEvents: 'none',
   },
   modalContent: {
-    background: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: '32px',
-    padding: '48px 32px',
-    maxWidth: '500px',
+    background: 'transparent',
+    borderRadius: '0',
+    padding: '0',
+    maxWidth: '100%',
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '24px',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-    backdropFilter: 'blur(20px)',
+    gap: '10vh',
+    pointerEvents: 'none',
   },
   microphoneContainer: {
     display: 'flex',
@@ -405,6 +413,7 @@ const styles = {
     justifyContent: 'center',
     transition: 'all 0.3s ease',
     boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)',
+    pointerEvents: 'auto',
   },
   centralMicActive: {
     background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -462,6 +471,8 @@ const styles = {
   },
   promptsContainer: {
     width: '100%',
+    maxWidth: '100vw',
+    overflow: 'hidden',
   },
   promptsHeader: {
     fontSize: '14px',
@@ -472,24 +483,28 @@ const styles = {
   },
   promptsList: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    maxHeight: '200px',
-    overflowY: 'auto',
-    paddingRight: '8px',
+    flexDirection: 'row',
+    gap: '12px',
+    paddingBottom: '12px',
+    paddingLeft: '20px',
+    paddingRight: '20px',
+    animation: 'scrollPrompts 30s linear infinite',
   },
   promptChip: {
-    padding: '12px 16px',
-    borderRadius: '12px',
-    background: 'rgba(255, 255, 255, 0.8)',
-    border: '1px solid rgba(229, 231, 235, 0.8)',
+    padding: '12px 24px',
+    borderRadius: '24px',
+    background: 'rgba(255, 255, 255, 0.95)',
+    border: '2px solid rgba(102, 126, 234, 0.3)',
     color: '#374151',
     cursor: 'pointer',
-    fontSize: '14px',
-    textAlign: 'left',
+    fontSize: '16px',
+    textAlign: 'center',
     transition: 'all 0.2s ease',
     fontWeight: '500',
-    backdropFilter: 'blur(10px)',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    pointerEvents: 'auto',
   },
   dismissHint: {
     fontSize: '12px',
@@ -543,23 +558,19 @@ if (typeof document !== 'undefined') {
       50% { height: 20px; }
     }
 
-    /* Scrollbar styles for prompts list */
+    @keyframes scrollPrompts {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Hide scrollbar but keep scrolling functionality */
+    div[style*="promptsList"] {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
     div[style*="promptsList"]::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    div[style*="promptsList"]::-webkit-scrollbar-track {
-      background: rgba(243, 244, 246, 0.5);
-      border-radius: 3px;
-    }
-
-    div[style*="promptsList"]::-webkit-scrollbar-thumb {
-      background: rgba(209, 213, 219, 0.8);
-      border-radius: 3px;
-    }
-
-    div[style*="promptsList"]::-webkit-scrollbar-thumb:hover {
-      background: rgba(156, 163, 175, 0.8);
+      display: none;
     }
 
     /* Prompt chip hover effect */
@@ -567,7 +578,8 @@ if (typeof document !== 'undefined') {
       background: rgba(102, 126, 234, 0.9) !important;
       color: white !important;
       border-color: rgba(102, 126, 234, 0.9) !important;
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
     }
 
     button[style*="floatingButton"]:hover {

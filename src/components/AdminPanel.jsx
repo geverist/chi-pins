@@ -11,6 +11,7 @@ import { useNowPlaying } from '../state/useNowPlaying'
 import PinCodeModal from './PinCodeModal'
 import AnalyticsDashboard from './AnalyticsDashboard'
 import VoiceAgentTab from './VoiceAgentTab'
+import KioskVoiceTab from './KioskVoiceTab'
 
 export default function AdminPanel({ open, onClose }) {
   const [authenticated, setAuthenticated] = useState(false)
@@ -357,6 +358,7 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
           <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>Media</TabBtn>
           <TabBtn active={tab === 'voice'} onClick={() => setTab('voice')}>Voice Agent</TabBtn>
+          <TabBtn active={tab === 'kioskvoice'} onClick={() => setTab('kioskvoice')}>Kiosk Voice</TabBtn>
           <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
         </div>
 
@@ -1193,6 +1195,87 @@ export default function AdminPanel({ open, onClose }) {
                       await updateNavSettingsAPI(updated);
                     }}
                   />
+                </FieldRow>
+
+                <FieldRow label="🗺️ Local Recommendations">
+                  <Toggle
+                    checked={navSettings.recommendations_enabled || false}
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, recommendations_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
+                    }}
+                  />
+                </FieldRow>
+
+                <FieldRow label="📋 Appointment Check-In">
+                  <Toggle
+                    checked={navSettings.appointment_checkin_enabled || false}
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, appointment_checkin_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
+                    }}
+                  />
+                </FieldRow>
+
+                <FieldRow label="🍽️ Reservation Check-In">
+                  <Toggle
+                    checked={navSettings.reservation_checkin_enabled || false}
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, reservation_checkin_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
+                    }}
+                  />
+                </FieldRow>
+
+                <FieldRow label="📖 Guest Book">
+                  <Toggle
+                    checked={navSettings.guestbook_enabled || false}
+                    onChange={async (v) => {
+                      const updated = { ...navSettings, guestbook_enabled: v };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
+                    }}
+                  />
+                </FieldRow>
+              </Card>
+
+              <Card title="Default Navigation App">
+                <p style={s.muted}>
+                  Choose which app should be displayed when the kiosk first loads. The map is shown by default.
+                </p>
+
+                <FieldRow label="Initial App">
+                  <select
+                    value={navSettings.default_navigation_app || 'map'}
+                    onChange={async (e) => {
+                      const updated = { ...navSettings, default_navigation_app: e.target.value };
+                      setNavSettings(updated);
+                      await updateNavSettingsAPI(updated);
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #2a2f37',
+                      background: '#16181d',
+                      color: '#e9eef3',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="map">📍 Map & Pin Placer</option>
+                    {navSettings.games_enabled && <option value="games">🎮 Games</option>}
+                    {navSettings.jukebox_enabled && <option value="jukebox">🎵 Jukebox</option>}
+                    {navSettings.order_enabled && <option value="order">🍕 Order Now</option>}
+                    {navSettings.photobooth_enabled && <option value="photobooth">📸 Photo Booth</option>}
+                    {navSettings.thenandnow_enabled && <option value="thenandnow">🏛️ Then & Now</option>}
+                    {navSettings.recommendations_enabled && <option value="recommendations">🗺️ Local Recommendations</option>}
+                    {navSettings.appointment_checkin_enabled && <option value="appointment">📋 Appointment Check-In</option>}
+                    {navSettings.reservation_checkin_enabled && <option value="reservation">🍽️ Reservation Check-In</option>}
+                    {navSettings.guestbook_enabled && <option value="guestbook">📖 Guest Book</option>}
+                  </select>
                 </FieldRow>
               </Card>
 
@@ -2593,6 +2676,8 @@ export default function AdminPanel({ open, onClose }) {
           )}
 
           {tab === 'voice' && <VoiceAgentTab />}
+
+          {tab === 'kioskvoice' && <KioskVoiceTab />}
         </div>
       </div>
     </div>
