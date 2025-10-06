@@ -1,6 +1,7 @@
 // src/App.jsx
 import { useMemo, useRef, useState, useEffect } from 'react';
 import logoUrl from './assets/logo.png';
+import { getIndustryConfig, isIndustryDemo } from './config/industryConfigs';
 
 // hooks
 import { usePins } from './hooks/usePins';
@@ -101,6 +102,10 @@ export default function App() {
   const mainMapRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
 
+  // industry demo config
+  const industryConfig = useMemo(() => getIndustryConfig(), []);
+  const isDemoMode = useMemo(() => isIndustryDemo(), []);
+
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
   const { settings: adminSettings } = useAdminSettings();
@@ -114,6 +119,17 @@ export default function App() {
     console.log('App.jsx - lastPlayed:', lastPlayed);
     console.log('App.jsx - queue:', queue);
   }, [currentTrack, isPlaying, lastPlayed, queue]);
+
+  // Apply industry demo config
+  useEffect(() => {
+    if (isDemoMode) {
+      console.log('Industry demo mode active:', industryConfig);
+      // Apply brand color to CSS variables
+      document.documentElement.style.setProperty('--brand-color', industryConfig.brandColor);
+      // Set page title
+      document.title = `${industryConfig.name} - ${industryConfig.tagline}`;
+    }
+  }, [isDemoMode, industryConfig]);
 
   // map mode - mobile always starts in Chicago mode with closer zoom
   const [mapMode, setMapMode] = useState('chicago');
@@ -886,6 +902,20 @@ export default function App() {
         {headerRight}
       </HeaderBar>
 
+      {isDemoMode && (
+        <div style={{
+          background: industryConfig.brandColor,
+          color: 'white',
+          padding: '8px 16px',
+          textAlign: 'center',
+          fontSize: '14px',
+          fontWeight: 600,
+          borderBottom: '2px solid rgba(255,255,255,0.2)'
+        }}>
+          🎭 Demo Mode: {industryConfig.name} | {industryConfig.tagline}
+        </div>
+      )}
+
       <NewsTicker
         enabled={adminSettings.newsTickerEnabled}
         feedUrl={adminSettings.newsTickerRssUrl}
@@ -920,8 +950,8 @@ export default function App() {
           isMobile={isMobile}
         >
           {(() => {
-            const shouldShow = !isMobile && showPopularSpots && mapMode === 'chicago' && !draft;
-            console.log('PopularSpots check:', { isMobile, showPopularSpots, mapMode, hasDraft: !!draft, shouldShow });
+            const shouldShow = !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots);
+            console.log('PopularSpots check:', { isMobile, showPopularSpots, mapMode, hasDraft: !!draft, isDemoMode, popularSpotsEnabled: !isDemoMode || industryConfig.enabledFeatures.popularSpots, shouldShow });
             return shouldShow ? <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" /> : null;
           })()}
           {showCommunityPins && !draft && (
@@ -1133,26 +1163,26 @@ export default function App() {
         <OrderMenu onClose={() => setOrderMenuOpen(false)} />
       )}
 
-      {jukeboxOpen && (
+      {jukeboxOpen && (!isDemoMode || industryConfig.enabledFeatures.jukebox) && (
         <Jukebox onClose={() => {
           console.log('App.jsx - Jukebox onClose called, closing modal...');
           setJukeboxOpen(false);
         }} />
       )}
 
-      {gamesOpen && (
+      {gamesOpen && (!isDemoMode || industryConfig.enabledFeatures.games) && (
         <GamesMenu onClose={() => setGamesOpen(false)} />
       )}
 
-      {photoBoothOpen && (
+      {photoBoothOpen && (!isDemoMode || industryConfig.enabledFeatures.photoBooth) && (
         <PhotoBooth onClose={() => setPhotoBoothOpen(false)} />
       )}
 
-      {thenAndNowOpen && (
+      {thenAndNowOpen && (!isDemoMode || industryConfig.enabledFeatures.thenAndNow) && (
         <ThenAndNow onClose={() => setThenAndNowOpen(false)} />
       )}
 
-      {commentsOpen && (
+      {commentsOpen && (!isDemoMode || industryConfig.enabledFeatures.feedback) && (
         <CommentsModal onClose={() => setCommentsOpen(false)} />
       )}
 
