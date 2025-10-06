@@ -48,12 +48,19 @@ export default function VoiceAssistant({
     };
   }, [enabled, language, enabledFeatures, navSettings]);
 
-  // Respond to shouldShow prop changes
+  // Respond to shouldShow prop changes and reset state when reopening
   useEffect(() => {
     if (!shouldShow) {
       setIsOpen(false);
     } else {
       setIsOpen(true);
+      // Reset all state when voice assistant reopens (e.g., after idle timer)
+      setTranscript('');
+      setResponse('');
+      setError(null);
+      setIsListening(false);
+      setIsProcessing(false);
+      setIsSpeaking(false);
     }
   }, [shouldShow]);
 
@@ -341,12 +348,7 @@ export default function VoiceAssistant({
               </div>
             )}
 
-            {/* Error Display */}
-            {error && (
-              <div style={styles.errorDisplay}>
-                ⚠️ {error}
-              </div>
-            )}
+            {/* Error Display - REMOVED: errors should not be shown to users */}
 
             {/* Horizontal Scrolling Prompts */}
             <div style={styles.promptsContainer}>
