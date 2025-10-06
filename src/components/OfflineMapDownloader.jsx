@@ -13,6 +13,7 @@ export default function OfflineMapDownloader({ autoStart = false }) {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
   const [storageStats, setStorageStats] = useState(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   const isNative = Capacitor.isNativePlatform();
 
@@ -61,6 +62,13 @@ export default function OfflineMapDownloader({ autoStart = false }) {
           setStats(finalStats);
           setDownloading(false);
           loadStats(); // Refresh storage stats
+
+          // Auto-hide after 10 seconds if download was successful
+          if (autoStart && finalStats.cached > 0) {
+            setTimeout(() => {
+              setIsVisible(false);
+            }, 10000);
+          }
         },
       });
 
@@ -95,6 +103,11 @@ export default function OfflineMapDownloader({ autoStart = false }) {
     return null;
   }
 
+  // Hide if user closed it
+  if (!isVisible) {
+    return null;
+  }
+
   const progressPercent = progress && progress.total > 0
     ? Math.round((progress.current / progress.total) * 100)
     : 0;
@@ -120,11 +133,29 @@ export default function OfflineMapDownloader({ autoStart = false }) {
         <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>
           📍 Offline Maps
         </h3>
-        {storageStats && (
-          <div style={{ fontSize: 12, color: '#a7b0b8' }}>
-            {storageStats.storage}
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {storageStats && (
+            <div style={{ fontSize: 12, color: '#a7b0b8' }}>
+              {storageStats.storage}
+            </div>
+          )}
+          <button
+            onClick={() => setIsVisible(false)}
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: 6,
+              padding: '4px 8px',
+              color: '#a7b0b8',
+              cursor: 'pointer',
+              fontSize: 18,
+              lineHeight: 1,
+            }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {error && (
