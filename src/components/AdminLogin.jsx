@@ -153,6 +153,18 @@ export default function AdminLogin({ onLoginSuccess }) {
             📧 Email me a login link
           </button>
 
+          <div style={styles.divider}>
+            <span style={styles.dividerText}>or</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => window.location.href = '/?demo=true'}
+            style={styles.demoButton}
+          >
+            🎮 Try Demo First (No Signup Required)
+          </button>
+
           <div style={styles.footer}>
             {mode === 'login' ? (
               <>
@@ -324,5 +336,16 @@ const styles = {
     color: '#667eea',
     textDecoration: 'none',
     fontWeight: 600,
+  },
+  demoButton: {
+    padding: '14px',
+    fontSize: '14px',
+    fontWeight: 700,
+    color: '#10b981',
+    background: 'white',
+    border: '2px solid #10b981',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   },
 }
