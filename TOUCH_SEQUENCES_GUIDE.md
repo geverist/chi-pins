@@ -10,22 +10,20 @@ All keyboard shortcuts have been replaced with touch sequences for easier kiosk 
 
 ### 1. 🔄 **Refresh Page** (Clear Cache & Reload)
 
-**Sequence:** Touch all four corners of the screen (in any order)
+**Sequence:** Triple-tap anywhere on the screen
 
 **Steps:**
-1. Touch top-left corner
-2. Touch top-right corner
-3. Touch bottom-left corner
-4. Touch bottom-right corner
+1. Tap the screen three times quickly in the same spot (within 50px)
+2. All three taps must be within 1 second
 
-**Time Limit:** 3 seconds
+**Time Limit:** 1 second
 
 **What it does:**
 - Clears all PWA caches (map tiles, API data)
 - Force reloads the page
 - Useful after deploying new updates
 
-**Visual Feedback:** Blue pulse at each corner
+**Visual Feedback:** Page reloads immediately after third tap
 
 ---
 
@@ -101,7 +99,7 @@ BR = Bottom-Right
 ### For Fully Kiosk Browser:
 
 1. **Refresh after deployment:**
-   - Touch all four corners to clear cache and reload
+   - Triple-tap anywhere on screen to clear cache and reload
    - Or use remote admin: `curl "http://TABLET-IP:2323/?cmd=clearCache&password=PASSWORD"`
 
 2. **Access admin panel:**
@@ -203,7 +201,7 @@ curl "http://$TABLET_IP:2323/?cmd=reload&password=$PASSWORD"
 
 | Action | Touch Sequence | Time Limit |
 |--------|---------------|------------|
-| Refresh Page | Touch all 4 corners | 3 seconds |
+| Refresh Page | Triple-tap same spot | 1 second |
 | Admin Panel | Touch all 4 quadrants | 5 seconds |
 | Kiosk Mode | Double-tap opposite corners | 2 seconds |
 
