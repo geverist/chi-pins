@@ -387,6 +387,49 @@ export const industryConfigs = {
       assumptionText: "Based on event (wedding, corporate) with 150 guests. Benefits: social sharing, client retention, referrals.",
     },
   },
+
+  hospitality: {
+    name: "Luxury Stays Hotel",
+    brandColor: "#0ea5e9", // sky blue
+    tagline: "Premium Hotel & Vacation Rentals",
+    enabledFeatures: {
+      games: true,
+      photoBooth: true,
+      jukebox: false,
+      feedback: true,
+      popularSpots: true,
+      thenAndNow: false,
+      aiVoice: true,
+    },
+    games: ["trivia"],
+    welcomeMessage: "Welcome to Luxury Stays! Discover local attractions while you wait to check in.",
+    attractorMessage: "🏨 Tap to explore local spots • Get concierge recommendations!",
+    ui: {
+      gamesMenuTitle: "Local Trivia & Activities",
+      photoBoothTitle: "Vacation Photo Booth",
+      feedbackPrompt: "How was your stay?",
+    },
+    demo: {
+      showPricing: true,
+      showVoiceAgent: true,
+      highlightFeatures: ["AI Concierge", "Local Recommendations", "Guest Engagement"],
+    },
+    metrics: {
+      guestEngagement: "78%",
+      upsellConversion: "38%",
+      conciergeEfficiency: "+60%",
+      roi: "1,850%",
+    },
+    roiCalc: {
+      defaultCustomersPerDay: 120,
+      defaultAvgTicket: 350,
+      engagementRate: 0.70,
+      upsellConversionRate: 0.38,
+      avgUpsellValue: 85,
+      laborSavingsPerMonth: 600,
+      assumptionText: "Based on hotels/Airbnbs with 120 daily check-ins, $350 avg stay. Upsells: room upgrades, spa services, tours.",
+    },
+  },
 };
 
 // Get industry config from URL parameter or default to restaurant
