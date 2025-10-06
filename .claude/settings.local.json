@@ -38,7 +38,8 @@
       "Bash(python3:*)",
       "Bash(npm init:*)",
       "Bash(echo:*)",
-      "Read(//Users/gileseverist/Dev/kiosk/**)"
+      "Read(//Users/gileseverist/Dev/kiosk/**)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
