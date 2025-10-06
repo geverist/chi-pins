@@ -1250,7 +1250,6 @@ export default function App() {
         locationId={isDemoMode ? `demo-${industryConfig.industry}` : 'default'}
         industry={isDemoMode ? industryConfig.industry : 'default'}
         enabled={true}
-        wakeWord="hey kiosk"
         language="en-US"
         enabledFeatures={isDemoMode ? industryConfig.enabledFeatures : {}}
         navSettings={navSettings}
