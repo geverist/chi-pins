@@ -271,6 +271,7 @@
 | Add-On | Monthly Cost | Description |
 |--------|--------------|-------------|
 | **SMS Notifications** | $29/mo | 1,000 messages/mo, $0.03 per additional |
+| **Appointment Reminders** | $39/mo | Automated SMS + voice reminders, 500/mo, reduces no-shows by 35% |
 | **Email Campaigns** | $49/mo | Automated email sequences |
 | **Advanced Analytics** | $99/mo | Custom dashboards, export data |
 | **White-Label Branding** | $299/mo | Remove EngageOS branding |
