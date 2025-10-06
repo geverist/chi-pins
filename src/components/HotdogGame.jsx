@@ -497,6 +497,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           onDrop={handleDrop}
           style={{
             minHeight: 400,
+            maxHeight: '70vh', // Prevent overflow
             width: '100%',
             maxWidth: 400,
             background: 'rgba(255,255,255,0.03)',
@@ -507,6 +508,8 @@ export default function HotdogGame({ onClose, onGameComplete }) {
             flexDirection: 'column',
             justifyContent: 'flex-end',
             gap: 8,
+            overflowY: 'auto', // Enable scrolling if needed
+            overflowX: 'hidden',
           }}
         >
           {assembledItems.length === 0 ? (
@@ -536,10 +539,11 @@ export default function HotdogGame({ onClose, onGameComplete }) {
                   gap: 12,
                   cursor: 'pointer',
                   transition: 'transform 0.2s',
+                  flexShrink: 0, // Prevent items from shrinking
                 }}
               >
                 <span style={{ fontSize: 32 }}>{item.emoji}</span>
-                <span style={{ color: '#ef4444', fontSize: 18 }}>✕</span>
+                {/* Removed red X - tap to remove is obvious from cursor */}
               </div>
             ))
           )}
@@ -720,10 +724,9 @@ export default function HotdogGame({ onClose, onGameComplete }) {
         style={{
           background: 'linear-gradient(135deg, #1a1f26 0%, #242a33 100%)',
           borderRadius: 20,
-          maxWidth: '95vw',
+          maxWidth: 'min(95vw, 900px)',
           maxHeight: '95vh',
           width: '100%',
-          maxWidth: 900,
           height: gameState === 'playing' ? '85vh' : 'auto',
           display: 'flex',
           flexDirection: 'column',
