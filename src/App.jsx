@@ -906,13 +906,35 @@ export default function App() {
         <div style={{
           background: industryConfig.brandColor,
           color: 'white',
-          padding: '8px 16px',
+          padding: '12px 16px',
           textAlign: 'center',
           fontSize: '14px',
           fontWeight: 600,
-          borderBottom: '2px solid rgba(255,255,255,0.2)'
+          borderBottom: '2px solid rgba(255,255,255,0.2)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
-          🎭 Demo Mode: {industryConfig.name} | {industryConfig.tagline}
+          <span>🎭 Demo Mode: {industryConfig.name} | {industryConfig.tagline}</span>
+          <a
+            href="https://agentiosk.com/#demo"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: 'white',
+              color: industryConfig.brandColor,
+              padding: '6px 16px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: 700,
+              fontSize: '13px',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            🚀 Get This For Your Business →
+          </a>
         </div>
       )}
 
