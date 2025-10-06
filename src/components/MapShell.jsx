@@ -1,7 +1,8 @@
 // src/components/MapShell.jsx
 import { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { MapContainer, TileLayer, useMapEvent, useMap } from 'react-leaflet';
+import { MapContainer, useMapEvent, useMap } from 'react-leaflet';
+import OfflineTileLayer from './OfflineTileLayer';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
 import 'leaflet-control-geocoder';
@@ -603,9 +604,8 @@ export default function MapShell({
         aria-label="Interactive map"
       >
         <SetMapRef mainMapRef={mainMapRef} setMapReady={setMapReady} />
-        <TileLayer
+        <OfflineTileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={maxZoom}
           // Performance optimizations
           maxNativeZoom={18}
@@ -614,8 +614,6 @@ export default function MapShell({
           updateWhenIdle={false}  // Update tiles while panning
           updateWhenZooming={false}  // Don't update during zoom animation
           updateInterval={200}  // Throttle tile updates to 200ms
-          // Caching optimizations
-          crossOrigin={true}
           // Loading optimizations
           className="map-tiles"
           errorTileUrl="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="  // Blank 1x1 transparent GIF

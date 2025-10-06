@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Chi-Pins</string>
+    <string name="title_activity_main">Chi-Pins</string>
+    <string name="package_name">com.chicagomikes.chipins</string>
+    <string name="custom_url_scheme">com.chicagomikes.chipins</string>
+</resources>
