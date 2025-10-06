@@ -883,6 +883,7 @@ export default function App() {
       cancelEditing();
       setTimeout(() => {
         setShowAttractor(!isMobile);
+        setVoiceAssistantVisible(true); // Show voice assistant when returning home
         setExploring(isMobile ? true : false);
         if (mainMapRef.current) {
           goToChicago(mainMapRef.current, isMobile);
@@ -893,6 +894,7 @@ export default function App() {
     }
     setMapMode('chicago');
     setShowAttractor(!isMobile);
+    setVoiceAssistantVisible(true); // Show voice assistant when returning home
     setExploring(isMobile ? true : false);
     if (mainMapRef.current) {
       goToChicago(mainMapRef.current, isMobile);
