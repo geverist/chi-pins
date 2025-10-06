@@ -386,20 +386,35 @@
     </footer>
 
     <script>
+        // Industry-specific ROI parameters (matching industryConfigs.js)
+        const industryROIParams = {
+            restaurant: { defaultCustomersPerDay: 200, defaultAvgTicket: 12, engagementRate: 0.65, upsellConversionRate: 0.28, avgUpsellValue: 4.50, laborSavingsPerMonth: 500 },
+            medspa: { defaultCustomersPerDay: 80, defaultAvgTicket: 250, engagementRate: 0.75, upsellConversionRate: 0.42, avgUpsellValue: 95, laborSavingsPerMonth: 450 },
+            auto: { defaultCustomersPerDay: 50, defaultAvgTicket: 350, engagementRate: 0.60, upsellConversionRate: 0.35, avgUpsellValue: 120, laborSavingsPerMonth: 600 },
+            healthcare: { defaultCustomersPerDay: 120, defaultAvgTicket: 0, engagementRate: 0.70 },
+            fitness: { defaultCustomersPerDay: 300, defaultAvgTicket: 89, engagementRate: 0.65 },
+            retail: { defaultCustomersPerDay: 180, defaultAvgTicket: 85, engagementRate: 0.55, conversionLift: 0.18 },
+            banking: { defaultCustomersPerDay: 250, defaultAvgTicket: 0, engagementRate: 0.60 },
+            events: { defaultCustomersPerDay: 150, defaultAvgTicket: 0, engagementRate: 0.70 }
+        };
+
         // Vertical-specific configurations
         const verticalConfigs = {
             restaurant: {
                 inputs: [
-                    { id: 'locations', label: 'Number of Locations', type: 'number', defaultValue: 10, hint: 'How many restaurant locations?' },
-                    { id: 'dailyCustomers', label: 'Daily Customers (per location)', type: 'number', defaultValue: 250, hint: 'Average customers per day' },
-                    { id: 'avgTicket', label: 'Average Ticket Size', type: 'number', defaultValue: 24, hint: 'Current average order value' },
-                    { id: 'hostLaborCost', label: 'Monthly Host Labor Cost (per location)', type: 'number', defaultValue: 3000, hint: 'What do you pay host staff?' }
+                    { id: 'locations', label: 'Number of Locations', type: 'number', defaultValue: 1, hint: 'How many restaurant locations?' },
+                    { id: 'dailyCustomers', label: 'Daily Customers (per location)', type: 'number', defaultValue: 200, hint: 'Average customers per day' },
+                    { id: 'avgTicket', label: 'Average Ticket Size', type: 'number', defaultValue: 12, hint: 'Current average order value' },
+                    { id: 'hostLaborCost', label: 'Monthly Host Labor Cost (per location)', type: 'number', defaultValue: 2500, hint: 'What do you pay host staff?' }
                 ],
                 calculate: (inputs) => {
                     const locations = inputs.locations;
                     const dailyCustomers = inputs.dailyCustomers;
                     const avgTicket = inputs.avgTicket;
                     const hostLaborCost = inputs.hostLaborCost;
+
+                    // Get industry-specific parameters
+                    const params = industryROIParams.restaurant;
 
                     // AI Voice enabled check with tiered pricing
                     const voiceTierElement = document.getElementById('voiceTier');
@@ -438,10 +453,12 @@
                     const walksOutsSaved = customersPerMonth * walkoutRate * walkoutReduction;
                     const walkoutRevenue = walksOutsSaved * avgTicket * 12;
 
-                    // Upsell revenue
-                    const upsellRate = aiVoiceEnabled ? 0.28 : 0.22; // AI Voice increases conversion 22% → 28%
-                    const avgUpsell = 8.50 * aiVoiceMultiplier; // Higher AOV with AI Voice
-                    const monthlyUpsells = dailyCustomers * 30 * upsellRate * locations;
+                    // Upsell revenue - use industry-specific parameters
+                    const engagementRate = params.engagementRate; // 65% for restaurant
+                    const upsellRate = aiVoiceEnabled ? params.upsellConversionRate : params.upsellConversionRate * 0.8; // AI Voice improves conversion
+                    const avgUpsell = params.avgUpsellValue * aiVoiceMultiplier; // $4.50 base, higher with AI Voice
+                    const monthlyEngaged = dailyCustomers * 30 * engagementRate * locations;
+                    const monthlyUpsells = monthlyEngaged * upsellRate;
                     const annualUpsellRevenue = monthlyUpsells * avgUpsell * 12;
 
                     const totalRevenue = annualLaborSavings + walkoutRevenue + annualUpsellRevenue;
@@ -472,12 +489,13 @@
                     };
 
                     const assumptions = [
+                        `Based on QSR with ${dailyCustomers} daily customers, $${avgTicket} avg ticket`,
+                        `${(engagementRate * 100).toFixed(0)}% of waiting customers engage with kiosk`,
+                        `${(upsellRate * 100).toFixed(0)}% of engaged customers add upsells (avg $${avgUpsell.toFixed(2)} — fries, drinks, desserts)${aiVoiceEnabled ? ' — AI Voice conversational upsells' : ''}`,
                         `Host staff replacement saves $${(hostLaborCost - totalMonthlyCost).toLocaleString()}/month per location`,
                         `${walkoutReduction * 100}% reduction in customer walkouts during peak hours${aiVoiceEnabled ? ' (AI Voice improves by 7 points)' : ''}`,
-                        `${(upsellRate * 100).toFixed(0)}% of customers accept upsell prompts (avg $${avgUpsell.toFixed(2)})${aiVoiceEnabled ? ' — AI Voice conversational upsells' : ''}`,
                         `Base software: $349/month per location`,
-                        `Hardware: $2,700 one-time per location`,
-                        `Email capture builds marketing list for future campaigns`
+                        `Hardware: $2,700 one-time per location`
                     ];
 
                     if (aiVoiceEnabled) {
@@ -502,8 +520,8 @@
                 inputs: [
                     { id: 'locations', label: 'Number of Locations', type: 'number', defaultValue: 1, hint: 'How many med spa locations?' },
                     { id: 'dailyAppointments', label: 'Daily Appointments', type: 'number', defaultValue: 80, hint: 'Average appointments per day' },
-                    { id: 'avgTreatment', label: 'Average Treatment Cost', type: 'number', defaultValue: 450, hint: 'Current average treatment price' },
-                    { id: 'membershipPrice', label: 'Monthly Membership Price', type: 'number', defaultValue: 199, hint: 'If you have a membership program' }
+                    { id: 'avgTreatment', label: 'Average Treatment Cost', type: 'number', defaultValue: 250, hint: 'Current average treatment price' },
+                    { id: 'membershipPrice', label: 'Monthly Membership Price', type: 'number', defaultValue: 300, hint: 'If you have a membership program' }
                 ],
                 calculate: (inputs) => {
                     const locations = inputs.locations;
@@ -511,13 +529,16 @@
                     const avgTreatment = inputs.avgTreatment;
                     const membershipPrice = inputs.membershipPrice;
 
-                    // Upsell revenue
-                    const kioskEngagement = 0.30;
-                    const upsellInterest = 0.42;
-                    const upsellConversion = 0.60;
-                    const avgUpsell = 400;
+                    // Get industry-specific parameters
+                    const params = industryROIParams.medspa;
+
+                    // Upsell revenue - use industry parameters
+                    const engagementRate = params.engagementRate; // 75% for med spa
+                    const upsellConversionRate = params.upsellConversionRate; // 42%
+                    const avgUpsell = params.avgUpsellValue; // $95
                     const monthlyAppointments = dailyAppointments * 30;
-                    const monthlyUpsells = monthlyAppointments * kioskEngagement * upsellInterest * upsellConversion;
+                    const monthlyEngaged = monthlyAppointments * engagementRate;
+                    const monthlyUpsells = monthlyEngaged * upsellConversionRate;
                     const monthlyUpsellRevenue = monthlyUpsells * avgUpsell;
                     const annualUpsellRevenue = monthlyUpsellRevenue * 12 * locations;
 
@@ -525,8 +546,8 @@
                     const commissionRate = 0.05;
                     const annualCommission = annualUpsellRevenue * commissionRate;
 
-                    // Membership growth
-                    const membershipConversions = monthlyAppointments * kioskEngagement * 0.15;
+                    // Membership growth - 15% of engaged clients sign up
+                    const membershipConversions = monthlyEngaged * 0.15;
                     const annualMembershipRevenue = membershipConversions * membershipPrice * 12 * locations;
 
                     // Social proof (new clients from Instagram shares)
@@ -555,12 +576,13 @@
                         roi: roi,
                         payback: paybackMonths,
                         assumptions: [
-                            `30% of waiting clients engage with kiosk`,
-                            `42% express interest in add-on treatments`,
-                            `60% of interests convert to booked treatments (avg add-on: $${avgUpsell})`,
-                            `15% of kiosk users enroll in membership program`,
-                            `5% commission on treatment upsells attributed to kiosk`,
-                            `Photo booth generates Instagram UGC → new consultations`
+                            `Based on med spa with ${dailyAppointments} daily appointments, $${avgTreatment} avg service`,
+                            `${(engagementRate * 100).toFixed(0)}% of waiting clients engage with kiosk`,
+                            `${(upsellConversionRate * 100).toFixed(0)}% of engaged clients buy products/upgrades (avg $${avgUpsell} — skincare, treatment upgrades)`,
+                            `15% of engaged clients enroll in $${membershipPrice}/mo membership program`,
+                            `Labor savings: $${params.laborSavingsPerMonth}/mo reduced front desk needs`,
+                            `Photo booth generates Instagram UGC → new consultations`,
+                            `5% commission on treatment upsells attributed to kiosk`
                         ]
                     };
                 }
