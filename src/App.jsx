@@ -534,6 +534,11 @@ export default function App() {
       setClearSearchToken((t) => t + 1);
       setVoiceAssistantVisible(true);
 
+      // Dismiss keyboard by blurring any focused input
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
       // Close all navigation modals
       setGamesOpen(false);
       setJukeboxOpen(false);
