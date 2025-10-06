@@ -39,7 +39,9 @@
       "Bash(npm init:*)",
       "Bash(echo:*)",
       "Read(//Users/gileseverist/Dev/kiosk/**)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx supabase db reset:*)",
+      "WebFetch(domain:chi-pins-l1nbeton3-geverists-projects.vercel.app)"
     ],
     "deny": [],
     "ask": []
