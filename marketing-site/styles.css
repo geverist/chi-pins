@@ -966,7 +966,21 @@ h1, h2, h3, h4 {
 }
 
 /* ===== RESPONSIVE ===== */
+
+/* Prevent horizontal scroll on all screen sizes */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Mobile Portrait (up to 768px) */
 @media (max-width: 768px) {
+    /* Container padding for mobile */
+    .container {
+        padding: 0 16px;
+    }
+
+    /* Navigation */
     .nav-links {
         display: none;
         position: fixed;
@@ -998,40 +1012,74 @@ h1, h2, h3, h4 {
         display: flex;
     }
 
+    /* Hero section */
     .hero-title {
-        font-size: 42px;
+        font-size: 36px;
     }
 
     .hero-subtitle {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .hero-stats {
         flex-direction: column;
-        gap: 24px;
+        gap: 20px;
     }
 
     .hero-cta {
         flex-direction: column;
+        gap: 12px;
     }
 
+    .hero-content,
+    .hero-visual {
+        padding: 0;
+    }
+
+    .hero {
+        padding: 60px 0 40px;
+    }
+
+    /* Section titles */
     .section-title {
-        font-size: 36px;
+        font-size: 28px;
     }
 
     .section-subtitle {
-        font-size: 18px;
+        font-size: 16px;
     }
 
+    /* Grids - stack on mobile */
+    .problem-grid,
+    .vertical-grid,
+    .features-grid,
+    .case-studies-grid,
+    .pricing-grid,
+    .addon-grid,
+    .faq-grid {
+        grid-template-columns: 1fr !important;
+        gap: 20px;
+    }
+
+    /* Comparison table - allow horizontal scroll */
     .comparison-table {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+        width: 100%;
     }
 
+    .comparison-table > div {
+        min-width: 500px;
+    }
+
+    /* Featured case study */
     .case-study.featured {
         grid-template-columns: 1fr;
-        padding: 40px;
+        padding: 32px 20px;
     }
 
+    /* Steps - vertical on mobile */
     .steps {
         flex-direction: column;
     }
@@ -1041,11 +1089,130 @@ h1, h2, h3, h4 {
         margin: 16px 0;
     }
 
+    /* Form rows */
     .form-row {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
 
+    /* Buttons */
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Fix video container */
+    .video-container {
+        max-width: 100%;
+    }
+
+    /* Fix hardware images */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Pricing cards */
+    .pricing-card {
+        width: 100%;
+    }
+
+    /* Stats responsive */
+    .stat {
+        width: 100%;
+    }
+}
+
+/* Mobile Landscape & Tablet Portrait (481px - 1024px) */
+@media (min-width: 481px) and (max-width: 1024px) {
+    .container {
+        padding: 0 24px;
+    }
+
+    .hero-title {
+        font-size: 48px;
+    }
+
+    .section-title {
+        font-size: 32px;
+    }
+
+    /* 2-column grid for tablets */
+    .vertical-grid,
+    .features-grid,
+    .pricing-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    /* Still stack these on tablet */
+    .problem-grid,
+    .case-studies-grid,
+    .addon-grid,
     .faq-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Landscape orientation specific fixes */
+@media (max-height: 600px) and (orientation: landscape) {
+    /* Reduce vertical padding in landscape */
+    .hero,
+    section {
+        padding-top: 40px !important;
+        padding-bottom: 40px !important;
+    }
+
+    .hero-title {
+        font-size: 32px;
+    }
+
+    .hero-stats {
+        flex-direction: row;
+        gap: 16px;
+    }
+
+    .hero-cta {
+        flex-direction: row;
+        gap: 12px;
+    }
+
+    /* Compact stats */
+    .stat-number {
+        font-size: 32px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+    }
+}
+
+/* Extra small devices (max 480px) */
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 28px;
+    }
+
+    .section-title {
+        font-size: 24px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+
+    /* Smaller stats on tiny screens */
+    .stat-number {
+        font-size: 36px;
+    }
+
+    .stat-label {
+        font-size: 13px;
+    }
+
+    /* Compact padding */
+    .hero,
+    section {
+        padding: 40px 0;
     }
 }
