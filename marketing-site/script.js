@@ -22,6 +22,16 @@ if (mobileMenuToggle) {
     });
 }
 
+// Get UTM parameters from URL
+function getUTMParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return {
+        utm_source: urlParams.get('utm_source') || null,
+        utm_medium: urlParams.get('utm_medium') || null,
+        utm_campaign: urlParams.get('utm_campaign') || null,
+    };
+}
+
 // Demo form submission
 const demoForm = document.getElementById('demoForm');
 
@@ -32,6 +42,10 @@ if (demoForm) {
         const formData = new FormData(demoForm);
         const data = Object.fromEntries(formData);
 
+        // Add UTM parameters
+        const utmParams = getUTMParams();
+        Object.assign(data, utmParams);
+
         // Show loading state
         const submitButton = demoForm.querySelector('button[type="submit"]');
         const originalText = submitButton.textContent;
@@ -40,7 +54,7 @@ if (demoForm) {
 
         try {
             // Submit to Supabase via API
-            const response = await fetch('/api/submit-demo', {
+            const response = await fetch('/api/submit-lead', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -49,20 +63,39 @@ if (demoForm) {
             const result = await response.json();
 
             if (response.ok) {
-                // Show success message
-                alert(`Thank you for your interest, ${data.name}! We'll contact you within 24 hours to schedule your demo.`);
+                // Show success message with personalization
+                const successMessage = `Thank you, ${data.name}! 🎉\n\n` +
+                    `We've received your request for ${data.company}.\n\n` +
+                    `Our sales team will contact you within 24 hours to:\n` +
+                    `• Schedule a personalized demo\n` +
+                    `• Calculate your specific ROI\n` +
+                    `• Discuss pricing for ${data.locations} location(s)\n\n` +
+                    `Check your email for confirmation!`;
+
+                alert(successMessage);
 
                 // Reset form
                 demoForm.reset();
 
+                // Track conversion event (if analytics is set up)
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'generate_lead', {
+                        event_category: 'engagement',
+                        event_label: data.industry,
+                        value: parseInt(data.locations)
+                    });
+                }
+
                 // Optional: Redirect to thank you page
-                // window.location.href = '/thank-you.html';
+                // window.location.href = '/thank-you.html?industry=' + data.industry;
             } else {
                 throw new Error(result.error || 'Failed to submit form');
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('There was an error submitting your request. Please try again or email us directly at investors@engageos.io');
+            alert('There was an error submitting your request. Please try again or contact us directly:\n\n' +
+                  'Email: hello@agentiosk.com\n' +
+                  'Phone: (720) 702-2122');
         } finally {
             // Restore button state
             submitButton.textContent = originalText;
