@@ -919,7 +919,7 @@ export default function App() {
         }}>
           <span>🎭 Demo Mode: {industryConfig.name} | {industryConfig.tagline}</span>
           <a
-            href="https://agentiosk.com/#demo"
+            href="/marketing-site/#demo"
             target="_blank"
             rel="noopener noreferrer"
             style={{
