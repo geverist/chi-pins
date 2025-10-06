@@ -291,12 +291,33 @@
                 </div>
 
                 <div class="input-group" style="margin-top: 32px; padding: 20px; background: #f1f5f9; border-radius: 12px; border: 2px solid #6366f1;">
-                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 8px;">
-                        <input type="checkbox" id="aiVoiceEnabled" style="width: auto; transform: scale(1.4);" onchange="calculate()">
-                        <span style="font-size: 16px; font-weight: 700; color: #6366f1;">🆕 Enable AI Voice Agent (+$149/month)</span>
+                    <label style="font-size: 16px; font-weight: 700; color: #6366f1; margin-bottom: 12px; display: block;">
+                        📞 AI Voice Agent Package
                     </label>
-                    <div class="input-hint" style="margin-left: 32px;">
-                        Conversational ordering, 18% higher AOV, 72% faster ordering, 45 languages, accessibility
+                    <select id="voiceTier" onchange="calculate()" style="width: 100%; padding: 12px; border: 2px solid #6366f1; border-radius: 8px; font-size: 14px; margin-bottom: 8px;">
+                        <option value="none">No Voice Agent ($0/mo)</option>
+                        <option value="starter">Starter - 100 calls/mo (+$99/mo)</option>
+                        <option value="professional" selected>Professional - 250 calls/mo (+$199/mo)</option>
+                        <option value="enterprise">Enterprise - 500 calls/mo (+$349/mo)</option>
+                        <option value="unlimited">Unlimited calls (+$499/mo)</option>
+                    </select>
+                    <div class="input-hint">
+                        24/7 AI phone answering, call forwarding, voicemail transcription, business hours automation
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-top: 16px; padding: 20px; background: #fef3c7; border-radius: 12px; border: 2px solid #f59e0b;">
+                    <label style="font-size: 16px; font-weight: 700; color: #f59e0b; margin-bottom: 12px; display: block;">
+                        🎙️ Call Recording & AI Analysis
+                    </label>
+                    <select id="recordingTier" onchange="calculate()" style="width: 100%; padding: 12px; border: 2px solid #f59e0b; border-radius: 8px; font-size: 14px; margin-bottom: 8px;">
+                        <option value="none" selected>No Recording ($0/mo)</option>
+                        <option value="basic">Basic - 50 hrs + transcription (+$49/mo)</option>
+                        <option value="pro">Pro - 150 hrs + operators (+$99/mo)</option>
+                        <option value="enterprise">Enterprise - Unlimited + custom operators (+$199/mo)</option>
+                    </select>
+                    <div class="input-hint">
+                        Dual-channel recording, automatic transcription, sentiment analysis, custom AI operators
                     </div>
                 </div>
 
@@ -380,13 +401,34 @@
                     const avgTicket = inputs.avgTicket;
                     const hostLaborCost = inputs.hostLaborCost;
 
-                    // AI Voice enabled check
-                    const aiVoiceEnabled = document.getElementById('aiVoiceEnabled')?.checked || false;
-                    const aiVoiceMultiplier = aiVoiceEnabled ? 1.18 : 1.0; // 18% AOV increase
-                    const aiVoiceFee = aiVoiceEnabled ? 149 : 0;
+                    // AI Voice enabled check with tiered pricing
+                    const voiceTierElement = document.getElementById('voiceTier');
+                    const voiceTier = voiceTierElement ? voiceTierElement.value : 'none';
+                    const aiVoiceEnabled = voiceTier !== 'none';
+
+                    // Voice tier pricing: starter=$99, pro=$199, enterprise=$349, unlimited=$499
+                    const voiceFees = { none: 0, starter: 99, professional: 199, enterprise: 349, unlimited: 499 };
+                    const aiVoiceFee = voiceFees[voiceTier] || 0;
+
+                    // Recording add-on check
+                    const recordingTierElement = document.getElementById('recordingTier');
+                    const recordingTier = recordingTierElement ? recordingTierElement.value : 'none';
+                    const recordingFees = { none: 0, basic: 49, pro: 99, enterprise: 199 };
+                    const recordingFee = recordingFees[recordingTier] || 0;
+
+                    // AI Voice multipliers by tier
+                    const voiceMultipliers = {
+                      none: 1.0,
+                      starter: 1.12,      // 12% AOV increase
+                      professional: 1.18, // 18% AOV increase
+                      enterprise: 1.22,   // 22% AOV increase
+                      unlimited: 1.25     // 25% AOV increase
+                    };
+                    const aiVoiceMultiplier = voiceMultipliers[voiceTier] || 1.0;
 
                     // Labor savings
-                    const monthlyLaborSavings = (hostLaborCost - 349 - aiVoiceFee) * locations;
+                    const totalMonthlyCost = 349 + aiVoiceFee + recordingFee;
+                    const monthlyLaborSavings = (hostLaborCost - totalMonthlyCost) * locations;
                     const annualLaborSavings = monthlyLaborSavings * 12;
 
                     // Walkout reduction
@@ -406,24 +448,43 @@
 
                     // Investment
                     const hardware = 2700 * locations;
-                    const software = (349 + aiVoiceFee) * locations * 12;
+                    const software = totalMonthlyCost * locations * 12;
                     const totalInvestment = hardware + software;
 
                     const netGain = totalRevenue - totalInvestment;
                     const roi = (netGain / totalInvestment * 100).toFixed(0);
                     const paybackMonths = (hardware / (totalRevenue / 12)).toFixed(1);
 
+                    // Voice tier display names
+                    const voiceTierNames = {
+                      none: 'No Voice Agent',
+                      starter: 'Starter (100 calls/mo)',
+                      professional: 'Professional (250 calls/mo)',
+                      enterprise: 'Enterprise (500 calls/mo)',
+                      unlimited: 'Unlimited calls'
+                    };
+
+                    const recordingTierNames = {
+                      none: 'No Recording',
+                      basic: 'Basic - 50 hrs + transcription',
+                      pro: 'Pro - 150 hrs + AI operators',
+                      enterprise: 'Enterprise - Unlimited + custom operators'
+                    };
+
                     const assumptions = [
-                        `Host staff replacement saves $${(hostLaborCost - 349 - aiVoiceFee).toLocaleString()}/month per location`,
-                        `${walkoutReduction * 100}% reduction in customer walkouts during peak hours${aiVoiceEnabled ? ' (AI Voice: 72% faster ordering)' : ''}`,
+                        `Host staff replacement saves $${(hostLaborCost - totalMonthlyCost).toLocaleString()}/month per location`,
+                        `${walkoutReduction * 100}% reduction in customer walkouts during peak hours${aiVoiceEnabled ? ' (AI Voice improves by 7 points)' : ''}`,
                         `${(upsellRate * 100).toFixed(0)}% of customers accept upsell prompts (avg $${avgUpsell.toFixed(2)})${aiVoiceEnabled ? ' — AI Voice conversational upsells' : ''}`,
-                        `Software: $${349 + aiVoiceFee}/month per location${aiVoiceEnabled ? ' (includes AI Voice)' : ''}`,
+                        `Base software: $349/month per location`,
                         `Hardware: $2,700 one-time per location`,
                         `Email capture builds marketing list for future campaigns`
                     ];
 
                     if (aiVoiceEnabled) {
-                        assumptions.push(`🆕 AI Voice: 18% higher AOV, 45 languages, full accessibility (ADA-compliant)`);
+                        assumptions.push(`📞 Voice Agent: ${voiceTierNames[voiceTier]} (+$${aiVoiceFee}/mo) — 24/7 AI answering, call forwarding`);
+                    }
+                    if (recordingTier !== 'none') {
+                        assumptions.push(`🎙️ Recording: ${recordingTierNames[recordingTier]} (+$${recordingFee}/mo) — Full transcription & AI analysis`);
                     }
 
                     return {

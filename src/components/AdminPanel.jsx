@@ -10,6 +10,7 @@ import { useThenAndNow } from '../hooks/useThenAndNow'
 import { useNowPlaying } from '../state/useNowPlaying'
 import PinCodeModal from './PinCodeModal'
 import AnalyticsDashboard from './AnalyticsDashboard'
+import VoiceAgentTab from './VoiceAgentTab'
 
 export default function AdminPanel({ open, onClose }) {
   const [authenticated, setAuthenticated] = useState(false)
@@ -355,6 +356,7 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'analytics'} onClick={() => setTab('analytics')}>Analytics</TabBtn>
           <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
           <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>Media</TabBtn>
+          <TabBtn active={tab === 'voice'} onClick={() => setTab('voice')}>Voice Agent</TabBtn>
           <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
         </div>
 
@@ -2589,6 +2591,8 @@ export default function AdminPanel({ open, onClose }) {
               </Card>
             </div>
           )}
+
+          {tab === 'voice' && <VoiceAgentTab />}
         </div>
       </div>
     </div>
