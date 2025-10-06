@@ -382,10 +382,38 @@ export default function App() {
     // Listen for zoom/pan events
     map.on('zoomstart', dismissOverlays);
     map.on('movestart', dismissOverlays);
+    map.on('zoom', dismissOverlays); // Fire during zoom animation
+    map.on('move', dismissOverlays); // Fire during pan animation
+
+    // Also listen for direct touch events on map container for pinch-to-zoom
+    const mapContainer = map.getContainer();
+    let touchCount = 0;
+
+    const handleTouchStart = (e) => {
+      touchCount = e.touches.length;
+      if (touchCount >= 2) {
+        // Two or more fingers = pinch gesture
+        dismissOverlays();
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length >= 2) {
+        // Multi-touch movement = pinch/zoom
+        dismissOverlays();
+      }
+    };
+
+    mapContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mapContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     return () => {
       map.off('zoomstart', dismissOverlays);
       map.off('movestart', dismissOverlays);
+      map.off('zoom', dismissOverlays);
+      map.off('move', dismissOverlays);
+      mapContainer.removeEventListener('touchstart', handleTouchStart);
+      mapContainer.removeEventListener('touchmove', handleTouchMove);
     };
   }, [mainMapRef]);
 
