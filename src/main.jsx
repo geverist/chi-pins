@@ -6,6 +6,8 @@ import TableMode from './routes/TableMode.jsx'
 import Admin from './routes/Admin.jsx'
 import { NowPlayingProvider } from './state/useNowPlaying.jsx'
 import { registerServiceWorker } from './registerServiceWorker.js'
+import { startBackgroundPrefetch } from './lib/tilePrefetch.js'
+import { perfMonitor } from './lib/performanceMonitor.js'
 import './styles.css'
 import './styles/transitions.css'
 
@@ -32,6 +34,18 @@ const router = createBrowserRouter(
 
 // Register PWA service worker
 registerServiceWorker();
+
+// Start prefetching Chicago map tiles in background (after 5 second delay)
+startBackgroundPrefetch({
+  delay: 5000,
+  zoomLevels: [10, 11, 12, 13], // Cache zoom levels 10-13
+  maxConcurrent: 4, // Limit concurrent requests to avoid overwhelming connection
+  onProgress: (current, total) => {
+    if (current % 100 === 0) {
+      console.log(`[Prefetch] ${current}/${total} tiles cached (${Math.round(current / total * 100)}%)`);
+    }
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

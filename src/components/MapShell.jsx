@@ -607,6 +607,18 @@ export default function MapShell({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={maxZoom}
+          // Performance optimizations
+          maxNativeZoom={18}
+          minNativeZoom={0}
+          keepBuffer={2}  // Keep tiles around viewport (default is 2)
+          updateWhenIdle={false}  // Update tiles while panning
+          updateWhenZooming={false}  // Don't update during zoom animation
+          updateInterval={200}  // Throttle tile updates to 200ms
+          // Caching optimizations
+          crossOrigin={true}
+          // Loading optimizations
+          className="map-tiles"
+          errorTileUrl="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="  // Blank 1x1 transparent GIF
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />
