@@ -22,10 +22,13 @@ These demos show the kiosk interface with industry-specific branding, features, 
 
 ### **Admin Panel Test Access**
 
-**Primary URL:** https://chi-pins.vercel.app/?admin=true
-**Alternative URL:** https://app.agentiosk.com/?admin=true (requires Vercel protection to be disabled first)
+**Primary URL:** https://kiosk.agentiosk.com/?admin=true
 
 **Test PIN:** `1111` (default for demo environment)
+
+**Alternative URLs:**
+- https://chi-pins.vercel.app/?admin=true (Vercel default)
+- https://app.agentiosk.com/?admin=true (requires protection disabled)
 
 **What you can test:**
 - ✅ Analytics dashboard
@@ -42,8 +45,7 @@ These demos show the kiosk interface with industry-specific branding, features, 
 |---------|-----|----------------|
 | **Marketing Site** | https://agentiosk.com/ | None |
 | **Public Demos** | https://chi-pins.vercel.app/?industry=X | None |
-| **Admin Panel (Primary)** | https://chi-pins.vercel.app/?admin=true | PIN: `1111` |
-| **Admin Panel (Alt)** | https://app.agentiosk.com/?admin=true | PIN: `1111` (after disabling Vercel protection) |
+| **Admin Panel** | https://kiosk.agentiosk.com/?admin=true | PIN: `1111` |
 | **Production Kiosk** | https://chi-pins.vercel.app/ | None (public kiosk) |
 
 ---
@@ -51,7 +53,7 @@ These demos show the kiosk interface with industry-specific branding, features, 
 ## 🔐 Admin Access Methods
 
 ### Method 1: Direct URL
-1. Go to: https://chi-pins.vercel.app/?admin=true
+1. Go to: https://kiosk.agentiosk.com/?admin=true
 2. Enter PIN: `1111`
 3. Access full admin dashboard
 

@@ -21,12 +21,13 @@ All industry demos are publicly accessible:
 **Primary URL (Working):** https://chi-pins.vercel.app/?admin=true
 - Status: ✅ 200 OK
 - Test PIN: `1111`
-- No Vercel login required
+- No authentication required
 
-**Alternative URL (Needs Fix):** https://app.agentiosk.com/?admin=true
-- Status: ❌ 401 Unauthorized
-- Requires: Disable Vercel Deployment Protection
-- See: [VERCEL_PROTECTION_FIX.md](./VERCEL_PROTECTION_FIX.md)
+**Custom Domain URLs (Need Protection Fix):**
+- https://kiosk.agentiosk.com/?admin=true (❌ 401, DNS configured, needs Vercel protection disabled)
+- https://app.agentiosk.com/?admin=true (❌ 401, needs Vercel protection disabled)
+
+> **Note:** Custom domains require Vercel Deployment Protection to be disabled in project settings.
 
 ### Marketing Site
 **URL:** https://agentiosk.com/
