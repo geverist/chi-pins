@@ -1,20 +1,13 @@
 // src/components/VoiceAssistant.jsx
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { getVoicePrompts } from '../config/voicePrompts';
 
 /**
- * Voice Assistant Component
+ * Voice Assistant Modal Component
  *
- * Provides speech-to-text and AI-powered voice responses for kiosk interactions.
- * Optional starting point for hands-free kiosk navigation.
- *
- * Features:
- * - Speech recognition (Web Speech API + OpenAI Whisper fallback)
- * - AI responses (OpenAI GPT-4)
- * - Text-to-speech (Web Speech API + ElevenLabs fallback)
- * - Wake word detection ("Hey Kiosk")
- * - Industry-specific context
- * - Multi-language support
+ * Modal overlay with suggested prompts and AI-powered voice interaction.
+ * Appears on the start screen for each industry demo.
  */
 
 export default function VoiceAssistant({
@@ -24,22 +17,21 @@ export default function VoiceAssistant({
   wakeWord = 'hey kiosk',
   language = 'en-US'
 }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
   const [error, setError] = useState(null);
-  const [settings, setSettings] = useState(null);
 
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
-  const audioContextRef = useRef(null);
+  const suggestedPrompts = getVoicePrompts(industry);
 
   useEffect(() => {
     if (!enabled) return;
 
-    loadSettings();
     initializeSpeechRecognition();
     initializeSpeechSynthesis();
 
@@ -50,28 +42,6 @@ export default function VoiceAssistant({
     };
   }, [enabled, language]);
 
-  async function loadSettings() {
-    try {
-      const { data, error } = await supabase
-        .from('location_widgets')
-        .select('configuration')
-        .eq('location_id', locationId)
-        .eq('widget_id', (await supabase
-          .from('marketplace_widgets')
-          .select('id')
-          .eq('slug', 'ai-voice-agent')
-          .single()
-        ).data?.id)
-        .single();
-
-      if (data) {
-        setSettings(data.configuration);
-      }
-    } catch (err) {
-      console.error('Error loading voice assistant settings:', err);
-    }
-  }
-
   function initializeSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       setError('Speech recognition not supported in this browser');
@@ -81,7 +51,7 @@ export default function VoiceAssistant({
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = language;
 
@@ -93,15 +63,10 @@ export default function VoiceAssistant({
     recognition.onresult = (event) => {
       const lastResult = event.results[event.results.length - 1];
       const transcriptText = lastResult[0].transcript;
-
       setTranscript(transcriptText);
 
-      // Check for wake word
-      if (transcriptText.toLowerCase().includes(wakeWord.toLowerCase())) {
-        // Wake word detected - process the command
-        if (lastResult.isFinal) {
-          processVoiceCommand(transcriptText);
-        }
+      if (lastResult.isFinal) {
+        processVoiceCommand(transcriptText);
       }
     };
 
@@ -113,25 +78,9 @@ export default function VoiceAssistant({
 
     recognition.onend = () => {
       setIsListening(false);
-      // Auto-restart if still enabled
-      if (enabled) {
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (err) {
-            console.log('Recognition already started');
-          }
-        }, 100);
-      }
     };
 
     recognitionRef.current = recognition;
-
-    try {
-      recognition.start();
-    } catch (err) {
-      console.error('Error starting recognition:', err);
-    }
   }
 
   function initializeSpeechSynthesis() {
@@ -139,7 +88,6 @@ export default function VoiceAssistant({
       setError('Speech synthesis not supported in this browser');
       return;
     }
-
     synthRef.current = window.speechSynthesis;
   }
 
@@ -147,22 +95,12 @@ export default function VoiceAssistant({
     setIsProcessing(true);
 
     try {
-      // Remove wake word from command
-      const cleanCommand = command
-        .toLowerCase()
-        .replace(wakeWord.toLowerCase(), '')
-        .trim();
-
-      // Get AI response
-      const aiResponse = await getAIResponse(cleanCommand);
-
+      // Get AI response (mock for now - will integrate with backend)
+      const aiResponse = await getAIResponse(command);
       setResponse(aiResponse);
 
       // Speak the response
       await speakResponse(aiResponse);
-
-      // Log interaction
-      await logInteraction(cleanCommand, aiResponse);
 
     } catch (err) {
       console.error('Error processing voice command:', err);
@@ -170,111 +108,66 @@ export default function VoiceAssistant({
       await speakResponse("Sorry, I had trouble processing that. Please try again.");
     } finally {
       setIsProcessing(false);
+      setTranscript('');
     }
   }
 
   async function getAIResponse(userMessage) {
-    // Call OpenAI API through backend
-    const { data, error } = await supabase.functions.invoke('ai-voice-agent', {
-      body: {
-        message: userMessage,
-        locationId,
-        industry,
-        context: {
-          currentPage: window.location.pathname,
-          language,
-          settings
-        }
-      }
-    });
+    // Mock response for now - will integrate with Supabase Edge Function
+    const mockResponses = {
+      restaurant: "I'd be happy to help with your order! Our most popular item is the Chicago Dog with all the toppings. Would you like to add that to your order?",
+      medspa: "Our signature facial treatment is very popular and takes about 60 minutes. Would you like to book an appointment?",
+      auto: "Your vehicle service is currently in progress. The estimated completion time is 45 minutes. Would you like to add a tire rotation?",
+      healthcare: "Your current wait time is approximately 15 minutes. Would you like to update your contact information while you wait?",
+      fitness: "We have a spin class starting in 30 minutes with 3 spots available. Would you like me to book you in?",
+      retail: "We just got new arrivals in the spring collection. Would you like me to show you what's trending?",
+      banking: "Our checking accounts have no monthly fees with direct deposit. Would you like to schedule an appointment with a banker?",
+      events: "The photo booth is located near the main entrance. Would you like me to start a photo session?",
+      hospitality: "The hotel spa offers massage services from 9am-8pm. Would you like to book a treatment?",
+    };
 
-    if (error) throw error;
-    return data.response;
+    return mockResponses[industry] || mockResponses.restaurant;
   }
 
   async function speakResponse(text) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       setIsSpeaking(true);
 
-      // Use Web Speech API for text-to-speech
       if (synthRef.current) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = language;
-        utterance.rate = settings?.speechRate || 1.0;
-        utterance.pitch = settings?.speechPitch || 1.0;
-        utterance.volume = settings?.speechVolume || 1.0;
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
 
         utterance.onend = () => {
           setIsSpeaking(false);
           resolve();
         };
 
-        utterance.onerror = (err) => {
+        utterance.onerror = () => {
           setIsSpeaking(false);
-          reject(err);
+          resolve();
         };
 
         synthRef.current.speak(utterance);
       } else {
-        // Fallback to ElevenLabs API (if configured)
-        speakWithElevenLabs(text)
-          .then(resolve)
-          .catch(reject);
-      }
-    });
-  }
-
-  async function speakWithElevenLabs(text) {
-    // ElevenLabs integration for higher quality voice
-    const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
-      body: {
-        text,
-        voice_id: settings?.elevenLabsVoiceId || 'default',
-        model_id: 'eleven_monolingual_v1'
-      }
-    });
-
-    if (error) throw error;
-
-    // Play audio
-    const audio = new Audio(data.audioUrl);
-    setIsSpeaking(true);
-
-    return new Promise((resolve, reject) => {
-      audio.onended = () => {
         setIsSpeaking(false);
         resolve();
-      };
-
-      audio.onerror = (err) => {
-        setIsSpeaking(false);
-        reject(err);
-      };
-
-      audio.play();
+      }
     });
   }
 
-  async function logInteraction(userMessage, aiResponse) {
-    try {
-      await supabase.from('voice_interactions').insert({
-        location_id: locationId,
-        user_message: userMessage,
-        ai_response: aiResponse,
-        language,
-        timestamp: new Date().toISOString()
-      });
-    } catch (err) {
-      console.error('Error logging interaction:', err);
-    }
+  function startListening() {
+    setTranscript('');
+    setResponse('');
+    setError(null);
+    recognitionRef.current?.start();
   }
 
-  function toggleListening() {
-    if (isListening) {
-      recognitionRef.current?.stop();
-    } else {
-      recognitionRef.current?.start();
-    }
+  function handlePromptClick(prompt) {
+    setTranscript(prompt);
+    processVoiceCommand(prompt);
   }
 
   if (!enabled) {
@@ -282,102 +175,134 @@ export default function VoiceAssistant({
   }
 
   return (
-    <div style={styles.container}>
-      {/* Floating voice button */}
+    <>
+      {/* Floating Voice Button */}
       <button
-        style={{
-          ...styles.voiceButton,
-          ...(isListening ? styles.voiceButtonActive : {}),
-          ...(isProcessing ? styles.voiceButtonProcessing : {}),
-          ...(isSpeaking ? styles.voiceButtonSpeaking : {})
-        }}
-        onClick={toggleListening}
-        aria-label="Voice Assistant"
+        style={styles.floatingButton}
+        onClick={() => setIsOpen(true)}
+        aria-label="Open Voice Assistant"
       >
-        {isProcessing && <Spinner />}
-        {!isProcessing && !isSpeaking && (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-          </svg>
-        )}
-        {isSpeaking && (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-          </svg>
-        )}
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+        <span style={styles.floatingButtonText}>Ask AI</span>
       </button>
 
-      {/* Transcript/Response overlay */}
-      {(transcript || response) && (
-        <div style={styles.overlay}>
-          <div style={styles.overlayContent}>
+      {/* Modal Overlay */}
+      {isOpen && (
+        <div style={styles.modalOverlay} onClick={() => !isListening && !isProcessing && setIsOpen(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div style={styles.header}>
+              <div style={styles.headerIcon}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 style={styles.title}>AI Voice Agent</h2>
+                <p style={styles.subtitle}>Say "{wakeWord}" or tap to speak</p>
+              </div>
+              <button
+                style={styles.closeButton}
+                onClick={() => setIsOpen(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Current Status */}
+            {(isListening || isProcessing || isSpeaking) && (
+              <div style={styles.statusCard}>
+                {isListening && (
+                  <div style={styles.statusContent}>
+                    <div style={styles.pulsingDot}></div>
+                    <span>Listening...</span>
+                  </div>
+                )}
+                {isProcessing && (
+                  <div style={styles.statusContent}>
+                    <Spinner size={20} />
+                    <span>Processing...</span>
+                  </div>
+                )}
+                {isSpeaking && (
+                  <div style={styles.statusContent}>
+                    <div style={styles.wavingBars}>
+                      <div style={styles.bar}></div>
+                      <div style={styles.bar}></div>
+                      <div style={styles.bar}></div>
+                    </div>
+                    <span>Speaking...</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Transcript Display */}
             {transcript && (
-              <div style={styles.transcriptSection}>
+              <div style={styles.transcriptCard}>
                 <p style={styles.label}>You said:</p>
                 <p style={styles.transcript}>{transcript}</p>
               </div>
             )}
 
+            {/* Response Display */}
             {response && (
-              <div style={styles.responseSection}>
+              <div style={styles.responseCard}>
                 <p style={styles.label}>Assistant:</p>
                 <p style={styles.response}>{response}</p>
               </div>
             )}
 
+            {/* Error Display */}
+            {error && (
+              <div style={styles.errorCard}>
+                {error}
+              </div>
+            )}
+
+            {/* Microphone Button */}
             <button
-              style={styles.closeButton}
-              onClick={() => {
-                setTranscript('');
-                setResponse('');
+              style={{
+                ...styles.micButton,
+                ...(isListening ? styles.micButtonActive : {}),
               }}
+              onClick={startListening}
+              disabled={isProcessing || isSpeaking}
             >
-              ×
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+              <span style={styles.micButtonText}>
+                {isListening ? 'Listening...' : 'Tap to Speak'}
+              </span>
             </button>
-          </div>
-        </div>
-      )}
 
-      {/* Error notification */}
-      {error && (
-        <div style={styles.errorNotification}>
-          {error}
-          <button
-            style={styles.errorClose}
-            onClick={() => setError(null)}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      {/* Status indicator */}
-      <div style={styles.statusBar}>
-        {isListening && (
-          <div style={styles.statusItem}>
-            <div style={styles.pulsingDot}></div>
-            <span>Listening for "{wakeWord}"...</span>
-          </div>
-        )}
-        {isProcessing && (
-          <div style={styles.statusItem}>
-            <Spinner size={16} />
-            <span>Processing...</span>
-          </div>
-        )}
-        {isSpeaking && (
-          <div style={styles.statusItem}>
-            <div style={styles.wavingBars}>
-              <div style={styles.bar}></div>
-              <div style={styles.bar}></div>
-              <div style={styles.bar}></div>
+            {/* Suggested Prompts */}
+            <div style={styles.promptsSection}>
+              <p style={styles.promptsTitle}>Suggested questions:</p>
+              <div style={styles.promptsScroll}>
+                {suggestedPrompts.map((prompt, index) => (
+                  <button
+                    key={index}
+                    style={styles.promptButton}
+                    onClick={() => handlePromptClick(prompt)}
+                    disabled={isProcessing || isSpeaking || isListening}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
-            <span>Speaking...</span>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -394,172 +319,226 @@ function Spinner({ size = 24 }) {
 }
 
 const styles = {
-  container: {
-    position: 'fixed',
-    zIndex: 9998
-  },
-  voiceButton: {
+  floatingButton: {
     position: 'fixed',
     bottom: '30px',
     right: '30px',
-    width: '70px',
-    height: '70px',
-    borderRadius: '50%',
+    width: '140px',
+    height: '56px',
+    borderRadius: '28px',
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     border: 'none',
     color: 'white',
     cursor: 'pointer',
-    boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: '10px',
     transition: 'all 0.3s ease',
-    zIndex: 9999
+    zIndex: 9999,
+    fontWeight: '600',
+    fontSize: '15px',
   },
-  voiceButtonActive: {
-    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    boxShadow: '0 4px 30px rgba(245, 87, 108, 0.6)',
-    animation: 'pulse 1.5s infinite'
+  floatingButtonText: {
+    display: 'block',
   },
-  voiceButtonProcessing: {
-    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  },
-  voiceButtonSpeaking: {
-    background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-  },
-  overlay: {
+  modalOverlay: {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.7)',
+    background: 'rgba(0, 0, 0, 0.85)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 9997,
-    padding: '20px'
+    zIndex: 10000,
+    padding: '20px',
   },
-  overlayContent: {
+  modalContent: {
     background: 'white',
-    borderRadius: '16px',
-    padding: '30px',
+    borderRadius: '24px',
+    padding: '32px',
     maxWidth: '600px',
     width: '100%',
-    position: 'relative',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+    maxHeight: '90vh',
+    overflow: 'auto',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
   },
-  transcriptSection: {
-    marginBottom: '20px',
-    paddingBottom: '20px',
-    borderBottom: '1px solid #e5e7eb'
+  header: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '16px',
+    marginBottom: '24px',
   },
-  responseSection: {
-    marginBottom: '0'
+  headerIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '12px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    flexShrink: 0,
+  },
+  title: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1f2937',
+    margin: '0 0 4px 0',
+  },
+  subtitle: {
+    fontSize: '14px',
+    color: '#6b7280',
+    margin: 0,
+  },
+  closeButton: {
+    marginLeft: 'auto',
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    background: '#f3f4f6',
+    border: 'none',
+    fontSize: '28px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#6b7280',
+    flexShrink: 0,
+  },
+  statusCard: {
+    background: '#f0f9ff',
+    padding: '16px',
+    borderRadius: '12px',
+    marginBottom: '16px',
+  },
+  statusContent: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    fontSize: '15px',
+    color: '#0369a1',
+    fontWeight: '500',
+  },
+  transcriptCard: {
+    background: '#f9fafb',
+    padding: '16px',
+    borderRadius: '12px',
+    marginBottom: '16px',
+  },
+  responseCard: {
+    background: '#f0f9ff',
+    padding: '16px',
+    borderRadius: '12px',
+    marginBottom: '16px',
+  },
+  errorCard: {
+    background: '#fee2e2',
+    color: '#991b1b',
+    padding: '16px',
+    borderRadius: '12px',
+    marginBottom: '16px',
   },
   label: {
     fontSize: '12px',
     fontWeight: '600',
     textTransform: 'uppercase',
     color: '#6b7280',
-    marginBottom: '8px'
+    marginBottom: '8px',
   },
   transcript: {
-    fontSize: '18px',
+    fontSize: '16px',
     color: '#1f2937',
-    lineHeight: '1.6',
-    margin: 0
+    lineHeight: '1.5',
+    margin: 0,
   },
   response: {
-    fontSize: '18px',
-    color: '#667eea',
-    lineHeight: '1.6',
+    fontSize: '16px',
+    color: '#0369a1',
+    lineHeight: '1.5',
     margin: 0,
-    fontWeight: '500'
+    fontWeight: '500',
   },
-  closeButton: {
-    position: 'absolute',
-    top: '15px',
-    right: '15px',
-    width: '30px',
-    height: '30px',
-    borderRadius: '50%',
-    background: '#f3f4f6',
+  micButton: {
+    width: '100%',
+    padding: '20px',
+    borderRadius: '16px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     border: 'none',
-    fontSize: '24px',
+    color: 'white',
     cursor: 'pointer',
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    color: '#6b7280'
+    gap: '12px',
+    marginBottom: '24px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
   },
-  errorNotification: {
-    position: 'fixed',
-    top: '20px',
-    right: '20px',
-    background: '#fee2e2',
-    color: '#991b1b',
-    padding: '12px 40px 12px 16px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    zIndex: 10000,
-    maxWidth: '400px'
+  micButtonActive: {
+    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    boxShadow: '0 4px 24px rgba(245, 87, 108, 0.5)',
   },
-  errorClose: {
-    position: 'absolute',
-    top: '8px',
-    right: '8px',
-    width: '24px',
-    height: '24px',
-    borderRadius: '50%',
-    background: 'transparent',
-    border: 'none',
-    fontSize: '18px',
-    cursor: 'pointer',
-    color: '#991b1b'
+  micButtonText: {
+    fontSize: '16px',
+    fontWeight: '600',
   },
-  statusBar: {
-    position: 'fixed',
-    bottom: '120px',
-    right: '30px',
-    background: 'white',
-    padding: '12px 20px',
-    borderRadius: '24px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    zIndex: 9998
+  promptsSection: {
+    marginTop: '24px',
   },
-  statusItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
+  promptsTitle: {
     fontSize: '14px',
+    fontWeight: '600',
     color: '#6b7280',
-    fontWeight: '500'
+    marginBottom: '12px',
+  },
+  promptsScroll: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    maxHeight: '240px',
+    overflowY: 'auto',
+    paddingRight: '8px',
+  },
+  promptButton: {
+    padding: '12px 16px',
+    borderRadius: '10px',
+    background: '#f9fafb',
+    border: '1px solid #e5e7eb',
+    color: '#374151',
+    cursor: 'pointer',
+    fontSize: '14px',
+    textAlign: 'left',
+    transition: 'all 0.2s ease',
+    fontWeight: '500',
   },
   pulsingDot: {
-    width: '10px',
-    height: '10px',
+    width: '12px',
+    height: '12px',
     borderRadius: '50%',
-    background: '#ef4444',
-    animation: 'pulse 1.5s infinite'
+    background: '#0369a1',
+    animation: 'pulse 1.5s infinite',
   },
   spinner: {
-    border: '3px solid rgba(255, 255, 255, 0.3)',
-    borderTop: '3px solid white',
+    border: '3px solid rgba(102, 126, 234, 0.2)',
+    borderTop: '3px solid #667eea',
     borderRadius: '50%',
-    animation: 'spin 1s linear infinite'
+    animation: 'spin 1s linear infinite',
   },
   wavingBars: {
     display: 'flex',
-    gap: '3px',
+    gap: '4px',
     alignItems: 'center',
-    height: '16px'
+    height: '20px',
   },
   bar: {
-    width: '3px',
-    background: '#667eea',
+    width: '4px',
+    background: '#0369a1',
     borderRadius: '2px',
-    animation: 'wave 1s ease-in-out infinite'
+    animation: 'wave 1s ease-in-out infinite',
   }
 };
 
@@ -569,7 +548,7 @@ if (typeof document !== 'undefined') {
   style.textContent = `
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.05); }
+      50% { opacity: 0.7; transform: scale(1.1); }
     }
 
     @keyframes spin {
@@ -578,20 +557,40 @@ if (typeof document !== 'undefined') {
     }
 
     @keyframes wave {
-      0%, 100% { height: 6px; }
-      50% { height: 16px; }
+      0%, 100% { height: 8px; }
+      50% { height: 20px; }
     }
 
-    ${styles.wavingBars} ${styles.bar}:nth-child(1) {
-      animation-delay: 0s;
+    /* Scrollbar styles */
+    .promptsScroll::-webkit-scrollbar {
+      width: 6px;
     }
 
-    ${styles.wavingBars} ${styles.bar}:nth-child(2) {
-      animation-delay: 0.2s;
+    .promptsScroll::-webkit-scrollbar-track {
+      background: #f3f4f6;
+      border-radius: 3px;
     }
 
-    ${styles.wavingBars} ${styles.bar}:nth-child(3) {
-      animation-delay: 0.4s;
+    .promptsScroll::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 3px;
+    }
+
+    .promptsScroll::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+
+    /* Prompt button hover effect */
+    button[style*="promptButton"]:hover:not(:disabled) {
+      background: #667eea !important;
+      color: white !important;
+      border-color: #667eea !important;
+      transform: translateY(-1px);
+    }
+
+    button[style*="floatingButton"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
     }
   `;
   document.head.appendChild(style);
