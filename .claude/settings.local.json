@@ -42,7 +42,9 @@
       "Bash(find:*)",
       "Bash(npx supabase db reset:*)",
       "WebFetch(domain:chi-pins-l1nbeton3-geverists-projects.vercel.app)",
-      "Bash(nslookup:*)"
+      "Bash(nslookup:*)",
+      "Bash(for file in *.html)",
+      "Bash(do sed -i '' 's|href=\"\"https://chi-pins.vercel.app/|href=\"\"https://chi-pins.vercel.app/|g; s|<a href=\"\"https://chi-pins.vercel.app/\\?industry=\\([^\"\"]*\\)\"\" class=\"\"demo-cta\"\"|<a href=\"\"https://chi-pins.vercel.app/?industry=\\1\"\" class=\"\"demo-cta\"\" target=\"\"_blank\"\"|g; s|<a href=\"\"https://chi-pins.vercel.app/\\?industry=\\([^\"\"]*\\)\"\" class=\"\"btn-primary\"\"|<a href=\"\"https://chi-pins.vercel.app/?industry=\\1\"\" class=\"\"btn-primary\"\" target=\"\"_blank\"\"|g; s|<a href=\"\"https://chi-pins.vercel.app/\\?industry=\\([^\"\"]*\\)\"\" class=\"\"cta-button\"\"|<a href=\"\"https://chi-pins.vercel.app/?industry=\\1\"\" class=\"\"cta-button\"\" target=\"\"_blank\"\"|g' \"$file\")"
     ],
     "deny": [],
     "ask": []
