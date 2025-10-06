@@ -51,6 +51,7 @@ const DEFAULTS = {
   // Security PINs
   adminPanelPin: '1111',      // 4-digit PIN for admin panel access
   kioskExitPin: '1111',       // 4-digit PIN for exiting kiosk mode
+  adminPanelIdleTimeout: 60,  // Seconds before admin panel auto-closes due to inactivity
 
   // Map display
   minZoomForPins: 13,

@@ -28,6 +28,40 @@ export default function AdminPanel({ open, onClose }) {
     }
   }, [open])
 
+  // Admin settings hook (needed for idle timeout setting)
+  const { settings: adminSettingsFromHook, save: saveAdminSettings, DEFAULTS } = useAdminSettings()
+
+  // Idle timer for admin panel auto-close
+  useEffect(() => {
+    if (!open) return
+
+    let idleTimer
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimer)
+      const timeoutSeconds = adminSettingsFromHook?.adminPanelIdleTimeout || 60
+      idleTimer = setTimeout(() => {
+        console.log('[AdminPanel] Idle timeout - closing admin panel')
+        onClose()
+      }, timeoutSeconds * 1000)
+    }
+
+    // Reset timer on user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+    events.forEach(event => {
+      document.addEventListener(event, resetIdleTimer, { passive: true })
+    })
+
+    // Start timer
+    resetIdleTimer()
+
+    return () => {
+      clearTimeout(idleTimer)
+      events.forEach(event => {
+        document.removeEventListener(event, resetIdleTimer)
+      })
+    }
+  }, [open, onClose, adminSettingsFromHook?.adminPanelIdleTimeout])
+
   // Background images hook
   const { backgrounds, loading: bgLoading, addBackground, deleteBackground } = useBackgroundImages()
 
@@ -61,9 +95,6 @@ export default function AdminPanel({ open, onClose }) {
 
   // Logo hook
   const { logoUrl, loading: logoLoading, uploadLogo, deleteLogo } = useLogo()
-
-  // Admin settings hook (replaces local state)
-  const { settings: adminSettingsFromHook, save: saveAdminSettings, DEFAULTS } = useAdminSettings()
 
   // ---------- State ----------
   const [settings, setSettings] = useState(adminSettingsFromHook)
@@ -480,6 +511,31 @@ export default function AdminPanel({ open, onClose }) {
                 </FieldRow>
                 <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
                   ⚠️ Must be exactly 4 digits. Press 'k' 3x to trigger kiosk exit prompt.
+                </p>
+
+                <FieldRow label="Admin panel idle timeout (seconds)">
+                  <input
+                    type="number"
+                    min={10}
+                    max={600}
+                    value={settings.adminPanelIdleTimeout || 60}
+                    onChange={(e) => {
+                      const value = Math.max(10, Math.min(600, parseInt(e.target.value) || 60));
+                      setSettings(s => ({ ...s, adminPanelIdleTimeout: value }));
+                    }}
+                    style={{
+                      width: 100,
+                      padding: '8px 12px',
+                      background: '#0f1115',
+                      border: '1px solid #2a2f37',
+                      borderRadius: 6,
+                      color: '#f3f5f7',
+                      fontSize: 16,
+                    }}
+                  />
+                </FieldRow>
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Auto-closes admin panel after inactivity. Default: 60 seconds.
                 </p>
               </Card>
 
