@@ -368,52 +368,53 @@ export default function App() {
     };
   }, [isMobile, mapMode, mainMapRef]);
 
-  // Dismiss overlays on map zoom/pan
+  // Dismiss overlays on map zoom/pan and pinch-to-zoom
   useEffect(() => {
-    if (!mainMapRef.current) return;
-
-    const map = mainMapRef.current;
-
     const dismissOverlays = () => {
       setShowAttractor(false);
       setVoiceAssistantVisible(false);
     };
 
-    // Listen for zoom/pan events
-    map.on('zoomstart', dismissOverlays);
-    map.on('movestart', dismissOverlays);
-    map.on('zoom', dismissOverlays); // Fire during zoom animation
-    map.on('move', dismissOverlays); // Fire during pan animation
-
-    // Also listen for direct touch events on map container for pinch-to-zoom
-    const mapContainer = map.getContainer();
-    let touchCount = 0;
-
+    // Global touch event handlers for pinch-to-zoom detection
     const handleTouchStart = (e) => {
-      touchCount = e.touches.length;
-      if (touchCount >= 2) {
-        // Two or more fingers = pinch gesture
+      if (e.touches && e.touches.length >= 2) {
+        console.log('[App] Pinch detected (touchstart) - dismissing overlays');
         dismissOverlays();
       }
     };
 
     const handleTouchMove = (e) => {
-      if (e.touches.length >= 2) {
-        // Multi-touch movement = pinch/zoom
+      if (e.touches && e.touches.length >= 2) {
+        console.log('[App] Pinch detected (touchmove) - dismissing overlays');
         dismissOverlays();
       }
     };
 
-    mapContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
-    mapContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+    // Listen globally on document for pinch gestures (catches all touch events)
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    // Also listen to map events if available
+    if (mainMapRef.current) {
+      const map = mainMapRef.current;
+      map.on('zoomstart', dismissOverlays);
+      map.on('movestart', dismissOverlays);
+      map.on('zoom', dismissOverlays);
+      map.on('move', dismissOverlays);
+
+      return () => {
+        map.off('zoomstart', dismissOverlays);
+        map.off('movestart', dismissOverlays);
+        map.off('zoom', dismissOverlays);
+        map.off('move', dismissOverlays);
+        document.removeEventListener('touchstart', handleTouchStart);
+        document.removeEventListener('touchmove', handleTouchMove);
+      };
+    }
 
     return () => {
-      map.off('zoomstart', dismissOverlays);
-      map.off('movestart', dismissOverlays);
-      map.off('zoom', dismissOverlays);
-      map.off('move', dismissOverlays);
-      mapContainer.removeEventListener('touchstart', handleTouchStart);
-      mapContainer.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
     };
   }, [mainMapRef]);
 
