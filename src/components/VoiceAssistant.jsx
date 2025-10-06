@@ -8,6 +8,7 @@ import { getVoicePrompts } from '../config/voicePrompts';
  *
  * Modal overlay with suggested prompts and AI-powered voice interaction.
  * Appears on the start screen for each industry demo.
+ * Prompts are dynamically generated based on enabled kiosk features.
  */
 
 export default function VoiceAssistant({
@@ -15,7 +16,9 @@ export default function VoiceAssistant({
   industry,
   enabled = false,
   wakeWord = 'hey kiosk',
-  language = 'en-US'
+  language = 'en-US',
+  enabledFeatures = {},
+  navSettings = {}
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -24,23 +27,69 @@ export default function VoiceAssistant({
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
   const [error, setError] = useState(null);
+  const [suggestedPrompts, setSuggestedPrompts] = useState([]);
 
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
-  const suggestedPrompts = getVoicePrompts(industry);
 
   useEffect(() => {
     if (!enabled) return;
 
     initializeSpeechRecognition();
     initializeSpeechSynthesis();
+    generateDynamicPrompts();
 
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
     };
-  }, [enabled, language]);
+  }, [enabled, language, enabledFeatures, navSettings]);
+
+  function generateDynamicPrompts() {
+    const prompts = [];
+    const basePrompts = getVoicePrompts(industry);
+
+    // Always include general prompts
+    prompts.push("What can you help me with?");
+    prompts.push("Tell me about this business");
+
+    // Add feature-specific prompts based on what's enabled
+    if (enabledFeatures.games || navSettings?.games?.enabled) {
+      prompts.push("What games can I play?");
+      prompts.push("Start a trivia game");
+    }
+
+    if (enabledFeatures.jukebox || navSettings?.jukebox?.enabled) {
+      prompts.push("Play some music");
+      prompts.push("What songs can I request?");
+    }
+
+    if (enabledFeatures.photoBooth || navSettings?.photoBooth?.enabled) {
+      prompts.push("Take a photo");
+      prompts.push("Where's the photo booth?");
+    }
+
+    if (enabledFeatures.feedback || navSettings?.feedback?.enabled) {
+      prompts.push("Leave feedback");
+      prompts.push("I want to give a review");
+    }
+
+    if (enabledFeatures.popularSpots || navSettings?.popularSpots?.enabled) {
+      prompts.push("Show me popular spots");
+      prompts.push("What's nearby?");
+    }
+
+    // Add industry-specific prompts (filter to unique)
+    const industrySpecific = basePrompts.slice(0, 5);
+    industrySpecific.forEach(prompt => {
+      if (!prompts.includes(prompt)) {
+        prompts.push(prompt);
+      }
+    });
+
+    setSuggestedPrompts(prompts);
+  }
 
   function initializeSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
