@@ -443,9 +443,9 @@ export default function App() {
     enabled: true
   });
 
-  // Touch sequence to refresh page (touch all four corners)
+  // Touch sequence to refresh page (triple-tap center)
   useTouchSequence(() => {
-    console.log('Four corners touched - refreshing page');
+    console.log('Triple-tap detected - refreshing page');
     // Clear service worker cache if available
     if ('serviceWorker' in navigator && 'caches' in window) {
       caches.keys().then(cacheNames => {
@@ -460,8 +460,8 @@ export default function App() {
       window.location.reload(true);
     }
   }, {
-    sequence: 'corners',
-    timeoutMs: 3000,
+    sequence: 'triple-tap',
+    timeoutMs: 1000, // 1 second window for three taps
     enabled: true
   });
 
