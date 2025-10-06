@@ -6,7 +6,8 @@ import { getVoicePrompts } from '../config/voicePrompts';
 /**
  * Voice Assistant Modal Component
  *
- * Modal overlay with suggested prompts and AI-powered voice interaction.
+ * Centered, semi-transparent modal overlay with suggested prompts.
+ * Large microphone button for voice interaction.
  * Appears on the start screen for each industry demo.
  * Prompts are dynamically generated based on enabled kiosk features.
  */
