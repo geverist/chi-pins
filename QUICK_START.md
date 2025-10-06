@@ -22,7 +22,8 @@ These demos show the kiosk interface with industry-specific branding, features, 
 
 ### **Admin Panel Test Access**
 
-**URL:** https://chi-pins.vercel.app/?admin=true
+**Primary URL:** https://chi-pins.vercel.app/?admin=true
+**Alternative URL:** https://app.agentiosk.com/?admin=true (requires Vercel protection to be disabled first)
 
 **Test PIN:** `1111` (default for demo environment)
 
@@ -41,7 +42,8 @@ These demos show the kiosk interface with industry-specific branding, features, 
 |---------|-----|----------------|
 | **Marketing Site** | https://agentiosk.com/ | None |
 | **Public Demos** | https://chi-pins.vercel.app/?industry=X | None |
-| **Admin Panel** | https://chi-pins.vercel.app/?admin=true | PIN: `1111` |
+| **Admin Panel (Primary)** | https://chi-pins.vercel.app/?admin=true | PIN: `1111` |
+| **Admin Panel (Alt)** | https://app.agentiosk.com/?admin=true | PIN: `1111` (after disabling Vercel protection) |
 | **Production Kiosk** | https://chi-pins.vercel.app/ | None (public kiosk) |
 
 ---
