@@ -4,7 +4,12 @@
       "Read(//tmp/**)",
       "Bash(git checkout:*)",
       "Bash(npx cap add:*)",
-      "Bash(npx cap sync:*)"
+      "Bash(npx cap sync:*)",
+      "Bash(export:*)",
+      "Bash(sdkmanager:*)",
+      "Bash(yes)",
+      "Bash(/Users/gileseverist/Dev/kiosk/chi-pins/android/gradlew -p /Users/gileseverist/Dev/kiosk/chi-pins/android assembleDebug)",
+      "Bash(brew install:*)"
     ],
     "deny": [],
     "ask": []
