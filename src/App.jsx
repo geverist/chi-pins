@@ -1248,6 +1248,8 @@ export default function App() {
         enabled={true}
         wakeWord="hey kiosk"
         language="en-US"
+        enabledFeatures={isDemoMode ? industryConfig.enabledFeatures : {}}
+        navSettings={navSettings}
       />
     </div>
   );
