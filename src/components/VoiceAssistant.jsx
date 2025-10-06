@@ -238,108 +238,92 @@ export default function VoiceAssistant({
         </svg>
       </button>
 
-      {/* Modal Overlay */}
+      {/* Centered Semi-Transparent Modal */}
       {isOpen && (
-        <div style={styles.modalOverlay} onClick={() => !isListening && !isProcessing && setIsOpen(false)}>
+        <div
+          style={styles.modalOverlay}
+          onClick={() => !isListening && !isProcessing && !isSpeaking && setIsOpen(false)}
+        >
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div style={styles.header}>
-              <div style={styles.headerIcon}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                </svg>
-              </div>
-              <div>
-                <h2 style={styles.title}>AI Voice Agent</h2>
-                <p style={styles.subtitle}>Say "{wakeWord}" or tap to speak</p>
-              </div>
-              <button
-                style={styles.closeButton}
-                onClick={() => setIsOpen(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
 
-            {/* Current Status */}
-            {(isListening || isProcessing || isSpeaking) && (
-              <div style={styles.statusCard}>
+            {/* Central Microphone Icon */}
+            <div style={styles.microphoneContainer}>
+              <button
+                style={{
+                  ...styles.centralMic,
+                  ...(isListening ? styles.centralMicActive : {}),
+                  ...(isProcessing ? styles.centralMicProcessing : {}),
+                  ...(isSpeaking ? styles.centralMicSpeaking : {}),
+                }}
+                onClick={startListening}
+                disabled={isProcessing || isSpeaking}
+              >
+                {isProcessing ? (
+                  <Spinner size={48} />
+                ) : (
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                  </svg>
+                )}
+              </button>
+
+              {/* Status Text */}
+              <div style={styles.statusText}>
                 {isListening && (
-                  <div style={styles.statusContent}>
+                  <>
                     <div style={styles.pulsingDot}></div>
                     <span>Listening...</span>
-                  </div>
+                  </>
                 )}
-                {isProcessing && (
-                  <div style={styles.statusContent}>
-                    <Spinner size={20} />
-                    <span>Processing...</span>
-                  </div>
-                )}
+                {isProcessing && <span>Processing...</span>}
                 {isSpeaking && (
-                  <div style={styles.statusContent}>
+                  <>
                     <div style={styles.wavingBars}>
                       <div style={styles.bar}></div>
                       <div style={styles.bar}></div>
                       <div style={styles.bar}></div>
                     </div>
                     <span>Speaking...</span>
+                  </>
+                )}
+                {!isListening && !isProcessing && !isSpeaking && (
+                  <span>Tap microphone or say "{wakeWord}"</span>
+                )}
+              </div>
+            </div>
+
+            {/* Conversation Display */}
+            {(transcript || response) && (
+              <div style={styles.conversationBox}>
+                {transcript && (
+                  <div style={styles.userMessage}>
+                    <strong>You:</strong> {transcript}
+                  </div>
+                )}
+                {response && (
+                  <div style={styles.agentMessage}>
+                    <strong>Agent:</strong> {response}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Transcript Display */}
-            {transcript && (
-              <div style={styles.transcriptCard}>
-                <p style={styles.label}>You said:</p>
-                <p style={styles.transcript}>{transcript}</p>
-              </div>
-            )}
-
-            {/* Response Display */}
-            {response && (
-              <div style={styles.responseCard}>
-                <p style={styles.label}>Assistant:</p>
-                <p style={styles.response}>{response}</p>
-              </div>
-            )}
-
             {/* Error Display */}
             {error && (
-              <div style={styles.errorCard}>
-                {error}
+              <div style={styles.errorDisplay}>
+                ⚠️ {error}
               </div>
             )}
 
-            {/* Microphone Button */}
-            <button
-              style={{
-                ...styles.micButton,
-                ...(isListening ? styles.micButtonActive : {}),
-              }}
-              onClick={startListening}
-              disabled={isProcessing || isSpeaking}
-            >
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-              </svg>
-              <span style={styles.micButtonText}>
-                {isListening ? 'Listening...' : 'Tap to Speak'}
-              </span>
-            </button>
-
-            {/* Suggested Prompts */}
-            <div style={styles.promptsSection}>
-              <p style={styles.promptsTitle}>Suggested questions:</p>
-              <div style={styles.promptsScroll}>
+            {/* Scrolling Suggested Prompts */}
+            <div style={styles.promptsContainer}>
+              <p style={styles.promptsHeader}>Try asking:</p>
+              <div style={styles.promptsList}>
                 {suggestedPrompts.map((prompt, index) => (
                   <button
                     key={index}
-                    style={styles.promptButton}
+                    style={styles.promptChip}
                     onClick={() => handlePromptClick(prompt)}
                     disabled={isProcessing || isSpeaking || isListening}
                   >
@@ -347,6 +331,11 @@ export default function VoiceAssistant({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Dismiss Hint */}
+            <div style={styles.dismissHint}>
+              Tap anywhere outside to dismiss
             </div>
           </div>
         </div>
@@ -393,171 +382,137 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0, 0, 0, 0.85)',
+    background: 'rgba(0, 0, 0, 0.7)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10000,
     padding: '20px',
+    backdropFilter: 'blur(8px)',
   },
   modalContent: {
-    background: 'white',
-    borderRadius: '24px',
-    padding: '32px',
-    maxWidth: '600px',
+    background: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: '32px',
+    padding: '48px 32px',
+    maxWidth: '500px',
     width: '100%',
-    maxHeight: '90vh',
-    overflow: 'auto',
-    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '16px',
-    marginBottom: '24px',
-  },
-  headerIcon: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '12px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
-    flexShrink: 0,
-  },
-  title: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#1f2937',
-    margin: '0 0 4px 0',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#6b7280',
-    margin: 0,
-  },
-  closeButton: {
-    marginLeft: 'auto',
-    width: '36px',
-    height: '36px',
-    borderRadius: '50%',
-    background: '#f3f4f6',
-    border: 'none',
-    fontSize: '28px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#6b7280',
-    flexShrink: 0,
-  },
-  statusCard: {
-    background: '#f0f9ff',
-    padding: '16px',
-    borderRadius: '12px',
-    marginBottom: '16px',
-  },
-  statusContent: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    fontSize: '15px',
-    color: '#0369a1',
-    fontWeight: '500',
-  },
-  transcriptCard: {
-    background: '#f9fafb',
-    padding: '16px',
-    borderRadius: '12px',
-    marginBottom: '16px',
-  },
-  responseCard: {
-    background: '#f0f9ff',
-    padding: '16px',
-    borderRadius: '12px',
-    marginBottom: '16px',
-  },
-  errorCard: {
-    background: '#fee2e2',
-    color: '#991b1b',
-    padding: '16px',
-    borderRadius: '12px',
-    marginBottom: '16px',
-  },
-  label: {
-    fontSize: '12px',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    color: '#6b7280',
-    marginBottom: '8px',
-  },
-  transcript: {
-    fontSize: '16px',
-    color: '#1f2937',
-    lineHeight: '1.5',
-    margin: 0,
-  },
-  response: {
-    fontSize: '16px',
-    color: '#0369a1',
-    lineHeight: '1.5',
-    margin: 0,
-    fontWeight: '500',
-  },
-  micButton: {
-    width: '100%',
-    padding: '20px',
-    borderRadius: '16px',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    border: 'none',
-    color: 'white',
-    cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '12px',
-    marginBottom: '24px',
+    gap: '24px',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+    backdropFilter: 'blur(20px)',
+  },
+  microphoneContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px',
+  },
+  centralMic: {
+    width: '120px',
+    height: '120px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    border: 'none',
+    color: 'white',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+    boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)',
   },
-  micButtonActive: {
+  centralMicActive: {
     background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    boxShadow: '0 4px 24px rgba(245, 87, 108, 0.5)',
+    boxShadow: '0 8px 40px rgba(245, 87, 108, 0.6)',
+    transform: 'scale(1.05)',
   },
-  micButtonText: {
+  centralMicProcessing: {
+    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    boxShadow: '0 8px 40px rgba(79, 172, 254, 0.6)',
+  },
+  centralMicSpeaking: {
+    background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+    boxShadow: '0 8px 40px rgba(67, 233, 123, 0.6)',
+  },
+  statusText: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
     fontSize: '16px',
-    fontWeight: '600',
+    fontWeight: '500',
+    color: '#374151',
+    minHeight: '24px',
   },
-  promptsSection: {
-    marginTop: '24px',
+  conversationBox: {
+    width: '100%',
+    background: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: '16px',
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
   },
-  promptsTitle: {
+  userMessage: {
+    fontSize: '14px',
+    color: '#1f2937',
+    padding: '8px 12px',
+    background: 'rgba(102, 126, 234, 0.1)',
+    borderRadius: '8px',
+  },
+  agentMessage: {
+    fontSize: '14px',
+    color: '#0369a1',
+    padding: '8px 12px',
+    background: 'rgba(3, 105, 161, 0.1)',
+    borderRadius: '8px',
+  },
+  errorDisplay: {
+    width: '100%',
+    background: 'rgba(254, 226, 226, 0.9)',
+    color: '#991b1b',
+    padding: '12px',
+    borderRadius: '12px',
+    fontSize: '14px',
+    textAlign: 'center',
+  },
+  promptsContainer: {
+    width: '100%',
+  },
+  promptsHeader: {
     fontSize: '14px',
     fontWeight: '600',
     color: '#6b7280',
     marginBottom: '12px',
+    textAlign: 'center',
   },
-  promptsScroll: {
+  promptsList: {
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
-    maxHeight: '240px',
+    maxHeight: '200px',
     overflowY: 'auto',
     paddingRight: '8px',
   },
-  promptButton: {
+  promptChip: {
     padding: '12px 16px',
-    borderRadius: '10px',
-    background: '#f9fafb',
-    border: '1px solid #e5e7eb',
+    borderRadius: '12px',
+    background: 'rgba(255, 255, 255, 0.8)',
+    border: '1px solid rgba(229, 231, 235, 0.8)',
     color: '#374151',
     cursor: 'pointer',
     fontSize: '14px',
     textAlign: 'left',
     transition: 'all 0.2s ease',
     fontWeight: '500',
+    backdropFilter: 'blur(10px)',
+  },
+  dismissHint: {
+    fontSize: '12px',
+    color: '#9ca3af',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   pulsingDot: {
     width: '12px',
@@ -605,30 +560,30 @@ if (typeof document !== 'undefined') {
       50% { height: 20px; }
     }
 
-    /* Scrollbar styles */
-    .promptsScroll::-webkit-scrollbar {
+    /* Scrollbar styles for prompts list */
+    div[style*="promptsList"]::-webkit-scrollbar {
       width: 6px;
     }
 
-    .promptsScroll::-webkit-scrollbar-track {
-      background: #f3f4f6;
+    div[style*="promptsList"]::-webkit-scrollbar-track {
+      background: rgba(243, 244, 246, 0.5);
       border-radius: 3px;
     }
 
-    .promptsScroll::-webkit-scrollbar-thumb {
-      background: #d1d5db;
+    div[style*="promptsList"]::-webkit-scrollbar-thumb {
+      background: rgba(209, 213, 219, 0.8);
       border-radius: 3px;
     }
 
-    .promptsScroll::-webkit-scrollbar-thumb:hover {
-      background: #9ca3af;
+    div[style*="promptsList"]::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.8);
     }
 
-    /* Prompt button hover effect */
-    button[style*="promptButton"]:hover:not(:disabled) {
-      background: #667eea !important;
+    /* Prompt chip hover effect */
+    button[style*="promptChip"]:hover:not(:disabled) {
+      background: rgba(102, 126, 234, 0.9) !important;
       color: white !important;
-      border-color: #667eea !important;
+      border-color: rgba(102, 126, 234, 0.9) !important;
       transform: translateY(-1px);
     }
 
@@ -636,6 +591,11 @@ if (typeof document !== 'undefined') {
       opacity: 1 !important;
       transform: scale(1.05);
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    /* Central mic hover effect */
+    button[style*="centralMic"]:hover:not(:disabled) {
+      transform: scale(1.05);
     }
   `;
   document.head.appendChild(style);
