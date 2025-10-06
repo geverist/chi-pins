@@ -61,6 +61,7 @@ import HolidayTheme from './components/HolidayTheme';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AchievementNotification from './components/AchievementNotification';
 import DemoModeSwitcher from './components/DemoModeSwitcher';
+import VoiceAssistant from './components/VoiceAssistant';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -1239,6 +1240,15 @@ export default function App() {
       <PWAInstallPrompt />
       <AchievementNotification />
       <DemoModeSwitcher />
+
+      {/* Voice AI Agent - enabled for all demos and industries */}
+      <VoiceAssistant
+        locationId={isDemoMode ? `demo-${industryConfig.industry}` : 'default'}
+        industry={isDemoMode ? industryConfig.industry : 'default'}
+        enabled={true}
+        wakeWord="hey kiosk"
+        language="en-US"
+      />
     </div>
   );
 }
