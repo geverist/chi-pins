@@ -417,6 +417,21 @@ export default function App() {
     };
   }, [mainMapRef]);
 
+  // Dismiss overlays when keyboard appears (input/textarea focused)
+  useEffect(() => {
+    const handleFocusIn = (e) => {
+      // Check if the focused element is an input or textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        console.log('[App] Input focused - dismissing overlays');
+        setShowAttractor(false);
+        setVoiceAssistantVisible(false);
+      }
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    return () => document.removeEventListener('focusin', handleFocusIn);
+  }, []);
+
   const startKioskNow = async () => {
     await enterFullscreen();
     await ensureWakeLock();
