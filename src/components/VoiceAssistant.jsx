@@ -40,6 +40,9 @@ export default function VoiceAssistant({
     initializeSpeechSynthesis();
     generateDynamicPrompts();
 
+    // Auto-open modal when component mounts
+    setIsOpen(true);
+
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
@@ -226,20 +229,7 @@ export default function VoiceAssistant({
 
   return (
     <>
-      {/* Small, subtle floating voice button - minimally intrusive */}
-      <button
-        style={styles.floatingButton}
-        onClick={() => setIsOpen(true)}
-        aria-label="Voice Assistant"
-        title="Voice Assistant - Ask questions"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-        </svg>
-      </button>
-
-      {/* Centered Semi-Transparent Modal */}
+      {/* Centered Semi-Transparent Modal - auto-opens on component mount */}
       {isOpen && (
         <div
           style={styles.modalOverlay}
