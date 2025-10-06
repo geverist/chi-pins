@@ -10,9 +10,11 @@ There are **three ways** to access your EngageOS admin panel:
 
 ## 1. **Direct URL (Recommended)**
 
-**Admin Dashboard URL:** `https://chi-pins.vercel.app/?admin=true`
+**Admin Dashboard URL:** `https://kiosk.agentiosk.com/?admin=true`
 
-> **Note:** You can also use `https://app.agentiosk.com/?admin=true` once domain protection is disabled in Vercel.
+> **Alternative URLs:**
+> - `https://chi-pins.vercel.app/?admin=true` (Vercel default)
+> - `https://app.agentiosk.com/?admin=true` (requires Vercel protection disabled)
 
 - Visit the URL above
 - Enter your **4-digit PIN code** (provided during setup)
@@ -148,7 +150,7 @@ Your actual kiosk URL with real data:
 
 | Purpose | URL |
 |---------|-----|
-| **Admin Dashboard** | `https://chi-pins.vercel.app/?admin=true` or `https://app.agentiosk.com/?admin=true` |
+| **Admin Dashboard** | `https://kiosk.agentiosk.com/?admin=true` |
 | **Public Restaurant Demo** | `https://chi-pins.vercel.app/?industry=restaurant` |
 | **Public Med Spa Demo** | `https://chi-pins.vercel.app/?industry=medspa` |
 | **Marketing Site** | `https://agentiosk.com/` |
