@@ -38,5 +38,15 @@ coverage/
 
 # Local development
 *.local
+
+# Android build files (managed by Capacitor)
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+android/build-tools/
+android/platforms/
+android/platform-tools/
+
 EOF
 .vercel
