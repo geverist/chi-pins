@@ -70,6 +70,7 @@ import ZoomGate from './components/ZoomGate';
 
 // Admin panel
 import AdminPanel from './components/AdminPanel';
+import AdminRoute from './components/AdminRoute';
 import PinCodeModal from './components/PinCodeModal';
 import MobilePinsList from './components/MobilePinsList';
 import MobilePinsTable from './components/MobilePinsTable';
@@ -1147,7 +1148,11 @@ export default function App() {
         />
       )}
 
-      <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
+      {adminOpen && (
+        <AdminRoute>
+          <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
+        </AdminRoute>
+      )}
 
       <PinCodeModal
         open={showKioskExitPin}
