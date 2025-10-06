@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS public.twilio_toll_free_verifications CASCADE;
 DROP TABLE IF EXISTS public.twilio_phone_numbers CASCADE;
 DROP TABLE IF EXISTS public.twilio_campaigns CASCADE;
 DROP TABLE IF EXISTS public.twilio_brands CASCADE;
+DROP TABLE IF EXISTS public.phone_numbers CASCADE;
 
 -- Twilio Brand Registrations (for A2P 10DLC)
 CREATE TABLE public.twilio_brands (
