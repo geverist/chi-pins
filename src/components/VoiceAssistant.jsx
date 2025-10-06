@@ -16,7 +16,6 @@ export default function VoiceAssistant({
   locationId,
   industry,
   enabled = false,
-  wakeWord = 'hey kiosk',
   language = 'en-US',
   enabledFeatures = {},
   navSettings = {}
@@ -259,29 +258,28 @@ export default function VoiceAssistant({
                 )}
               </button>
 
-              {/* Status Text */}
-              <div style={styles.statusText}>
-                {isListening && (
-                  <>
-                    <div style={styles.pulsingDot}></div>
-                    <span>Listening...</span>
-                  </>
-                )}
-                {isProcessing && <span>Processing...</span>}
-                {isSpeaking && (
-                  <>
-                    <div style={styles.wavingBars}>
-                      <div style={styles.bar}></div>
-                      <div style={styles.bar}></div>
-                      <div style={styles.bar}></div>
-                    </div>
-                    <span>Speaking...</span>
-                  </>
-                )}
-                {!isListening && !isProcessing && !isSpeaking && (
-                  <span>Tap microphone or say "{wakeWord}"</span>
-                )}
-              </div>
+              {/* Status Text - only show when active */}
+              {(isListening || isProcessing || isSpeaking) && (
+                <div style={styles.statusText}>
+                  {isListening && (
+                    <>
+                      <div style={styles.pulsingDot}></div>
+                      <span>Listening...</span>
+                    </>
+                  )}
+                  {isProcessing && <span>Processing...</span>}
+                  {isSpeaking && (
+                    <>
+                      <div style={styles.wavingBars}>
+                        <div style={styles.bar}></div>
+                        <div style={styles.bar}></div>
+                        <div style={styles.bar}></div>
+                      </div>
+                      <span>Speaking...</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Conversation Display */}
@@ -309,7 +307,6 @@ export default function VoiceAssistant({
 
             {/* Scrolling Suggested Prompts */}
             <div style={styles.promptsContainer}>
-              <p style={styles.promptsHeader}>Try asking:</p>
               <div style={styles.promptsList}>
                 {suggestedPrompts.map((prompt, index) => (
                   <button
@@ -322,11 +319,6 @@ export default function VoiceAssistant({
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* Dismiss Hint */}
-            <div style={styles.dismissHint}>
-              Tap anywhere outside to close
             </div>
           </div>
         </div>
