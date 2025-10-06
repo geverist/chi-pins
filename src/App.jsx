@@ -62,6 +62,7 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AchievementNotification from './components/AchievementNotification';
 import DemoModeSwitcher from './components/DemoModeSwitcher';
 import VoiceAssistant from './components/VoiceAssistant';
+import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -107,6 +108,9 @@ export default function App() {
   // industry demo config
   const industryConfig = useMemo(() => getIndustryConfig(), []);
   const isDemoMode = useMemo(() => isIndustryDemo(), []);
+
+  // Industry demo switcher (key sequence: D-E-M-O)
+  const demoSwitcher = useIndustryDemoSwitcher();
 
   // data
   const { pins, setPins, hotdogSuggestions } = usePins(mainMapRef);
@@ -1250,6 +1254,13 @@ export default function App() {
         language="en-US"
         enabledFeatures={isDemoMode ? industryConfig.enabledFeatures : {}}
         navSettings={navSettings}
+      />
+
+      {/* Industry Demo Switcher - Press D-E-M-O to open */}
+      <IndustryDemoSwitcherModal
+        isOpen={demoSwitcher.isOpen}
+        onClose={demoSwitcher.close}
+        onSwitch={demoSwitcher.switchToIndustry}
       />
     </div>
   );
