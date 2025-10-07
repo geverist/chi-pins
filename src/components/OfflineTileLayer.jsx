@@ -105,16 +105,26 @@ export default function OfflineTileLayer({
     // Progressive tile caching for global mode
     let downloadTimeout = null;
     const handleMoveEnd = () => {
-      if (!enableProgressiveCaching) return;
+      if (!enableProgressiveCaching) {
+        console.log('[OfflineTileLayer] handleMoveEnd called but progressive caching is DISABLED');
+        return;
+      }
 
+      console.log('[OfflineTileLayer] Map moved, scheduling tile download in 1 second...');
       // Debounce tile downloads to avoid excessive requests
       clearTimeout(downloadTimeout);
       downloadTimeout = setTimeout(() => {
+        const bounds = map.getBounds();
+        const zoom = map.getZoom();
+        console.log('[OfflineTileLayer] Starting progressive tile download - zoom:', zoom, 'bounds:', bounds);
+
         storage.downloadVisibleTiles(map, {
           maxConcurrent: 2,
           zoomBuffer: 1,
+        }).then(() => {
+          console.log('[OfflineTileLayer] Progressive tile download completed');
         }).catch(err => {
-          console.warn('[OfflineTileLayer] Error downloading visible tiles:', err);
+          console.error('[OfflineTileLayer] Error downloading visible tiles:', err);
         });
       }, 1000); // Wait 1 second after map stops moving
     };

@@ -443,11 +443,11 @@ const styles = {
     bottom: 0,
     background: 'transparent',
     display: 'flex',
-    alignItems: 'flex-end',
+    alignItems: 'center', // Center vertically
     justifyContent: 'center',
     zIndex: 10000,
     padding: '20px',
-    paddingBottom: '20vh',
+    paddingBottom: '120px', // Space for footer
     pointerEvents: 'none',
   },
   modalContent: {
@@ -456,11 +456,10 @@ const styles = {
     padding: '0',
     maxWidth: '100%',
     width: '100%',
-    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between', // Changed from gap to space-between
+    gap: '8vh', // Fixed gap between microphone and prompts
     pointerEvents: 'none',
     position: 'relative',
   },
