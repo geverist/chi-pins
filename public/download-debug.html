@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi-Pins Download Debug</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #f0f0f0;
+        }
+        .apk {
+            background: #2a2a2a;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .latest {
+            border-left-color: #10b981;
+            background: #1f3a2f;
+        }
+        h2 {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chi-Pins APK Download Debug</h1>
+    <div id="status">Loading...</div>
+
+    <h2>All Available APKs (sorted newest first):</h2>
+    <div id="apks"></div>
+
+    <h2>Selected APK (what download.html uses):</h2>
+    <div id="selected"></div>
+
+    <script>
+        async function debug() {
+            try {
+                const response = await fetch('https://api.github.com/repos/geverist/chi-pins/releases/latest');
+                const data = await response.json();
+
+                // Find all APKs
+                const apks = data.assets.filter(asset => asset.name.endsWith('.apk'));
+                apks.sort((a, b) => b.name.localeCompare(a.name)); // Descending order
+
+                const selected = apks[0];
+
+                document.getElementById('status').innerHTML = `
+                    <strong>Release:</strong> ${data.tag_name}<br>
+                    <strong>Published:</strong> ${data.published_at}<br>
+                    <strong>Total APKs:</strong> ${apks.length}
+                `;
+
+                document.getElementById('apks').innerHTML = apks.map((apk, i) => `
+                    <div class="apk ${i === 0 ? 'latest' : ''}">
+                        <strong>${apk.name}</strong><br>
+                        Size: ${(apk.size / 1024 / 1024).toFixed(2)} MB (${apk.size.toLocaleString()} bytes)<br>
+                        Updated: ${apk.updated_at}<br>
+                        URL: <a href="${apk.browser_download_url}" style="color: #60a5fa;">${apk.browser_download_url}</a>
+                    </div>
+                `).join('');
+
+                document.getElementById('selected').innerHTML = `
+                    <div class="apk latest">
+                        <strong style="color: #10b981;">✓ ${selected.name}</strong><br>
+                        Size: ${(selected.size / 1024 / 1024).toFixed(2)} MB (${selected.size.toLocaleString()} bytes)<br>
+                        Updated: ${selected.updated_at}<br>
+                        <br>
+                        <a href="${selected.browser_download_url}"
+                           style="display: inline-block; background: #10b981; color: white; padding: 12px 24px;
+                                  border-radius: 6px; text-decoration: none; font-weight: bold;">
+                            Download This APK
+                        </a>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <strong style="color: #ef4444;">Error:</strong> ${error.message}
+                `;
+                console.error(error);
+            }
+        }
+
+        debug();
+    </script>
+</body>
+</html>
