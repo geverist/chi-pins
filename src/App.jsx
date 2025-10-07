@@ -207,6 +207,9 @@ export default function App() {
   // voice assistant visibility
   const [voiceAssistantVisible, setVoiceAssistantVisible] = useState(true);
 
+  // downloading bar visibility (for footer margin adjustment)
+  const [downloadingBarVisible, setDownloadingBarVisible] = useState(false);
+
   // layer toggles
   const [showPopularSpots, setShowPopularSpots] = useState(true);
   const [showCommunityPins, setShowCommunityPins] = useState(true);
@@ -1277,6 +1280,7 @@ export default function App() {
         cancelEditing={cancelEditing}
         setShareOpen={setShareOpen}
         adminSettings={adminSettings}
+        downloadingBarVisible={downloadingBarVisible}
       />
 
       {(!isMobile || adminSettings.showNowPlayingOnMobile) && (
@@ -1440,7 +1444,11 @@ export default function App() {
 
       {/* Offline Map Downloader - Auto-starts in native app, hidden in browser */}
       {adminSettings.showOfflineMapDownloader !== false && (
-        <OfflineMapDownloader autoStart={true} mode={mapMode} />
+        <OfflineMapDownloader
+          autoStart={true}
+          mode={mapMode}
+          onVisibilityChange={setDownloadingBarVisible}
+        />
       )}
 
       {/* Industry Demo Switcher - Press D-E-M-O to open */}

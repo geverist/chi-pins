@@ -2,6 +2,8 @@
 import Editor from './Editor';
 import { btn3d } from '../lib/styles';
 
+const DOWNLOADING_BAR_HEIGHT = 72; // Must match OfflineMapDownloader.jsx
+
 export default function Footer({
   isMobile,
   draft,
@@ -33,12 +35,17 @@ export default function Footer({
   cancelEditing,
   setShareOpen,
   adminSettings,
+  downloadingBarVisible = false,
 }) {
   if (isMobile) return null;
 
   return (
     <footer
-      style={{ padding: '20px 24px' }}
+      style={{
+        padding: '20px 24px',
+        marginBottom: downloadingBarVisible ? `${DOWNLOADING_BAR_HEIGHT}px` : '0',
+        transition: 'margin-bottom 0.3s ease',
+      }}
       onClick={handleFooterClick}
       onTouchStart={handleFooterTouch}
       aria-label="Footer controls"
