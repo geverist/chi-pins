@@ -61,7 +61,7 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
         });
       } else {
         await storage.downloadChicagoTiles({
-          zoomLevels: [10, 11, 12, 13],
+          zoomLevels: [10, 11, 12, 13, 14, 15, 16, 17],
           maxConcurrent: isNative ? 6 : 4,
           onProgress: (current, total, { cached, failed, skipped }) => {
             setProgress({ current, total, cached, failed, skipped });

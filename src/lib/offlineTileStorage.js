@@ -43,7 +43,7 @@ function latLngToTile(lat, lng, zoom) {
 /**
  * Get all tile coordinates for Chicago at given zoom levels
  */
-function getChicagoTileCoords(zoomLevels = [10, 11, 12, 13]) {
+function getChicagoTileCoords(zoomLevels = [10, 11, 12, 13, 14, 15, 16, 17]) {
   const tiles = [];
 
   for (const zoom of zoomLevels) {
@@ -320,7 +320,7 @@ class OfflineTileStorage {
    */
   async downloadChicagoTiles(options = {}) {
     const {
-      zoomLevels = [10, 11, 12, 13],
+      zoomLevels = [10, 11, 12, 13, 14, 15, 16, 17],
       maxConcurrent = 4,
       onProgress = null,
       onComplete = null,

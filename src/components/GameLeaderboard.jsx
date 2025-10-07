@@ -16,7 +16,9 @@ export default function GameLeaderboard({
   const [rank, setRank] = useState(null);
   const [userEntryId, setUserEntryId] = useState(null);
   const [error, setError] = useState(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const userRowRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -140,9 +142,19 @@ export default function GameLeaderboard({
             </h3>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <input
+                ref={inputRef}
                 type="text"
                 value={initials}
-                onChange={(e) => setInitials(e.target.value.toUpperCase().slice(0, 3))}
+                onChange={(e) => {
+                  const value = e.target.value.toUpperCase().slice(0, 3);
+                  setInitials(value);
+                  // Auto-dismiss keyboard when 3 characters are entered
+                  if (value.length === 3) {
+                    setTimeout(() => inputRef.current?.blur(), 100);
+                  }
+                }}
+                onFocus={() => setKeyboardOpen(true)}
+                onBlur={() => setKeyboardOpen(false)}
                 placeholder="ABC"
                 maxLength={3}
                 style={{
@@ -187,6 +199,43 @@ export default function GameLeaderboard({
           </div>
         </form>
       )}
+
+      {/* Keyboard Dismiss Button (Android) */}
+      {keyboardOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'linear-gradient(to top, rgba(16,17,20,0.98) 0%, rgba(16,17,20,0.95) 50%, transparent 100%)',
+            padding: '24px 20px 32px',
+            display: 'flex',
+            justifyContent: 'center',
+            zIndex: 100000,
+            pointerEvents: 'none',
+          }}
+        >
+          <button
+            onClick={() => inputRef.current?.blur()}
+            style={{
+              padding: '14px 32px',
+              borderRadius: 12,
+              border: '1px solid rgba(59,130,246,0.3)',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white',
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 20px rgba(59,130,246,0.3)',
+              pointerEvents: 'auto',
+            }}
+          >
+            Done with Keyboard ✓
+          </button>
+        </div>
+      )}
+
 
       {/* Success Message */}
       {submitted && rank && (
