@@ -316,6 +316,92 @@ class OfflineTileStorage {
   }
 
   /**
+   * Download tiles for the visible map area
+   * Call this when the map moves in global mode to progressively cache tiles
+   */
+  async downloadVisibleTiles(map, options = {}) {
+    const {
+      maxConcurrent = 2,
+      zoomBuffer = 1, // Download tiles for current zoom ± this value
+      onProgress = null,
+    } = options;
+
+    if (!map) return;
+
+    const bounds = map.getBounds();
+    const currentZoom = Math.floor(map.getZoom());
+
+    // Download tiles for current zoom level and one level up/down
+    const minZoom = Math.max(0, currentZoom - zoomBuffer);
+    const maxZoom = Math.min(18, currentZoom + zoomBuffer);
+
+    const tiles = [];
+
+    for (let z = minZoom; z <= maxZoom; z++) {
+      const nw = latLngToTile(bounds.getNorth(), bounds.getWest(), z);
+      const se = latLngToTile(bounds.getSouth(), bounds.getEast(), z);
+
+      for (let x = nw.x; x <= se.x; x++) {
+        for (let y = nw.y; y <= se.y; y++) {
+          tiles.push({ x, y, z });
+        }
+      }
+    }
+
+    console.log(`[OfflineTileStorage] Downloading ${tiles.length} visible tiles (zoom ${minZoom}-${maxZoom})`);
+
+    let completed = 0;
+    let cached = 0;
+    let skipped = 0;
+
+    // Process tiles in batches
+    for (let i = 0; i < tiles.length; i += maxConcurrent) {
+      const batch = tiles.slice(i, i + maxConcurrent);
+
+      await Promise.all(batch.map(async ({ x, y, z }) => {
+        try {
+          // Check if already cached
+          const existing = await this.getTile(z, x, y);
+          if (existing) {
+            skipped++;
+            completed++;
+            return;
+          }
+
+          // Download tile
+          const subdomain = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
+          const url = `https://${subdomain}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+
+          const response = await fetch(url, {
+            cache: 'force-cache',
+            priority: 'low',
+          });
+
+          if (!response.ok) {
+            console.warn(`[OfflineTileStorage] Failed to download tile ${z}/${x}/${y}`);
+            return;
+          }
+
+          const blob = await response.blob();
+          await this.saveTile(z, x, y, blob);
+          cached++;
+        } catch (err) {
+          console.warn(`[OfflineTileStorage] Error downloading tile ${z}/${x}/${y}:`, err.message);
+        } finally {
+          completed++;
+          if (onProgress) {
+            onProgress(completed, tiles.length, { cached, skipped });
+          }
+        }
+      }));
+    }
+
+    console.log(`[OfflineTileStorage] Visible tiles cached: ${cached} new, ${skipped} already cached`);
+
+    return { total: tiles.length, cached, skipped };
+  }
+
+  /**
    * Download and cache Chicago tiles in background
    */
   async downloadChicagoTiles(options = {}) {
