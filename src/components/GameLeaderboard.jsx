@@ -51,6 +51,11 @@ export default function GameLeaderboard({
       return;
     }
 
+    // Dismiss keyboard immediately when submitting
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
+
     try {
       setSubmitting(true);
 
