@@ -92,8 +92,11 @@
                 const response = await fetch('https://api.github.com/repos/geverist/chi-pins/releases/latest');
                 const data = await response.json();
 
-                // Find the APK asset
-                const apkAsset = data.assets.find(asset => asset.name.endsWith('.apk'));
+                // Find all APK assets and sort by name (timestamp) descending to get most recent
+                const apkAssets = data.assets.filter(asset => asset.name.endsWith('.apk'));
+                apkAssets.sort((a, b) => b.name.localeCompare(a.name)); // Descending order
+
+                const apkAsset = apkAssets[0]; // Get most recent
 
                 if (apkAsset) {
                     document.getElementById('downloadLink').href = apkAsset.browser_download_url;
