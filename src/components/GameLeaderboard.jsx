@@ -15,6 +15,7 @@ export default function GameLeaderboard({
   const [submitted, setSubmitted] = useState(false);
   const [rank, setRank] = useState(null);
   const [userEntryId, setUserEntryId] = useState(null);
+  const [error, setError] = useState(null);
   const userRowRef = useRef(null);
 
   useEffect(() => {
@@ -88,7 +89,9 @@ export default function GameLeaderboard({
       }, 100);
     } catch (err) {
       console.error('Failed to submit score:', err);
-      alert('Failed to save score. Please try again.');
+      setError('Failed to save score. Please try again.');
+      // Clear error after 5 seconds
+      setTimeout(() => setError(null), 5000);
     } finally {
       setSubmitting(false);
     }
@@ -104,6 +107,23 @@ export default function GameLeaderboard({
 
   return (
     <div>
+      {/* Error Message */}
+      {error && (
+        <div
+          style={{
+            background: 'rgba(239,68,68,0.1)',
+            border: '1px solid rgba(239,68,68,0.3)',
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 16,
+            color: '#fca5a5',
+            fontSize: 14,
+          }}
+        >
+          ❌ {error}
+        </div>
+      )}
+
       {/* Submit Score Form */}
       {!viewOnly && !submitted && (
         <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
