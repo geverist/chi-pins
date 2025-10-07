@@ -1,6 +1,7 @@
 // src/state/useThenAndNow.js
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { getPersistentStorage } from '../lib/persistentStorage';
 
 const CACHE_KEY = 'then_and_now_cache';
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
@@ -11,19 +12,25 @@ export function useThenAndNow() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Load from cache first
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
+    const storage = getPersistentStorage();
+
+    // Load from persistent cache first
+    const loadCache = async () => {
       try {
-        const { data, timestamp } = JSON.parse(cached);
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          setComparisons(data);
-          setLoading(false);
+        const cached = await storage.get(CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = cached;
+          if (Date.now() - timestamp < CACHE_DURATION) {
+            setComparisons(data);
+            setLoading(false);
+          }
         }
       } catch (err) {
         console.error('[useThenAndNow] Error loading cache:', err);
       }
-    }
+    };
+
+    loadCache();
 
     // Fetch from database
     const fetchComparisons = async () => {
@@ -41,11 +48,11 @@ export function useThenAndNow() {
         setComparisons(data || []);
         setError(null);
 
-        // Update cache
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
+        // Update persistent cache
+        await storage.set(CACHE_KEY, {
           data: data || [],
           timestamp: Date.now()
-        }));
+        });
 
         setLoading(false);
       } catch (err) {

@@ -228,6 +228,8 @@ function GeocoderTopCenter({
       border: '1px solid rgba(255,255,255,0.14)',
       boxShadow: '0 8px 24px rgba(0,0,0,0.30)',
       position: 'relative',
+      minHeight: '52px', // Fixed height to prevent shifting
+      maxHeight: '52px', // Fixed height to prevent shifting
     });
     hostRef.current.appendChild(shell);
     shellRef.current = shell;
@@ -398,6 +400,8 @@ function GeocoderTopCenter({
       justifyContent: 'center',
       padding: '0',
       zIndex: 3700,
+      willChange: 'transform', // GPU acceleration
+      pointerEvents: 'auto', // Ensure clickable
     });
     micBtn.textContent = '🎤';
     micBtn.title = 'Voice Search';

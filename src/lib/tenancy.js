@@ -6,6 +6,8 @@
  * Each tenant (restaurant, med spa, hotel) operates independently with complete data isolation.
  */
 
+import { getPersistentStorage } from './persistentStorage';
+
 /**
  * Get current tenant ID from environment, subdomain, or URL
  */
@@ -25,8 +27,9 @@ export const getCurrentTenant = () => {
   const urlTenant = getTenantFromURL();
   if (urlTenant) return urlTenant;
 
-  const cachedTenant = getTenantFromCache();
-  if (cachedTenant) return cachedTenant;
+  // Note: getTenantFromCache is now async, so we need to handle this differently
+  // The cached tenant will be loaded in initializeTenantContext
+  // For synchronous calls, fall through to error
 
   throw new Error('No tenant context available. Cannot proceed.');
 };
@@ -65,13 +68,14 @@ export const getTenantFromURL = () => {
 };
 
 /**
- * Get cached tenant from local storage
+ * Get cached tenant from persistent storage
  */
-export const getTenantFromCache = () => {
+export const getTenantFromCache = async () => {
   if (typeof window === 'undefined') return null;
 
   try {
-    return localStorage.getItem('current_tenant');
+    const storage = getPersistentStorage();
+    return await storage.get('current_tenant');
   } catch (error) {
     console.warn('Failed to read tenant from cache:', error);
     return null;
@@ -80,12 +84,14 @@ export const getTenantFromCache = () => {
 
 /**
  * Cache tenant ID for faster subsequent loads
+ * Uses persistent storage that survives APK updates
  */
-export const cacheTenant = (tenantId) => {
+export const cacheTenant = async (tenantId) => {
   if (typeof window === 'undefined') return;
 
   try {
-    localStorage.setItem('current_tenant', tenantId);
+    const storage = getPersistentStorage();
+    await storage.set('current_tenant', tenantId);
   } catch (error) {
     console.warn('Failed to cache tenant:', error);
   }
@@ -94,11 +100,12 @@ export const cacheTenant = (tenantId) => {
 /**
  * Clear cached tenant
  */
-export const clearTenantCache = () => {
+export const clearTenantCache = async () => {
   if (typeof window === 'undefined') return;
 
   try {
-    localStorage.removeItem('current_tenant');
+    const storage = getPersistentStorage();
+    await storage.remove('current_tenant');
   } catch (error) {
     console.warn('Failed to clear tenant cache:', error);
   }

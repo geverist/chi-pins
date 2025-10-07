@@ -65,6 +65,7 @@ import AchievementNotification from './components/AchievementNotification';
 import DemoModeSwitcher from './components/DemoModeSwitcher';
 import VoiceAssistant from './components/VoiceAssistant';
 import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
+import { getPersistentStorage } from './lib/persistentStorage';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -128,6 +129,13 @@ export default function App() {
     console.log('App.jsx - lastPlayed:', lastPlayed);
     console.log('App.jsx - queue:', queue);
   }, [currentTrack, isPlaying, lastPlayed, queue]);
+
+  // Migrate localStorage to persistent storage on app load (runs once)
+  useEffect(() => {
+    const storage = getPersistentStorage();
+    storage.migrateFromLocalStorage();
+    console.log('[App] Persistent storage migration initiated');
+  }, []);
 
   // Apply industry demo config
   useEffect(() => {

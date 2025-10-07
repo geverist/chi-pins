@@ -105,6 +105,13 @@ export default function ThenAndNow({ onClose }) {
   const displayComparisons = comparisons.length > 0 ? comparisons : fallbackComparisons;
   const current = displayComparisons[currentIndex];
 
+  // Debug logging
+  if (comparisons.length > 0) {
+    console.log('[ThenAndNow] Using database images:', comparisons.length, 'comparisons');
+  } else {
+    console.log('[ThenAndNow] Using fallback images');
+  }
+
   // Show loading state
   if (loading) {
     return (
@@ -127,23 +134,22 @@ export default function ThenAndNow({ onClose }) {
   const handleSliderChange = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX || e.touches?.[0]?.clientX;
-    if (x) {
+    if (x !== undefined) {
       const position = ((x - rect.left) / rect.width) * 100;
       setSliderPosition(Math.max(0, Math.min(100, position)));
     }
   };
 
   const handleMouseMove = (e) => {
-    if (isDragging) {
-      handleSliderChange(e);
-    }
+    if (!isDragging) return;
+    e.preventDefault();
+    handleSliderChange(e);
   };
 
   const handleTouchMove = (e) => {
-    if (isDragging) {
-      e.preventDefault(); // Prevent scrolling and default touch behavior
-      handleSliderChange(e);
-    }
+    if (!isDragging) return;
+    e.preventDefault(); // Prevent scrolling and default touch behavior
+    handleSliderChange(e);
   };
 
   const nextComparison = () => {
@@ -243,13 +249,13 @@ export default function ThenAndNow({ onClose }) {
             boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
             cursor: 'ew-resize',
             userSelect: 'none',
+            touchAction: 'none', // Disable default touch behaviors
           }}
           onMouseDown={(e) => {
             setIsDragging(true);
             handleSliderChange(e);
           }}
           onTouchStart={(e) => {
-            e.preventDefault(); // Prevent default touch behavior
             setIsDragging(true);
             handleSliderChange(e);
           }}
@@ -279,7 +285,7 @@ export default function ThenAndNow({ onClose }) {
               width: '100%',
               height: '100%',
               clipPath: `inset(0 ${100 - sliderPosition}% 0 0)`,
-              transition: isDragging ? 'none' : 'clip-path 0.1s ease',
+              willChange: isDragging ? 'clip-path' : 'auto',
               pointerEvents: 'none',
             }}
           >
