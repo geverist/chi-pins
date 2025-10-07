@@ -431,10 +431,10 @@ const styles = {
   },
   microphoneWrapper: {
     position: 'fixed',
-    top: '35vh', // Below "Tap the map" (20vh) + some spacing
+    top: '50%', // Center vertically in available space
     left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: 9500, // Above attractor (3600) but below other modals
+    transform: 'translate(-50%, -50%)',
+    zIndex: 300, // Above footer/banner (100), below attractor (400)
     pointerEvents: 'none',
     display: 'flex',
     flexDirection: 'column',
@@ -518,10 +518,10 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    bottom: '140px', // Above footer (with buffer for downloading bar)
+    bottom: '100px', // Above footer (80px) with 20px spacing, won't be affected by downloading bar
     left: 0,
     right: 0,
-    zIndex: 9500, // Same as microphone
+    zIndex: 300, // Same level as microphone, below attractor (400)
     overflow: 'hidden',
     pointerEvents: 'none',
   },
