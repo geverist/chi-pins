@@ -7,7 +7,10 @@ import { useState, useEffect } from 'react';
 import { getOfflineTileStorage } from '../lib/offlineTileStorage';
 import { Capacitor } from '@capacitor/core';
 
-export default function OfflineMapDownloader({ autoStart = false, mode = 'chicago' }) {
+// Height of the downloading bar (for footer margin calculation)
+export const DOWNLOADING_BAR_HEIGHT = 72;
+
+export default function OfflineMapDownloader({ autoStart = false, mode = 'chicago', onVisibilityChange }) {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(null);
   const [stats, setStats] = useState(null);
@@ -16,6 +19,16 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
   const [downloadMode, setDownloadMode] = useState('chicago'); // 'chicago' or 'global'
 
   const isNative = Capacitor.isNativePlatform();
+
+  // Calculate if bar should be shown
+  const shouldShowBar = isVisible && !(autoStart && !isNative);
+
+  // Notify parent of visibility changes (for footer margin adjustment)
+  useEffect(() => {
+    if (onVisibilityChange) {
+      onVisibilityChange(shouldShowBar);
+    }
+  }, [shouldShowBar, onVisibilityChange]);
 
   useEffect(() => {
     // Auto-start download if enabled and running in native app

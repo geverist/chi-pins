@@ -313,8 +313,10 @@ export default function VoiceAssistant({
         <div style={styles.modalOverlay}>
           <div style={styles.modalContent}>
 
-            {/* Central Microphone Icon */}
-            <div style={styles.microphoneContainer}>
+            {/* Top section: Microphone and conversation (flexible height) */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10vh' }}>
+              {/* Central Microphone Icon */}
+              <div style={styles.microphoneContainer}>
               <button
                 style={{
                   ...styles.centralMic,
@@ -357,27 +359,28 @@ export default function VoiceAssistant({
                   )}
                 </div>
               )}
+              </div>
+
+              {/* Conversation Display */}
+              {(transcript || response) && (
+                <div style={styles.conversationBox}>
+                  {transcript && (
+                    <div style={styles.userMessage}>
+                      <strong>You:</strong> {transcript}
+                    </div>
+                  )}
+                  {response && (
+                    <div style={styles.agentMessage}>
+                      <strong>Agent:</strong> {response}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Error Display - REMOVED: errors should not be shown to users */}
             </div>
 
-            {/* Conversation Display */}
-            {(transcript || response) && (
-              <div style={styles.conversationBox}>
-                {transcript && (
-                  <div style={styles.userMessage}>
-                    <strong>You:</strong> {transcript}
-                  </div>
-                )}
-                {response && (
-                  <div style={styles.agentMessage}>
-                    <strong>Agent:</strong> {response}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Error Display - REMOVED: errors should not be shown to users */}
-
-            {/* Horizontal Scrolling Prompts */}
+            {/* Bottom section: Horizontal Scrolling Prompts (always at bottom) */}
             <div style={styles.promptsContainer}>
               <div style={styles.promptsList}>
                 {/* Duplicate prompts for continuous scroll effect */}
@@ -453,11 +456,13 @@ const styles = {
     padding: '0',
     maxWidth: '100%',
     width: '100%',
+    height: '100%',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '10vh',
+    justifyContent: 'space-between', // Changed from gap to space-between
     pointerEvents: 'none',
+    position: 'relative',
   },
   microphoneContainer: {
     display: 'flex',
