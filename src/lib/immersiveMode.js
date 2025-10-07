@@ -14,13 +14,10 @@ export async function enableImmersiveMode() {
   }
 
   try {
-    // Use Android's SYSTEM_UI_FLAG_IMMERSIVE_STICKY to hide nav/status bars
-    const { AndroidFullScreen } = await import('@awesome-cordova-plugins/android-full-screen');
-
-    // Check if plugin is available
-    if (AndroidFullScreen) {
-      await AndroidFullScreen.immersiveMode();
-      console.log('[ImmersiveMode] Enabled successfully');
+    // Try to use native Capacitor Plugin API for AndroidFullScreen if available
+    if (window.plugins && window.plugins.fullscreen) {
+      await window.plugins.fullscreen.immersiveMode();
+      console.log('[ImmersiveMode] Enabled successfully via plugin');
     } else {
       // Fallback: Use native JavaScript method
       enableImmersiveModeFallback();
