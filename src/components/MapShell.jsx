@@ -318,6 +318,7 @@ function GeocoderTopCenter({
       // Don't auto-focus to prevent keyboard popup
       // input.focus();
       // Explicitly blur and disable autofocus
+      console.log('[MapShell] Preventing auto-focus: calling blur() and setting attributes');
       input.blur();
       input.setAttribute('autofocus', 'false');
       input.setAttribute('autocomplete', 'off');
@@ -731,7 +732,11 @@ export default function MapShell({
           className="map-tiles"
           errorTileUrl="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="  // Blank 1x1 transparent GIF
           // Progressive caching in global mode
-          enableProgressiveCaching={mapMode === 'global'}
+          enableProgressiveCaching={(() => {
+            const enabled = mapMode === 'global';
+            console.log('[MapShell] Progressive caching enabled:', enabled, 'mapMode:', mapMode);
+            return enabled;
+          })()}
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />

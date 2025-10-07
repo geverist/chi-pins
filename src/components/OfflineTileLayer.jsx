@@ -22,6 +22,7 @@ export default function OfflineTileLayer({
   useEffect(() => {
     if (!map) return;
 
+    console.log('[OfflineTileLayer] Initializing with enableProgressiveCaching:', enableProgressiveCaching);
     const storage = getOfflineTileStorage();
 
     // Custom tile layer that checks offline storage first
@@ -119,9 +120,12 @@ export default function OfflineTileLayer({
     };
 
     if (enableProgressiveCaching) {
+      console.log('[OfflineTileLayer] Progressive caching ENABLED - attaching moveend listener');
       map.on('moveend', handleMoveEnd);
       // Initial download
       handleMoveEnd();
+    } else {
+      console.log('[OfflineTileLayer] Progressive caching DISABLED');
     }
 
     return () => {
