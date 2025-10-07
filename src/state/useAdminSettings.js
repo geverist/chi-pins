@@ -1,6 +1,7 @@
 // src/state/useAdminSettings.js
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { getPersistentStorage } from '../lib/persistentStorage'
 
 /**
  * Settings live under table "settings" with schema:
@@ -156,9 +157,10 @@ export function useAdminSettings() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  // Load from Supabase → fallback to LocalStorage → defaults
+  // Load from Supabase → fallback to Persistent Storage → defaults
   useEffect(() => {
     let mounted = true
+    const storage = getPersistentStorage()
     ;(async () => {
       setLoading(true)
       setError(null)
@@ -174,18 +176,18 @@ export function useAdminSettings() {
           if (data?.value) {
             setSettings(s => ({ ...DEFAULTS, ...s, ...data.value }))
           } else {
-            // Local fallback
+            // Persistent storage fallback
             try {
-              const raw = localStorage.getItem(LS_KEY)
-              if (raw) setSettings(s => ({ ...DEFAULTS, ...s, ...JSON.parse(raw) }))
+              const cached = await storage.get(LS_KEY)
+              if (cached) setSettings(s => ({ ...DEFAULTS, ...s, ...cached }))
             } catch {}
           }
         }
       } catch (e) {
-        // Fallback to LS if table missing / not provisioned
+        // Fallback to persistent storage if table missing / not provisioned
         try {
-          const raw = localStorage.getItem(LS_KEY)
-          if (raw) setSettings(s => ({ ...DEFAULTS, ...s, ...JSON.parse(raw) }))
+          const cached = await storage.get(LS_KEY)
+          if (cached) setSettings(s => ({ ...DEFAULTS, ...s, ...cached }))
         } catch {}
         setError(e?.message || 'Failed to load settings')
       } finally {
@@ -196,12 +198,13 @@ export function useAdminSettings() {
   }, [])
 
   const save = useCallback(async (next) => {
+    const storage = getPersistentStorage()
     setSaving(true)
     setError(null)
     const merged = { ...settings, ...next }
     setSettings(merged)
-    // Always save to LocalStorage as well
-    try { localStorage.setItem(LS_KEY, JSON.stringify(merged)) } catch {}
+    // Always save to persistent storage as well
+    try { await storage.set(LS_KEY, merged) } catch {}
 
     // Try Supabase upsert
     try {
@@ -210,7 +213,7 @@ export function useAdminSettings() {
         .upsert({ key: 'app', value: merged }, { onConflict: 'key' })
       if (error) throw error
     } catch (e) {
-      setError(e?.message || 'Failed to save settings (using local fallback).')
+      setError(e?.message || 'Failed to save settings (using persistent fallback).')
     } finally {
       setSaving(false)
     }

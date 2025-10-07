@@ -12,6 +12,8 @@ import PinCodeModal from './PinCodeModal'
 import AnalyticsDashboard from './AnalyticsDashboard'
 import VoiceAgentTab from './VoiceAgentTab'
 import KioskVoiceTab from './KioskVoiceTab'
+import MarketplaceAdmin from './MarketplaceAdmin'
+import ContentLayoutTab from './ContentLayoutTab'
 
 export default function AdminPanel({ open, onClose }) {
   const [authenticated, setAuthenticated] = useState(false)
@@ -381,6 +383,8 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'games'} onClick={() => setTab('games')}>Games</TabBtn>
           <TabBtn active={tab === 'branding'} onClick={() => setTab('branding')}>Branding</TabBtn>
           <TabBtn active={tab === 'navigation'} onClick={() => setTab('navigation')}>Navigation</TabBtn>
+          <TabBtn active={tab === 'layout'} onClick={() => setTab('layout')}>📐 Layout</TabBtn>
+          <TabBtn active={tab === 'marketplace'} onClick={() => setTab('marketplace')}>🧩 Marketplace</TabBtn>
           <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
           <TabBtn active={tab === 'thenandnow'} onClick={() => setTab('thenandnow')}>Then & Now</TabBtn>
           <TabBtn active={tab === 'clusters'} onClick={() => setTab('clusters')}>Kiosk Clusters</TabBtn>
@@ -2734,6 +2738,14 @@ export default function AdminPanel({ open, onClose }) {
           {tab === 'voice' && <VoiceAgentTab />}
 
           {tab === 'kioskvoice' && <KioskVoiceTab />}
+
+          {tab === 'layout' && <ContentLayoutTab />}
+
+          {tab === 'marketplace' && (
+            <div style={{ margin: '-30px', minHeight: '100%' }}>
+              <MarketplaceAdmin />
+            </div>
+          )}
         </div>
       </div>
     </div>

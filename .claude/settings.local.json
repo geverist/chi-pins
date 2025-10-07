@@ -9,7 +9,22 @@
       "Bash(sdkmanager:*)",
       "Bash(yes)",
       "Bash(/Users/gileseverist/Dev/kiosk/chi-pins/android/gradlew -p /Users/gileseverist/Dev/kiosk/chi-pins/android assembleDebug)",
-      "Bash(brew install:*)"
+      "Bash(brew install:*)",
+      "Read(//Users/gileseverist/**)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(./android/gradlew:*)",
+      "Bash(adb -s 192.168.1.202:41777 install -r public/chi-pins.apk)",
+      "Bash(adb -s 192.168.1.202:41777 shell pm list packages)",
+      "Bash(adb:*)",
+      "Bash(gh run watch:*)",
+      "Bash(psql:*)",
+      "Bash(/opt/homebrew/opt/postgresql@16/bin/psql:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
