@@ -310,13 +310,10 @@ export default function VoiceAssistant({
     <>
       {/* Voice Assistant - just microphone and horizontal scrolling prompts */}
       {isOpen && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-
-            {/* Top section: Microphone and conversation (flexible height) */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10vh' }}>
-              {/* Central Microphone Icon */}
-              <div style={styles.microphoneContainer}>
+        <>
+          {/* Central Microphone - positioned below attractor overlay */}
+          <div style={styles.microphoneWrapper}>
+            <div style={styles.microphoneContainer}>
               <button
                 style={{
                   ...styles.centralMic,
@@ -359,45 +356,42 @@ export default function VoiceAssistant({
                   )}
                 </div>
               )}
-              </div>
-
-              {/* Conversation Display */}
-              {(transcript || response) && (
-                <div style={styles.conversationBox}>
-                  {transcript && (
-                    <div style={styles.userMessage}>
-                      <strong>You:</strong> {transcript}
-                    </div>
-                  )}
-                  {response && (
-                    <div style={styles.agentMessage}>
-                      <strong>Agent:</strong> {response}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Error Display - REMOVED: errors should not be shown to users */}
             </div>
 
-            {/* Bottom section: Horizontal Scrolling Prompts (always at bottom) */}
-            <div style={styles.promptsContainer}>
-              <div style={styles.promptsList}>
-                {/* Duplicate prompts for continuous scroll effect */}
-                {[...suggestedPrompts, ...suggestedPrompts].map((prompt, index) => (
-                  <button
-                    key={index}
-                    style={styles.promptChip}
-                    onClick={() => handlePromptClick(prompt)}
-                    disabled={isProcessing || isSpeaking || isListening}
-                  >
-                    {prompt}
-                  </button>
-                ))}
+            {/* Conversation Display */}
+            {(transcript || response) && (
+              <div style={styles.conversationBox}>
+                {transcript && (
+                  <div style={styles.userMessage}>
+                    <strong>You:</strong> {transcript}
+                  </div>
+                )}
+                {response && (
+                  <div style={styles.agentMessage}>
+                    <strong>Agent:</strong> {response}
+                  </div>
+                )}
               </div>
+            )}
+          </div>
+
+          {/* Horizontal Scrolling Prompts - positioned below microphone, above footer */}
+          <div style={styles.promptsContainer}>
+            <div style={styles.promptsList}>
+              {/* Duplicate prompts for continuous scroll effect */}
+              {[...suggestedPrompts, ...suggestedPrompts].map((prompt, index) => (
+                <button
+                  key={index}
+                  style={styles.promptChip}
+                  onClick={() => handlePromptClick(prompt)}
+                  disabled={isProcessing || isSpeaking || isListening}
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
@@ -435,33 +429,17 @@ const styles = {
     zIndex: 1000,
     opacity: 0.7,
   },
-  modalOverlay: {
+  microphoneWrapper: {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'transparent',
-    display: 'flex',
-    alignItems: 'center', // Center vertically
-    justifyContent: 'center',
-    zIndex: 10000,
-    padding: '20px',
-    paddingBottom: '120px', // Space for footer
+    top: '35vh', // Below "Tap the map" (20vh) + some spacing
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 9500, // Above attractor (3600) but below other modals
     pointerEvents: 'none',
-  },
-  modalContent: {
-    background: 'transparent',
-    borderRadius: '0',
-    padding: '0',
-    maxWidth: '100%',
-    width: '100%',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '8vh', // Fixed gap between microphone and prompts
-    pointerEvents: 'none',
-    position: 'relative',
+    gap: '16px',
   },
   microphoneContainer: {
     display: 'flex',
@@ -539,9 +517,13 @@ const styles = {
     textAlign: 'center',
   },
   promptsContainer: {
-    width: '100%',
-    maxWidth: '100vw',
+    position: 'fixed',
+    bottom: '140px', // Above footer (with buffer for downloading bar)
+    left: 0,
+    right: 0,
+    zIndex: 9500, // Same as microphone
     overflow: 'hidden',
+    pointerEvents: 'none',
   },
   promptsHeader: {
     fontSize: '14px',
