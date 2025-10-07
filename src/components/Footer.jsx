@@ -45,6 +45,8 @@ export default function Footer({
         padding: '20px 24px',
         marginBottom: downloadingBarVisible ? `${DOWNLOADING_BAR_HEIGHT}px` : '0',
         transition: 'margin-bottom 0.3s ease',
+        position: 'relative',
+        zIndex: 50, // Above map (0), below NowPlayingBanner (100)
       }}
       onClick={handleFooterClick}
       onTouchStart={handleFooterTouch}
