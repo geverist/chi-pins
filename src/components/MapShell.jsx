@@ -315,7 +315,8 @@ function GeocoderTopCenter({
       input.addEventListener('input', () => {
         onSearchInteraction?.();
       });
-      input.focus();
+      // Don't auto-focus to prevent keyboard popup
+      // input.focus();
     } else {
       console.warn('GeocoderTopCenter: Input not found');
     }
@@ -725,6 +726,8 @@ export default function MapShell({
           // Loading optimizations
           className="map-tiles"
           errorTileUrl="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="  // Blank 1x1 transparent GIF
+          // Progressive caching in global mode
+          enableProgressiveCaching={mode === 'global'}
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />

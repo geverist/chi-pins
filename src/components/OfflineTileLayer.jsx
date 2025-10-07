@@ -14,6 +14,7 @@ export default function OfflineTileLayer({
   minZoom = 0,
   onTileLoad,
   onTileError,
+  enableProgressiveCaching = false, // Enable in global mode
   ...otherProps
 }) {
   const map = useMap();
@@ -100,10 +101,37 @@ export default function OfflineTileLayer({
 
     tileLayer.addTo(map);
 
+    // Progressive tile caching for global mode
+    let downloadTimeout = null;
+    const handleMoveEnd = () => {
+      if (!enableProgressiveCaching) return;
+
+      // Debounce tile downloads to avoid excessive requests
+      clearTimeout(downloadTimeout);
+      downloadTimeout = setTimeout(() => {
+        storage.downloadVisibleTiles(map, {
+          maxConcurrent: 2,
+          zoomBuffer: 1,
+        }).catch(err => {
+          console.warn('[OfflineTileLayer] Error downloading visible tiles:', err);
+        });
+      }, 1000); // Wait 1 second after map stops moving
+    };
+
+    if (enableProgressiveCaching) {
+      map.on('moveend', handleMoveEnd);
+      // Initial download
+      handleMoveEnd();
+    }
+
     return () => {
       map.removeLayer(tileLayer);
+      if (enableProgressiveCaching) {
+        map.off('moveend', handleMoveEnd);
+        clearTimeout(downloadTimeout);
+      }
     };
-  }, [map, attribution, maxZoom, minZoom, onTileLoad, onTileError, otherProps]);
+  }, [map, attribution, maxZoom, minZoom, onTileLoad, onTileError, enableProgressiveCaching, otherProps]);
 
   return null;
 }
