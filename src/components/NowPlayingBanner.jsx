@@ -1,7 +1,7 @@
 // src/components/NowPlayingBanner.jsx
 import { useState, useEffect } from 'react';
 
-export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue, scrollSpeed = 30, isMobile = false }) {
+export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue, scrollSpeed = 60, isMobile = false }) {
   const [animate, setAnimate] = useState(false);
 
   // Restart animation when track changes
@@ -27,7 +27,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
   // Build the display text with clear visual separation
   const parts = [];
-  const separator = ' '.repeat(15) + '●●●' + ' '.repeat(15); // Visual separator
+  const separator = ' '.repeat(50) + '●●●' + ' '.repeat(50); // Wide visual separator for clear text separation
 
   if (lastPlayed) {
     parts.push(`⏮ Last Played: ${lastPlayed.title}${lastPlayed.artist ? ` - ${lastPlayed.artist}` : ''}`);
@@ -43,8 +43,8 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
   const displayText = parts.join(separator);
 
-  // Duplicate text for seamless scrolling - need more copies for smooth loop
-  const scrollContent = Array(20).fill(displayText).join(separator);
+  // Duplicate text for seamless scrolling - fewer copies needed with slower speed
+  const scrollContent = Array(6).fill(displayText).join(separator);
 
   return (
     <div
