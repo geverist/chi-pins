@@ -195,20 +195,47 @@ export default function VoiceAssistant({
   }
 
   async function getAIResponse(userMessage) {
-    // Mock response for now - will integrate with Supabase Edge Function
-    const mockResponses = {
-      restaurant: "I'd be happy to help with your order! Our most popular item is the Chicago Dog with all the toppings. Would you like to add that to your order?",
-      medspa: "Our signature facial treatment is very popular and takes about 60 minutes. Would you like to book an appointment?",
-      auto: "Your vehicle service is currently in progress. The estimated completion time is 45 minutes. Would you like to add a tire rotation?",
-      healthcare: "Your current wait time is approximately 15 minutes. Would you like to update your contact information while you wait?",
-      fitness: "We have a spin class starting in 30 minutes with 3 spots available. Would you like me to book you in?",
-      retail: "We just got new arrivals in the spring collection. Would you like me to show you what's trending?",
-      banking: "Our checking accounts have no monthly fees with direct deposit. Would you like to schedule an appointment with a banker?",
-      events: "The photo booth is located near the main entrance. Would you like me to start a photo session?",
-      hospitality: "The hotel spa offers massage services from 9am-8pm. Would you like to book a treatment?",
-    };
+    try {
+      // Build context from enabled features
+      const features = Object.entries(enabledFeatures)
+        .filter(([_, enabled]) => enabled)
+        .map(([feature, _]) => feature);
 
-    return mockResponses[industry] || mockResponses.restaurant;
+      const context = {
+        locationName: navSettings.locationName,
+        features,
+      };
+
+      const response = await fetch('/api/voice-assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          industry,
+          context,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Log if response was cached for debugging
+      if (data.cached) {
+        console.log('[VoiceAssistant] Used cached response');
+      }
+
+      return data.response;
+    } catch (error) {
+      console.error('[VoiceAssistant] API error:', error);
+
+      // Fallback to generic response
+      return "I'm having trouble connecting right now. Please try asking your question again, or feel free to explore the map to find what you need.";
+    }
   }
 
   async function speakResponse(text) {
