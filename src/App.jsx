@@ -67,6 +67,7 @@ import VoiceAssistant from './components/VoiceAssistant';
 import DebugPanel from './components/DebugPanel';
 import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
 import { getPersistentStorage } from './lib/persistentStorage';
+import { enableImmersiveMode, maintainImmersiveMode } from './lib/immersiveMode';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -295,6 +296,10 @@ export default function App() {
 
     // Initialize remote logger for debugging
     initRemoteLogger();
+
+    // Enable Android immersive mode to hide navigation/status bars
+    enableImmersiveMode();
+    maintainImmersiveMode();
 
     // Set exploring mode based on mobile state
     if (isMobile) {

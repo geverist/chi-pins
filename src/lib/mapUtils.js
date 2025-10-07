@@ -163,13 +163,19 @@ export function boundsForMiles(center, miles) {
 }
 
 /* ---------- Chicago overview (no pannable bounds) ---------- */
-export function resetToChicagoOverview(map) {
+export function resetToChicagoOverview(map, options = {}) {
   if (!map) return;
+  const { skipInvalidate = true } = options; // Skip invalidateSize by default to prevent tile refresh
+
   map.setMinZoom(CHI_MIN_ZOOM);
   map.setMaxZoom(CHI_MAX_ZOOM);
   map.setMaxBounds(null);
   map.fitBounds(CHI_BOUNDS, { animate: true });
-  setTimeout(() => map.invalidateSize(), 300);
+
+  // Only invalidate size if explicitly requested (e.g., after window resize)
+  if (!skipInvalidate) {
+    setTimeout(() => map.invalidateSize(), 300);
+  }
 }
 
 /** Center + fit an N-mile box (defensive center). */
