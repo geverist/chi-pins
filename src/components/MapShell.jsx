@@ -72,6 +72,17 @@ function ensureSearchCss() {
         right: 8px !important;
       }
     }
+    /* Pulse animation for microphone when listening */
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+      }
+      50% {
+        opacity: 0.7;
+        transform: translateY(-50%) scale(1.1);
+      }
+    }
   `;
   const style = document.createElement('style');
   style.setAttribute('data-map-search-css', '1');
@@ -366,6 +377,95 @@ function GeocoderTopCenter({
       inputRef.current?.focus();
     });
 
+    // Add microphone button for voice search
+    const micBtn = L.DomUtil.create('button', 'map-search-mic', shell);
+    Object.assign(micBtn.style, {
+      position: 'absolute',
+      right: '46px', // Position to left of clear button
+      top: '50%',
+      transform: 'translateY(-50%)',
+      width: '28px',
+      height: '28px',
+      borderRadius: '50%',
+      border: '1px solid rgba(255,255,255,0.25)',
+      background: 'rgba(0,0,0,0.35)',
+      color: '#e9eef3',
+      cursor: 'pointer',
+      fontSize: '16px',
+      lineHeight: '1',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0',
+      zIndex: 3700,
+    });
+    micBtn.textContent = '🎤';
+    micBtn.title = 'Voice Search';
+    micBtn.setAttribute('aria-label', 'Voice search');
+    L.DomEvent.disableClickPropagation(micBtn);
+
+    let recognition = null;
+    let isListening = false;
+
+    // Initialize speech recognition if available
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        isListening = true;
+        micBtn.style.background = 'rgba(239, 68, 68, 0.8)'; // Red when listening
+        micBtn.style.animation = 'pulse 1s infinite';
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        micBtn.style.background = 'rgba(0,0,0,0.35)';
+        micBtn.style.animation = 'none';
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('[VoiceSearch] Recognized:', transcript);
+
+        if (inputRef.current) {
+          inputRef.current.value = transcript;
+          inputRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+          inputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+          showHideClear();
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('[VoiceSearch] Error:', event.error);
+        isListening = false;
+        micBtn.style.background = 'rgba(0,0,0,0.35)';
+        micBtn.style.animation = 'none';
+      };
+    } else {
+      // Hide mic button if speech recognition not supported
+      micBtn.style.display = 'none';
+    }
+
+    micBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+
+      if (!recognition) {
+        console.warn('[VoiceSearch] Speech recognition not available');
+        return;
+      }
+
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    });
+
     if (input) {
       const handleInput = (e) => {
         showHideClear();
@@ -390,6 +490,10 @@ function GeocoderTopCenter({
     return () => {
       try {
         clearBtn?.remove();
+        micBtn?.remove();
+        if (recognition) {
+          recognition.abort();
+        }
         geocoder.remove();
       } catch {}
       geocoderRef.current = null;
