@@ -1432,7 +1432,7 @@ export default function App() {
 
       {/* Offline Map Downloader - Auto-starts in native app, hidden in browser */}
       {adminSettings.showOfflineMapDownloader !== false && (
-        <OfflineMapDownloader autoStart={true} />
+        <OfflineMapDownloader autoStart={true} mode={mapMode} />
       )}
 
       {/* Industry Demo Switcher - Press D-E-M-O to open */}

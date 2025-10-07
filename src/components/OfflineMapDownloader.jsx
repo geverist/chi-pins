@@ -7,12 +7,13 @@ import { useState, useEffect } from 'react';
 import { getOfflineTileStorage } from '../lib/offlineTileStorage';
 import { Capacitor } from '@capacitor/core';
 
-export default function OfflineMapDownloader({ autoStart = false }) {
+export default function OfflineMapDownloader({ autoStart = false, mode = 'chicago' }) {
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(null);
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [downloadMode, setDownloadMode] = useState('chicago'); // 'chicago' or 'global'
 
   const isNative = Capacitor.isNativePlatform();
 
@@ -28,40 +29,72 @@ export default function OfflineMapDownloader({ autoStart = false }) {
     }
   }, [autoStart, isNative]);
 
-  async function startDownload() {
+  async function startDownload(targetMode = 'chicago') {
     if (downloading) return;
 
     setDownloading(true);
+    setDownloadMode(targetMode);
     setError(null);
     setProgress({ current: 0, total: 0, cached: 0, failed: 0, skipped: 0 });
 
     try {
       const storage = getOfflineTileStorage();
 
-      await storage.downloadChicagoTiles({
-        zoomLevels: [10, 11, 12, 13],
-        maxConcurrent: isNative ? 6 : 4,
-        onProgress: (current, total, { cached, failed, skipped }) => {
-          setProgress({ current, total, cached, failed, skipped });
-        },
-        onComplete: (finalStats) => {
-          setStats(finalStats);
-          setDownloading(false);
+      if (targetMode === 'global') {
+        await storage.downloadGlobalTiles({
+          zoomLevels: [3, 4, 5],
+          maxConcurrent: isNative ? 6 : 4,
+          onProgress: (current, total, { cached, failed, skipped }) => {
+            setProgress({ current, total, cached, failed, skipped });
+          },
+          onComplete: (finalStats) => {
+            setStats(finalStats);
+            setDownloading(false);
 
-          // Auto-hide after 10 seconds if download was successful
-          if (autoStart && finalStats.cached > 0) {
-            setTimeout(() => {
-              setIsVisible(false);
-            }, 10000);
-          }
-        },
-      });
+            // Auto-hide after 10 seconds if download was successful
+            if (autoStart && finalStats.cached > 0) {
+              setTimeout(() => {
+                setIsVisible(false);
+              }, 10000);
+            }
+          },
+        });
+      } else {
+        await storage.downloadChicagoTiles({
+          zoomLevels: [10, 11, 12, 13],
+          maxConcurrent: isNative ? 6 : 4,
+          onProgress: (current, total, { cached, failed, skipped }) => {
+            setProgress({ current, total, cached, failed, skipped });
+          },
+          onComplete: (finalStats) => {
+            setStats(finalStats);
+            setDownloading(false);
+
+            // Auto-hide after 10 seconds if download was successful
+            if (autoStart && finalStats.cached > 0) {
+              setTimeout(() => {
+                setIsVisible(false);
+              }, 10000);
+            }
+          },
+        });
+      }
     } catch (err) {
       console.error('[OfflineMapDownloader] Download failed:', err);
       setError(err.message);
       setDownloading(false);
     }
   }
+
+  // Trigger download when mode changes
+  useEffect(() => {
+    if (mode === 'global' && isNative && !downloading && !stats) {
+      // Auto-start global download when switching to global mode
+      setTimeout(() => {
+        startDownload('global');
+      }, 2000);
+    }
+  }, [mode, isNative]);
 
   // Don't show UI in browser mode with auto-start (runs silently in background)
   if (autoStart && !isNative) {
@@ -99,7 +132,12 @@ export default function OfflineMapDownloader({ autoStart = false }) {
           <span style={{ fontSize: 20 }}>📍</span>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>
-              {downloading ? `Downloading tiles (${progressPercent}%)` : stats ? '✅ Map tiles cached' : 'Offline Maps'}
+              {downloading
+                ? `Downloading ${downloadMode === 'global' ? 'global' : 'Chicago'} map (${progressPercent}%)`
+                : stats
+                  ? `✅ ${downloadMode === 'global' ? 'Global' : 'Chicago'} map cached`
+                  : 'Offline Maps'
+              }
             </div>
             {progress && downloading && (
               <div style={{ fontSize: 10, color: '#a7b0b8', marginTop: 2 }}>

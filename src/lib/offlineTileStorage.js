@@ -19,6 +19,14 @@ const CHICAGO_BOUNDS = {
   west: -87.9401,
 };
 
+// Global bounds (entire world)
+const GLOBAL_BOUNDS = {
+  north: 85,
+  south: -85,
+  east: 180,
+  west: -180,
+};
+
 // Check if running in native Capacitor app
 const isNative = Capacitor.isNativePlatform();
 
@@ -41,6 +49,26 @@ function getChicagoTileCoords(zoomLevels = [10, 11, 12, 13]) {
   for (const zoom of zoomLevels) {
     const nw = latLngToTile(CHICAGO_BOUNDS.north, CHICAGO_BOUNDS.west, zoom);
     const se = latLngToTile(CHICAGO_BOUNDS.south, CHICAGO_BOUNDS.east, zoom);
+
+    for (let x = nw.x; x <= se.x; x++) {
+      for (let y = nw.y; y <= se.y; y++) {
+        tiles.push({ x, y, z: zoom });
+      }
+    }
+  }
+
+  return tiles;
+}
+
+/**
+ * Get all tile coordinates for global map at given zoom levels
+ */
+function getGlobalTileCoords(zoomLevels = [3, 4, 5]) {
+  const tiles = [];
+
+  for (const zoom of zoomLevels) {
+    const nw = latLngToTile(GLOBAL_BOUNDS.north, GLOBAL_BOUNDS.west, zoom);
+    const se = latLngToTile(GLOBAL_BOUNDS.south, GLOBAL_BOUNDS.east, zoom);
 
     for (let x = nw.x; x <= se.x; x++) {
       for (let y = nw.y; y <= se.y; y++) {
@@ -367,6 +395,94 @@ class OfflineTileStorage {
     };
 
     console.log('[OfflineTileStorage] Download complete:', stats);
+
+    if (onComplete) {
+      onComplete(stats);
+    }
+
+    return stats;
+  }
+
+  /**
+   * Download and cache global map tiles (zoom 3-5 for world overview)
+   */
+  async downloadGlobalTiles(options = {}) {
+    const {
+      zoomLevels = [3, 4, 5],
+      maxConcurrent = 4,
+      onProgress = null,
+      onComplete = null,
+    } = options;
+
+    console.log('[OfflineTileStorage] Starting global tile download...');
+
+    const tiles = getGlobalTileCoords(zoomLevels);
+    let completed = 0;
+    let cached = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    console.log(`[OfflineTileStorage] ${tiles.length} global tiles to download`);
+
+    // Process tiles in batches
+    for (let i = 0; i < tiles.length; i += maxConcurrent) {
+      const batch = tiles.slice(i, i + maxConcurrent);
+
+      await Promise.all(batch.map(async ({ x, y, z }) => {
+        try {
+          // Check if already cached
+          const existing = await this.getTile(z, x, y);
+          if (existing) {
+            skipped++;
+            completed++;
+            if (onProgress) onProgress(completed, tiles.length, { cached, failed, skipped });
+            return;
+          }
+
+          // Download tile
+          const subdomain = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
+          const url = `https://${subdomain}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+
+          const response = await fetch(url, {
+            cache: 'force-cache',
+            priority: 'low',
+          });
+
+          if (!response.ok) {
+            failed++;
+            console.warn(`[OfflineTileStorage] Failed to download global tile ${z}/${x}/${y}: ${response.status}`);
+            return;
+          }
+
+          const blob = await response.blob();
+          await this.saveTile(z, x, y, blob);
+          cached++;
+        } catch (err) {
+          failed++;
+          console.warn(`[OfflineTileStorage] Error downloading global tile ${z}/${x}/${y}:`, err.message);
+        } finally {
+          completed++;
+          if (onProgress) {
+            onProgress(completed, tiles.length, { cached, failed, skipped });
+          }
+        }
+      }));
+
+      // Log progress every batch
+      if (completed % 50 === 0) {
+        console.log(`[OfflineTileStorage] Global progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%)`);
+      }
+    }
+
+    const stats = {
+      total: tiles.length,
+      cached,
+      failed,
+      skipped,
+      completed,
+    };
+
+    console.log('[OfflineTileStorage] Global download complete:', stats);
 
     if (onComplete) {
       onComplete(stats);
