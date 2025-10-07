@@ -24,7 +24,10 @@
       "Bash(psql:*)",
       "Bash(/opt/homebrew/opt/postgresql@16/bin/psql:*)",
       "Bash(find:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(chmod:*)",
+      "Bash(/opt/homebrew/share/android-commandlinetools/build-tools/34.0.0/aapt:*)"
     ],
     "deny": [],
     "ask": []

@@ -64,6 +64,7 @@ import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AchievementNotification from './components/AchievementNotification';
 import DemoModeSwitcher from './components/DemoModeSwitcher';
 import VoiceAssistant from './components/VoiceAssistant';
+import DebugPanel from './components/DebugPanel';
 import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
 import { getPersistentStorage } from './lib/persistentStorage';
 
@@ -1457,6 +1458,9 @@ export default function App() {
         onClose={demoSwitcher.close}
         onSwitch={demoSwitcher.switchToIndustry}
       />
+
+      {/* Debug Panel - Press D-E-B-U-G to toggle or add ?debug=true to URL */}
+      <DebugPanel />
     </div>
   );
 }
