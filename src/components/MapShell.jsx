@@ -290,10 +290,10 @@ function GeocoderTopCenter({
       ctrlEl.querySelector('.leaflet-control-geocoder-form input');
     inputRef.current = input;
     if (input) {
-      input.style.padding = '10px 94px 10px 12px'; // Extra padding for mic + clear buttons
+      input.style.padding = '10px 100px 10px 12px'; // Extra padding for mic + clear buttons (mic button needs more space)
       input.style.borderRadius = '10px';
       input.style.outline = 'none';
-      input.style.width = 'min(72vw, 520px)';
+      input.style.width = 'min(72vw, 540px)'; // Slightly wider for better proportions
       input.placeholder = effectivePlaceholder;
       input.setAttribute('aria-label', effectiveMode === 'global' ? 'Search places worldwide' : 'Search Chicago and nearby');
       input.addEventListener('keydown', (ev) => {
@@ -403,7 +403,7 @@ function GeocoderTopCenter({
     const micBtn = L.DomUtil.create('button', 'map-search-mic', shell);
     Object.assign(micBtn.style, {
       position: 'absolute',
-      right: '48px', // Position to left of clear button with better spacing
+      right: '52px', // Position to left of clear button (32px clear + 8px gap + 12px margin)
       top: '50%',
       transform: 'translateY(-50%)',
       width: '36px',
