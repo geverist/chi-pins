@@ -326,21 +326,16 @@ function GeocoderTopCenter({
       console.warn('GeocoderTopCenter: Input not found');
     }
 
-    // Hide all default geocoder icons and buttons
+    // Remove all default geocoder icons and buttons from the DOM entirely
     const iconBtn = ctrlEl.querySelector('.leaflet-control-geocoder-icon');
     if (iconBtn) {
-      iconBtn.style.display = 'none';
-      iconBtn.style.visibility = 'hidden';
-      iconBtn.style.width = '0';
-      iconBtn.style.height = '0';
-      iconBtn.style.overflow = 'hidden';
+      iconBtn.remove();
     }
 
-    // Also hide any other default buttons/icons that might appear
-    const allIcons = ctrlEl.querySelectorAll('.leaflet-control-geocoder-icon, button.leaflet-control-geocoder-icon');
+    // Also remove any other default buttons/icons that might appear
+    const allIcons = ctrlEl.querySelectorAll('.leaflet-control-geocoder-icon, button.leaflet-control-geocoder-icon, button[title="Search"]');
     allIcons.forEach(icon => {
-      icon.style.display = 'none';
-      icon.style.visibility = 'hidden';
+      icon.remove();
     });
 
     const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell);

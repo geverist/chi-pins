@@ -432,7 +432,7 @@ const styles = {
   },
   microphoneWrapper: {
     position: 'fixed',
-    top: '60%', // Position higher to create clearance from footer navigation buttons
+    top: '70%', // Lowered to show more map
     left: '50%',
     transform: 'translate(-50%, -50%)',
     zIndex: 300, // Above footer/banner (250), independent of UI below
@@ -519,7 +519,7 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    top: 'calc(60% + 100px)', // Just below microphone (at 60%), with clearance from footer
+    top: 'calc(70% + 100px)', // Just below microphone (at 70%)
     left: 0,
     right: 0,
     zIndex: 300, // Same level as microphone, above footer (50) and banners (200-250)

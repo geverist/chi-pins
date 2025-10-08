@@ -31,7 +31,8 @@
       "Bash(./scripts/deploy-latest-apk.sh:*)",
       "Bash(keytool:*)",
       "Bash(gh release download:*)",
-      "Bash(gh release view:*)"
+      "Bash(gh release view:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []
