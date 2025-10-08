@@ -201,7 +201,6 @@ export default function Footer({
                   📖 Guest Book
                 </button>
               )}
-            </div>
               {navSettings.explore_enabled && (
                 <>
                   {!exploring ? (
