@@ -776,7 +776,7 @@ export default function MapShell({
       >
         <SetMapRef mainMapRef={mainMapRef} setMapReady={setMapReady} />
         <OfflineTileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; OpenStreetMap contributors'
           maxZoom={maxZoom}
           // Performance optimizations
           maxNativeZoom={18}
