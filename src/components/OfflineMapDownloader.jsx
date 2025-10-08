@@ -134,7 +134,7 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
         padding: '10px 20px',
         boxShadow: '0 -4px 12px rgba(0,0,0,0.3)',
         borderTop: '1px solid rgba(255,255,255,0.1)',
-        zIndex: 200, // Above NowPlayingBanner (100), below voice assistant (300)
+        zIndex: 200, // Below NowPlayingBanner (250) and voice assistant (300), above footer (50)
         color: '#f4f6f8',
       }}
     >
