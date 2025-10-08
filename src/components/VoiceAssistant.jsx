@@ -558,7 +558,7 @@ const styles = {
     whiteSpace: 'nowrap',
     flexShrink: 0,
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    pointerEvents: 'auto',
+    pointerEvents: 'none', // Don't intercept clicks - let them pass through to elements below
   },
   dismissHint: {
     fontSize: '12px',
