@@ -50,11 +50,21 @@ export function useIdleReset({
     setExploring(false);
     setMapMode('chicago');
 
-    // 4) Snap map to max zoomed-out Chicago bounds
+    // 4) Gently return to Chicago bounds without forcing tile refresh
     const map = mainMapRef?.current;
     if (map) {
-      map.setMaxBounds(CHI_BOUNDS);
-      map.fitBounds(CHI_BOUNDS, { animate: false });
+      // Only adjust bounds if we're outside Chicago area
+      const currentBounds = map.getBounds();
+      const needsReset = !CHI_BOUNDS.contains(currentBounds.getCenter());
+
+      if (needsReset) {
+        // Use smooth animation and let cached tiles load naturally
+        map.setMaxBounds(CHI_BOUNDS);
+        map.fitBounds(CHI_BOUNDS, { animate: true, duration: 1.5 });
+      } else {
+        // Already in Chicago, just ensure bounds are set
+        map.setMaxBounds(CHI_BOUNDS);
+      }
     }
 
     // 5) Show attractor
