@@ -204,8 +204,22 @@ export const TEAM_COLOR = {
 
 const STEM_ANGLE_DEG = 8;
 
-export function pushpinHTMLFor(team = 'other', includeHalo = false) {
-  const color = TEAM_COLOR[team] || TEAM_COLOR.other;
+export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = null) {
+  // Import pin styles dynamically to get custom colors
+  let color = TEAM_COLOR[team] || TEAM_COLOR.other;
+
+  // Override with custom pin style color if available
+  if (pinStyle) {
+    try {
+      const { getPinStyle } = require('../config/pinStyles');
+      const style = getPinStyle(pinStyle);
+      if (style?.colors?.primary) {
+        color = style.colors.primary;
+      }
+    } catch (e) {
+      // Fall back to team color if pin styles not available
+    }
+  }
   const ICON_W = 30, ICON_H = 46;
   const AX = ICON_W / 2, AY = ICON_H;
   const headR = 10, headBorder = 2;
@@ -279,13 +293,18 @@ export function spotIconFor(category = 'hotdog') {
 
 export const SPOT_TOOLTIP_OFFSET = [0, -28];
 
-export const iconFor = (team) =>
-  L.divIcon({
-    className: `pin pin-${team}`,
-    html: pushpinHTMLFor(team, false),
+export const iconFor = (teamOrPin) => {
+  // Support both old API (team string) and new API (pin object)
+  const team = typeof teamOrPin === 'string' ? teamOrPin : (teamOrPin?.team || 'other');
+  const pinStyle = typeof teamOrPin === 'object' ? teamOrPin?.pinStyle : null;
+
+  return L.divIcon({
+    className: `pin pin-${pinStyle || team}`,
+    html: pushpinHTMLFor(team, false, pinStyle),
     iconSize: [30, 46],
     iconAnchor: [15, 46],
   });
+};
 
 export const placingIconFor = (team) =>
   L.divIcon({

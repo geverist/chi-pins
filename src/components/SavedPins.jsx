@@ -17,8 +17,8 @@ export default function SavedPins({
   onHighlightEnd,
   // Auto-dismiss after exploring click
   exploreDismissMs = 12000,
-  // Override icon (used for Global/region coloring)
-  getIcon = (p) => iconFor(p.team || 'other'),
+  // Override icon (used for Global/region coloring and custom pin styles)
+  getIcon = (p) => iconFor(p), // Pass full pin object to support pinStyle
   // Message callback
   onMessage,
 }) {
