@@ -44,7 +44,12 @@ export function useIdleAttractor({
   const bump = useCallback(() => {
     clearTimeout(timerRef.current)
     clearTimeout(confettiTimer.current)
-    stopConfettiScreensaver()
+
+    // Stop confetti
+    if (confettiInterval.current) {
+      clearInterval(confettiInterval.current)
+      confettiInterval.current = null
+    }
     clearAllConfetti() // Immediately remove all confetti on user interaction
 
     // While user is interacting (editor/submap/explore), keep attractor hidden
@@ -52,7 +57,13 @@ export function useIdleAttractor({
 
     // Set timer for confetti screensaver (only if enabled)
     if (confettiScreensaverEnabled) {
-      confettiTimer.current = setTimeout(startConfettiScreensaver, confettiScreensaverMs)
+      confettiTimer.current = setTimeout(() => {
+        // Inline confetti start to avoid function dependency
+        showConfetti()
+        confettiInterval.current = setInterval(() => {
+          showConfetti()
+        }, 6000)
+      }, confettiScreensaverMs)
     }
 
     // Set timer for full idle reset
@@ -66,7 +77,8 @@ export function useIdleAttractor({
         setShowAttractor(true)
       }
     }, timeoutMs)
-  }, [draft, submapOpen, exploring, onIdle, timeoutMs, confettiScreensaverMs, confettiScreensaverEnabled, mainMapRef, startConfettiScreensaver, stopConfettiScreensaver])
+  }, [draft, submapOpen, exploring, onIdle, timeoutMs, confettiScreensaverMs, confettiScreensaverEnabled, mainMapRef])
+  // Removed startConfettiScreensaver and stopConfettiScreensaver from dependencies
 
   useEffect(() => {
     window.addEventListener('pointerdown', bump)
