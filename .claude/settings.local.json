@@ -27,7 +27,8 @@
       "Bash(npm install:*)",
       "Bash(curl:*)",
       "Bash(chmod:*)",
-      "Bash(/opt/homebrew/share/android-commandlinetools/build-tools/34.0.0/aapt:*)"
+      "Bash(/opt/homebrew/share/android-commandlinetools/build-tools/34.0.0/aapt:*)",
+      "Bash(./scripts/deploy-latest-apk.sh:*)"
     ],
     "deny": [],
     "ask": []
