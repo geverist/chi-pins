@@ -701,11 +701,13 @@ function SetMapRef({ mainMapRef, setMapReady }) {
       mainMapRef.current = map;
       setMapReady(true);
       console.log('SetMapRef: mainMapRef.current set to', map);
-      setTimeout(() => map.invalidateSize(), 300); // Ensure initial render
+      // Only invalidateSize on very first mount
+      setTimeout(() => map.invalidateSize(), 300);
     } else {
       console.warn('SetMapRef: map, mainMapRef, or setMapReady is invalid', { map, mainMapRef, setMapReady });
     }
-  }, [map, mainMapRef, setMapReady]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]); // Only run when map instance changes, not when setMapReady changes
   return null;
 }
 
@@ -737,7 +739,7 @@ export default function MapShell({
       mainMapRef.current = map;
       setMapReady(true);
       console.log('MapShell: Map initialized, setting mainMapRef to', map);
-      setTimeout(() => map.invalidateSize(), 300); // Ensure initial render
+      // Skip invalidateSize here - SetMapRef component handles it
     } else {
       console.warn('MapShell: mainMapRef or setMapReady is invalid', { mainMapRef, setMapReady });
     }
