@@ -84,14 +84,15 @@ jobs:
         path: android/app/build/outputs/apk/release/chi-pins-${{ steps.timestamp.outputs.timestamp }}.apk
         retention-days: 30
 
-    - name: Save keystore for future use (first build only)
-      if: ${{ secrets.RELEASE_KEYSTORE_BASE64 == '' }}
+    - name: Output keystore info
       run: |
-        echo "::warning::IMPORTANT: Save this keystore to GitHub Secrets!"
-        echo "Run this command and add output as RELEASE_KEYSTORE_BASE64 secret:"
-        echo "base64 -i android/app/chi-pins-release.keystore"
-        base64 -i android/app/chi-pins-release.keystore > /tmp/keystore-base64.txt
-        echo "Keystore saved to /tmp/keystore-base64.txt"
+        if [ -z "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" ]; then
+          echo "::warning::No keystore in secrets - generated new one this build"
+          echo "::warning::To enable consistent signing, add keystore to secrets:"
+          echo "::warning::base64 -i android/app/chi-pins-release.keystore | gh secret set RELEASE_KEYSTORE_BASE64"
+        else
+          echo "Using persistent keystore from secrets"
+        fi
 
     - name: Upload APK to Release
       uses: softprops/action-gh-release@v1
