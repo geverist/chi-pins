@@ -17,6 +17,7 @@ const DEFAULTS = {
   kioskAutoStart: true,
   attractorHintEnabled: true,
   confettiScreensaverEnabled: false, // Enable confetti screensaver after idle period
+  databaseSyncMinutes: 30, // Database sync interval in minutes (pins, trivia, jukebox)
 
   // Timers (internal)
   idleTimeoutMs: 60_000,

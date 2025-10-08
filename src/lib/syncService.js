@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 import { getLocalDatabase } from './localDatabase';
 import { perfMonitor } from './performanceMonitor';
 
-const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_SYNC_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes (default)
 
 /**
  * Background sync service
@@ -16,14 +16,16 @@ class SyncService {
     this.isSyncing = false;
     this.lastSyncTime = null;
     this.syncCallbacks = [];
+    this.syncIntervalMs = DEFAULT_SYNC_INTERVAL_MS;
   }
 
   /**
-   * Start background sync
+   * Start background sync with configurable interval
    */
-  async start() {
+  async start(syncIntervalMinutes = 30) {
     console.log('[SyncService] Starting background sync...');
 
+    this.syncIntervalMs = syncIntervalMinutes * 60 * 1000;
     this.db = await getLocalDatabase();
 
     if (!this.db.isAvailable()) {
@@ -37,9 +39,18 @@ class SyncService {
     // Schedule periodic sync
     this.syncTimer = setInterval(() => {
       this.syncAll();
-    }, SYNC_INTERVAL_MS);
+    }, this.syncIntervalMs);
 
-    console.log(`[SyncService] Sync scheduled every ${SYNC_INTERVAL_MS / 1000}s`);
+    console.log(`[SyncService] Sync scheduled every ${syncIntervalMinutes} minutes`);
+  }
+
+  /**
+   * Update sync interval (restarts timer)
+   */
+  async updateInterval(syncIntervalMinutes) {
+    console.log(`[SyncService] Updating sync interval to ${syncIntervalMinutes} minutes`);
+    this.stop();
+    await this.start(syncIntervalMinutes);
   }
 
   /**
