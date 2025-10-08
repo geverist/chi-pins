@@ -1300,6 +1300,7 @@ export default function App() {
         setShareOpen={setShareOpen}
         adminSettings={adminSettings}
         downloadingBarVisible={downloadingBarVisible}
+        nowPlayingVisible={!isMobile && (currentTrack || queue[0])}
       />
 
       {(!isMobile || adminSettings.showNowPlayingOnMobile) && (

@@ -49,7 +49,8 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
   return (
     <div
       style={{
-        position: 'relative',
+        position: 'fixed',
+        bottom: 72, // Above download bar which is 72px tall (DOWNLOADING_BAR_HEIGHT)
         left: 0,
         right: 0,
         height: isMobile ? 40 : 48,

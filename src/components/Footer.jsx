@@ -4,6 +4,7 @@ import Editor from './Editor';
 import { btn3d } from '../lib/styles';
 
 const DOWNLOADING_BAR_HEIGHT = 72; // Must match OfflineMapDownloader.jsx
+const NOW_PLAYING_HEIGHT = 48; // NowPlayingBanner height (desktop)
 
 function Footer({
   isMobile,
@@ -37,17 +38,23 @@ function Footer({
   setShareOpen,
   adminSettings,
   downloadingBarVisible = false,
+  nowPlayingVisible = false,
 }) {
   if (isMobile) return null;
+
+  // Calculate bottom margin based on which bars are visible
+  let bottomMargin = 0;
+  if (downloadingBarVisible) bottomMargin += DOWNLOADING_BAR_HEIGHT;
+  if (nowPlayingVisible) bottomMargin += NOW_PLAYING_HEIGHT;
 
   return (
     <footer
       style={{
         padding: '12px 16px',
-        marginBottom: downloadingBarVisible ? `${DOWNLOADING_BAR_HEIGHT}px` : '0',
+        marginBottom: `${bottomMargin}px`,
         transition: 'margin-bottom 0.3s ease',
         position: 'relative',
-        zIndex: 50, // Above map (0), below NowPlayingBanner (100)
+        zIndex: 50, // Above map (0), below download bar (200) and NowPlayingBanner (250)
       }}
       onClick={handleFooterClick}
       onTouchStart={handleFooterTouch}
