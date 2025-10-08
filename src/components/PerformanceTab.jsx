@@ -1,6 +1,6 @@
 // src/components/PerformanceTab.jsx
 import { useState, useEffect } from 'react';
-import { offlineTileStorage } from '../lib/offlineTileStorage';
+import { getOfflineTileStorage } from '../lib/offlineTileStorage';
 import { getHEOSClient } from '../lib/heosClient';
 import { getSyncService } from '../lib/syncService';
 
@@ -26,6 +26,7 @@ export default function PerformanceTab({ settings, onSave }) {
 
   async function loadCacheStats() {
     try {
+      const offlineTileStorage = getOfflineTileStorage();
       const stats = await offlineTileStorage.getStats();
       setCacheStats(stats);
     } catch (error) {
@@ -65,6 +66,7 @@ export default function PerformanceTab({ settings, onSave }) {
 
     setClearing(true);
     try {
+      const offlineTileStorage = getOfflineTileStorage();
       await offlineTileStorage.clearAll();
       await loadCacheStats();
       alert('Cache cleared successfully!');
