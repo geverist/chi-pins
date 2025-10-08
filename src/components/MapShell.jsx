@@ -290,10 +290,10 @@ function GeocoderTopCenter({
       ctrlEl.querySelector('.leaflet-control-geocoder-form input');
     inputRef.current = input;
     if (input) {
-      input.style.padding = '10px 100px 10px 12px'; // Extra padding for mic + clear buttons (mic button needs more space)
+      input.style.padding = '12px 96px 12px 14px'; // Right padding for mic (88px) + clear (40px) buttons with gap
       input.style.borderRadius = '10px';
       input.style.outline = 'none';
-      input.style.width = 'min(72vw, 540px)'; // Slightly wider for better proportions
+      input.style.width = 'min(70vw, 520px)'; // Clean width for input field
       input.placeholder = effectivePlaceholder;
       input.setAttribute('aria-label', effectiveMode === 'global' ? 'Search places worldwide' : 'Search Chicago and nearby');
       input.addEventListener('keydown', (ev) => {
