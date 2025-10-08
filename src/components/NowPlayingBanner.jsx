@@ -55,7 +55,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
         height: isMobile ? 40 : 48,
         background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
         borderTop: '2px solid #a78bfa',
-        zIndex: 100,
+        zIndex: 250, // Above downloading bar (200), below voice assistant (300)
         overflow: 'hidden',
         boxShadow: '0 -2px 8px rgba(0,0,0,0.2)',
       }}

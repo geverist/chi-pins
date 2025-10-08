@@ -39,31 +39,49 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Build APK
+    - name: Generate Release Keystore
+      run: |
+        mkdir -p android/app
+        keytool -genkeypair -v \
+          -keystore android/app/chi-pins-release.keystore \
+          -alias chi-pins \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -storepass chipins2024 \
+          -keypass chipins2024 \
+          -dname "CN=Chi Pins, OU=Development, O=Chicago Mikes, L=Chicago, ST=IL, C=US"
+
+    - name: Build Release APK
       run: |
         cd android
         chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleRelease --no-daemon
+      env:
+        KEYSTORE_PATH: app/chi-pins-release.keystore
+        KEYSTORE_PASSWORD: chipins2024
+        KEY_ALIAS: chi-pins
+        KEY_PASSWORD: chipins2024
 
     - name: Get timestamp
       id: timestamp
       run: echo "timestamp=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
 
     - name: Rename APK
-      run: cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/apk/debug/chi-pins-${{ steps.timestamp.outputs.timestamp }}.apk
+      run: cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/chi-pins-${{ steps.timestamp.outputs.timestamp }}.apk
 
     - name: Upload APK as Artifact
       uses: actions/upload-artifact@v4
       with:
         name: chi-pins-apk
-        path: android/app/build/outputs/apk/debug/chi-pins-${{ steps.timestamp.outputs.timestamp }}.apk
+        path: android/app/build/outputs/apk/release/chi-pins-${{ steps.timestamp.outputs.timestamp }}.apk
         retention-days: 30
 
     - name: Upload APK to Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: latest
-        files: android/app/build/outputs/apk/debug/chi-pins-${{ steps.timestamp.outputs.timestamp }}.apk
+        files: android/app/build/outputs/apk/release/chi-pins-${{ steps.timestamp.outputs.timestamp }}.apk
         name: "Chi-Pins Latest Build"
         body: |
           Automated build from commit ${{ github.sha }}
