@@ -14,6 +14,7 @@ import VoiceAgentTab from './VoiceAgentTab'
 import KioskVoiceTab from './KioskVoiceTab'
 import MarketplaceAdmin from './MarketplaceAdmin'
 import ContentLayoutTab from './ContentLayoutTab'
+import PerformanceTab from './PerformanceTab'
 
 export default function AdminPanel({ open, onClose }) {
   const [authenticated, setAuthenticated] = useState(false)
@@ -394,6 +395,7 @@ export default function AdminPanel({ open, onClose }) {
           <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>Media</TabBtn>
           <TabBtn active={tab === 'voice'} onClick={() => setTab('voice')}>Voice Agent</TabBtn>
           <TabBtn active={tab === 'kioskvoice'} onClick={() => setTab('kioskvoice')}>Kiosk Voice</TabBtn>
+          <TabBtn active={tab === 'performance'} onClick={() => setTab('performance')}>Performance</TabBtn>
           <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
         </div>
 
@@ -2740,6 +2742,17 @@ export default function AdminPanel({ open, onClose }) {
           {tab === 'kioskvoice' && <KioskVoiceTab />}
 
           {tab === 'layout' && <ContentLayoutTab />}
+
+          {tab === 'performance' && (
+            <PerformanceTab
+              settings={settings}
+              onSave={async (updates) => {
+                for (const [key, value] of Object.entries(updates)) {
+                  await saveAdminSettings(key, value);
+                }
+              }}
+            />
+          )}
 
           {tab === 'marketplace' && (
             <div style={{ margin: '-30px', minHeight: '100%' }}>

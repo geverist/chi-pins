@@ -82,6 +82,14 @@ const DEFAULTS = {
   newsTickerEnabled: false,
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
 
+  // HEOS Integration
+  heosEnabled: false,
+  heosHost: '',
+  heosPlayerId: '',
+
+  // Performance
+  voicePromptsScrollSpeed: 60, // Seconds for full scroll animation
+
   // Fun Facts
   funFactsEnabled: true,           // Show fun facts when clicking on Chicago map
   funFactDurationSeconds: 15,      // How long fun fact toast stays visible
