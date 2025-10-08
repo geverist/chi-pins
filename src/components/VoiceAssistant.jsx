@@ -431,10 +431,10 @@ const styles = {
   },
   microphoneWrapper: {
     position: 'fixed',
-    top: '50%', // Center vertically in available space
+    top: '40%', // Positioned higher on screen, fixed regardless of footer changes
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    zIndex: 300, // Above footer/banner (100), below attractor (400)
+    zIndex: 300, // Above footer/banner (250), independent of UI below
     pointerEvents: 'none',
     display: 'flex',
     flexDirection: 'column',
@@ -518,10 +518,10 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    top: 'calc(50% + 100px)', // Just below microphone (which is at 50% centered)
+    top: 'calc(40% + 120px)', // Just below microphone (which is at 40%), fixed position
     left: 0,
     right: 0,
-    zIndex: 300, // Same level as microphone, below attractor (400)
+    zIndex: 300, // Same level as microphone, independent of UI changes below
     overflow: 'hidden',
     pointerEvents: 'none',
   },

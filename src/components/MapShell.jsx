@@ -290,7 +290,7 @@ function GeocoderTopCenter({
       ctrlEl.querySelector('.leaflet-control-geocoder-form input');
     inputRef.current = input;
     if (input) {
-      input.style.padding = '10px 36px 10px 12px';
+      input.style.padding = '10px 94px 10px 12px'; // Extra padding for mic + clear buttons
       input.style.borderRadius = '10px';
       input.style.outline = 'none';
       input.style.width = 'min(72vw, 520px)';
@@ -332,28 +332,42 @@ function GeocoderTopCenter({
     const clearBtn = L.DomUtil.create('button', 'map-search-clear', shell);
     Object.assign(clearBtn.style, {
       position: 'absolute',
-      right: '16px',
+      right: '8px',
       top: '50%',
       transform: 'translateY(-50%)',
-      width: '22px',
-      height: '22px',
-      borderRadius: '50%',
-      border: '1px solid rgba(255,255,255,0.25)',
-      background: 'rgba(0,0,0,0.35)',
+      width: '32px',
+      height: '32px',
+      borderRadius: '8px', // Match mic button
+      border: '1px solid rgba(255,255,255,0.2)',
+      background: 'rgba(0,0,0,0.25)',
       color: '#e9eef3',
       cursor: 'pointer',
-      fontSize: '14px',
+      fontSize: '18px',
+      fontWeight: '300',
       lineHeight: '1',
       display: 'none',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '0',
       zIndex: 3700,
+      transition: 'all 0.2s ease',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
     });
     clearBtn.textContent = '×';
     clearBtn.title = 'Clear';
     clearBtn.setAttribute('aria-label', 'Clear search input');
     clearBtnRef.current = clearBtn;
+
+    // Add hover effect for clear button
+    clearBtn.addEventListener('mouseenter', () => {
+      clearBtn.style.background = 'rgba(239, 68, 68, 0.3)';
+      clearBtn.style.transform = 'translateY(-50%) scale(1.05)';
+    });
+    clearBtn.addEventListener('mouseleave', () => {
+      clearBtn.style.background = 'rgba(0,0,0,0.25)';
+      clearBtn.style.transform = 'translateY(-50%)';
+    });
+
     L.DomEvent.disableClickPropagation(clearBtn);
 
     const showHideClear = () => {
@@ -389,29 +403,46 @@ function GeocoderTopCenter({
     const micBtn = L.DomUtil.create('button', 'map-search-mic', shell);
     Object.assign(micBtn.style, {
       position: 'absolute',
-      right: '46px', // Position to left of clear button
+      right: '48px', // Position to left of clear button with better spacing
       top: '50%',
       transform: 'translateY(-50%)',
-      width: '28px',
-      height: '28px',
-      borderRadius: '50%',
-      border: '1px solid rgba(255,255,255,0.25)',
-      background: 'rgba(0,0,0,0.35)',
+      width: '36px',
+      height: '36px',
+      borderRadius: '8px', // Match search bar aesthetic
+      border: '1px solid rgba(255,255,255,0.2)',
+      background: 'rgba(0,0,0,0.25)',
       color: '#e9eef3',
       cursor: 'pointer',
-      fontSize: '16px',
+      fontSize: '18px',
       lineHeight: '1',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       padding: '0',
       zIndex: 3700,
-      willChange: 'transform', // GPU acceleration
-      pointerEvents: 'auto', // Ensure clickable
+      willChange: 'transform',
+      pointerEvents: 'auto',
+      transition: 'all 0.2s ease',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
     });
     micBtn.textContent = '🎤';
     micBtn.title = 'Voice Search';
     micBtn.setAttribute('aria-label', 'Voice search');
+
+    // Add hover effect
+    micBtn.addEventListener('mouseenter', () => {
+      if (!isListening) {
+        micBtn.style.background = 'rgba(0,0,0,0.4)';
+        micBtn.style.transform = 'translateY(-50%) scale(1.05)';
+      }
+    });
+    micBtn.addEventListener('mouseleave', () => {
+      if (!isListening) {
+        micBtn.style.background = 'rgba(0,0,0,0.25)';
+        micBtn.style.transform = 'translateY(-50%)';
+      }
+    });
+
     L.DomEvent.disableClickPropagation(micBtn);
 
     let recognition = null;
