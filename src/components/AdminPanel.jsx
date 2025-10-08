@@ -2581,6 +2581,7 @@ export default function AdminPanel({ open, onClose }) {
                     <option value="local">Local Device (Browser)</option>
                     <option value="bluetooth">Bluetooth Device</option>
                     <option value="sonos">Sonos Speaker</option>
+                    <option value="heos">HEOS Speaker</option>
                   </select>
                 </FieldRow>
 
@@ -2632,6 +2633,70 @@ export default function AdminPanel({ open, onClose }) {
                     </FieldRow>
                     <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
                       Requires Sonos HTTP API running on the network
+                    </p>
+                  </>
+                )}
+
+                {settings.audioOutputType === 'heos' && (
+                  <>
+                    <FieldRow label="HEOS Network Discovery">
+                      <button
+                        onClick={async () => {
+                          // Discover HEOS devices on network
+                          try {
+                            const response = await fetch('/api/heos/discover');
+                            const devices = await response.json();
+                            if (devices.length > 0) {
+                              setSettings(s => ({
+                                ...s,
+                                heosHost: devices[0].ip,
+                                heosPlayerId: devices[0].pid,
+                              }));
+                              alert(`Found HEOS device: ${devices[0].name} (${devices[0].ip})`);
+                            } else {
+                              alert('No HEOS devices found on network');
+                            }
+                          } catch (err) {
+                            console.error('HEOS discovery failed:', err);
+                            alert('HEOS discovery failed. Enter IP manually.');
+                          }
+                        }}
+                        style={{
+                          ...s.button,
+                          width: '100%',
+                          background: '#3b82f6',
+                          color: '#fff',
+                        }}
+                      >
+                        🔍 Discover HEOS Devices
+                      </button>
+                    </FieldRow>
+                    <FieldRow label="HEOS Host IP">
+                      <input
+                        type="text"
+                        value={settings.heosHost || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, heosHost: e.target.value }))}
+                        placeholder="192.168.1.100"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <FieldRow label="Player ID">
+                      <input
+                        type="text"
+                        value={settings.heosPlayerId || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, heosPlayerId: e.target.value }))}
+                        placeholder="Auto-filled from discovery"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                      Click "Discover HEOS Devices" to auto-detect speakers on your network, or enter IP manually.
                     </p>
                   </>
                 )}
