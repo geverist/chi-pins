@@ -689,6 +689,77 @@ export default function AdminPanel({ open, onClose }) {
                 </Card>
               )}
 
+              <FieldRow label="Enable Comments Banner">
+                <Toggle
+                  checked={settings.commentsBannerEnabled}
+                  onChange={(v) => setSettings(s => ({ ...s, commentsBannerEnabled: v }))}
+                />
+              </FieldRow>
+
+              {settings.commentsBannerEnabled && (
+                <Card title="Comments Banner Settings">
+                  <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                    Display random comments from pins in a scrolling banner. Configure moderation keywords.
+                  </p>
+
+                  <FieldRow label="Max Comments">
+                    <input
+                      type="number"
+                      min="10"
+                      max="50"
+                      value={settings.commentsBannerMaxComments || 20}
+                      onChange={(e) => setSettings(s => ({ ...s, commentsBannerMaxComments: parseInt(e.target.value) || 20 }))}
+                      style={{ ...s.input, width: '80px' }}
+                    />
+                    <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>comments</span>
+                  </FieldRow>
+
+                  <FieldRow label="Scroll Speed">
+                    <input
+                      type="number"
+                      min="10"
+                      max="120"
+                      value={settings.commentsBannerScrollSpeed || 60}
+                      onChange={(e) => setSettings(s => ({ ...s, commentsBannerScrollSpeed: parseInt(e.target.value) || 60 }))}
+                      style={{ ...s.input, width: '80px' }}
+                    />
+                    <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                  </FieldRow>
+
+                  <FieldRow label="Refresh Interval">
+                    <input
+                      type="number"
+                      min="30"
+                      max="600"
+                      value={Math.round((settings.commentsBannerRefreshInterval || 120000) / 1000)}
+                      onChange={(e) => setSettings(s => ({ ...s, commentsBannerRefreshInterval: (parseInt(e.target.value) || 120) * 1000 }))}
+                      style={{ ...s.input, width: '80px' }}
+                    />
+                    <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                  </FieldRow>
+
+                  <FieldRow label="Prohibited Keywords" style={{ marginTop: 16, alignItems: 'flex-start' }}>
+                    <textarea
+                      value={(settings.commentsBannerProhibitedKeywords || []).join(', ')}
+                      onChange={(e) => {
+                        const keywords = e.target.value.split(',').map(k => k.trim()).filter(k => k);
+                        setSettings(s => ({ ...s, commentsBannerProhibitedKeywords: keywords }));
+                      }}
+                      placeholder="spam, inappropriate, offensive"
+                      style={{
+                        ...s.input,
+                        width: '100%',
+                        minHeight: '60px',
+                        resize: 'vertical',
+                      }}
+                    />
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                    Comma-separated list. Comments containing these words will be filtered out.
+                  </p>
+                </Card>
+              )}
+
               <Card title="Map constants">
                 <FieldRow label="Initial radius (miles)">
                   <NumberInput

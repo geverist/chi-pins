@@ -84,6 +84,13 @@ const DEFAULTS = {
   newsTickerEnabled: false,
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
 
+  // Comments Banner
+  commentsBannerEnabled: true, // Enable scrolling comments banner at top
+  commentsBannerScrollSpeed: 60, // Seconds for full scroll
+  commentsBannerMaxComments: 20, // Max number of comments to display
+  commentsBannerRefreshInterval: 120000, // 2 minutes - rotate comments
+  commentsBannerProhibitedKeywords: [], // Custom prohibited keywords (admin configurable)
+
   // HEOS Integration
   heosEnabled: false,
   heosHost: '',
