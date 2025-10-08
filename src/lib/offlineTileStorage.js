@@ -425,6 +425,7 @@ class OfflineTileStorage {
     // Process tiles in batches
     for (let i = 0; i < tiles.length; i += maxConcurrent) {
       const batch = tiles.slice(i, i + maxConcurrent);
+      let batchHadDownloads = false;
 
       await Promise.all(batch.map(async ({ x, y, z }) => {
         try {
@@ -436,6 +437,8 @@ class OfflineTileStorage {
             if (onProgress) onProgress(completed, tiles.length, { cached, failed, skipped });
             return;
           }
+
+          batchHadDownloads = true;
 
           // Download tile
           const subdomain = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
@@ -471,8 +474,10 @@ class OfflineTileStorage {
         console.log(`[OfflineTileStorage] Progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%)`);
       }
 
-      // Small delay between batches to prevent UI blocking
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Only delay if we actually downloaded tiles (not all cached)
+      if (batchHadDownloads) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
     }
 
     const stats = {
@@ -516,6 +521,7 @@ class OfflineTileStorage {
     // Process tiles in batches
     for (let i = 0; i < tiles.length; i += maxConcurrent) {
       const batch = tiles.slice(i, i + maxConcurrent);
+      let batchHadDownloads = false;
 
       await Promise.all(batch.map(async ({ x, y, z }) => {
         try {
@@ -527,6 +533,8 @@ class OfflineTileStorage {
             if (onProgress) onProgress(completed, tiles.length, { cached, failed, skipped });
             return;
           }
+
+          batchHadDownloads = true;
 
           // Download tile
           const subdomain = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
@@ -562,8 +570,10 @@ class OfflineTileStorage {
         console.log(`[OfflineTileStorage] Global progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%)`);
       }
 
-      // Small delay between batches to prevent UI blocking
-      await new Promise(resolve => setTimeout(resolve, 50));
+      // Only delay if we actually downloaded tiles (not all cached)
+      if (batchHadDownloads) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
     }
 
     const stats = {
