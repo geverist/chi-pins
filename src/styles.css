@@ -81,7 +81,7 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 28px); }
   display: grid;
   place-items: center;
   align-content: start;
-  padding-top: 20vh;
+  padding-top: 12vh; /* Raised from 20vh to expose more of central Chicago map */
   pointer-events: none;
   z-index: 400; /* Above voice assistant (300), below modals (9000+) */
   background: transparent;
