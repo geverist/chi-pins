@@ -422,8 +422,9 @@ function GeocoderTopCenter({
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRecognition();
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true; // Show interim results for better UX
       recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         isListening = true;
@@ -451,9 +452,29 @@ function GeocoderTopCenter({
 
       recognition.onerror = (event) => {
         console.error('[VoiceSearch] Error:', event.error);
+
+        // Don't treat "no-speech" as a fatal error - just keep waiting
+        if (event.error === 'no-speech') {
+          console.log('[VoiceSearch] No speech detected, waiting for input...');
+          // Keep the mic active-looking for a moment before resetting
+          setTimeout(() => {
+            if (!isListening) {
+              micBtn.style.background = 'rgba(0,0,0,0.35)';
+              micBtn.style.animation = 'none';
+            }
+          }, 500);
+          return;
+        }
+
+        // For other errors, stop listening
         isListening = false;
         micBtn.style.background = 'rgba(0,0,0,0.35)';
         micBtn.style.animation = 'none';
+
+        // Show user-friendly error message
+        if (event.error === 'not-allowed') {
+          alert('Microphone permission denied. Please allow microphone access in your browser settings.');
+        }
       };
     } else {
       // Hide mic button if speech recognition not supported
