@@ -40,8 +40,8 @@ export function playPinDropSound() {
  */
 export function showConfetti(container = document.body, options = {}) {
   const {
-    count = 100,
-    duration = 3000,
+    count = 50, // Reduced from 100 for less frequent confetti
+    duration = 4000, // Increased duration for cleanup
     colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
   } = options;
 
@@ -50,11 +50,11 @@ export function showConfetti(container = document.body, options = {}) {
   for (let i = 0; i < count; i++) {
     const confetti = document.createElement('div');
     confetti.style.position = 'fixed';
-    confetti.style.width = '10px';
-    confetti.style.height = '10px';
+    confetti.style.width = '20px'; // Bigger: 20px instead of 10px
+    confetti.style.height = '20px'; // Bigger: 20px instead of 10px
     confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
     confetti.style.left = Math.random() * 100 + '%';
-    confetti.style.top = '-10px';
+    confetti.style.top = '-20px'; // Adjusted for larger size
     confetti.style.opacity = '1';
     confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
     confetti.style.pointerEvents = 'none';
@@ -64,9 +64,9 @@ export function showConfetti(container = document.body, options = {}) {
     container.appendChild(confetti);
     confettiPieces.push(confetti);
 
-    // Animate falling
+    // Animate falling - slower and longer duration
     const fallDistance = window.innerHeight + 50;
-    const fallDuration = 2000 + Math.random() * 2000;
+    const fallDuration = 3500 + Math.random() * 2500; // Slower: 3500-6000ms instead of 2000-4000ms
     const horizontalDrift = (Math.random() - 0.5) * 200;
     const rotation = Math.random() * 720;
 
