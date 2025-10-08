@@ -2,8 +2,8 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Z-Pattern gesture detector for admin panel access
- * Pattern: Top-left → Top-right → Bottom-left → Bottom-right
+ * Four-corner sequential gesture detector for admin panel access
+ * Pattern: Top-left → Top-right → Bottom-right → Bottom-left (clockwise from top-left)
  *
  * Gesture must complete within 3 seconds
  * Each corner must be within 100px of actual corner
@@ -50,12 +50,12 @@ export function useZPatternGesture(onComplete) {
 
       const [p1, p2, p3, p4] = touchPoints.current;
 
-      // Check if each point is near the expected corner
+      // Check if each point is near the expected corner in clockwise order
       const valid =
         isNearCorner(p1.x, p1.y, 'topLeft') &&
         isNearCorner(p2.x, p2.y, 'topRight') &&
-        isNearCorner(p3.x, p3.y, 'bottomLeft') &&
-        isNearCorner(p4.x, p4.y, 'bottomRight');
+        isNearCorner(p3.x, p3.y, 'bottomRight') &&
+        isNearCorner(p4.x, p4.y, 'bottomLeft');
 
       // Check minimum distances (prevent accidental taps)
       const distances = [
@@ -102,10 +102,24 @@ export function useZPatternGesture(onComplete) {
         return;
       }
 
-      // Add touch point
-      touchPoints.current.push({ x, y, time: Date.now() });
+      // Check if this touch is near ANY corner (only track corner touches)
+      const isNearAnyCorner =
+        isNearCorner(x, y, 'topLeft') ||
+        isNearCorner(x, y, 'topRight') ||
+        isNearCorner(x, y, 'bottomLeft') ||
+        isNearCorner(x, y, 'bottomRight');
 
-      console.log(`[ZPattern] Touch ${touchPoints.current.length}: (${x.toFixed(0)}, ${y.toFixed(0)})`);
+      // Only track touches near corners (ignore touches in the middle)
+      if (!isNearAnyCorner && touchPoints.current.length === 0) {
+        // First touch not near a corner, ignore this gesture attempt
+        return;
+      }
+
+      // Add touch point only if near a corner
+      if (isNearAnyCorner) {
+        touchPoints.current.push({ x, y, time: Date.now() });
+        console.log(`[ZPattern] Touch ${touchPoints.current.length}: (${x.toFixed(0)}, ${y.toFixed(0)})`);
+      }
 
       // Check if pattern is complete
       if (touchPoints.current.length === 4) {
@@ -113,16 +127,15 @@ export function useZPatternGesture(onComplete) {
           console.log('[ZPattern] ✓ Gesture recognized!');
           onComplete?.();
           resetGesture();
+          // Only prevent default on successful gesture
+          e.preventDefault();
         } else {
           console.log('[ZPattern] ✗ Pattern mismatch, resetting');
           resetGesture();
         }
       }
 
-      // Prevent default to avoid scrolling
-      if (touchPoints.current.length > 0) {
-        e.preventDefault();
-      }
+      // DON'T prevent default - let touches pass through to buttons!
     }
 
     function handleTouchEnd(e) {
