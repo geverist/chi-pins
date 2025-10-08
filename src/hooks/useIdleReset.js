@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { CHI_BOUNDS } from '../lib/mapUtils';
+import { showConfetti } from '../lib/effects';
 
 /**
  * Resets the UI after `idleMs` of no input:
@@ -32,8 +33,11 @@ export function useIdleReset({
 
   // config
   idleMs = 60_000,
+  confettiScreensaverMs = 30_000, // Show confetti screensaver after 30s (configurable for testing)
 }) {
   const idleTimer = useRef(null);
+  const confettiTimer = useRef(null);
+  const confettiInterval = useRef(null);
 
   const doIdleReset = () => {
     // 1) Close any editing UI
@@ -71,12 +75,36 @@ export function useIdleReset({
     setShowAttractor(true);
   };
 
+  const startConfettiScreensaver = () => {
+    console.log('[IdleReset] Starting confetti screensaver');
+    // Show confetti burst immediately
+    showConfetti();
+    // Then show it every 3 seconds
+    confettiInterval.current = setInterval(() => {
+      showConfetti();
+    }, 3000);
+  };
+
+  const stopConfettiScreensaver = () => {
+    if (confettiInterval.current) {
+      console.log('[IdleReset] Stopping confetti screensaver');
+      clearInterval(confettiInterval.current);
+      confettiInterval.current = null;
+    }
+  };
+
   const bump = () => {
     clearTimeout(idleTimer.current);
+    clearTimeout(confettiTimer.current);
+    stopConfettiScreensaver();
+
     // hide attractor while actively interacting
     if (draft || submapCenter || exploring || shareOpen) {
       setShowAttractor(false);
     }
+
+    // Set timers for confetti screensaver and full idle reset
+    confettiTimer.current = setTimeout(startConfettiScreensaver, confettiScreensaverMs);
     idleTimer.current = setTimeout(doIdleReset, idleMs);
   };
 
@@ -92,6 +120,8 @@ export function useIdleReset({
       window.removeEventListener('pointerdown', onAnyInput);
       window.removeEventListener('keydown', onAnyInput);
       clearTimeout(idleTimer.current);
+      clearTimeout(confettiTimer.current);
+      stopConfettiScreensaver();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft, submapCenter, exploring, shareOpen, idleMs]);

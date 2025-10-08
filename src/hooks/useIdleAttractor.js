@@ -1,6 +1,7 @@
 // hooks/useIdleAttractor.js
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { resetToChicagoOverview } from '../lib/mapUtils'
+import { showConfetti } from '../lib/effects'
 
 /**
  * Shows an attractor after inactivity and optionally resets the map.
@@ -13,16 +14,44 @@ export function useIdleAttractor({
   submapOpen,
   exploring,
   timeoutMs = 60_000,
+  confettiScreensaverMs = 15_000, // Show confetti screensaver after 15s for quick testing
   onIdle, // <-- NEW
 }) {
   const [showAttractor, setShowAttractor] = useState(true) // Show on page load
   const timerRef = useRef(null)
+  const confettiTimer = useRef(null)
+  const confettiInterval = useRef(null)
+
+  const startConfettiScreensaver = useCallback(() => {
+    console.log('[IdleAttractor] Starting confetti screensaver')
+    // Show confetti burst immediately
+    showConfetti()
+    // Then show it every 3 seconds
+    confettiInterval.current = setInterval(() => {
+      showConfetti()
+    }, 3000)
+  }, [])
+
+  const stopConfettiScreensaver = useCallback(() => {
+    if (confettiInterval.current) {
+      console.log('[IdleAttractor] Stopping confetti screensaver')
+      clearInterval(confettiInterval.current)
+      confettiInterval.current = null
+    }
+  }, [])
 
   const bump = useCallback(() => {
     clearTimeout(timerRef.current)
+    clearTimeout(confettiTimer.current)
+    stopConfettiScreensaver()
+
     // While user is interacting (editor/submap/explore), keep attractor hidden
     if (draft || submapOpen || exploring) setShowAttractor(false)
 
+    // Set timer for confetti screensaver (shorter timeout for testing)
+    confettiTimer.current = setTimeout(startConfettiScreensaver, confettiScreensaverMs)
+
+    // Set timer for full idle reset
     timerRef.current = setTimeout(() => {
       try {
         // Let the app close the editor, submap, etc.
@@ -33,7 +62,7 @@ export function useIdleAttractor({
         setShowAttractor(true)
       }
     }, timeoutMs)
-  }, [draft, submapOpen, exploring, onIdle, timeoutMs, mainMapRef])
+  }, [draft, submapOpen, exploring, onIdle, timeoutMs, confettiScreensaverMs, mainMapRef, startConfettiScreensaver, stopConfettiScreensaver])
 
   useEffect(() => {
     window.addEventListener('pointerdown', bump)
@@ -43,6 +72,8 @@ export function useIdleAttractor({
       window.removeEventListener('pointerdown', bump)
       window.removeEventListener('keydown', bump)
       clearTimeout(timerRef.current)
+      clearTimeout(confettiTimer.current)
+      stopConfettiScreensaver()
     }
     // re-arm when deps change (e.g. map mode)
     // eslint-disable-next-line react-hooks/exhaustive-deps
