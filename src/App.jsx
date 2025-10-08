@@ -302,7 +302,7 @@ export default function App() {
 
     // Start background sync service for SQLite cache
     const syncService = getSyncService();
-    syncService.start().catch(err => {
+    syncService.start(adminSettings.databaseSyncMinutes).catch(err => {
       console.error('[App] Failed to start sync service:', err);
     });
 
@@ -319,6 +319,14 @@ export default function App() {
       console.log('App: Desktop mode - exploring disabled');
     }
   }, [isMobile]);
+
+  // Update sync interval when admin setting changes
+  useEffect(() => {
+    const syncService = getSyncService();
+    if (syncService.syncTimer) {
+      syncService.updateInterval(adminSettings.databaseSyncMinutes);
+    }
+  }, [adminSettings.databaseSyncMinutes]);
 
   // kiosk state
   const [needsKioskStart, setNeedsKioskStart] = useState(false);

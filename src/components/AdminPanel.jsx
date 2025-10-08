@@ -430,6 +430,14 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, confettiScreensaverEnabled: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Database sync interval (minutes)">
+                  <NumberInput
+                    value={settings.databaseSyncMinutes}
+                    min={5}
+                    max={1440}
+                    onChange={(v) => setSettings(s => ({ ...s, databaseSyncMinutes: v }))}
+                  />
+                </FieldRow>
               </Card>
 
               <Card title="Feature Idle Timeouts">
