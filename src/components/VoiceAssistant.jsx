@@ -518,7 +518,7 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    bottom: '80px', // Just above footer top edge
+    bottom: '140px', // Above footer navigation buttons (footer ~120px tall)
     left: 0,
     right: 0,
     zIndex: 300, // Same level as microphone, below attractor (400)
