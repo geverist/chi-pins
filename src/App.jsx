@@ -1238,7 +1238,9 @@ export default function App() {
           )}
         </MapShell>
 
-        {/* Removed AttractorOverlay - users can figure out map interaction */}
+        {showAttractor && !draft && !submapCenter && !exploring && (
+          <AttractorOverlay onDismiss={() => setShowAttractor(false)} />
+        )}
 
         {toast && <Toast title={toast.title} text={toast.text} onClose={() => setToast(null)} />}
       </div>
