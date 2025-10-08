@@ -41,7 +41,8 @@
       "Bash(/usr/libexec/java_home:*)",
       "Bash(java:*)",
       "Bash(brew info:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(unzip:*)"
     ],
     "deny": [],
     "ask": []

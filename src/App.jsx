@@ -296,6 +296,16 @@ export default function App() {
     return detected;
   });
 
+  // Calculate if Now Playing banner is actually showing (matches NowPlayingBanner.jsx logic)
+  // Must be after isMobile is defined
+  const nowPlayingActuallyVisible = !isMobile && (currentTrack || queue[0]);
+  console.log('[App] nowPlayingActuallyVisible:', JSON.stringify({
+    nowPlayingActuallyVisible,
+    isMobile,
+    hasCurrentTrack: !!currentTrack,
+    hasQueueItem: !!queue[0]
+  }));
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
@@ -1195,7 +1205,7 @@ export default function App() {
           mapReady={mapReady}
           isMobile={isMobile}
           downloadingBarVisible={downloadingBarVisible}
-          nowPlayingVisible={!isMobile && (currentTrack || queue[0])}
+          nowPlayingVisible={nowPlayingActuallyVisible}
         >
           {(() => {
             const shouldShow = !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots);
@@ -1320,7 +1330,7 @@ export default function App() {
         setShareOpen={setShareOpen}
         adminSettings={adminSettings}
         downloadingBarVisible={downloadingBarVisible}
-        nowPlayingVisible={!isMobile && (currentTrack || queue[0])}
+        nowPlayingVisible={nowPlayingActuallyVisible}
       />
 
       {(!isMobile || adminSettings.showNowPlayingOnMobile) && (
@@ -1331,6 +1341,7 @@ export default function App() {
           nextInQueue={queue[0] || null}
           scrollSpeed={isMobile ? adminSettings.nowPlayingScrollSpeedMobile : adminSettings.nowPlayingScrollSpeedKiosk}
           isMobile={isMobile}
+          downloadingBarVisible={downloadingBarVisible}
         />
       )}
 
@@ -1487,7 +1498,7 @@ export default function App() {
           onPlacePin={handleVoicePlacePin}
           shouldShow={voiceAssistantVisible}
           downloadingBarVisible={downloadingBarVisible}
-          nowPlayingVisible={!isMobile && (currentTrack || queue[0])}
+          nowPlayingVisible={nowPlayingActuallyVisible}
           customVoicePrompts={adminSettings.customVoicePrompts}
         />
       )}

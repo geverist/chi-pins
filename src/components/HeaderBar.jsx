@@ -1,6 +1,7 @@
 // src/components/HeaderBar.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useLogo } from '../hooks/useLogo'
+import { useLayoutStack } from '../hooks/useLayoutStack'
 import defaultLogoUrl from '../assets/logo.png'
 
 const PIN_COLOR = {
@@ -86,11 +87,23 @@ export default function HeaderBar({
   showTableView = false,
   onToggleView,
 }) {
+  const headerRef = useRef(null);
+  const { updateHeight } = useLayoutStack();
+
   // Fetch uploaded logo from Supabase
   const { logoUrl: uploadedLogoUrl } = useLogo()
 
   // Use uploaded logo if available, otherwise fall back to prop or default
   const logoSrc = uploadedLogoUrl || logoSrcProp || defaultLogoUrl
+
+  // Report actual header height to layout system
+  useEffect(() => {
+    if (headerRef.current) {
+      const height = headerRef.current.offsetHeight;
+      console.log('[HeaderBar] Reporting height:', height);
+      updateHeight('headerHeight', height);
+    }
+  }, [updateHeight, logoSrc, children]); // Re-measure when content changes
 
   // If isMobile not provided, detect via media query
   const [isMobileDetected, setIsMobileDetected] = useState(false)
@@ -120,6 +133,7 @@ export default function HeaderBar({
   if (isMobile) {
     return (
       <header
+        ref={headerRef}
         style={{
           display:'flex', alignItems:'center', gap:12, justifyContent:'space-between',
           flexWrap:'nowrap', padding:'10px 14px', position:'relative',
@@ -189,6 +203,7 @@ export default function HeaderBar({
   // ---------- Desktop/kiosk header (unchanged) ----------
   return (
     <header
+      ref={headerRef}
       style={{
         display:'flex', alignItems:'center', gap:12, justifyContent:'space-between',
         flexWrap:'wrap', padding:'10px 14px', position:'relative',

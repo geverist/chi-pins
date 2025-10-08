@@ -41,22 +41,37 @@ function Footer({
   downloadingBarVisible = false,
   nowPlayingVisible = false,
 }) {
-  const { getBottomPosition, updateHeight } = useLayoutStack();
+  const { layout, updateHeight } = useLayoutStack();
   const footerRef = useRef(null);
 
   // Report heights to layout system
   useEffect(() => {
-    updateHeight('downloadingBar', downloadingBarVisible ? DOWNLOADING_BAR_HEIGHT : 0);
-    updateHeight('nowPlaying', nowPlayingVisible ? NOW_PLAYING_HEIGHT : 0);
+    const nowPlayingHeight = nowPlayingVisible ? NOW_PLAYING_HEIGHT : 0;
+    console.log('[Footer] Reporting now playing height:', JSON.stringify({ nowPlayingHeight, nowPlayingVisible }));
+    updateHeight('nowPlayingHeight', nowPlayingHeight);
     if (footerRef.current) {
-      updateHeight('footer', footerRef.current.offsetHeight);
+      updateHeight('footerHeight', footerRef.current.offsetHeight);
     }
-  }, [downloadingBarVisible, nowPlayingVisible, updateHeight]);
+  }, [nowPlayingVisible, updateHeight]);
 
-  if (isMobile) return null;
+  if (isMobile) {
+    console.log('[Footer] Hidden on mobile');
+    return null;
+  }
 
-  // Get position from layout stack
-  const bottomPosition = getBottomPosition('nowPlaying');
+  // Footer sits above downloading bar and now playing bar
+  // Use actual measured heights from layout stack
+  const downloadingHeight = layout.downloadingBarHeight || 0;
+  const nowPlayingHeightValue = layout.nowPlayingHeight || 0;
+  const bottomPosition = downloadingHeight + nowPlayingHeightValue;
+
+  console.log('[Footer] Positioned above bottom bars:', JSON.stringify({
+    bottomPosition,
+    downloadingHeight,
+    nowPlayingHeight: nowPlayingHeightValue,
+    downloadingBarVisible,
+    nowPlayingVisible
+  }));
 
   return (
     <footer
@@ -67,10 +82,13 @@ function Footer({
         left: 0,
         right: 0,
         padding: '12px 16px',
-        transition: 'bottom 0.3s ease',
+        // transition: 'bottom 0.3s ease', // TEMPORARILY DISABLED FOR DEBUGGING
         zIndex: 50, // Above map (0), below download bar (200) and NowPlayingBanner (250)
         background: 'rgba(17, 24, 39, 0.95)', // Semi-transparent dark background
         backdropFilter: 'blur(8px)',
+        // Debug border
+        borderTop: '3px solid red',
+        borderBottom: '3px solid blue',
       }}
       onClick={handleFooterClick}
       onTouchStart={handleFooterTouch}
@@ -133,7 +151,7 @@ function Footer({
                   className="btn-kiosk"
                   aria-label="Order from Chicago Mike's"
                 >
-                  🍕 Order
+                  🍕 Order Now
                 </button>
               )}
               {navSettings.photobooth_enabled && (
@@ -146,7 +164,7 @@ function Footer({
                   className="btn-kiosk"
                   aria-label="Photo Booth"
                 >
-                  📸 Photos
+                  📸 Photo Booth
                 </button>
               )}
               {navSettings.thenandnow_enabled && (

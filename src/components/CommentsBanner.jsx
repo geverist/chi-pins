@@ -12,17 +12,10 @@ export default function CommentsBanner({
   maxComments = 20,
   refreshInterval = 120000, // 2 minutes - rotate comments
 }) {
-  const { getTopPosition, updateHeight } = useLayoutStack();
+  const { updateHeight } = useLayoutStack();
   const [commentIndex, setCommentIndex] = useState(0);
   const containerRef = useRef(null);
-
-  // Report height to layout system
-  useEffect(() => {
-    if (containerRef.current) {
-      const height = containerRef.current.offsetHeight;
-      updateHeight('commentsBanner', height);
-    }
-  }, [updateHeight]);
+  const [topPosition, setTopPosition] = useState(60); // Default fallback
 
   // Extract comments from pins and filter out prohibited content
   const allComments = useMemo(() => {
@@ -30,6 +23,23 @@ export default function CommentsBanner({
     const filtered = filterComments(pinsWithComments, customKeywords);
     return getRandomComments(filtered, maxComments);
   }, [pins, customKeywords, maxComments]);
+
+  // Position below header using layout stack
+  const { layout } = useLayoutStack();
+
+  useEffect(() => {
+    // Use layout stack header height for positioning
+    if (layout.headerHeight) {
+      setTopPosition(layout.headerHeight);
+    }
+  }, [layout.headerHeight]);
+
+  // Report height to layout system (56px fixed height + update when visibility changes)
+  useEffect(() => {
+    const height = allComments.length > 0 ? 56 : 0;
+    console.log('[CommentsBanner] Reporting height to layout:', height, 'comments:', allComments.length);
+    updateHeight('commentsBannerHeight', height);
+  }, [allComments.length, updateHeight]);
 
   // Refresh random comments periodically
   useEffect(() => {
@@ -46,9 +56,6 @@ export default function CommentsBanner({
 
   // Double the comments for seamless infinite scroll
   const displayComments = [...allComments, ...allComments];
-
-  // Get position from layout stack
-  const topPosition = getTopPosition('header');
 
   return (
     <div ref={containerRef} style={{...styles.container, top: `${topPosition}px`}}>
@@ -84,7 +91,7 @@ const styles = {
     left: 0,
     right: 0,
     background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%)',
-    zIndex: 400, // Above voice assistant (300), below header (500), below admin (9999)
+    zIndex: 600, // Above header (500), voice assistant (300), below admin (9999)
     overflow: 'hidden',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
   },
@@ -92,11 +99,13 @@ const styles = {
     overflow: 'hidden',
     position: 'relative',
     height: '56px',
+    display: 'flex',
+    alignItems: 'center',
   },
   scrollContent: (scrollSpeed) => ({
     display: 'flex',
     gap: '24px',
-    padding: '8px 0',
+    padding: '0',
     animation: `scroll ${scrollSpeed}s linear infinite`,
     willChange: 'transform',
   }),

@@ -81,9 +81,9 @@ h1 { margin: 0; font-size: clamp(18px, 2.4vw, 28px); }
   display: grid;
   place-items: center;
   align-content: start;
-  padding-top: 10vh; /* Raised to expose more of central Chicago map */
+  padding-top: 20vh; /* Lowered to make room for search bar above */
   pointer-events: none;
-  z-index: 400; /* Above voice assistant (300), below modals (9000+) */
+  z-index: 400; /* Above voice assistant (300), below modals (9000+), below search bar (3600) */
   background: transparent;
   animation: saverFade 200ms ease-out;
 }

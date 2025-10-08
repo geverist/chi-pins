@@ -379,24 +379,18 @@ export default function AdminPanel({ open, onClose }) {
 
         {/* Fixed tabs bar */}
         <div style={s.tabs}>
-          <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>General</TabBtn>
-          <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>Display</TabBtn>
-          <TabBtn active={tab === 'games'} onClick={() => setTab('games')}>Games</TabBtn>
-          <TabBtn active={tab === 'branding'} onClick={() => setTab('branding')}>Branding</TabBtn>
-          <TabBtn active={tab === 'navigation'} onClick={() => setTab('navigation')}>Navigation</TabBtn>
-          <TabBtn active={tab === 'layout'} onClick={() => setTab('layout')}>📐 Layout</TabBtn>
+          <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>⚙️ General</TabBtn>
+          <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>🖥️ Display & Layout</TabBtn>
+          <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>📝 Content</TabBtn>
+          <TabBtn active={tab === 'games'} onClick={() => setTab('games')}>🎮 Games</TabBtn>
+          <TabBtn active={tab === 'branding'} onClick={() => setTab('branding')}>🎨 Branding</TabBtn>
+          <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>🔊 Media & Audio</TabBtn>
+          <TabBtn active={tab === 'voice'} onClick={() => setTab('voice')}>🎙️ Voice</TabBtn>
+          <TabBtn active={tab === 'clusters'} onClick={() => setTab('clusters')}>🏢 Clusters</TabBtn>
+          <TabBtn active={tab === 'analytics'} onClick={() => setTab('analytics')}>📊 Analytics</TabBtn>
+          <TabBtn active={tab === 'performance'} onClick={() => setTab('performance')}>⚡ Performance</TabBtn>
+          <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>✅ Moderation</TabBtn>
           <TabBtn active={tab === 'marketplace'} onClick={() => setTab('marketplace')}>🧩 Marketplace</TabBtn>
-          <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>Popular Spots</TabBtn>
-          <TabBtn active={tab === 'thenandnow'} onClick={() => setTab('thenandnow')}>Then & Now</TabBtn>
-          <TabBtn active={tab === 'clusters'} onClick={() => setTab('clusters')}>Kiosk Clusters</TabBtn>
-          <TabBtn active={tab === 'notifications'} onClick={() => setTab('notifications')}>Notifications</TabBtn>
-          <TabBtn active={tab === 'analytics'} onClick={() => setTab('analytics')}>Analytics</TabBtn>
-          <TabBtn active={tab === 'backgrounds'} onClick={() => setTab('backgrounds')}>Backgrounds</TabBtn>
-          <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>Media</TabBtn>
-          <TabBtn active={tab === 'voice'} onClick={() => setTab('voice')}>Voice Agent</TabBtn>
-          <TabBtn active={tab === 'kioskvoice'} onClick={() => setTab('kioskvoice')}>Kiosk Voice</TabBtn>
-          <TabBtn active={tab === 'performance'} onClick={() => setTab('performance')}>Performance</TabBtn>
-          <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>Moderation</TabBtn>
         </div>
 
         {/* Scrollable body (consistent size across tabs) */}
@@ -951,8 +945,9 @@ export default function AdminPanel({ open, onClose }) {
           )}
 
           {tab === 'display' && (
-            <SectionGrid>
-              <Card title="Zoom thresholds">
+            <>
+              <SectionGrid>
+                <Card title="Zoom thresholds">
                 <FieldRow label="Min zoom to show real pins">
                   <NumberInput
                     value={settings.minZoomForPins}
@@ -1089,7 +1084,10 @@ export default function AdminPanel({ open, onClose }) {
                   </select>
                 </FieldRow>
               </Card>
-            </SectionGrid>
+              </SectionGrid>
+
+              <ContentLayoutTab />
+            </>
           )}
 
           {tab === 'branding' && (
@@ -1512,176 +1510,6 @@ export default function AdminPanel({ open, onClose }) {
                   Weather widget shows current weather with hot dog recommendations. Configure location coordinates for accurate weather data.
                 </p>
               </Card>
-            </SectionGrid>
-          )}
-
-          {tab === 'notifications' && (
-            <SectionGrid>
-              <Card title="Twilio Configuration">
-                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
-                  Configure Twilio for SMS notifications
-                </p>
-
-                <FieldRow label="Enable Twilio">
-                  <Toggle
-                    checked={settings.twilioEnabled}
-                    onChange={(v) => setSettings(s => ({ ...s, twilioEnabled: v }))}
-                  />
-                </FieldRow>
-
-                {settings.twilioEnabled && (
-                  <>
-                    <FieldRow label="Account SID">
-                      <input
-                        type="text"
-                        value={settings.twilioAccountSid || ''}
-                        onChange={(e) => setSettings(s => ({ ...s, twilioAccountSid: e.target.value }))}
-                        placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        style={{ ...s.input, width: '100%', fontFamily: 'monospace' }}
-                      />
-                    </FieldRow>
-
-                    <FieldRow label="Auth Token">
-                      <input
-                        type="password"
-                        value={settings.twilioAuthToken || ''}
-                        onChange={(e) => setSettings(s => ({ ...s, twilioAuthToken: e.target.value }))}
-                        placeholder="********************************"
-                        style={{ ...s.input, width: '100%', fontFamily: 'monospace' }}
-                      />
-                    </FieldRow>
-
-                    <FieldRow label="Phone Number">
-                      <input
-                        type="tel"
-                        value={settings.twilioPhoneNumber || ''}
-                        onChange={(e) => setSettings(s => ({ ...s, twilioPhoneNumber: e.target.value }))}
-                        placeholder="+15551234567"
-                        style={{ ...s.input, width: '100%' }}
-                      />
-                    </FieldRow>
-
-                    <p style={{ ...s.muted, margin: '12px 0 0', fontSize: 11 }}>
-                      Get your Twilio credentials from <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>console.twilio.com</a>
-                    </p>
-                  </>
-                )}
-              </Card>
-
-              {settings.notificationsEnabled && (
-                <Card title="Notification Settings">
-                  <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
-                    Get notified about activity on your kiosk
-                  </p>
-
-                  <FieldRow label="Notify Me About">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={settings.notifyOnPinPlacement !== false}
-                          onChange={(e) => setSettings(s => ({ ...s, notifyOnPinPlacement: e.target.checked }))}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>New pin placements</span>
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={settings.notifyOnFeedback !== false}
-                          onChange={(e) => setSettings(s => ({ ...s, notifyOnFeedback: e.target.checked }))}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: 13, color: '#e2e8f0' }}>Customer feedback</span>
-                      </label>
-                    </div>
-                  </FieldRow>
-
-                  <FieldRow label="Notification Method">
-                    <select
-                      value={settings.notificationType || 'sms'}
-                      onChange={(e) => setSettings(s => ({ ...s, notificationType: e.target.value }))}
-                      style={s.input}
-                    >
-                      <option value="sms">SMS Only</option>
-                      <option value="email">Email Only</option>
-                      <option value="both">Both SMS & Email</option>
-                      <option value="webhook">Webhook Only</option>
-                      <option value="all">All Methods</option>
-                    </select>
-                  </FieldRow>
-
-                  {(settings.notificationType === 'webhook' || settings.notificationType === 'all') && (
-                    <>
-                      <FieldRow label="Webhook URL">
-                        <input
-                          type="url"
-                          value={settings.webhookUrl || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, webhookUrl: e.target.value }))}
-                          placeholder="https://hooks.zapier.com/hooks/catch/..."
-                          style={{ ...s.input, width: '100%' }}
-                        />
-                      </FieldRow>
-                      <p style={{ ...s.muted, margin: '4px 0 16px', fontSize: 11 }}>
-                        Sends JSON POST with event details. Works with Zapier, Make.com, n8n, etc.
-                      </p>
-                    </>
-                  )}
-
-                  {(settings.notificationType === 'sms' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
-                    <>
-                      <FieldRow label="SMS Recipients">
-                        <input
-                          type="text"
-                          value={settings.notificationRecipients || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, notificationRecipients: e.target.value }))}
-                          placeholder="+1234567890, +0987654321"
-                          style={{ ...s.input, width: '100%' }}
-                        />
-                      </FieldRow>
-
-                      <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
-                        Comma-separated phone numbers (include country code, e.g. +1)
-                      </p>
-                    </>
-                  )}
-
-                  {(settings.notificationType === 'email' || settings.notificationType === 'both' || settings.notificationType === 'all') && (
-                    <>
-                      <FieldRow label="Email Recipients">
-                        <input
-                          type="text"
-                          value={settings.emailRecipients || ''}
-                          onChange={(e) => setSettings(s => ({ ...s, emailRecipients: e.target.value }))}
-                          placeholder="owner@business.com, manager@business.com"
-                          style={{ ...s.input, width: '100%' }}
-                        />
-                      </FieldRow>
-
-                      <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
-                        Comma-separated email addresses
-                      </p>
-                    </>
-                  )}
-
-                  <FieldRow label="Anonymous Message Rate Limit">
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <input
-                        type="number"
-                        min="1"
-                        max="50"
-                        value={settings.maxAnonymousMessagesPerDay || 5}
-                        onChange={(e) => setSettings(s => ({ ...s, maxAnonymousMessagesPerDay: parseInt(e.target.value) || 5 }))}
-                        style={{ ...s.input, width: '80px' }}
-                      />
-                      <span style={{ fontSize: 13, color: '#a7b0b8' }}>messages per pin per day</span>
-                    </div>
-                  </FieldRow>
-                  <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
-                    Limits how many anonymous messages a single pin can receive per day to prevent spam
-                  </p>
-                </Card>
-              )}
             </SectionGrid>
           )}
 
@@ -2333,9 +2161,68 @@ export default function AdminPanel({ open, onClose }) {
           )}
 
           {tab === 'analytics' && (
-            <div style={{ padding: '0 4px' }}>
-              <AnalyticsDashboard />
-            </div>
+            <>
+              <div style={{ padding: '0 4px' }}>
+                <AnalyticsDashboard />
+              </div>
+
+              <div style={{ marginTop: 24 }}>
+                <SectionGrid>
+                  <Card title="📢 Notifications">
+                    <FieldRow label="Enable Twilio SMS">
+                      <Toggle
+                        checked={settings.twilioEnabled}
+                        onChange={(v) => setSettings(s => ({ ...s, twilioEnabled: v }))}
+                      />
+                    </FieldRow>
+
+                    {settings.twilioEnabled && (
+                      <>
+                        <FieldRow label="Account SID">
+                          <input
+                            type="text"
+                            value={settings.twilioAccountSid || ''}
+                            onChange={(e) => setSettings(s => ({ ...s, twilioAccountSid: e.target.value }))}
+                            placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                            style={{ ...s.input, width: '100%', fontFamily: 'monospace' }}
+                          />
+                        </FieldRow>
+
+                        <FieldRow label="Auth Token">
+                          <input
+                            type="password"
+                            value={settings.twilioAuthToken || ''}
+                            onChange={(e) => setSettings(s => ({ ...s, twilioAuthToken: e.target.value }))}
+                            placeholder="********************************"
+                            style={{ ...s.input, width: '100%', fontFamily: 'monospace' }}
+                          />
+                        </FieldRow>
+
+                        <FieldRow label="Phone Number">
+                          <input
+                            type="tel"
+                            value={settings.twilioPhoneNumber || ''}
+                            onChange={(e) => setSettings(s => ({ ...s, twilioPhoneNumber: e.target.value }))}
+                            placeholder="+15551234567"
+                            style={{ ...s.input, width: '100%' }}
+                          />
+                        </FieldRow>
+
+                        <FieldRow label="SMS Recipients">
+                          <input
+                            type="text"
+                            value={settings.notificationRecipients || ''}
+                            onChange={(e) => setSettings(s => ({ ...s, notificationRecipients: e.target.value }))}
+                            placeholder="+1234567890, +0987654321"
+                            style={{ ...s.input, width: '100%' }}
+                          />
+                        </FieldRow>
+                      </>
+                    )}
+                  </Card>
+                </SectionGrid>
+              </div>
+            </>
           )}
 
           {tab === 'backgrounds' && (
@@ -2587,6 +2474,48 @@ export default function AdminPanel({ open, onClose }) {
 
                 {settings.audioOutputType === 'bluetooth' && (
                   <>
+                    <FieldRow label="Bluetooth Discovery">
+                      <button
+                        onClick={async () => {
+                          // Discover Bluetooth audio devices
+                          try {
+                            if (!navigator.bluetooth) {
+                              alert('Bluetooth is not supported in this browser. Please pair via system settings.');
+                              return;
+                            }
+
+                            const device = await navigator.bluetooth.requestDevice({
+                              filters: [{ services: ['audio_sink'] }],
+                              optionalServices: ['battery_service']
+                            });
+
+                            if (device) {
+                              setSettings(s => ({
+                                ...s,
+                                bluetoothDeviceName: device.name,
+                                bluetoothDeviceId: device.id,
+                              }));
+                              alert(`Found Bluetooth device: ${device.name}`);
+                            }
+                          } catch (err) {
+                            console.error('Bluetooth discovery failed:', err);
+                            if (err.name === 'NotFoundError') {
+                              alert('No Bluetooth devices found. Make sure your speaker is in pairing mode.');
+                            } else {
+                              alert('Bluetooth discovery failed. You can still enter the device name manually.');
+                            }
+                          }
+                        }}
+                        style={{
+                          ...s.button,
+                          width: '100%',
+                          background: '#8b5cf6',
+                          color: '#fff',
+                        }}
+                      >
+                        🔍 Discover Bluetooth Devices
+                      </button>
+                    </FieldRow>
                     <FieldRow label="Device Name">
                       <input
                         type="text"
@@ -2600,24 +2529,45 @@ export default function AdminPanel({ open, onClose }) {
                       />
                     </FieldRow>
                     <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                      Note: Bluetooth pairing must be done through your device's system settings first
+                      Click "Discover Bluetooth Devices" to scan for available audio devices, or pair via system settings and enter name manually.
                     </p>
                   </>
                 )}
 
                 {settings.audioOutputType === 'sonos' && (
                   <>
-                    <FieldRow label="Room Name">
-                      <input
-                        type="text"
-                        value={settings.sonosRoomName || ''}
-                        onChange={(e) => setSettings(s => ({ ...s, sonosRoomName: e.target.value }))}
-                        placeholder="Living Room"
-                        style={{
-                          ...s.input,
-                          width: '100%',
+                    <FieldRow label="Sonos Network Discovery">
+                      <button
+                        onClick={async () => {
+                          // Discover Sonos devices on network
+                          try {
+                            const { getSonosClient } = await import('../lib/sonosClient');
+                            const client = getSonosClient();
+                            const devices = await client.discover();
+                            if (devices.length > 0) {
+                              setSettings(s => ({
+                                ...s,
+                                sonosIpAddress: devices[0].ip,
+                                sonosRoomName: devices[0].name,
+                              }));
+                              alert(`Found Sonos device: ${devices[0].name} (${devices[0].ip})`);
+                            } else {
+                              alert('No Sonos devices found on network');
+                            }
+                          } catch (err) {
+                            console.error('Sonos discovery failed:', err);
+                            alert('Sonos discovery failed. Enter IP manually.');
+                          }
                         }}
-                      />
+                        style={{
+                          ...s.button,
+                          width: '100%',
+                          background: '#10b981',
+                          color: '#fff',
+                        }}
+                      >
+                        🔍 Discover Sonos Devices
+                      </button>
                     </FieldRow>
                     <FieldRow label="IP Address">
                       <input
@@ -2631,8 +2581,20 @@ export default function AdminPanel({ open, onClose }) {
                         }}
                       />
                     </FieldRow>
+                    <FieldRow label="Room Name">
+                      <input
+                        type="text"
+                        value={settings.sonosRoomName || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, sonosRoomName: e.target.value }))}
+                        placeholder="Living Room"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
                     <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
-                      Requires Sonos HTTP API running on the network
+                      Click "Discover Sonos Devices" to auto-detect speakers on your network, or enter IP manually.
                     </p>
                   </>
                 )}
@@ -3006,11 +2968,14 @@ export default function AdminPanel({ open, onClose }) {
             </div>
           )}
 
-          {tab === 'voice' && <VoiceAgentTab />}
-
-          {tab === 'kioskvoice' && <KioskVoiceTab />}
-
-          {tab === 'layout' && <ContentLayoutTab />}
+          {tab === 'voice' && (
+            <>
+              <VoiceAgentTab />
+              <div style={{ marginTop: 24 }}>
+                <KioskVoiceTab />
+              </div>
+            </>
+          )}
 
           {tab === 'performance' && (
             <PerformanceTab

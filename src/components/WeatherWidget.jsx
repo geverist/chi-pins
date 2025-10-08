@@ -1,18 +1,29 @@
 // src/components/WeatherWidget.jsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAdminSettings } from '../state/useAdminSettings';
 import { isIndustryDemo } from '../config/industryConfigs';
 import { useLayoutStack } from '../hooks/useLayoutStack';
 
 export default function WeatherWidget({ autoDismissOnEdit = false }) {
   const { settings: adminSettings } = useAdminSettings();
-  const { getTopPosition } = useLayoutStack();
+  const { layout } = useLayoutStack();
+  const widgetRef = useRef(null);
   const isDemoMode = isIndustryDemo();
   const newsTickerEnabled = adminSettings.newsTickerEnabled && adminSettings.newsTickerRssUrl;
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // Calculate position based on layout stack
+  const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 10; // 10px spacing
+
+  // Debug logging
+  console.log('[WeatherWidget] Layout values:', JSON.stringify({
+    headerHeight: layout.headerHeight,
+    commentsBannerHeight: layout.commentsBannerHeight,
+    calculatedTop: topPosition
+  }));
 
   // Auto-dismiss when user interacts with pins/editor
   useEffect(() => {
@@ -89,15 +100,13 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
     return null;
   }
 
-  // Get position from layout stack - position after comments banner
-  const topPosition = getTopPosition('commentsBanner') + 10; // 10px spacing below comments banner
-
   if (loading) {
     return (
       <div
+        ref={widgetRef}
         style={{
           position: 'fixed',
-          top: topPosition,
+          top: `${topPosition}px`,
           right: 20,
           background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(37,99,235,0.95) 100%)',
           borderRadius: 16,
@@ -121,9 +130,10 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
 
   return (
     <div
+      ref={widgetRef}
       style={{
         position: 'fixed',
-        top: topPosition,
+        top: `${topPosition}px`,
         right: 20,
         background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(37,99,235,0.95) 100%)',
         borderRadius: 16,

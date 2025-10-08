@@ -1,8 +1,10 @@
 // src/components/NowPlayingBanner.jsx
 import { useState, useEffect } from 'react';
+import { useLayoutStack } from '../hooks/useLayoutStack';
 
-export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue, scrollSpeed = 60, isMobile = false }) {
+export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue, scrollSpeed = 60, isMobile = false, downloadingBarVisible = false }) {
   const [animate, setAnimate] = useState(false);
+  const { layout } = useLayoutStack();
 
   // Restart animation when track changes
   useEffect(() => {
@@ -14,8 +16,14 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
 
   // Only show banner if there's currently playing music OR upcoming tracks
   // Don't show if only lastPlayed exists (no active music)
+  // Also hide on mobile devices
   if (!currentTrack && !nextInQueue) {
     console.log('NowPlayingBanner - Hidden: no currentTrack or nextInQueue');
+    return null;
+  }
+
+  if (isMobile) {
+    console.log('NowPlayingBanner - Hidden: on mobile device');
     return null;
   }
 
@@ -46,11 +54,21 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
   // Duplicate text for seamless scrolling - fewer copies needed with slower speed
   const scrollContent = Array(6).fill(displayText).join(separator);
 
+  // Position at bottom (0) or above downloading bar using actual measured height
+  const downloadingHeight = layout.downloadingBarHeight || 0;
+  const bottomPosition = downloadingHeight;
+
+  console.log('[NowPlayingBanner] Positioned above downloading bar:', JSON.stringify({
+    bottomPosition,
+    downloadingHeight,
+    downloadingBarVisible
+  }));
+
   return (
     <div
       style={{
         position: 'fixed',
-        bottom: 72, // Above download bar which is 72px tall (DOWNLOADING_BAR_HEIGHT)
+        bottom: bottomPosition,
         left: 0,
         right: 0,
         height: isMobile ? 40 : 48,
@@ -58,6 +76,7 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
         borderTop: '2px solid #a78bfa',
         zIndex: 250, // Above downloading bar (200), below voice assistant (300)
         overflow: 'hidden',
+        transition: 'bottom 0.3s ease',
         boxShadow: '0 -2px 8px rgba(0,0,0,0.2)',
       }}
     >

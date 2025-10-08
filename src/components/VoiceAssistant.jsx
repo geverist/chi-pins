@@ -313,20 +313,24 @@ function VoiceAssistant({
     processVoiceCommand(prompt);
   }
 
-  const { getBottomPosition } = useLayoutStack();
-
   if (!enabled) {
     return null;
   }
 
-  // Get bottom stack position from layout system
-  const bottomStackHeight = getBottomPosition('footer');
+  // Calculate total height of bottom stack (footer + bars)
+  const DOWNLOADING_BAR_HEIGHT = 72;
+  const NOW_PLAYING_HEIGHT = 48;
+  const FOOTER_HEIGHT = 80; // Approximate footer height
 
-  // Microphone position - centered in lower third of screen, above all bottom elements
-  const microphoneBottomPx = bottomStackHeight + 180; // 180px above the bottom stack
+  const bottomStackHeight = FOOTER_HEIGHT +
+                           (downloadingBarVisible ? DOWNLOADING_BAR_HEIGHT : 0) +
+                           (nowPlayingVisible ? NOW_PLAYING_HEIGHT : 0);
 
-  // Prompts should be between microphone and footer
-  const promptsBottomPx = bottomStackHeight + 80; // 80px above the bottom stack
+  // Prompts positioned just above the footer navigation bar
+  const promptsBottomPx = bottomStackHeight + 20; // 20px above the footer stack
+
+  // Microphone should be ABOVE the prompts
+  const microphoneBottomPx = bottomStackHeight + 120; // 120px above the footer stack (above prompts)
 
   return (
     <>
