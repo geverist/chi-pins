@@ -30,34 +30,172 @@ class HEOSClient {
   async discover() {
     console.log('[HEOS] Discovering devices...');
 
-    // Try common HEOS device IPs on local network
-    const commonHosts = [
-      '192.168.1.100',
-      '192.168.1.101',
-      '192.168.1.102',
-      '192.168.0.100',
-      '192.168.0.101',
-      '10.0.0.100',
-    ];
+    // Step 1: Try mDNS service discovery (requires browser support or Capacitor plugin)
+    const mdnsDevices = await this.discoverViaMDNS();
+    if (mdnsDevices.length > 0) {
+      console.log(`[HEOS] Found ${mdnsDevices.length} devices via mDNS`);
+      this.host = mdnsDevices[0].ip;
+      return mdnsDevices;
+    }
 
-    for (const host of commonHosts) {
-      try {
-        const response = await fetch(`http://${host}:${this.port}/`, {
-          method: 'HEAD',
-          timeout: 1000
-        });
-        if (response.ok) {
-          console.log(`[HEOS] Found device at ${host}`);
-          this.host = host;
-          return host;
-        }
-      } catch (e) {
-        // Continue scanning
-      }
+    // Step 2: Try SSDP (UPnP) discovery
+    const ssdpDevices = await this.discoverViaSSDP();
+    if (ssdpDevices.length > 0) {
+      console.log(`[HEOS] Found ${ssdpDevices.length} devices via SSDP`);
+      this.host = ssdpDevices[0].ip;
+      return ssdpDevices;
+    }
+
+    // Step 3: Fall back to IP range scanning
+    console.log('[HEOS] Falling back to IP range scan...');
+    const scannedDevices = await this.scanIPRange();
+    if (scannedDevices.length > 0) {
+      console.log(`[HEOS] Found ${scannedDevices.length} devices via scan`);
+      this.host = scannedDevices[0].ip;
+      return scannedDevices;
     }
 
     console.warn('[HEOS] No devices found via auto-discovery');
-    return null;
+    return [];
+  }
+
+  /**
+   * Discover devices via mDNS (Bonjour/Zeroconf)
+   * HEOS broadcasts as _heos._tcp
+   */
+  async discoverViaMDNS() {
+    // Browser API doesn't support mDNS directly
+    // Would require Capacitor plugin or native implementation
+    // For now, return empty array
+    console.log('[HEOS] mDNS discovery not supported in browser');
+    return [];
+  }
+
+  /**
+   * Discover devices via SSDP (Simple Service Discovery Protocol)
+   * HEOS devices respond to M-SEARCH requests
+   */
+  async discoverViaSSDP() {
+    // SSDP requires UDP multicast (not supported in browser)
+    // Would require Capacitor plugin or native implementation
+    console.log('[HEOS] SSDP discovery not supported in browser');
+    return [];
+  }
+
+  /**
+   * Scan local IP range for HEOS devices
+   * Tests common local IPs and subnet
+   */
+  async scanIPRange() {
+    const devices = [];
+
+    // Get device's local IP to determine subnet
+    const localIP = await this.getLocalIP();
+    console.log('[HEOS] Local IP:', localIP);
+
+    let ipsToScan = [];
+
+    if (localIP) {
+      // Scan same subnet (e.g., 192.168.1.x)
+      const subnet = localIP.split('.').slice(0, 3).join('.');
+      ipsToScan = Array.from({ length: 255 }, (_, i) => `${subnet}.${i + 1}`);
+    } else {
+      // Fall back to common ranges
+      ipsToScan = [
+        ...Array.from({ length: 20 }, (_, i) => `192.168.1.${100 + i}`),
+        ...Array.from({ length: 20 }, (_, i) => `192.168.0.${100 + i}`),
+        ...Array.from({ length: 20 }, (_, i) => `10.0.0.${100 + i}`),
+      ];
+    }
+
+    console.log(`[HEOS] Scanning ${ipsToScan.length} IPs...`);
+
+    // Scan in batches to avoid overwhelming the network
+    const batchSize = 10;
+    for (let i = 0; i < ipsToScan.length; i += batchSize) {
+      const batch = ipsToScan.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map(ip => this.testHEOSDevice(ip))
+      );
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          devices.push({
+            ip: batch[index],
+            name: result.value.name || 'HEOS Device',
+          });
+        }
+      });
+
+      // Stop if we found at least one device
+      if (devices.length > 0) {
+        break;
+      }
+    }
+
+    return devices;
+  }
+
+  /**
+   * Get device's local IP address
+   */
+  async getLocalIP() {
+    try {
+      // Use WebRTC to get local IP (works in browser)
+      return new Promise((resolve) => {
+        const pc = new RTCPeerConnection({ iceServers: [] });
+        pc.createDataChannel('');
+        pc.createOffer().then(offer => pc.setLocalDescription(offer));
+
+        pc.onicecandidate = (ice) => {
+          if (!ice || !ice.candidate || !ice.candidate.candidate) {
+            pc.close();
+            resolve(null);
+            return;
+          }
+
+          const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+          const match = ipRegex.exec(ice.candidate.candidate);
+          if (match && match[1]) {
+            pc.close();
+            resolve(match[1]);
+          }
+        };
+
+        // Timeout after 2 seconds
+        setTimeout(() => {
+          pc.close();
+          resolve(null);
+        }, 2000);
+      });
+    } catch (error) {
+      console.error('[HEOS] Failed to get local IP:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Test if a device at given IP is a HEOS speaker
+   */
+  async testHEOSDevice(ip) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 500); // 500ms timeout per device
+
+      const response = await fetch(`http://${ip}:${this.port}/heos/system/heart_beat`, {
+        signal: controller.signal,
+        mode: 'no-cors', // Allow cross-origin testing
+      });
+
+      clearTimeout(timeoutId);
+
+      // If we get any response, assume it's a HEOS device
+      // (no-cors mode doesn't allow reading response, but connection success = device found)
+      return { name: 'HEOS Device' };
+    } catch (error) {
+      // Timeout or connection refused = not a HEOS device
+      return null;
+    }
   }
 
   /**

@@ -10,6 +10,7 @@ import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useHighlightPin } from './hooks/useHighlightPin';
 import { useQuadrantTouch } from './hooks/useQuadrantTouch';
 import { useTouchSequence } from './hooks/useTouchSequence';
+import { useZPatternGesture } from './hooks/useZPatternGesture';
 
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo';
@@ -1047,11 +1048,17 @@ export default function App() {
     if (shouldCountTap(e)) registerTap();
   };
 
-  // Four-quadrant touch to open admin panel
+  // Four-quadrant touch to open admin panel (legacy)
   useQuadrantTouch(() => {
     console.log('Four quadrant touch detected - opening admin panel');
     setAdminOpen(true);
   }, !adminOpen); // Only enable when admin panel is closed
+
+  // Z-pattern gesture to open admin panel (new method)
+  useZPatternGesture(() => {
+    console.log('Z-pattern gesture detected - opening admin panel');
+    setAdminOpen(true);
+  });
   const handleFooterTouch = (e) => {
     if (shouldCountTap(e)) registerTap();
   };
