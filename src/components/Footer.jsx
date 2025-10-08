@@ -1,10 +1,11 @@
 // src/components/Footer.jsx
+import { memo } from 'react';
 import Editor from './Editor';
 import { btn3d } from '../lib/styles';
 
 const DOWNLOADING_BAR_HEIGHT = 72; // Must match OfflineMapDownloader.jsx
 
-export default function Footer({
+function Footer({
   isMobile,
   draft,
   exploring,
@@ -250,3 +251,5 @@ export default function Footer({
     </footer>
   );
 }
+
+export default memo(Footer);

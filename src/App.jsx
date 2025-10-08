@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useMemo, useRef, useState, useEffect, lazy, Suspense } from 'react';
 import logoUrl from './assets/logo.png';
 import { getIndustryConfig, isIndustryDemo } from './config/industryConfigs';
 
@@ -50,7 +50,7 @@ import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
 import NowPlayingBanner from './components/NowPlayingBanner';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
-import EnhancedPhotoBooth from './components/EnhancedPhotoBooth';
+const EnhancedPhotoBooth = lazy(() => import('./components/EnhancedPhotoBooth'));
 import ThenAndNow from './components/ThenAndNow';
 import { initRemoteLogger } from './utils/remoteLogger';
 import WeatherWidget from './components/WeatherWidget';
@@ -84,7 +84,7 @@ import MobilePinsList from './components/MobilePinsList';
 import MobilePinsTable from './components/MobilePinsTable';
 import MobileNavMenu from './components/MobileNavMenu';
 import OrderMenu from './components/OrderMenu';
-import Jukebox from './components/Jukebox';
+const Jukebox = lazy(() => import('./components/Jukebox'));
 import GamesMenu from './components/GamesMenu';
 import Footer from './components/Footer';
 import { useAdminSettings } from './state/useAdminSettings';
@@ -1381,10 +1381,12 @@ export default function App() {
       )}
 
       {jukeboxOpen && (!isDemoMode || industryConfig.enabledFeatures.jukebox) && (
-        <Jukebox onClose={() => {
-          console.log('App.jsx - Jukebox onClose called, closing modal...');
-          setJukeboxOpen(false);
-        }} />
+        <Suspense fallback={<div style={{position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff'}}>Loading...</div>}>
+          <Jukebox onClose={() => {
+            console.log('App.jsx - Jukebox onClose called, closing modal...');
+            setJukeboxOpen(false);
+          }} />
+        </Suspense>
       )}
 
       {gamesOpen && (!isDemoMode || industryConfig.enabledFeatures.games) && (
@@ -1392,7 +1394,9 @@ export default function App() {
       )}
 
       {photoBoothOpen && (!isDemoMode || industryConfig.enabledFeatures.photoBooth) && (
-        <EnhancedPhotoBooth onClose={() => setPhotoBoothOpen(false)} />
+        <Suspense fallback={<div style={{position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff'}}>Loading...</div>}>
+          <EnhancedPhotoBooth onClose={() => setPhotoBoothOpen(false)} />
+        </Suspense>
       )}
 
       {thenAndNowOpen && (!isDemoMode || industryConfig.enabledFeatures.thenAndNow) && (
