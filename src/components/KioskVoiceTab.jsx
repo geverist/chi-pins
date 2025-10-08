@@ -1,11 +1,19 @@
 // src/components/KioskVoiceTab.jsx
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAdminSettings } from '../state/useAdminSettings'
+import { DEFAULT_CUSTOM_PROMPTS } from '../config/customVoicePrompts'
 
 export default function KioskVoiceTab() {
   const [loading, setLoading] = useState(true)
   const [settings, setSettings] = useState(null)
   const [newPrompt, setNewPrompt] = useState('')
+  const [newAIInstruction, setNewAIInstruction] = useState('')
+  const [newCategory, setNewCategory] = useState('general')
+  const [phoneExposed, setPhoneExposed] = useState(true)
+  const [editingPrompt, setEditingPrompt] = useState(null)
+
+  const { settings: adminSettings, save: saveAdminSettings } = useAdminSettings()
 
   useEffect(() => {
     loadSettings()
@@ -79,6 +87,73 @@ export default function KioskVoiceTab() {
     }
   }
 
+  const addCustomPrompt = async () => {
+    if (!newPrompt.trim()) {
+      alert('Please enter prompt text')
+      return
+    }
+    if (!newAIInstruction.trim()) {
+      alert('Please enter AI instruction')
+      return
+    }
+
+    const customPrompts = adminSettings.customVoicePrompts || []
+
+    // Check if prompt already exists
+    if (customPrompts.find(p => p.text.toLowerCase() === newPrompt.trim().toLowerCase())) {
+      alert('This prompt already exists')
+      return
+    }
+
+    const newPromptObj = {
+      id: `custom-${Date.now()}`,
+      text: newPrompt.trim(),
+      aiInstruction: newAIInstruction.trim(),
+      category: newCategory,
+      enabled: true,
+      phoneExposed: phoneExposed,
+    }
+
+    await saveAdminSettings({
+      customVoicePrompts: [...customPrompts, newPromptObj]
+    })
+
+    setNewPrompt('')
+    setNewAIInstruction('')
+    setNewCategory('general')
+    setPhoneExposed(true)
+  }
+
+  const updateCustomPrompt = async (id, updates) => {
+    const customPrompts = adminSettings.customVoicePrompts || []
+    const updated = customPrompts.map(p => p.id === id ? { ...p, ...updates } : p)
+    await saveAdminSettings({ customVoicePrompts: updated })
+    setEditingPrompt(null)
+  }
+
+  const removeCustomPrompt = async (id) => {
+    if (!confirm('Delete this prompt?')) return
+    const customPrompts = adminSettings.customVoicePrompts || []
+    await saveAdminSettings({
+      customVoicePrompts: customPrompts.filter(p => p.id !== id)
+    })
+  }
+
+  const moveCustomPrompt = async (index, direction) => {
+    const customPrompts = [...(adminSettings.customVoicePrompts || [])]
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= customPrompts.length) return
+
+    [customPrompts[index], customPrompts[newIndex]] = [customPrompts[newIndex], customPrompts[index]]
+    await saveAdminSettings({ customVoicePrompts: customPrompts })
+  }
+
+  const resetToDefaults = async () => {
+    if (!confirm('Reset to default prompts? This will remove all custom prompts.')) return
+    await saveAdminSettings({ customVoicePrompts: DEFAULT_CUSTOM_PROMPTS })
+  }
+
+  // Legacy functions for backwards compatibility
   const addPrompt = () => {
     if (!newPrompt.trim()) {
       alert('Please enter a prompt')
@@ -285,122 +360,231 @@ export default function KioskVoiceTab() {
         </div>
       </Card>
 
-      {/* Suggested Prompts Card */}
-      <Card title="Suggested Prompts">
+      {/* Custom Voice Prompts Card */}
+      <Card title="Custom Voice Prompts with AI Instructions">
         <div style={{ marginBottom: 16, padding: 12, background: 'rgba(251, 191, 36, 0.1)', borderRadius: 6, border: '1px solid rgba(251, 191, 36, 0.3)' }}>
           <div style={{ fontSize: 12, color: '#fbbf24' }}>
-            💡 These prompts scroll horizontally below the microphone. They suggest what users can say to interact with the voice assistant.
+            💡 Configure prompts that users can click or say. Each prompt has custom AI instructions that guide the assistant's response.
           </div>
         </div>
 
-        {/* Auto-generate toggle */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div>
-            <div style={{ ...label, marginBottom: 2 }}>Auto-generate from Features</div>
-            <div style={{ fontSize: 12, color: '#9ca3af' }}>Automatically add prompts based on enabled kiosk features</div>
-          </div>
+        {/* Reset to Defaults Button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
           <button
-            onClick={() => updateSettings({ auto_generate_prompts: !settings.auto_generate_prompts })}
+            onClick={resetToDefaults}
             style={{
               ...btnSmall,
-              background: settings.auto_generate_prompts ? '#10b981' : '#6b7280',
+              background: '#8b5cf6',
               color: '#fff'
             }}
           >
-            {settings.auto_generate_prompts ? '✓ Enabled' : '✗ Disabled'}
+            🔄 Reset to Defaults
           </button>
         </div>
 
-        {/* Add Prompt */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <input
-            type="text"
-            value={newPrompt}
-            onChange={(e) => setNewPrompt(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addPrompt()}
-            placeholder="e.g., What are today's specials?"
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: 6,
-              color: '#f3f4f6',
-              fontSize: 14
-            }}
-          />
-          <button
-            onClick={addPrompt}
-            style={{
-              ...btn,
-              background: '#10b981',
-              color: '#fff'
-            }}
-          >
-            ➕ Add
-          </button>
+        {/* Add Prompt Form */}
+        <div style={{ padding: 16, background: 'rgba(255, 255, 255, 0.05)', borderRadius: 8, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <label style={label}>Prompt Text (What users see/say)</label>
+              <input
+                type="text"
+                value={newPrompt}
+                onChange={(e) => setNewPrompt(e.target.value)}
+                placeholder="e.g., What games can I play?"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 6,
+                  color: '#f3f4f6',
+                  fontSize: 14
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={label}>AI Instruction (How AI should respond)</label>
+              <textarea
+                value={newAIInstruction}
+                onChange={(e) => setNewAIInstruction(e.target.value)}
+                placeholder="e.g., List available games (trivia, deep dish, popcorn wind). Offer to start one."
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: 6,
+                  color: '#f3f4f6',
+                  fontSize: 14,
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={label}>Category</label>
+                <select
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  style={selectStyle}
+                >
+                  <option value="general">General</option>
+                  <option value="features">Features</option>
+                  <option value="navigation">Navigation</option>
+                  <option value="map-action">Map Action</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'end' }}>
+                <button
+                  onClick={() => setPhoneExposed(!phoneExposed)}
+                  style={{
+                    ...btnSmall,
+                    width: '100%',
+                    background: phoneExposed ? '#10b981' : '#6b7280',
+                    color: '#fff'
+                  }}
+                >
+                  {phoneExposed ? '📞 Phone Accessible' : '🚫 Kiosk Only'}
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={addCustomPrompt}
+              style={{
+                ...btn,
+                background: '#10b981',
+                color: '#fff',
+                width: '100%'
+              }}
+            >
+              ➕ Add Custom Prompt
+            </button>
+          </div>
         </div>
 
         {/* Prompts List */}
-        {!settings.suggested_prompts || settings.suggested_prompts.length === 0 ? (
+        {(!adminSettings.customVoicePrompts || adminSettings.customVoicePrompts.length === 0) ? (
           <p style={{ color: '#888', fontStyle: 'italic', textAlign: 'center', margin: '20px 0' }}>
-            No prompts added yet. Add your first prompt above!
+            No custom prompts yet. Click "Reset to Defaults" to load default prompts, or create your own above.
           </p>
         ) : (
-          <div style={{ display: 'grid', gap: 8 }}>
-            {settings.suggested_prompts.map((prompt, index) => (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {adminSettings.customVoicePrompts.map((prompt, index) => (
               <div
-                key={index}
+                key={prompt.id}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '10px 12px',
+                  padding: 12,
                   background: 'rgba(255, 255, 255, 0.05)',
                   borderRadius: 8,
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}
               >
-                {/* Order controls */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <button
-                    onClick={() => movePrompt(index, 'up')}
-                    disabled={index === 0}
-                    style={{
-                      ...btnTiny,
-                      opacity: index === 0 ? 0.3 : 1
-                    }}
-                  >
-                    ▲
-                  </button>
-                  <button
-                    onClick={() => movePrompt(index, 'down')}
-                    disabled={index === settings.suggested_prompts.length - 1}
-                    style={{
-                      ...btnTiny,
-                      opacity: index === settings.suggested_prompts.length - 1 ? 0.3 : 1
-                    }}
-                  >
-                    ▼
-                  </button>
-                </div>
+                <div style={{ display: 'flex', alignItems: 'start', gap: 12, marginBottom: 8 }}>
+                  {/* Order controls */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <button
+                      onClick={() => moveCustomPrompt(index, 'up')}
+                      disabled={index === 0}
+                      style={{
+                        ...btnTiny,
+                        opacity: index === 0 ? 0.3 : 1
+                      }}
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => moveCustomPrompt(index, 'down')}
+                      disabled={index === adminSettings.customVoicePrompts.length - 1}
+                      style={{
+                        ...btnTiny,
+                        opacity: index === adminSettings.customVoicePrompts.length - 1 ? 0.3 : 1
+                      }}
+                    >
+                      ▼
+                    </button>
+                  </div>
 
-                {/* Prompt text */}
-                <div style={{ flex: 1, fontSize: 14, color: '#f3f4f6' }}>
-                  {prompt}
-                </div>
+                  {/* Content */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        background: '#3b82f6',
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        textTransform: 'uppercase'
+                      }}>
+                        {prompt.category}
+                      </span>
 
-                {/* Delete button */}
-                <button
-                  onClick={() => removePrompt(prompt)}
-                  style={{
-                    ...btnSmall,
-                    background: '#ef4444',
-                    color: '#fff'
-                  }}
-                >
-                  🗑️
-                </button>
+                      {prompt.phoneExposed === false && (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: 4,
+                          background: '#6b7280',
+                          color: '#fff',
+                          fontSize: 11
+                        }}>
+                          🚫 Kiosk Only
+                        </span>
+                      )}
+
+                      {prompt.phoneExposed !== false && (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: 4,
+                          background: '#10b981',
+                          color: '#fff',
+                          fontSize: 11
+                        }}>
+                          📞 Phone Accessible
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#f3f4f6', marginBottom: 8 }}>
+                      "{prompt.text}"
+                    </div>
+
+                    <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 4 }}>AI Instruction:</div>
+                    <div style={{ fontSize: 13, color: '#d1d5db', fontStyle: 'italic' }}>
+                      {prompt.aiInstruction}
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button
+                      onClick={() => updateCustomPrompt(prompt.id, { enabled: !prompt.enabled })}
+                      style={{
+                        ...btnSmall,
+                        background: prompt.enabled ? '#10b981' : '#6b7280',
+                        color: '#fff'
+                      }}
+                    >
+                      {prompt.enabled ? '✓' : '✗'}
+                    </button>
+                    <button
+                      onClick={() => removeCustomPrompt(prompt.id)}
+                      style={{
+                        ...btnSmall,
+                        background: '#ef4444',
+                        color: '#fff'
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -409,7 +593,7 @@ export default function KioskVoiceTab() {
         {/* Preview note */}
         <div style={{ marginTop: 16, padding: 10, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
           <div style={{ fontSize: 11, color: '#93c5fd' }}>
-            💬 Preview: These prompts will scroll horizontally on the kiosk screen when users open the voice assistant.
+            💬 These prompts scroll horizontally on the kiosk screen and are accessible via Twilio phone (if marked as phone accessible).
           </div>
         </div>
       </Card>

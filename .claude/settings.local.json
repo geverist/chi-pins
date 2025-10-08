@@ -32,7 +32,10 @@
       "Bash(keytool:*)",
       "Bash(gh release download:*)",
       "Bash(gh release view:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(./gradlew:*)"
     ],
     "deny": [],
     "ask": []

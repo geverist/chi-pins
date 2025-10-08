@@ -166,33 +166,8 @@ export default function Editor({
   );
 
 
-  const LoyaltySection = loyaltyEnabled ? (
-    <div style={{
-      gridColumn: '1 / -1',
-      border: '1px solid #2a2f37',
-      borderRadius: 12,
-      padding: 12,
-      background: 'linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02))',
-      display: 'grid',
-      gap: 8,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 18 }}>⭐</span>
-        <strong>Link your loyalty phone (optional)</strong>
-      </div>
-      <div style={{
-        display: 'grid',
-        gap: 8,
-        gridTemplateColumns: 'minmax(220px,1fr) auto',
-        alignItems: 'center',
-      }}>
-        <VoiceInput type="tel" inputMode="tel" placeholder="(312) 555-1234" value={form.loyaltyPhone || ''} onChange={(e) => update({ loyaltyPhone: e.target.value })} ariaLabel="Loyalty phone number" />
-        <span style={{ fontSize: 13, color: phoneLooksValid ? '#9AE6B4' : '#a7b0b8' }}>
-          {phoneLooksValid ? '⭐ You\'ll earn a star for linking' : 'Enter at least 10 digits'}
-        </span>
-      </div>
-    </div>
-  ) : null;
+  // Loyalty section moved to PinShareModal to free up space in editor
+  const LoyaltySection = null;
 
   if (mapMode === 'chicago') {
     return (

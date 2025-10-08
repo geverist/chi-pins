@@ -145,7 +145,8 @@ export default function OfflineTileLayer({
         clearTimeout(downloadTimeout);
       }
     };
-  }, [map, attribution, maxZoom, minZoom, onTileLoad, onTileError, enableProgressiveCaching, otherProps]);
+  }, [map, attribution, maxZoom, minZoom, enableProgressiveCaching]);
+  // Removed onTileLoad, onTileError, and otherProps from dependencies to prevent unnecessary re-renders
 
   return null;
 }
