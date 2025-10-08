@@ -66,6 +66,7 @@ import AchievementNotification from './components/AchievementNotification';
 import DemoModeSwitcher from './components/DemoModeSwitcher';
 import VoiceAssistant from './components/VoiceAssistant';
 import DebugPanel from './components/DebugPanel';
+import PerformanceDiagnostics from './components/PerformanceDiagnostics';
 import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
 import { getPersistentStorage } from './lib/persistentStorage';
 import { enableImmersiveMode, maintainImmersiveMode } from './lib/immersiveMode';
@@ -1485,6 +1486,11 @@ export default function App() {
 
       {/* Debug Panel - Press D-E-B-U-G to toggle or add ?debug=true to URL */}
       <DebugPanel />
+
+      {/* Performance Diagnostics - Add ?diagnostics=true to URL */}
+      {new URLSearchParams(window.location.search).get('diagnostics') === 'true' && (
+        <PerformanceDiagnostics />
+      )}
     </div>
   );
 }
