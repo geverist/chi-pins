@@ -518,7 +518,7 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    bottom: '100px', // Above footer (80px) with 20px spacing, won't be affected by downloading bar
+    bottom: '80px', // Just above footer top edge
     left: 0,
     right: 0,
     zIndex: 300, // Same level as microphone, below attractor (400)
