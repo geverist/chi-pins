@@ -49,6 +49,7 @@ import Toast from './components/Toast';
 import AttractorOverlay from './components/AttractorOverlay';
 import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
+import CommentsBanner from './components/CommentsBanner';
 import NowPlayingBanner from './components/NowPlayingBanner';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
 const EnhancedPhotoBooth = lazy(() => import('./components/EnhancedPhotoBooth'));
@@ -1160,6 +1161,16 @@ export default function App() {
         scrollSpeed={isMobile ? adminSettings.newsTickerScrollSpeedMobile : adminSettings.newsTickerScrollSpeedKiosk}
         isMobile={isMobile}
       />
+
+      {adminSettings.commentsBannerEnabled && (
+        <CommentsBanner
+          pins={pins}
+          customKeywords={adminSettings.commentsBannerProhibitedKeywords || []}
+          scrollSpeed={adminSettings.commentsBannerScrollSpeed || 60}
+          maxComments={adminSettings.commentsBannerMaxComments || 20}
+          refreshInterval={adminSettings.commentsBannerRefreshInterval || 120000}
+        />
+      )}
 
       <div
         className="map-wrap"
