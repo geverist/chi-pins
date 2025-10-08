@@ -616,10 +616,8 @@ function MapModeController({ mode, isMobile }) {
     map.touchZoom?.enable();
     map.boxZoom?.enable();
     map.keyboard?.enable();
-    setTimeout(() => {
-      map.invalidateSize();
-      console.log('[MapModeController] After invalidateSize, zoom:', map.getZoom());
-    }, 300);
+    // Skip invalidateSize - only needed on initial render and window resize
+    console.log('[MapModeController] Map interactions enabled, zoom:', map.getZoom());
   }, [map, isMobile]);
 
   useEffect(() => {
@@ -627,30 +625,28 @@ function MapModeController({ mode, isMobile }) {
       console.warn('MapModeController: Map not available');
       return;
     }
-    setTimeout(() => {
-      map.invalidateSize();
-      if (mode === 'global') {
-        map.setMaxBounds(null);
-        map.setMinZoom(2);
-        map.setMaxZoom(GLOBAL_MAX_ZOOM);
-        map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true });
-        map.dragging?.enable();
-        map.scrollWheelZoom?.enable();
-        map.touchZoom?.enable();
-        map.boxZoom?.enable();
-        map.keyboard?.enable();
-      } else {
-        map.setMaxBounds(null);
-        map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
-        map.setMaxZoom(CHI_MAX_ZOOM);
-        map.fitBounds(CHI_BOUNDS, { animate: true });
-        map.dragging?.enable();
-        map.scrollWheelZoom?.enable();
-        map.touchZoom?.enable();
-        map.boxZoom?.enable();
-        map.keyboard?.enable();
-      }
-    }, 300);
+    // Skip invalidateSize - only apply mode changes
+    if (mode === 'global') {
+      map.setMaxBounds(null);
+      map.setMinZoom(2);
+      map.setMaxZoom(GLOBAL_MAX_ZOOM);
+      map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true });
+      map.dragging?.enable();
+      map.scrollWheelZoom?.enable();
+      map.touchZoom?.enable();
+      map.boxZoom?.enable();
+      map.keyboard?.enable();
+    } else {
+      map.setMaxBounds(null);
+      map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
+      map.setMaxZoom(CHI_MAX_ZOOM);
+      map.fitBounds(CHI_BOUNDS, { animate: true });
+      map.dragging?.enable();
+      map.scrollWheelZoom?.enable();
+      map.touchZoom?.enable();
+      map.boxZoom?.enable();
+      map.keyboard?.enable();
+    }
   }, [mode, map, isMobile]);
 
   return null;
@@ -664,19 +660,17 @@ function CameraReset({ mapMode, resetCameraToken, isMobile }) {
       return;
     }
     if (mapMode !== 'chicago') return;
-    setTimeout(() => {
-      try {
-        map.invalidateSize();
-        if (isMobile) {
-          // On mobile, zoom to Chicago proper (zoom 11) instead of full metro bounds
-          map.setView([CHI.lat, CHI.lng], 11, { animate: true });
-        } else {
-          // On desktop, fit to full metro bounds
-          map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MAX_ZOOM });
-        }
-        map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
-      } catch {}
-    }, 300);
+    // Skip invalidateSize - only apply camera reset
+    try {
+      if (isMobile) {
+        // On mobile, zoom to Chicago proper (zoom 11) instead of full metro bounds
+        map.setView([CHI.lat, CHI.lng], 11, { animate: true });
+      } else {
+        // On desktop, fit to full metro bounds
+        map.fitBounds(CHI_BOUNDS, { animate: true, maxZoom: CHI_MAX_ZOOM });
+      }
+      map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
+    } catch {}
   }, [resetCameraToken, mapMode, map, isMobile]);
   return null;
 }
