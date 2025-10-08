@@ -570,6 +570,7 @@ export default function App() {
     submapOpen: !!submapCenter,
     exploring,
     timeoutMs: 60 * 1000,
+    confettiScreensaverEnabled: adminSettings.confettiScreensaverEnabled,
     onIdle: () => {
       // Close all modals and reset to main map
       cancelEditing();

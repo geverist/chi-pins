@@ -15,6 +15,7 @@ export function useIdleAttractor({
   exploring,
   timeoutMs = 60_000,
   confettiScreensaverMs = 60_000, // Show confetti screensaver after 60s (was 15s for testing)
+  confettiScreensaverEnabled = false, // Enable/disable confetti screensaver
   onIdle, // <-- NEW
 }) {
   const [showAttractor, setShowAttractor] = useState(true) // Show on page load
@@ -49,8 +50,10 @@ export function useIdleAttractor({
     // While user is interacting (editor/submap/explore), keep attractor hidden
     if (draft || submapOpen || exploring) setShowAttractor(false)
 
-    // Set timer for confetti screensaver
-    confettiTimer.current = setTimeout(startConfettiScreensaver, confettiScreensaverMs)
+    // Set timer for confetti screensaver (only if enabled)
+    if (confettiScreensaverEnabled) {
+      confettiTimer.current = setTimeout(startConfettiScreensaver, confettiScreensaverMs)
+    }
 
     // Set timer for full idle reset
     timerRef.current = setTimeout(() => {
@@ -63,7 +66,7 @@ export function useIdleAttractor({
         setShowAttractor(true)
       }
     }, timeoutMs)
-  }, [draft, submapOpen, exploring, onIdle, timeoutMs, confettiScreensaverMs, mainMapRef, startConfettiScreensaver, stopConfettiScreensaver])
+  }, [draft, submapOpen, exploring, onIdle, timeoutMs, confettiScreensaverMs, confettiScreensaverEnabled, mainMapRef, startConfettiScreensaver, stopConfettiScreensaver])
 
   useEffect(() => {
     window.addEventListener('pointerdown', bump)
