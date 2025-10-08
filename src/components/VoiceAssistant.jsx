@@ -432,7 +432,7 @@ const styles = {
   },
   microphoneWrapper: {
     position: 'fixed',
-    top: '68%', // Position to expose central Chicago map, above footer and banners
+    top: '60%', // Position higher to create clearance from footer navigation buttons
     left: '50%',
     transform: 'translate(-50%, -50%)',
     zIndex: 300, // Above footer/banner (250), independent of UI below
@@ -519,12 +519,13 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    top: 'calc(68% + 100px)', // Just below microphone (which is at 68%), well above footer
+    top: 'calc(60% + 100px)', // Just below microphone (at 60%), with clearance from footer
     left: 0,
     right: 0,
     zIndex: 300, // Same level as microphone, above footer (50) and banners (200-250)
     overflow: 'hidden',
     pointerEvents: 'none',
+    maxHeight: '80px', // Limit height to prevent overlap with footer buttons
   },
   promptsHeader: {
     fontSize: '14px',
