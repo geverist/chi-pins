@@ -7,6 +7,7 @@ import { getIndustryConfig, isIndustryDemo } from './config/industryConfigs';
 import { usePins } from './hooks/usePins';
 import { useIdleAttractor } from './hooks/useIdleAttractor';
 import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
+import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
 import { useQuadrantTouch } from './hooks/useQuadrantTouch';
 import { useTouchSequence } from './hooks/useTouchSequence';
@@ -25,7 +26,7 @@ import {
   CHI_MIN_ZOOM,
   isInLakeMichigan,
 } from './lib/mapUtils';
-import { focusDraft, goToChicago } from './lib/mapActions';
+import { goToChicago } from './lib/mapActions';
 
 // pin helpers
 import { ensureUniqueSlug, makeChiSlug } from './lib/pinsUtils';
@@ -44,10 +45,8 @@ import DraftMarker from './components/DraftMarker';
 import SubMapModal from './components/SubMapModal';
 import ShareConfirmModal from './components/ShareConfirmModal';
 import PopularSpotsOverlay from './components/PopularSpotsOverlay';
-import Editor from './components/Editor';
 import Toast from './components/Toast';
 import AttractorOverlay from './components/AttractorOverlay';
-import GlobalCounters from './components/GlobalCounters';
 import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
 import NowPlayingBanner from './components/NowPlayingBanner';
@@ -73,16 +72,13 @@ import { enableImmersiveMode, maintainImmersiveMode } from './lib/immersiveMode'
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
-import PinHeatmap from './components/PinHeatmap';
 import ProgressiveVisualization from './components/ProgressiveVisualization';
 import ZoomGate from './components/ZoomGate';
 
 // Admin panel
 import AdminPanel from './components/AdminPanel';
 import OfflineMapDownloader from './components/OfflineMapDownloader';
-import AdminRoute from './components/AdminRoute';
 import PinCodeModal from './components/PinCodeModal';
-import MobilePinsList from './components/MobilePinsList';
 import MobilePinsTable from './components/MobilePinsTable';
 import MobileNavMenu from './components/MobileNavMenu';
 import OrderMenu from './components/OrderMenu';
@@ -178,35 +174,39 @@ export default function App() {
     console.log('[App] Team filter changed to:', selectedTeamFilter);
   }, [selectedTeamFilter]);
 
-  // share modal
-  const [shareOpen, setShareOpen] = useState(false);
+  // Modal management - centralized in useModalManager hook
+  const {
+    shareOpen,
+    setShareOpen,
+    pinShareOpen,
+    setPinShareOpen,
+    messageModalOpen,
+    setMessageModalOpen,
+    commentsOpen,
+    setCommentsOpen,
+    orderMenuOpen,
+    setOrderMenuOpen,
+    jukeboxOpen,
+    setJukeboxOpen,
+    gamesOpen,
+    setGamesOpen,
+    photoBoothOpen,
+    setPhotoBoothOpen,
+    thenAndNowOpen,
+    setThenAndNowOpen,
+    adminOpen,
+    setAdminOpen,
+    closeAllModals,
+  } = useModalManager();
+
+  // Share modal specific state
   const [shareToFb, setShareToFb] = useState(false);
 
-  // pin share modal
-  const [pinShareOpen, setPinShareOpen] = useState(false);
+  // Pin share modal specific state
   const [pinToShare, setPinToShare] = useState(null);
 
-  // anonymous message modal
-  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  // Anonymous message modal specific state
   const [pinToMessage, setPinToMessage] = useState(null);
-
-  // order menu modal
-  const [orderMenuOpen, setOrderMenuOpen] = useState(false);
-
-  // jukebox modal
-  const [jukeboxOpen, setJukeboxOpen] = useState(false);
-
-  // games modal
-  const [gamesOpen, setGamesOpen] = useState(false);
-
-  // photo booth modal
-  const [photoBoothOpen, setPhotoBoothOpen] = useState(false);
-
-  // then & now modal
-  const [thenAndNowOpen, setThenAndNowOpen] = useState(false);
-
-  // comments modal
-  const [commentsOpen, setCommentsOpen] = useState(false);
 
   // voice assistant visibility
   const [voiceAssistantVisible, setVoiceAssistantVisible] = useState(true);
@@ -581,19 +581,8 @@ export default function App() {
         document.activeElement.blur();
       }
 
-      // Close all navigation modals
-      setGamesOpen(false);
-      setJukeboxOpen(false);
-      setOrderMenuOpen(false);
-      setPhotoBoothOpen(false);
-      setThenAndNowOpen(false);
-      setCommentsOpen(false);
-      setRecommendationsOpen(false);
-      setAppointmentCheckInOpen(false);
-      setReservationCheckInOpen(false);
-      setGuestBookOpen(false);
-      setAnonymousMessageOpen(false);
-      setAdminOpen(false);
+      // Close all modals using centralized function
+      closeAllModals();
     },
   });
 
@@ -1016,10 +1005,13 @@ export default function App() {
       </div>
     ) : null; // Continent counts are now shown in HeaderBar itself
 
-  // admin (hidden)
-  const [adminOpen, setAdminOpen] = useState(
-    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1'
-  );
+  // admin (hidden) - adminOpen and setAdminOpen come from useModalManager
+  // Initialize admin state from URL parameter
+  useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1') {
+      setAdminOpen(true);
+    }
+  }, [setAdminOpen]);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef(null);
 
