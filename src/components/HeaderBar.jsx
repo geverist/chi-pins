@@ -117,6 +117,7 @@ export default function HeaderBar({
           display:'flex', alignItems:'center', gap:12, justifyContent:'space-between',
           flexWrap:'nowrap', padding:'10px 14px', position:'relative',
           borderBottom:'1px solid #222',
+          zIndex: 500, // Above voice assistant (300) and other overlays
         }}
       >
         {/* Optional logo button keeps the same behavior but is not required */}
@@ -185,6 +186,7 @@ export default function HeaderBar({
         display:'flex', alignItems:'center', gap:12, justifyContent:'space-between',
         flexWrap:'wrap', padding:'10px 14px', position:'relative',
         borderBottom:'1px solid #222',
+        zIndex: 500, // Above voice assistant (300) and other overlays
       }}
     >
       {/* Left: logo + title + total */}

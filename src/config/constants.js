@@ -16,6 +16,7 @@ export const Z_INDEX = {
   NOW_PLAYING_BANNER: 250,
   VOICE_ASSISTANT: 300,
   ATTRACTOR_OVERLAY: 400,
+  HEADER: 500, // Above voice assistant to ensure header buttons are always clickable
   MODALS: 9000,
   CONFETTI: 99999,
 };
