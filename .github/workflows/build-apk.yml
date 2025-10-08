@@ -41,9 +41,9 @@ jobs:
 
     - name: Generate Release Keystore
       run: |
-        mkdir -p android/app
+        cd android/app
         keytool -genkeypair -v \
-          -keystore android/app/chi-pins-release.keystore \
+          -keystore chi-pins-release.keystore \
           -alias chi-pins \
           -keyalg RSA \
           -keysize 2048 \
@@ -58,7 +58,7 @@ jobs:
         chmod +x gradlew
         ./gradlew assembleRelease --no-daemon
       env:
-        KEYSTORE_PATH: app/chi-pins-release.keystore
+        KEYSTORE_PATH: chi-pins-release.keystore
         KEYSTORE_PASSWORD: chipins2024
         KEY_ALIAS: chi-pins
         KEY_PASSWORD: chipins2024
