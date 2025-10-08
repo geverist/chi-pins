@@ -26,10 +26,10 @@ export function useIdleAttractor({
     console.log('[IdleAttractor] Starting confetti screensaver')
     // Show confetti burst immediately
     showConfetti()
-    // Then show it every 3 seconds
+    // Then show it every 6 seconds (less frequent)
     confettiInterval.current = setInterval(() => {
       showConfetti()
-    }, 3000)
+    }, 6000)
   }, [])
 
   const stopConfettiScreensaver = useCallback(() => {
