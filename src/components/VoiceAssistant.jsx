@@ -1,5 +1,5 @@
 // src/components/VoiceAssistant.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { supabase } from '../lib/supabase';
 import { getVoicePrompts } from '../config/voicePrompts';
 
@@ -12,7 +12,7 @@ import { getVoicePrompts } from '../config/voicePrompts';
  * Prompts are dynamically generated based on enabled kiosk features.
  */
 
-export default function VoiceAssistant({
+function VoiceAssistant({
   locationId,
   industry,
   enabled = false,
@@ -20,7 +20,8 @@ export default function VoiceAssistant({
   enabledFeatures = {},
   navSettings = {},
   onPlacePin = null,
-  shouldShow = true
+  shouldShow = true,
+  scrollSpeed = 60 // seconds for full scroll animation (configurable in admin)
 }) {
   const [isOpen, setIsOpen] = useState(true); // Show on page load
   const [isListening, setIsListening] = useState(false);
@@ -377,7 +378,7 @@ export default function VoiceAssistant({
 
           {/* Horizontal Scrolling Prompts - positioned below microphone, above footer */}
           <div style={styles.promptsContainer}>
-            <div style={styles.promptsList}>
+            <div style={styles.promptsList(scrollSpeed)}>
               {/* Quadruple prompts for seamless infinite scroll */}
               {[...suggestedPrompts, ...suggestedPrompts, ...suggestedPrompts, ...suggestedPrompts].map((prompt, index) => (
                 <button
@@ -532,16 +533,16 @@ const styles = {
     marginBottom: '12px',
     textAlign: 'center',
   },
-  promptsList: {
+  promptsList: (scrollSpeed) => ({
     display: 'flex',
     flexDirection: 'row',
     gap: '12px',
     paddingBottom: '12px',
     paddingLeft: '20px',
     paddingRight: '20px',
-    animation: 'scrollPrompts 60s linear infinite',
+    animation: `scrollPrompts ${scrollSpeed}s linear infinite`,
     willChange: 'transform',
-  },
+  }),
   promptChip: {
     padding: '12px 24px',
     borderRadius: '24px',
@@ -647,3 +648,5 @@ if (typeof document !== 'undefined') {
   `;
   document.head.appendChild(style);
 }
+
+export default memo(VoiceAssistant);

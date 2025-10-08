@@ -25,6 +25,7 @@ const DEFAULTS = {
   popularSpots: [],
   funFacts: {},
   loyaltyEnabled: true,
+  voicePromptsScrollSpeed: 60, // seconds for full scroll animation
 }
 
 export function useAppSettings() {
