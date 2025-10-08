@@ -13,6 +13,7 @@ import { useQuadrantTouch } from './hooks/useQuadrantTouch';
 import { useTouchSequence } from './hooks/useTouchSequence';
 import { useZPatternGesture } from './hooks/useZPatternGesture';
 import { getSyncService } from './lib/syncService';
+import { LayoutStackProvider } from './hooks/useLayoutStack';
 
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo';
@@ -986,11 +987,6 @@ export default function App() {
           </button>
         ) : (
           <>
-            <TeamCount
-              pins={pinsDeduped}
-              selectedTeam={selectedTeamFilter}
-              onTeamSelect={setSelectedTeamFilter}
-            />
             <button
               type="button"
               aria-pressed={showPopularSpots}
@@ -1087,22 +1083,23 @@ export default function App() {
   }, []);
 
   return (
-    <div
-      className="app"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        height: '-webkit-fill-available',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        overflow: 'hidden',
-        willChange: 'transform',
-      }}
-    >
+    <LayoutStackProvider>
+      <div
+        className="app"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+          height: '-webkit-fill-available',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflow: 'hidden',
+          willChange: 'transform',
+        }}
+      >
       <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
@@ -1519,5 +1516,6 @@ export default function App() {
         <PerformanceDiagnostics />
       )}
     </div>
+    </LayoutStackProvider>
   );
 }

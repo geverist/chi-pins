@@ -25,11 +25,22 @@ export function continentFor(lat, lng) {
 }
 
 export function countByContinent(pins = []) {
-  const counts = { chicago: 0, na: 0, sa: 0, eu: 0, af: 0, as: 0 }
+  const counts = {
+    chicago: 0, na: 0, sa: 0, eu: 0, af: 0, as: 0,
+    // Custom pin styles
+    bears: 0, bulls: 0, cubs: 0, whitesox: 0, blackhawks: 0, chicagostar: 0
+  }
   for (const p of pins) {
-    const { lat, lng } = p || {}
+    const { lat, lng, pinStyle } = p || {}
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
-    counts[continentFor(lat, lng)]++
+
+    // Count by custom pin style if present
+    if (pinStyle && counts.hasOwnProperty(pinStyle)) {
+      counts[pinStyle]++
+    } else {
+      // Otherwise count by continent
+      counts[continentFor(lat, lng)]++
+    }
   }
   return counts
 }

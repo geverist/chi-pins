@@ -38,7 +38,10 @@
       "Bash(./gradlew:*)",
       "Bash(node:*)",
       "Bash(echo:*)",
-      "Bash(/usr/libexec/java_home:*)"
+      "Bash(/usr/libexec/java_home:*)",
+      "Bash(java:*)",
+      "Bash(brew info:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

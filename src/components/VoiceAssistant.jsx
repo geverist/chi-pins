@@ -5,6 +5,7 @@ import { getVoicePrompts } from '../config/voicePrompts';
 import { getEnabledPrompts, getAIInstruction, DEFAULT_CUSTOM_PROMPTS } from '../config/customVoicePrompts';
 import { shouldUseElevenLabs, getElevenLabsOptions, speak as elevenLabsSpeak } from '../lib/elevenlabs';
 import { useAdminSettings } from '../state/useAdminSettings';
+import { useLayoutStack } from '../hooks/useLayoutStack';
 
 /**
  * Voice Assistant Modal Component
@@ -312,37 +313,33 @@ function VoiceAssistant({
     processVoiceCommand(prompt);
   }
 
+  const { getBottomPosition } = useLayoutStack();
+
   if (!enabled) {
     return null;
   }
 
-  // Calculate bottom offset based on visible bars
-  const DOWNLOADING_BAR_HEIGHT = 72;
-  const NOW_PLAYING_HEIGHT = 48;
-  const FOOTER_HEIGHT = 80; // Footer with navigation buttons
-  let bottomOffset = FOOTER_HEIGHT; // Start above footer
-  if (downloadingBarVisible) bottomOffset += DOWNLOADING_BAR_HEIGHT;
-  if (nowPlayingVisible) bottomOffset += NOW_PLAYING_HEIGHT;
+  // Get bottom stack position from layout system
+  const bottomStackHeight = getBottomPosition('footer');
 
-  // Microphone position
-  const microphoneTopPercent = 45; // Position at 45% from top
+  // Microphone position - centered in lower third of screen, above all bottom elements
+  const microphoneBottomPx = bottomStackHeight + 180; // 180px above the bottom stack
 
   // Prompts should be between microphone and footer
-  // Calculate prompts top position (below microphone)
-  const promptsTopPercent = microphoneTopPercent + 15; // 15% below microphone
+  const promptsBottomPx = bottomStackHeight + 80; // 80px above the bottom stack
 
   return (
     <>
       {/* Voice Assistant - just microphone and horizontal scrolling prompts */}
       {isOpen && (
         <>
-          {/* Central Microphone - centered in upper viewport */}
+          {/* Central Microphone - centered in lower viewport, above footer */}
           <div style={{
             ...styles.microphoneWrapper,
-            top: `${microphoneTopPercent}%`,
-            bottom: 'auto',
+            bottom: `${microphoneBottomPx}px`,
+            top: 'auto',
             left: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translateX(-50%)',
           }}>
             <div style={styles.microphoneContainer}>
               <button
@@ -406,11 +403,11 @@ function VoiceAssistant({
             )}
           </div>
 
-          {/* Horizontal Scrolling Prompts - positioned below microphone */}
+          {/* Horizontal Scrolling Prompts - positioned below microphone, above footer */}
           <div style={{
             ...styles.promptsContainer,
-            top: `${promptsTopPercent}%`,
-            bottom: 'auto',
+            bottom: `${promptsBottomPx}px`,
+            top: 'auto',
           }}>
             <div style={styles.promptsList(scrollSpeed)}>
               {/* Double prompts for seamless infinite scroll with -50% translation */}
@@ -466,11 +463,11 @@ const styles = {
   },
   microphoneWrapper: {
     position: 'fixed',
-    top: '70%', // Lowered to show more map
+    // top/bottom set dynamically in component
     left: '50%',
-    transform: 'translate(-50%, -50%)',
-    zIndex: 300, // Above footer/banner (250), independent of UI below
-    pointerEvents: 'none',
+    // transform set dynamically in component
+    zIndex: 400, // Above comments banner (250), footer (50), below header (500)
+    pointerEvents: 'auto', // Make clickable
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -553,12 +550,12 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    top: 'calc(70% + 100px)', // Just below microphone (at 70%)
+    // top/bottom set dynamically in component
     left: 0,
     right: 0,
-    zIndex: 300, // Same level as microphone, above footer (50) and banners (200-250)
+    zIndex: 400, // Same level as microphone, above footer (50) and banners (200-250)
     overflow: 'hidden',
-    pointerEvents: 'none',
+    pointerEvents: 'auto', // Make clickable
     maxHeight: '80px', // Limit height to prevent overlap with footer buttons
   },
   promptsHeader: {

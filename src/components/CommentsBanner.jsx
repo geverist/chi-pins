@@ -1,8 +1,9 @@
 // src/components/CommentsBanner.jsx
 // Scrolling banner that displays random comments from pins
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { filterComments, getRandomComments } from '../config/moderation';
+import { useLayoutStack } from '../hooks/useLayoutStack';
 
 export default function CommentsBanner({
   pins = [],
@@ -11,7 +12,17 @@ export default function CommentsBanner({
   maxComments = 20,
   refreshInterval = 120000, // 2 minutes - rotate comments
 }) {
+  const { getTopPosition, updateHeight } = useLayoutStack();
   const [commentIndex, setCommentIndex] = useState(0);
+  const containerRef = useRef(null);
+
+  // Report height to layout system
+  useEffect(() => {
+    if (containerRef.current) {
+      const height = containerRef.current.offsetHeight;
+      updateHeight('commentsBanner', height);
+    }
+  }, [updateHeight]);
 
   // Extract comments from pins and filter out prohibited content
   const allComments = useMemo(() => {
@@ -36,8 +47,11 @@ export default function CommentsBanner({
   // Double the comments for seamless infinite scroll
   const displayComments = [...allComments, ...allComments];
 
+  // Get position from layout stack
+  const topPosition = getTopPosition('header');
+
   return (
-    <div style={styles.container}>
+    <div ref={containerRef} style={{...styles.container, top: `${topPosition}px`}}>
       <div style={styles.scrollWrapper}>
         <div style={styles.scrollContent(scrollSpeed)} key={commentIndex}>
           {displayComments.map((comment, index) => (
@@ -66,7 +80,7 @@ export default function CommentsBanner({
 const styles = {
   container: {
     position: 'fixed',
-    top: 60, // Below header (which is ~60px tall)
+    // top set dynamically from layout stack
     left: 0,
     right: 0,
     background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%)',
