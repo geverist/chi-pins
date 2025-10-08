@@ -32,13 +32,18 @@ if [ "$DEVICE_COUNT" -eq "0" ]; then
   exit 1
 fi
 
-echo "📤 Pushing APK to kiosk..."
-adb push "/tmp/$APK_NAME" /sdcard/Download/
+echo "📤 Installing APK to kiosk..."
+# Use -r flag to reinstall, keeping app data (including cached map tiles)
+# Use -s to specify device if multiple are connected
+DEVICE_ID=$(adb devices | grep -v "List" | grep "device$" | head -1 | awk '{print $1}')
 
-echo "📲 Installing APK..."
-adb shell am start -a android.intent.action.VIEW -d "file:///sdcard/Download/$APK_NAME" -t application/vnd.android.package-archive
+if [ -z "$DEVICE_ID" ]; then
+  adb install -r "/tmp/$APK_NAME"
+else
+  adb -s "$DEVICE_ID" install -r "/tmp/$APK_NAME"
+fi
 
-echo "✅ Done! APK should be installing on the kiosk now."
+echo "✅ Done! APK installed successfully."
 
 # Cleanup
 rm "/tmp/$APK_NAME"
