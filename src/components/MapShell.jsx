@@ -98,6 +98,8 @@ function GeocoderTopCenter({
   clearToken = 0,
   isMobile = false,
   onSearchInteraction,
+  downloadingBarVisible = false,
+  nowPlayingVisible = false,
 }) {
   const map = useMap();
   const hostRef = useRef(null);
@@ -201,12 +203,20 @@ function GeocoderTopCenter({
       geocoderRef.current = null;
     }
 
+    // Calculate bottom offset based on visible bars
+    const DOWNLOADING_BAR_HEIGHT = 72;
+    const NOW_PLAYING_HEIGHT = 48;
+    let bottomOffset = 0;
+    if (downloadingBarVisible) bottomOffset += DOWNLOADING_BAR_HEIGHT;
+    if (nowPlayingVisible) bottomOffset += NOW_PLAYING_HEIGHT;
+
     const host = L.DomUtil.create('div', 'map-search-host');
     Object.assign(host.style, {
       position: 'absolute',
       left: '50%',
-      top: '10px',
+      bottom: `${10 + bottomOffset}px`,
       transform: 'translateX(-50%)',
+      transition: 'bottom 0.3s ease',
       zIndex: 3600,
       pointerEvents: 'auto',
       maxWidth: 'min(92vw, 720px)',
@@ -575,6 +585,19 @@ function GeocoderTopCenter({
     };
   }, [map, mode, debouncedGeocode, dynamicMode, dynamicPlaceholder]);
 
+  // Update host position when bars visibility changes
+  useEffect(() => {
+    if (!hostRef.current) return;
+
+    const DOWNLOADING_BAR_HEIGHT = 72;
+    const NOW_PLAYING_HEIGHT = 48;
+    let bottomOffset = 0;
+    if (downloadingBarVisible) bottomOffset += DOWNLOADING_BAR_HEIGHT;
+    if (nowPlayingVisible) bottomOffset += NOW_PLAYING_HEIGHT;
+
+    hostRef.current.style.bottom = `${10 + bottomOffset}px`;
+  }, [downloadingBarVisible, nowPlayingVisible]);
+
   useEffect(() => {
     const g = geocoderRef.current;
     const i = inputRef.current;
@@ -734,6 +757,8 @@ export default function MapShell({
   mapReady,
   isMobile,
   onSearchInteraction,
+  downloadingBarVisible = false,
+  nowPlayingVisible = false,
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   // Mobile: zoom 11 (Chicago proper, shows neighborhoods). Desktop: zoom 9 (full metro)
@@ -803,6 +828,8 @@ export default function MapShell({
             clearToken={clearSearchToken}
             isMobile={isMobile}
             onSearchInteraction={onSearchInteraction}
+            downloadingBarVisible={downloadingBarVisible}
+            nowPlayingVisible={nowPlayingVisible}
           />
         )}
         <TapToPlace onPick={onPick} onMapClick={onMapClick} disabled={exploring} mapReady={mapReady} />

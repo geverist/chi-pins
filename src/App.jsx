@@ -1186,6 +1186,8 @@ export default function App() {
           clearSearchToken={clearSearchToken}
           mapReady={mapReady}
           isMobile={isMobile}
+          downloadingBarVisible={downloadingBarVisible}
+          nowPlayingVisible={!isMobile && (currentTrack || queue[0])}
         >
           {(() => {
             const shouldShow = !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots);
@@ -1473,6 +1475,8 @@ export default function App() {
           navSettings={navSettings}
           onPlacePin={handleVoicePlacePin}
           shouldShow={voiceAssistantVisible}
+          downloadingBarVisible={downloadingBarVisible}
+          nowPlayingVisible={!isMobile && (currentTrack || queue[0])}
         />
       )}
 

@@ -21,7 +21,9 @@ function VoiceAssistant({
   navSettings = {},
   onPlacePin = null,
   shouldShow = true,
-  scrollSpeed = 60 // seconds for full scroll animation (configurable in admin)
+  scrollSpeed = 60, // seconds for full scroll animation (configurable in admin)
+  downloadingBarVisible = false,
+  nowPlayingVisible = false,
 }) {
   const [isOpen, setIsOpen] = useState(true); // Show on page load
   const [isListening, setIsListening] = useState(false);
@@ -307,13 +309,26 @@ function VoiceAssistant({
     return null;
   }
 
+  // Calculate bottom offset based on visible bars
+  const DOWNLOADING_BAR_HEIGHT = 72;
+  const NOW_PLAYING_HEIGHT = 48;
+  let bottomOffset = 0;
+  if (downloadingBarVisible) bottomOffset += DOWNLOADING_BAR_HEIGHT;
+  if (nowPlayingVisible) bottomOffset += NOW_PLAYING_HEIGHT;
+
   return (
     <>
       {/* Voice Assistant - just microphone and horizontal scrolling prompts */}
       {isOpen && (
         <>
           {/* Central Microphone - positioned below attractor overlay */}
-          <div style={styles.microphoneWrapper}>
+          <div style={{
+            ...styles.microphoneWrapper,
+            bottom: `${50 + bottomOffset}px`,
+            top: 'auto',
+            transform: 'translate(-50%, 0)',
+            transition: 'bottom 0.3s ease',
+          }}>
             <div style={styles.microphoneContainer}>
               <button
                 style={{
@@ -377,7 +392,12 @@ function VoiceAssistant({
           </div>
 
           {/* Horizontal Scrolling Prompts - positioned below microphone, above footer */}
-          <div style={styles.promptsContainer}>
+          <div style={{
+            ...styles.promptsContainer,
+            top: 'auto',
+            bottom: `${170 + bottomOffset}px`, // 170px above footer to leave room for microphone
+            transition: 'bottom 0.3s ease',
+          }}>
             <div style={styles.promptsList(scrollSpeed)}>
               {/* Double prompts for seamless infinite scroll with -50% translation */}
               {[...suggestedPrompts, ...suggestedPrompts].map((prompt, index) => (
