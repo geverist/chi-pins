@@ -2747,6 +2747,125 @@ export default function AdminPanel({ open, onClose }) {
                 </p>
               </Card>
 
+              <Card title="Voice & TTS Settings">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Configure text-to-speech for voice assistant and phone calls
+                </p>
+
+                <FieldRow label="TTS Provider">
+                  <select
+                    value={settings.ttsProvider || 'browser'}
+                    onChange={(e) => setSettings(s => ({ ...s, ttsProvider: e.target.value }))}
+                    style={{
+                      ...s.input,
+                      width: '100%',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="browser">Browser (Built-in)</option>
+                    <option value="elevenlabs">ElevenLabs</option>
+                  </select>
+                </FieldRow>
+
+                {settings.ttsProvider === 'elevenlabs' && (
+                  <>
+                    <FieldRow label="ElevenLabs API Key">
+                      <input
+                        type="password"
+                        value={settings.elevenlabsApiKey || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, elevenlabsApiKey: e.target.value }))}
+                        placeholder="sk_..."
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+                      Get your API key from <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>elevenlabs.io</a>
+                    </p>
+
+                    <FieldRow label="Voice ID (Kiosk)">
+                      <input
+                        type="text"
+                        value={settings.elevenlabsVoiceId || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, elevenlabsVoiceId: e.target.value }))}
+                        placeholder="21m00Tcm4TlvDq8ikWAM (Rachel)"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+                      Find voice IDs in your <a href="https://elevenlabs.io/app/voice-library" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>ElevenLabs Voice Library</a>
+                    </p>
+
+                    <FieldRow label="Voice ID (Phone)">
+                      <input
+                        type="text"
+                        value={settings.elevenlabsPhoneVoiceId || ''}
+                        onChange={(e) => setSettings(s => ({ ...s, elevenlabsPhoneVoiceId: e.target.value }))}
+                        placeholder="21m00Tcm4TlvDq8ikWAM (same as kiosk or different)"
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+                      Use a different voice for phone calls if desired
+                    </p>
+
+                    <FieldRow label="Model">
+                      <select
+                        value={settings.elevenlabsModel || 'eleven_turbo_v2_5'}
+                        onChange={(e) => setSettings(s => ({ ...s, elevenlabsModel: e.target.value }))}
+                        style={{
+                          ...s.input,
+                          width: '100%',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <option value="eleven_turbo_v2_5">Turbo v2.5 (Fastest, Lowest Latency)</option>
+                        <option value="eleven_turbo_v2">Turbo v2 (Fast)</option>
+                        <option value="eleven_multilingual_v2">Multilingual v2 (Best Quality)</option>
+                        <option value="eleven_monolingual_v1">Monolingual v1 (English Only)</option>
+                      </select>
+                    </FieldRow>
+
+                    <FieldRow label="Stability">
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={settings.elevenlabsStability || 0.5}
+                        onChange={(e) => setSettings(s => ({ ...s, elevenlabsStability: parseFloat(e.target.value) }))}
+                        style={{ width: '100%' }}
+                      />
+                      <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>{settings.elevenlabsStability || 0.5}</span>
+                    </FieldRow>
+
+                    <FieldRow label="Similarity Boost">
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={settings.elevenlabsSimilarity || 0.75}
+                        onChange={(e) => setSettings(s => ({ ...s, elevenlabsSimilarity: parseFloat(e.target.value) }))}
+                        style={{ width: '100%' }}
+                      />
+                      <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>{settings.elevenlabsSimilarity || 0.75}</span>
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                      Stability: Higher = more consistent. Similarity: Higher = closer to original voice.
+                    </p>
+                  </>
+                )}
+              </Card>
+
               <Card title="Media Library">
                 <p style={s.muted}>
                   Upload MP3 audio files for the jukebox. Files are stored in Supabase and played locally.

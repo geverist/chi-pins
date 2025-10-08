@@ -50,11 +50,15 @@ function Footer({
   return (
     <footer
       style={{
+        position: 'fixed',
+        bottom: `${bottomMargin}px`,
+        left: 0,
+        right: 0,
         padding: '12px 16px',
-        marginBottom: `${bottomMargin}px`,
-        transition: 'margin-bottom 0.3s ease',
-        position: 'relative',
+        transition: 'bottom 0.3s ease',
         zIndex: 50, // Above map (0), below download bar (200) and NowPlayingBanner (250)
+        background: 'rgba(17, 24, 39, 0.95)', // Semi-transparent dark background
+        backdropFilter: 'blur(8px)',
       }}
       onClick={handleFooterClick}
       onTouchStart={handleFooterTouch}

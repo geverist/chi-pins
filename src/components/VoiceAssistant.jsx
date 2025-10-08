@@ -3,6 +3,8 @@ import { useState, useEffect, useRef, memo } from 'react';
 import { supabase } from '../lib/supabase';
 import { getVoicePrompts } from '../config/voicePrompts';
 import { getEnabledPrompts, getAIInstruction, DEFAULT_CUSTOM_PROMPTS } from '../config/customVoicePrompts';
+import { shouldUseElevenLabs, getElevenLabsOptions, speak as elevenLabsSpeak } from '../lib/elevenlabs';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 /**
  * Voice Assistant Modal Component
@@ -27,6 +29,7 @@ function VoiceAssistant({
   nowPlayingVisible = false,
   customVoicePrompts = [], // Custom configurable prompts from admin panel
 }) {
+  const { settings: adminSettings } = useAdminSettings();
   const [isOpen, setIsOpen] = useState(true); // Show on page load
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -243,32 +246,34 @@ function VoiceAssistant({
   }
 
   async function speakResponse(text) {
-    return new Promise((resolve) => {
-      setIsSpeaking(true);
+    setIsSpeaking(true);
 
-      if (synthRef.current) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = language;
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
+    try {
+      // Use ElevenLabs if configured, otherwise fall back to browser TTS
+      if (shouldUseElevenLabs(adminSettings)) {
+        const options = getElevenLabsOptions(adminSettings);
+        await elevenLabsSpeak(text, options);
+      } else if (synthRef.current) {
+        // Browser TTS fallback
+        await new Promise((resolve) => {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = language;
+          utterance.rate = 1.0;
+          utterance.pitch = 1.0;
+          utterance.volume = 1.0;
 
-        utterance.onend = () => {
-          setIsSpeaking(false);
-          resolve();
-        };
+          utterance.onend = () => resolve();
+          utterance.onerror = () => resolve();
 
-        utterance.onerror = () => {
-          setIsSpeaking(false);
-          resolve();
-        };
-
-        synthRef.current.speak(utterance);
-      } else {
-        setIsSpeaking(false);
-        resolve();
+          synthRef.current.speak(utterance);
+        });
       }
-    });
+    } catch (error) {
+      console.error('[VoiceAssistant] TTS error:', error);
+      // Fail silently - don't interrupt user experience
+    } finally {
+      setIsSpeaking(false);
+    }
   }
 
   async function startListening() {
@@ -314,22 +319,30 @@ function VoiceAssistant({
   // Calculate bottom offset based on visible bars
   const DOWNLOADING_BAR_HEIGHT = 72;
   const NOW_PLAYING_HEIGHT = 48;
-  let bottomOffset = 0;
+  const FOOTER_HEIGHT = 80; // Footer with navigation buttons
+  let bottomOffset = FOOTER_HEIGHT; // Start above footer
   if (downloadingBarVisible) bottomOffset += DOWNLOADING_BAR_HEIGHT;
   if (nowPlayingVisible) bottomOffset += NOW_PLAYING_HEIGHT;
+
+  // Microphone position
+  const microphoneTopPercent = 45; // Position at 45% from top
+
+  // Prompts should be between microphone and footer
+  // Calculate prompts top position (below microphone)
+  const promptsTopPercent = microphoneTopPercent + 15; // 15% below microphone
 
   return (
     <>
       {/* Voice Assistant - just microphone and horizontal scrolling prompts */}
       {isOpen && (
         <>
-          {/* Central Microphone - positioned below attractor overlay */}
+          {/* Central Microphone - centered in upper viewport */}
           <div style={{
             ...styles.microphoneWrapper,
-            bottom: `${50 + bottomOffset}px`,
-            top: 'auto',
-            transform: 'translate(-50%, 0)',
-            transition: 'bottom 0.3s ease',
+            top: `${microphoneTopPercent}%`,
+            bottom: 'auto',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
           }}>
             <div style={styles.microphoneContainer}>
               <button
@@ -393,12 +406,11 @@ function VoiceAssistant({
             )}
           </div>
 
-          {/* Horizontal Scrolling Prompts - positioned below microphone, above footer */}
+          {/* Horizontal Scrolling Prompts - positioned below microphone */}
           <div style={{
             ...styles.promptsContainer,
-            top: 'auto',
-            bottom: `${170 + bottomOffset}px`, // 170px above footer to leave room for microphone
-            transition: 'bottom 0.3s ease',
+            top: `${promptsTopPercent}%`,
+            bottom: 'auto',
           }}>
             <div style={styles.promptsList(scrollSpeed)}>
               {/* Double prompts for seamless infinite scroll with -50% translation */}
