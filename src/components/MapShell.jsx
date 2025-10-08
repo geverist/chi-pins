@@ -8,6 +8,7 @@ import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
 import 'leaflet-control-geocoder';
 import { CHI, CHI_BOUNDS, CHI_MIN_ZOOM, CHI_MAX_ZOOM, USA, GLOBAL_ZOOM, GLOBAL_MAX_ZOOM } from '../lib/mapUtils';
 import debounce from 'lodash/debounce';
+import { useLayoutStack } from '../hooks/useLayoutStack';
 
 // Fix default marker icon paths (vite)
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -102,6 +103,7 @@ function GeocoderTopCenter({
   nowPlayingVisible = false,
 }) {
   const map = useMap();
+  const { getTopPosition } = useLayoutStack();
   const hostRef = useRef(null);
   const shellRef = useRef(null);
   const geocoderRef = useRef(null);
@@ -203,20 +205,16 @@ function GeocoderTopCenter({
       geocoderRef.current = null;
     }
 
-    // Calculate bottom offset based on visible bars
-    const DOWNLOADING_BAR_HEIGHT = 72;
-    const NOW_PLAYING_HEIGHT = 48;
-    let bottomOffset = 0;
-    if (downloadingBarVisible) bottomOffset += DOWNLOADING_BAR_HEIGHT;
-    if (nowPlayingVisible) bottomOffset += NOW_PLAYING_HEIGHT;
+    // Position search bar below comments banner (which is below header)
+    const topPosition = getTopPosition('commentsBanner') + 10; // 10px spacing
 
     const host = L.DomUtil.create('div', 'map-search-host');
     Object.assign(host.style, {
       position: 'absolute',
       left: '50%',
-      bottom: `${10 + bottomOffset}px`,
+      top: `${topPosition}px`,
       transform: 'translateX(-50%)',
-      transition: 'bottom 0.3s ease',
+      transition: 'top 0.3s ease',
       zIndex: 3600,
       pointerEvents: 'auto',
       maxWidth: 'min(92vw, 720px)',
@@ -586,16 +584,10 @@ function GeocoderTopCenter({
   }, [map, mode, debouncedGeocode, dynamicMode, dynamicPlaceholder]);
 
   // Update host position when bars visibility changes
+  // Search bar is now at top, no need to adjust for bottom bars
+  // Keep the effect for potential future use but make it a no-op
   useEffect(() => {
-    if (!hostRef.current) return;
-
-    const DOWNLOADING_BAR_HEIGHT = 72;
-    const NOW_PLAYING_HEIGHT = 48;
-    let bottomOffset = 0;
-    if (downloadingBarVisible) bottomOffset += DOWNLOADING_BAR_HEIGHT;
-    if (nowPlayingVisible) bottomOffset += NOW_PLAYING_HEIGHT;
-
-    hostRef.current.style.bottom = `${10 + bottomOffset}px`;
+    // Search bar position is fixed at top, no adjustments needed
   }, [downloadingBarVisible, nowPlayingVisible]);
 
   useEffect(() => {

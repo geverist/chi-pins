@@ -884,6 +884,166 @@ export default function VoiceAgentTab() {
             </div>
           </Card>
 
+          <Card title="AI Conversation Model Configuration">
+            <div style={{ display: 'grid', gap: 16 }}>
+              <div style={{ padding: 12, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                <div style={{ fontSize: 13, color: '#93c5fd', marginBottom: 4 }}>
+                  🤖 AI Conversation Engine
+                </div>
+                <div style={{ fontSize: 12, color: '#d1d5db' }}>
+                  Configure which AI model powers your voice agent's conversation intelligence. Different models offer varying capabilities, speeds, and costs.
+                </div>
+              </div>
+
+              <div>
+                <label style={label}>AI Provider</label>
+                <select
+                  value={phoneNumber.ai_provider || 'anthropic'}
+                  onChange={async (e) => {
+                    const provider = e.target.value
+                    // Set default models for each provider
+                    const defaultModels = {
+                      anthropic: 'claude-3-5-sonnet-20241022',
+                      openai: 'gpt-4o',
+                      google: 'gemini-1.5-pro',
+                      azure: 'gpt-4'
+                    }
+                    const { error } = await supabase
+                      .from('phone_numbers')
+                      .update({
+                        ai_provider: provider,
+                        ai_model: defaultModels[provider]
+                      })
+                      .eq('id', phoneNumber.id)
+                    if (!error) await loadVoiceAgentData()
+                  }}
+                  style={selectStyle}
+                >
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="openai">OpenAI (GPT)</option>
+                  <option value="google">Google (Gemini)</option>
+                  <option value="azure">Azure OpenAI</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={label}>AI Model</label>
+                <select
+                  value={phoneNumber.ai_model || 'claude-3-5-sonnet-20241022'}
+                  onChange={async (e) => {
+                    const { error } = await supabase
+                      .from('phone_numbers')
+                      .update({ ai_model: e.target.value })
+                      .eq('id', phoneNumber.id)
+                    if (!error) await loadVoiceAgentData()
+                  }}
+                  style={selectStyle}
+                >
+                  {phoneNumber.ai_provider === 'anthropic' && (
+                    <>
+                      <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Recommended)</option>
+                      <option value="claude-3-opus-20240229">Claude 3 Opus (Most Capable)</option>
+                      <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                      <option value="claude-3-haiku-20240307">Claude 3 Haiku (Fastest)</option>
+                    </>
+                  )}
+                  {phoneNumber.ai_provider === 'openai' && (
+                    <>
+                      <option value="gpt-4o">GPT-4o (Recommended)</option>
+                      <option value="gpt-4o-mini">GPT-4o Mini (Fast & Affordable)</option>
+                      <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                      <option value="gpt-4">GPT-4</option>
+                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</option>
+                    </>
+                  )}
+                  {phoneNumber.ai_provider === 'google' && (
+                    <>
+                      <option value="gemini-1.5-pro">Gemini 1.5 Pro (Recommended)</option>
+                      <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fastest)</option>
+                      <option value="gemini-pro">Gemini Pro</option>
+                    </>
+                  )}
+                  {phoneNumber.ai_provider === 'azure' && (
+                    <>
+                      <option value="gpt-4">GPT-4 (Azure)</option>
+                      <option value="gpt-4-turbo">GPT-4 Turbo (Azure)</option>
+                      <option value="gpt-35-turbo">GPT-3.5 Turbo (Azure)</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label style={label}>Temperature ({phoneNumber.ai_temperature || 0.7})</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="0.1"
+                  value={phoneNumber.ai_temperature || 0.7}
+                  onChange={async (e) => {
+                    const { error } = await supabase
+                      .from('phone_numbers')
+                      .update({ ai_temperature: parseFloat(e.target.value) })
+                      .eq('id', phoneNumber.id)
+                    if (!error) await loadVoiceAgentData()
+                  }}
+                  style={{
+                    width: '100%',
+                    height: 8,
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    borderRadius: 4,
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                  <span>0.0 (Focused)</span>
+                  <span>1.0 (Balanced)</span>
+                  <span>2.0 (Creative)</span>
+                </div>
+                <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 8 }}>
+                  Lower values make responses more consistent and focused. Higher values increase creativity and variability.
+                </div>
+              </div>
+
+              <div>
+                <label style={label}>Max Response Tokens</label>
+                <select
+                  value={phoneNumber.ai_max_tokens || 1024}
+                  onChange={async (e) => {
+                    const { error } = await supabase
+                      .from('phone_numbers')
+                      .update({ ai_max_tokens: parseInt(e.target.value) })
+                      .eq('id', phoneNumber.id)
+                    if (!error) await loadVoiceAgentData()
+                  }}
+                  style={selectStyle}
+                >
+                  <option value="512">512 tokens (Short responses)</option>
+                  <option value="1024">1024 tokens (Recommended)</option>
+                  <option value="2048">2048 tokens (Detailed responses)</option>
+                  <option value="4096">4096 tokens (Very detailed)</option>
+                </select>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
+                  Roughly 750 tokens = 1 minute of speech
+                </div>
+              </div>
+
+              <div style={{ padding: 12, background: 'rgba(251, 191, 36, 0.1)', borderRadius: 6, border: '1px solid rgba(251, 191, 36, 0.3)' }}>
+                <div style={{ fontSize: 12, color: '#fbbf24', marginBottom: 4 }}>
+                  💡 Model Selection Tips
+                </div>
+                <ul style={{ fontSize: 11, color: '#d1d5db', margin: '4px 0', paddingLeft: 20 }}>
+                  <li>Claude 3.5 Sonnet: Best for natural conversations, tool use</li>
+                  <li>GPT-4o: Fast, multimodal, good for complex tasks</li>
+                  <li>Gemini 1.5 Pro: Long context, good for knowledge-heavy calls</li>
+                  <li>Haiku/Mini/Flash: Budget-friendly, faster response times</li>
+                </ul>
+              </div>
+            </div>
+          </Card>
+
           <Card title="Text-to-Speech (TTS) Configuration">
             <div style={{ display: 'grid', gap: 16 }}>
               <div>

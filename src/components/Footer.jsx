@@ -1,7 +1,8 @@
 // src/components/Footer.jsx
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import Editor from './Editor';
 import { btn3d } from '../lib/styles';
+import { useLayoutStack } from '../hooks/useLayoutStack';
 
 const DOWNLOADING_BAR_HEIGHT = 72; // Must match OfflineMapDownloader.jsx
 const NOW_PLAYING_HEIGHT = 48; // NowPlayingBanner height (desktop)
@@ -40,18 +41,29 @@ function Footer({
   downloadingBarVisible = false,
   nowPlayingVisible = false,
 }) {
+  const { getBottomPosition, updateHeight } = useLayoutStack();
+  const footerRef = useRef(null);
+
+  // Report heights to layout system
+  useEffect(() => {
+    updateHeight('downloadingBar', downloadingBarVisible ? DOWNLOADING_BAR_HEIGHT : 0);
+    updateHeight('nowPlaying', nowPlayingVisible ? NOW_PLAYING_HEIGHT : 0);
+    if (footerRef.current) {
+      updateHeight('footer', footerRef.current.offsetHeight);
+    }
+  }, [downloadingBarVisible, nowPlayingVisible, updateHeight]);
+
   if (isMobile) return null;
 
-  // Calculate bottom margin based on which bars are visible
-  let bottomMargin = 0;
-  if (downloadingBarVisible) bottomMargin += DOWNLOADING_BAR_HEIGHT;
-  if (nowPlayingVisible) bottomMargin += NOW_PLAYING_HEIGHT;
+  // Get position from layout stack
+  const bottomPosition = getBottomPosition('nowPlaying');
 
   return (
     <footer
+      ref={footerRef}
       style={{
         position: 'fixed',
-        bottom: `${bottomMargin}px`,
+        bottom: `${bottomPosition}px`,
         left: 0,
         right: 0,
         padding: '12px 16px',
@@ -78,8 +90,10 @@ function Footer({
               style={{
                 display: 'flex',
                 justifyContent: 'center',
-                gap: 18,
-                flexWrap: 'wrap',
+                gap: 8,
+                flexWrap: 'nowrap',
+                overflow: 'hidden',
+                minWidth: 0,
               }}
               data-no-admin-tap
             >
@@ -119,7 +133,7 @@ function Footer({
                   className="btn-kiosk"
                   aria-label="Order from Chicago Mike's"
                 >
-                  🍕 Order Now
+                  🍕 Order
                 </button>
               )}
               {navSettings.photobooth_enabled && (
@@ -132,7 +146,7 @@ function Footer({
                   className="btn-kiosk"
                   aria-label="Photo Booth"
                 >
-                  📸 Photo Booth
+                  📸 Photos
                 </button>
               )}
               {navSettings.thenandnow_enabled && (
@@ -145,7 +159,7 @@ function Footer({
                   className="btn-kiosk"
                   aria-label="Then & Now Photos"
                 >
-                  🏛️ Then & Now
+                  🏛️ Then&Now
                 </button>
               )}
               {navSettings.comments_enabled && (
@@ -158,7 +172,7 @@ function Footer({
                   className="btn-kiosk"
                   aria-label="Leave Feedback"
                 >
-                  💬 Leave Feedback
+                  💬 Feedback
                 </button>
               )}
               {navSettings.recommendations_enabled && (
@@ -171,7 +185,7 @@ function Footer({
                   className="btn-kiosk"
                   aria-label="Local Recommendations"
                 >
-                  🗺️ Recommendations
+                  🗺️ Explore
                 </button>
               )}
               {navSettings.appointment_checkin_enabled && (
@@ -226,7 +240,7 @@ function Footer({
                       className="btn-kiosk"
                       aria-label="Explore community pins"
                     >
-                      🔎 Explore Pins
+                      🔎 Pins
                     </button>
                   ) : (
                     <button
@@ -238,7 +252,7 @@ function Footer({
                       className="btn-kiosk"
                       aria-label="Close explore mode"
                     >
-                      ✖ Close Explore
+                      ✖ Close
                     </button>
                   )}
                 </>

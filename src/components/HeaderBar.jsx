@@ -4,12 +4,19 @@ import { useLogo } from '../hooks/useLogo'
 import defaultLogoUrl from '../assets/logo.png'
 
 const PIN_COLOR = {
-  chicago:  '#0ea5e9',
-  na:       '#3b82f6',
-  sa:       '#ef4444',
-  eu:       '#22c55e',
-  af:       '#f59e0b',
-  as:       '#a855f7',
+  chicago:      '#0ea5e9',
+  na:           '#3b82f6',
+  sa:           '#ef4444',
+  eu:           '#22c55e',
+  af:           '#f59e0b',
+  as:           '#a855f7',
+  // Custom pin styles
+  bears:        '#0B162A',
+  bulls:        '#CE1141',
+  cubs:         '#0E3386',
+  whitesox:     '#27251F',
+  blackhawks:   '#CF0A2C',
+  chicagostar:  '#B3DDF2',
 }
 
 function InlineCount({ color, label, count, onClick }) {
@@ -219,15 +226,25 @@ export default function HeaderBar({
       </div>
 
       {/* Right: continent counts (inline, no boxes) + children + switch */}
-      <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'nowrap', overflow:'hidden', minWidth:0 }}>
         {mapMode === 'global' && continentCounts && (
-          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-            <InlineCount color={PIN_COLOR.chicago} label="Chicago"       count={continentCounts.chicago} onClick={() => onContinentClick?.('chicago')} />
-            <InlineCount color={PIN_COLOR.na}      label="North America" count={continentCounts.na}      onClick={() => onContinentClick?.('na')} />
-            <InlineCount color={PIN_COLOR.sa}      label="South America" count={continentCounts.sa}      onClick={() => onContinentClick?.('sa')} />
-            <InlineCount color={PIN_COLOR.eu}      label="Europe"        count={continentCounts.eu}      onClick={() => onContinentClick?.('eu')} />
-            <InlineCount color={PIN_COLOR.as}      label="Asia"          count={continentCounts.as}      onClick={() => onContinentClick?.('as')} />
-            <InlineCount color={PIN_COLOR.af}      label="Africa"        count={continentCounts.af}      onClick={() => onContinentClick?.('af')} />
+          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'nowrap', overflow:'hidden' }}>
+            <InlineCount color={PIN_COLOR.chicago} label="CHI"       count={continentCounts.chicago} onClick={() => onContinentClick?.('chicago')} />
+            <InlineCount color={PIN_COLOR.na}      label="N.Am" count={continentCounts.na}      onClick={() => onContinentClick?.('na')} />
+            <InlineCount color={PIN_COLOR.sa}      label="S.Am" count={continentCounts.sa}      onClick={() => onContinentClick?.('sa')} />
+            <InlineCount color={PIN_COLOR.eu}      label="EUR"        count={continentCounts.eu}      onClick={() => onContinentClick?.('eu')} />
+            <InlineCount color={PIN_COLOR.as}      label="ASIA"          count={continentCounts.as}      onClick={() => onContinentClick?.('as')} />
+            <InlineCount color={PIN_COLOR.af}      label="AFR"        count={continentCounts.af}      onClick={() => onContinentClick?.('af')} />
+          </div>
+        )}
+        {mapMode === 'chicago' && continentCounts && (
+          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'nowrap', overflow:'hidden' }}>
+            {continentCounts.bears > 0 && <InlineCount color={PIN_COLOR.bears} label="🐻" count={continentCounts.bears} />}
+            {continentCounts.bulls > 0 && <InlineCount color={PIN_COLOR.bulls} label="🐂" count={continentCounts.bulls} />}
+            {continentCounts.cubs > 0 && <InlineCount color={PIN_COLOR.cubs} label="⚾" count={continentCounts.cubs} />}
+            {continentCounts.whitesox > 0 && <InlineCount color={PIN_COLOR.whitesox} label="⚪" count={continentCounts.whitesox} />}
+            {continentCounts.blackhawks > 0 && <InlineCount color={PIN_COLOR.blackhawks} label="🏒" count={continentCounts.blackhawks} />}
+            {continentCounts.chicagostar > 0 && <InlineCount color={PIN_COLOR.chicagostar} label="⭐" count={continentCounts.chicagostar} />}
           </div>
         )}
 

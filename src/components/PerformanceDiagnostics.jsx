@@ -144,7 +144,7 @@ export default function PerformanceDiagnostics() {
 
           <div style={{ marginBottom: 8 }}>
             <strong style={{ color: longTasks.length > 0 ? '#ff0000' : '#00ff00' }}>
-              Long Tasks (>50ms blocking):
+              Long Tasks (&gt;50ms blocking):
             </strong>
             <div>{stats.longTasks.count} tasks</div>
             {stats.longTasks.avg > 0 && (
@@ -239,7 +239,7 @@ export default function PerformanceDiagnostics() {
           <li>Red long tasks = UI is frozen during these</li>
           <li>If you tap a button and see pointerdown but NO click = event consumed</li>
           <li>If target shows wrong element = something is covering the button</li>
-          <li>Database sync >1000ms = blocking UI thread</li>
+          <li>Database sync &gt;1000ms = blocking UI thread</li>
         </ul>
       </div>
     </div>

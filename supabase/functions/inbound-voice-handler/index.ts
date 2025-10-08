@@ -7,6 +7,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
+const openaiApiKey = Deno.env.get('OPENAI_API_KEY') ?? '';
+const googleApiKey = Deno.env.get('GOOGLE_API_KEY') ?? '';
+const azureApiKey = Deno.env.get('AZURE_OPENAI_API_KEY') ?? '';
+const azureEndpoint = Deno.env.get('AZURE_OPENAI_ENDPOINT') ?? '';
 
 serve(async (req) => {
   try {
@@ -24,7 +28,7 @@ serve(async (req) => {
     // Identify tenant from phone number
     const { data: phoneNumber, error: phoneError } = await supabase
       .from('phone_numbers')
-      .select('id, tenant_id, greeting_message, voice_type')
+      .select('id, tenant_id, greeting_message, voice_type, ai_provider, ai_model, ai_temperature, ai_max_tokens')
       .eq('phone_number', to)
       .eq('status', 'active')
       .single();
@@ -102,7 +106,11 @@ serve(async (req) => {
       knowledge || [],
       conversationHistory,
       isOpen,
-      speechResult
+      speechResult,
+      phoneNumber.ai_provider || 'anthropic',
+      phoneNumber.ai_model || 'claude-3-5-sonnet-20241022',
+      phoneNumber.ai_temperature || 0.7,
+      phoneNumber.ai_max_tokens || 1024
     );
 
     // Add AI response to conversation
@@ -138,14 +146,18 @@ serve(async (req) => {
   }
 });
 
-// Generate AI response using Claude
+// Generate AI response using configured provider
 async function generateAIResponse(
   businessName: string,
   industry: string,
   knowledge: any[],
   conversationHistory: any[],
   isOpen: boolean,
-  userInput: string
+  userInput: string,
+  provider: string = 'anthropic',
+  model: string = 'claude-3-5-sonnet-20241022',
+  temperature: number = 0.7,
+  maxTokens: number = 1024
 ) {
   // Build knowledge base context
   const knowledgeContext = knowledge.map(k =>
@@ -184,26 +196,25 @@ Respond with a JSON object:
 }`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicApiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: conversationHistory.filter(m => m.role).map(m => ({
-          role: m.role === 'user' ? 'user' : 'assistant',
-          content: m.content
-        }))
-      })
-    });
+    let aiText = '';
 
-    const data = await response.json();
-    const aiText = data.content[0].text;
+    // Call the appropriate AI provider
+    switch (provider) {
+      case 'anthropic':
+        aiText = await callAnthropic(model, systemPrompt, conversationHistory, temperature, maxTokens);
+        break;
+      case 'openai':
+        aiText = await callOpenAI(model, systemPrompt, conversationHistory, temperature, maxTokens);
+        break;
+      case 'google':
+        aiText = await callGoogle(model, systemPrompt, conversationHistory, temperature, maxTokens);
+        break;
+      case 'azure':
+        aiText = await callAzure(model, systemPrompt, conversationHistory, temperature, maxTokens);
+        break;
+      default:
+        throw new Error(`Unsupported AI provider: ${provider}`);
+    }
 
     // Try to parse JSON response
     try {
@@ -226,6 +237,148 @@ Respond with a JSON object:
       action: 'voicemail'
     };
   }
+}
+
+// Call Anthropic Claude API
+async function callAnthropic(
+  model: string,
+  systemPrompt: string,
+  conversationHistory: any[],
+  temperature: number,
+  maxTokens: number
+): Promise<string> {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': anthropicApiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: maxTokens,
+      temperature,
+      system: systemPrompt,
+      messages: conversationHistory.filter(m => m.role).map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content
+      }))
+    })
+  });
+
+  const data = await response.json();
+  return data.content[0].text;
+}
+
+// Call OpenAI GPT API
+async function callOpenAI(
+  model: string,
+  systemPrompt: string,
+  conversationHistory: any[],
+  temperature: number,
+  maxTokens: number
+): Promise<string> {
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...conversationHistory.filter(m => m.role).map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content
+    }))
+  ];
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openaiApiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature,
+      max_tokens: maxTokens
+    })
+  });
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// Call Google Gemini API
+async function callGoogle(
+  model: string,
+  systemPrompt: string,
+  conversationHistory: any[],
+  temperature: number,
+  maxTokens: number
+): Promise<string> {
+  // Gemini API uses a different format - combine system prompt with conversation
+  const contents = [
+    {
+      role: 'user',
+      parts: [{ text: systemPrompt }]
+    },
+    ...conversationHistory.filter(m => m.role).map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    }))
+  ];
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleApiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature,
+          maxOutputTokens: maxTokens
+        }
+      })
+    }
+  );
+
+  const data = await response.json();
+  return data.candidates[0].content.parts[0].text;
+}
+
+// Call Azure OpenAI API
+async function callAzure(
+  model: string,
+  systemPrompt: string,
+  conversationHistory: any[],
+  temperature: number,
+  maxTokens: number
+): Promise<string> {
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...conversationHistory.filter(m => m.role).map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content
+    }))
+  ];
+
+  const response = await fetch(
+    `${azureEndpoint}/openai/deployments/${model}/chat/completions?api-version=2024-02-15-preview`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': azureApiKey
+      },
+      body: JSON.stringify({
+        messages,
+        temperature,
+        max_tokens: maxTokens
+      })
+    }
+  );
+
+  const data = await response.json();
+  return data.choices[0].message.content;
 }
 
 // Generate TwiML response
