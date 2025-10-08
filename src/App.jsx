@@ -50,7 +50,7 @@ import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
 import NowPlayingBanner from './components/NowPlayingBanner';
 import GlobalAudioPlayer from './components/GlobalAudioPlayer';
-import PhotoBooth from './components/PhotoBooth';
+import EnhancedPhotoBooth from './components/EnhancedPhotoBooth';
 import ThenAndNow from './components/ThenAndNow';
 import { initRemoteLogger } from './utils/remoteLogger';
 import WeatherWidget from './components/WeatherWidget';
@@ -1394,7 +1394,7 @@ export default function App() {
       )}
 
       {photoBoothOpen && (!isDemoMode || industryConfig.enabledFeatures.photoBooth) && (
-        <PhotoBooth onClose={() => setPhotoBoothOpen(false)} />
+        <EnhancedPhotoBooth onClose={() => setPhotoBoothOpen(false)} />
       )}
 
       {thenAndNowOpen && (!isDemoMode || industryConfig.enabledFeatures.thenAndNow) && (
