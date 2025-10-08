@@ -219,17 +219,43 @@ class LocalDatabase {
   }
 
   /**
-   * Bulk insert/update pins
+   * Bulk insert/update pins (optimized batch insert)
    */
   async bulkUpsertPins(pins) {
     if (!this.isAvailable() || !pins.length) return;
 
     try {
-      for (const pin of pins) {
-        await this.upsertPin(pin);
+      // Use transaction for better performance
+      await this.db.execute('BEGIN TRANSACTION');
+
+      const sql = `
+        INSERT OR REPLACE INTO pins (
+          id, user_id, lat, lng, team, name, neighborhood,
+          hotdog, note, photo, continent, created_at, updated_at, synced_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `;
+
+      // Batch insert in chunks of 100 to avoid memory issues and allow UI updates
+      const chunkSize = 100;
+      for (let i = 0; i < pins.length; i += chunkSize) {
+        const chunk = pins.slice(i, i + chunkSize);
+
+        for (const pin of chunk) {
+          await this.db.run(sql, [
+            pin.id, pin.user_id, pin.lat, pin.lng, pin.team,
+            pin.name, pin.neighborhood, pin.hotdog, pin.note,
+            pin.photo, pin.continent, pin.created_at, pin.updated_at,
+          ]);
+        }
+
+        // Yield to UI thread between chunks
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
+
+      await this.db.execute('COMMIT');
       console.log(`[LocalDB] Synced ${pins.length} pins`);
     } catch (error) {
+      await this.db.execute('ROLLBACK');
       console.error('[LocalDB] Failed to bulk upsert pins:', error);
     }
   }
