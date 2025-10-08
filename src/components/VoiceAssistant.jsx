@@ -379,8 +379,8 @@ function VoiceAssistant({
           {/* Horizontal Scrolling Prompts - positioned below microphone, above footer */}
           <div style={styles.promptsContainer}>
             <div style={styles.promptsList(scrollSpeed)}>
-              {/* Quadruple prompts for seamless infinite scroll */}
-              {[...suggestedPrompts, ...suggestedPrompts, ...suggestedPrompts, ...suggestedPrompts].map((prompt, index) => (
+              {/* Double prompts for seamless infinite scroll with -50% translation */}
+              {[...suggestedPrompts, ...suggestedPrompts].map((prompt, index) => (
                 <button
                   key={index}
                   style={styles.promptChip}
@@ -613,7 +613,7 @@ if (typeof document !== 'undefined') {
 
     @keyframes scrollPrompts {
       0% { transform: translateX(0); }
-      100% { transform: translateX(-25%); }
+      100% { transform: translateX(-50%); }
     }
 
     /* Hide scrollbar but keep scrolling functionality */
