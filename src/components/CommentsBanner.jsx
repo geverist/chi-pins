@@ -66,11 +66,11 @@ export default function CommentsBanner({
 const styles = {
   container: {
     position: 'fixed',
-    top: 0,
+    top: 60, // Below header (which is ~60px tall)
     left: 0,
     right: 0,
     background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%)',
-    zIndex: 400, // Above voice assistant (300), below admin (9999)
+    zIndex: 400, // Above voice assistant (300), below header (500), below admin (9999)
     overflow: 'hidden',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
   },

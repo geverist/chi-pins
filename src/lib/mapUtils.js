@@ -1,5 +1,6 @@
 // src/lib/mapUtils.js
 import L from 'leaflet';
+import { getPinStyle } from '../config/pinStyles';
 
 /* ---------- Camera / bounds constants ---------- */
 export const CHI = { lat: 41.8781, lng: -87.6298 };
@@ -205,19 +206,14 @@ export const TEAM_COLOR = {
 const STEM_ANGLE_DEG = 8;
 
 export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = null) {
-  // Import pin styles dynamically to get custom colors
+  // Use pin style colors if available
   let color = TEAM_COLOR[team] || TEAM_COLOR.other;
 
   // Override with custom pin style color if available
   if (pinStyle) {
-    try {
-      const { getPinStyle } = require('../config/pinStyles');
-      const style = getPinStyle(pinStyle);
-      if (style?.colors?.primary) {
-        color = style.colors.primary;
-      }
-    } catch (e) {
-      // Fall back to team color if pin styles not available
+    const style = getPinStyle(pinStyle);
+    if (style?.colors?.primary) {
+      color = style.colors.primary;
     }
   }
   const ICON_W = 30, ICON_H = 46;

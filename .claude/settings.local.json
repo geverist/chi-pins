@@ -35,7 +35,10 @@
       "Bash(awk:*)",
       "Bash(npm run dev:*)",
       "Bash(npm run build:*)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "Bash(node:*)",
+      "Bash(echo:*)",
+      "Bash(/usr/libexec/java_home:*)"
     ],
     "deny": [],
     "ask": []
