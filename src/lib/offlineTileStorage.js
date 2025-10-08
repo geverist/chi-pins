@@ -470,6 +470,9 @@ class OfflineTileStorage {
       if (completed % 50 === 0) {
         console.log(`[OfflineTileStorage] Progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%)`);
       }
+
+      // Small delay between batches to prevent UI blocking
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
 
     const stats = {
@@ -558,6 +561,9 @@ class OfflineTileStorage {
       if (completed % 50 === 0) {
         console.log(`[OfflineTileStorage] Global progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%)`);
       }
+
+      // Small delay between batches to prevent UI blocking
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
 
     const stats = {
