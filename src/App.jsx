@@ -11,6 +11,7 @@ import { useHighlightPin } from './hooks/useHighlightPin';
 import { useQuadrantTouch } from './hooks/useQuadrantTouch';
 import { useTouchSequence } from './hooks/useTouchSequence';
 import { useZPatternGesture } from './hooks/useZPatternGesture';
+import { getSyncService } from './lib/syncService';
 
 // geo / map helpers
 import { continentFor, countByContinent } from './lib/geo';
@@ -297,6 +298,12 @@ export default function App() {
 
     // Initialize remote logger for debugging
     initRemoteLogger();
+
+    // Start background sync service for SQLite cache
+    const syncService = getSyncService();
+    syncService.start().catch(err => {
+      console.error('[App] Failed to start sync service:', err);
+    });
 
     // Enable Android immersive mode to hide navigation/status bars
     enableImmersiveMode();
@@ -1048,11 +1055,18 @@ export default function App() {
     if (shouldCountTap(e)) registerTap();
   };
 
-  // Four-quadrant touch to open admin panel (legacy)
-  useQuadrantTouch(() => {
-    console.log('Four quadrant touch detected - opening admin panel');
-    setAdminOpen(true);
-  }, !adminOpen); // Only enable when admin panel is closed
+  // Four-quadrant touch: quick=admin panel, hold 3s=refresh app
+  useQuadrantTouch(
+    () => {
+      console.log('Four quadrant quick touch - opening admin panel');
+      setAdminOpen(true);
+    },
+    !adminOpen, // Only enable when admin panel is closed
+    () => {
+      console.log('Four quadrant hold - refreshing app');
+      window.location.reload();
+    }
+  );
 
   // Z-pattern gesture to open admin panel (new method)
   useZPatternGesture(() => {
