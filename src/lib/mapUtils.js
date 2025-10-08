@@ -186,7 +186,7 @@ export function centerAndFitMiles(map, center, miles) {
   map.fitBounds(b, { animate: true });
   const z = map.getZoom();
   map.setView([c.lat, c.lng], z, { animate: true });
-  setTimeout(() => map.invalidateSize(), 300);
+  // Skip invalidateSize to prevent tile refresh
 }
 
 /* ---------- Push-pin SVG + Leaflet icons ---------- */
@@ -320,7 +320,7 @@ export function setChicagoMode(map) {
   map.setMinZoom(CHI_MIN_ZOOM);
   map.setMaxZoom(CHI_MAX_ZOOM);
   map.setMaxBounds(null);
-  setTimeout(() => map.invalidateSize(), 300);
+  // Skip invalidateSize to prevent tile refresh
 }
 
 export function setGlobalMode(map) {
@@ -328,5 +328,5 @@ export function setGlobalMode(map) {
   map.setMaxBounds(null);
   map.setMinZoom(2);
   map.setMaxZoom(GLOBAL_MAX_ZOOM);
-  setTimeout(() => map.invalidateSize(), 300);
+  // Skip invalidateSize to prevent tile refresh
 }
