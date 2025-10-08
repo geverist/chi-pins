@@ -85,7 +85,7 @@ jobs:
         retention-days: 30
 
     - name: Save keystore for future use (first build only)
-      if: secrets.RELEASE_KEYSTORE_BASE64 == ''
+      if: ${{ secrets.RELEASE_KEYSTORE_BASE64 == '' }}
       run: |
         echo "::warning::IMPORTANT: Save this keystore to GitHub Secrets!"
         echo "Run this command and add output as RELEASE_KEYSTORE_BASE64 secret:"
