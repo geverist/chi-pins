@@ -6,9 +6,41 @@ class PerformanceMonitor {
       tileLoadTimes: [],
       apiCallTimes: [],
       renderTimes: [],
+      syncTimes: [],
+      databaseOps: [],
+      longTasks: [],
     };
 
     this.enabled = localStorage.getItem('perfMonitor') === 'true';
+
+    // Track long tasks (>50ms) that block the main thread
+    if (typeof PerformanceObserver !== 'undefined') {
+      try {
+        this.longTaskObserver = new PerformanceObserver((list) => {
+          if (!this.enabled) return;
+
+          for (const entry of list.getEntries()) {
+            if (entry.duration > 50) {
+              this.metrics.longTasks.push({
+                duration: entry.duration,
+                timestamp: Date.now(),
+                name: entry.name,
+              });
+
+              if (this.metrics.longTasks.length > 50) {
+                this.metrics.longTasks.shift();
+              }
+
+              console.warn(`[PerfMonitor] Long task detected: ${entry.duration.toFixed(0)}ms - ${entry.name}`);
+            }
+          }
+        });
+
+        this.longTaskObserver.observe({ entryTypes: ['longtask'] });
+      } catch (e) {
+        console.log('[PerfMonitor] Long task observer not supported');
+      }
+    }
   }
 
   enable() {
@@ -84,6 +116,48 @@ class PerformanceMonitor {
     }
   }
 
+  // Track database sync performance
+  trackSync(operation, startTime, recordCount = 0) {
+    if (!this.enabled) return;
+
+    const duration = performance.now() - startTime;
+    this.metrics.syncTimes.push({
+      operation,
+      duration,
+      recordCount,
+      timestamp: Date.now(),
+    });
+
+    if (this.metrics.syncTimes.length > 50) {
+      this.metrics.syncTimes.shift();
+    }
+
+    if (duration > 1000) {
+      console.warn(`[PerfMonitor] Slow sync: ${operation} (${recordCount} records) took ${duration.toFixed(0)}ms`);
+    }
+  }
+
+  // Track individual database operations
+  trackDatabaseOp(operation, startTime, table = '') {
+    if (!this.enabled) return;
+
+    const duration = performance.now() - startTime;
+    this.metrics.databaseOps.push({
+      operation,
+      table,
+      duration,
+      timestamp: Date.now(),
+    });
+
+    if (this.metrics.databaseOps.length > 100) {
+      this.metrics.databaseOps.shift();
+    }
+
+    if (duration > 500) {
+      console.warn(`[PerfMonitor] Slow database op: ${operation} on ${table} took ${duration.toFixed(0)}ms`);
+    }
+  }
+
   // Get statistics
   getStats() {
     const calcStats = (arr) => {
@@ -101,6 +175,9 @@ class PerformanceMonitor {
       tiles: calcStats(this.metrics.tileLoadTimes),
       api: calcStats(this.metrics.apiCallTimes),
       renders: calcStats(this.metrics.renderTimes),
+      syncs: calcStats(this.metrics.syncTimes),
+      databaseOps: calcStats(this.metrics.databaseOps),
+      longTasks: calcStats(this.metrics.longTasks),
     };
   }
 
@@ -132,6 +209,24 @@ class PerformanceMonitor {
       min: `${stats.renders.min.toFixed(0)}ms`,
       max: `${stats.renders.max.toFixed(0)}ms`,
     });
+    console.log('Database Syncs:', {
+      count: stats.syncs.count,
+      avg: `${stats.syncs.avg.toFixed(0)}ms`,
+      min: `${stats.syncs.min.toFixed(0)}ms`,
+      max: `${stats.syncs.max.toFixed(0)}ms`,
+    });
+    console.log('Database Operations:', {
+      count: stats.databaseOps.count,
+      avg: `${stats.databaseOps.avg.toFixed(0)}ms`,
+      min: `${stats.databaseOps.min.toFixed(0)}ms`,
+      max: `${stats.databaseOps.max.toFixed(0)}ms`,
+    });
+    console.log('Long Tasks (>50ms blocking):', {
+      count: stats.longTasks.count,
+      avg: `${stats.longTasks.avg.toFixed(0)}ms`,
+      min: `${stats.longTasks.min.toFixed(0)}ms`,
+      max: `${stats.longTasks.max.toFixed(0)}ms`,
+    });
     console.log('========================');
   }
 
@@ -141,6 +236,9 @@ class PerformanceMonitor {
       tileLoadTimes: [],
       apiCallTimes: [],
       renderTimes: [],
+      syncTimes: [],
+      databaseOps: [],
+      longTasks: [],
     };
     console.log('[PerfMonitor] Metrics cleared');
   }

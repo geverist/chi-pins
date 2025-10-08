@@ -1,6 +1,7 @@
 // src/lib/syncService.js
 import { supabase } from './supabase';
 import { getLocalDatabase } from './localDatabase';
+import { perfMonitor } from './performanceMonitor';
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -142,6 +143,7 @@ class SyncService {
    * Sync pins from Supabase to SQLite
    */
   async syncPins() {
+    const startTime = performance.now();
     console.log('[SyncService] Syncing pins...');
 
     // Get pins from Supabase (last 1000 pins)
@@ -157,9 +159,13 @@ class SyncService {
     }
 
     // Bulk insert into SQLite
+    const dbStartTime = performance.now();
     await this.db.bulkUpsertPins(pins || []);
+    perfMonitor.trackDatabaseOp('bulkUpsertPins', dbStartTime, 'pins');
+
     await this.db.updateSyncMetadata('pins');
 
+    perfMonitor.trackSync('syncPins', startTime, pins?.length || 0);
     console.log(`[SyncService] Synced ${pins?.length || 0} pins`);
     return pins?.length || 0;
   }
