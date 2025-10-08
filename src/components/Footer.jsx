@@ -42,7 +42,7 @@ export default function Footer({
   return (
     <footer
       style={{
-        padding: '20px 24px',
+        padding: '12px 16px',
         marginBottom: downloadingBarVisible ? `${DOWNLOADING_BAR_HEIGHT}px` : '0',
         transition: 'margin-bottom 0.3s ease',
         position: 'relative',
@@ -202,66 +202,38 @@ export default function Footer({
                 </button>
               )}
             </div>
-          )}
-
-          {/* Bottom row: Hint text and Explore pins */}
-          <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              minHeight: 44,
-            }}
-          >
-            <div
-              className="hint"
-              style={{
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                textAlign: 'center',
-                color: '#a7b0b8',
-                pointerEvents: 'none',
-                width: '100%',
-              }}
-            >
-              {exploring
-                ? 'Click any pin to see details.'
-                : mapMode === 'global'
-                ? 'Click the map to place your pin anywhere in the world.'
-                : mapReady
-                ? 'Tap the map to place your pin, then start dragging the pin to fine-tune.'
-                : 'Loading map, please wait...'}
+              {navSettings.explore_enabled && (
+                <>
+                  {!exploring ? (
+                    <button
+                      onClick={() => {
+                        setExploring(true);
+                        setShowAttractor(false);
+                        setVoiceAssistantVisible?.(false);
+                      }}
+                      style={btn3d(false)}
+                      className="btn-kiosk"
+                      aria-label="Explore community pins"
+                    >
+                      🔎 Explore Pins
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setExploring(false);
+                        setVoiceAssistantVisible?.(false);
+                      }}
+                      style={btn3d(false)}
+                      className="btn-kiosk"
+                      aria-label="Close explore mode"
+                    >
+                      ✖ Close Explore
+                    </button>
+                  )}
+                </>
+              )}
             </div>
-            {navSettings.explore_enabled && (
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }} data-no-admin-tap>
-                {!exploring ? (
-                  <button
-                    onClick={() => {
-                      setExploring(true);
-                      setShowAttractor(false);
-                      setVoiceAssistantVisible?.(false);
-                    }}
-                    className="btn-kiosk"
-                    aria-label="Explore community pins"
-                  >
-                    🔎 Explore pins
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setExploring(false);
-                      setVoiceAssistantVisible?.(false);
-                    }}
-                    className="btn-kiosk"
-                    aria-label="Close explore mode"
-                  >
-                    ✖ Close explore
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       ) : (
         <Editor
