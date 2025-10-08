@@ -11,6 +11,7 @@ import {
   getCachedPins,
 } from '../lib/offlineStorage';
 import { playPinDropSound, showConfetti } from '../lib/effects';
+import { getLocalDatabase } from '../lib/localDatabase';
 
 const MAX_ROWS = 1000;
 
@@ -104,6 +105,24 @@ export function usePins(mainMapRef) {
 
     const load = async () => {
       try {
+        // Try loading from local SQLite cache first (faster)
+        const db = await getLocalDatabase();
+        if (db.isAvailable()) {
+          console.log('[usePins] Loading from SQLite cache...');
+          const cachedPins = await db.getPins();
+
+          if (cachedPins.length > 0 && !cancelled) {
+            console.log(`[usePins] Loaded ${cachedPins.length} pins from cache`);
+            bumpNewest(cachedPins);
+            setPins((p) => mergeRows(p, cachedPins));
+
+            // Return early - sync service will update in background
+            return;
+          }
+        }
+
+        console.log('[usePins] Loading from Supabase...');
+
         // Fetch all pins in batches to avoid Supabase pagination limits
         const allData = [];
         let offset = 0;

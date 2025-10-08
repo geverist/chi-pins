@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { offlineTileStorage } from '../lib/offlineTileStorage';
 import { getHEOSClient } from '../lib/heosClient';
+import { getSyncService } from '../lib/syncService';
 
 export default function PerformanceTab({ settings, onSave }) {
   const [cacheStats, setCacheStats] = useState(null);
@@ -11,9 +12,16 @@ export default function PerformanceTab({ settings, onSave }) {
   const [heosPlayers, setHeosPlayers] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(settings.heosPlayerId || '');
   const [scrollSpeed, setScrollSpeed] = useState(settings.voicePromptsScrollSpeed || 60);
+  const [syncStats, setSyncStats] = useState(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     loadCacheStats();
+    loadSyncStats();
+
+    // Update sync stats every 10 seconds
+    const interval = setInterval(loadSyncStats, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   async function loadCacheStats() {
@@ -22,6 +30,31 @@ export default function PerformanceTab({ settings, onSave }) {
       setCacheStats(stats);
     } catch (error) {
       console.error('[PerformanceTab] Failed to load cache stats:', error);
+    }
+  }
+
+  async function loadSyncStats() {
+    try {
+      const syncService = getSyncService();
+      const stats = await syncService.getSyncStats();
+      setSyncStats(stats);
+    } catch (error) {
+      console.error('[PerformanceTab] Failed to load sync stats:', error);
+    }
+  }
+
+  async function handleForceSync() {
+    setSyncing(true);
+    try {
+      const syncService = getSyncService();
+      await syncService.forceSync();
+      await loadSyncStats();
+      alert('Sync completed successfully!');
+    } catch (error) {
+      console.error('[PerformanceTab] Force sync failed:', error);
+      alert('Sync failed: ' + error.message);
+    } finally {
+      setSyncing(false);
     }
   }
 
@@ -84,6 +117,78 @@ export default function PerformanceTab({ settings, onSave }) {
       <h2 style={{ marginTop: 0, marginBottom: '24px', fontSize: '24px', fontWeight: 600 }}>
         Performance & Cache
       </h2>
+
+      {/* SQLite Sync Status */}
+      <section style={{ marginBottom: '32px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>
+          Database Sync Status
+        </h3>
+
+        {syncStats ? (
+          <div style={{
+            background: 'rgba(255,255,255,0.05)',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '16px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
+                  {syncStats.isSyncing ? '🔄 Syncing...' : '✓ Synced'}
+                </div>
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                  {syncStats.lastSync
+                    ? `Last sync: ${new Date(syncStats.lastSync).toLocaleTimeString()}`
+                    : 'Not yet synced'
+                  }
+                </div>
+              </div>
+              <button
+                onClick={handleForceSync}
+                disabled={syncing || syncStats.isSyncing}
+                style={{
+                  padding: '8px 16px',
+                  background: syncing ? '#6b7280' : '#3b82f6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: syncing ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600
+                }}
+              >
+                {syncing ? 'Syncing...' : 'Force Sync'}
+              </button>
+            </div>
+
+            {syncStats.tables && syncStats.tables.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+                {syncStats.tables.map(table => (
+                  <div key={table.table_name} style={{
+                    padding: '12px',
+                    background: 'rgba(0,0,0,0.2)',
+                    borderRadius: '6px'
+                  }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
+                      {table.table_name}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#9ca3af' }}>
+                      Syncs: {table.sync_count || 0}
+                    </div>
+                    {table.last_error && (
+                      <div style={{ fontSize: '10px', color: '#ef4444', marginTop: '4px' }}>
+                        Error: {table.last_error}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ padding: '16px', color: '#9ca3af' }}>Loading sync status...</div>
+        )}
+      </section>
 
       {/* Tile Cache Management */}
       <section style={{ marginBottom: '32px' }}>
