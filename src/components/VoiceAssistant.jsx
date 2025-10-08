@@ -432,7 +432,7 @@ const styles = {
   },
   microphoneWrapper: {
     position: 'fixed',
-    bottom: '160px', // Position from bottom, above footer (~100px) + banners (~72px downloading or ~52px playing)
+    bottom: '220px', // Position well above footer (~100px) + downloading bar (72px) + safe margin (48px)
     left: '50%',
     transform: 'translateX(-50%)',
     zIndex: 300, // Above footer/banner (250), independent of UI below
@@ -519,7 +519,7 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    bottom: '100px', // Just above footer, will stay above banners due to z-index
+    bottom: '140px', // Above footer (~100px) + safe margin (40px), below microphone
     left: 0,
     right: 0,
     zIndex: 300, // Same level as microphone, above footer (50) and banners (200-250)
