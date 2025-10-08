@@ -38,6 +38,21 @@ export function playPinDropSound() {
  * @param {HTMLElement} container - Container element for confetti
  * @param {Object} options - Animation options
  */
+// Track all active confetti pieces globally so we can clean them up immediately
+const activeConfettiPieces = new Set();
+
+/**
+ * Clean up all active confetti immediately
+ */
+export function clearAllConfetti() {
+  activeConfettiPieces.forEach(piece => {
+    if (piece && piece.parentNode) {
+      piece.remove();
+    }
+  });
+  activeConfettiPieces.clear();
+}
+
 export function showConfetti(container = document.body, options = {}) {
   const {
     count = 100, // Increased from 50 for more confetti
@@ -63,6 +78,7 @@ export function showConfetti(container = document.body, options = {}) {
 
     container.appendChild(confetti);
     confettiPieces.push(confetti);
+    activeConfettiPieces.add(confetti);
 
     // Animate falling - even slower and longer duration
     const fallDistance = window.innerHeight + 50;
@@ -87,7 +103,10 @@ export function showConfetti(container = document.body, options = {}) {
 
   // Cleanup
   setTimeout(() => {
-    confettiPieces.forEach(piece => piece.remove());
+    confettiPieces.forEach(piece => {
+      piece.remove();
+      activeConfettiPieces.delete(piece);
+    });
   }, duration);
 }
 

@@ -1,7 +1,7 @@
 // hooks/useIdleAttractor.js
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { resetToChicagoOverview } from '../lib/mapUtils'
-import { showConfetti } from '../lib/effects'
+import { showConfetti, clearAllConfetti } from '../lib/effects'
 
 /**
  * Shows an attractor after inactivity and optionally resets the map.
@@ -14,7 +14,7 @@ export function useIdleAttractor({
   submapOpen,
   exploring,
   timeoutMs = 60_000,
-  confettiScreensaverMs = 15_000, // Show confetti screensaver after 15s for quick testing
+  confettiScreensaverMs = 60_000, // Show confetti screensaver after 60s (was 15s for testing)
   onIdle, // <-- NEW
 }) {
   const [showAttractor, setShowAttractor] = useState(true) // Show on page load
@@ -44,11 +44,12 @@ export function useIdleAttractor({
     clearTimeout(timerRef.current)
     clearTimeout(confettiTimer.current)
     stopConfettiScreensaver()
+    clearAllConfetti() // Immediately remove all confetti on user interaction
 
     // While user is interacting (editor/submap/explore), keep attractor hidden
     if (draft || submapOpen || exploring) setShowAttractor(false)
 
-    // Set timer for confetti screensaver (shorter timeout for testing)
+    // Set timer for confetti screensaver
     confettiTimer.current = setTimeout(startConfettiScreensaver, confettiScreensaverMs)
 
     // Set timer for full idle reset
