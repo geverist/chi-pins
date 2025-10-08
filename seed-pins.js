@@ -31,6 +31,9 @@ const chicagoWords = [
 
 const teams = ['cubs', 'whitesox', 'other'];
 
+// Custom pin styles from src/config/pinStyles.js
+const pinStyles = ['bears', 'bulls', 'cubs', 'whitesox', 'blackhawks', 'chicagostar'];
+
 const hotdogStands = [
   "Portillo's", "Gene & Jude's", "Superdawg", "Jim's Original",
   "The Wieners Circle", "Byron's Hot Dogs", "Wolfy's", "Devil Dawgs",
@@ -163,10 +166,14 @@ async function seedDatabase() {
     const note = randomChoice(sampleNotes);
     const hotdog = Math.random() > 0.6 ? randomChoice(hotdogStands) : null;
 
+    // Randomly assign a custom pin style (70% chance to get one, 30% default)
+    const pinStyle = Math.random() > 0.3 ? randomChoice(pinStyles) : null;
+
     pins.push({
       slug,
       name: slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
       team,
+      pinStyle,
       lat: location.lat,
       lng: location.lng,
       neighborhood: generateNeighborhood(),
@@ -181,10 +188,15 @@ async function seedDatabase() {
   console.log('🌍 Generating 8 global pins...');
   globalLocations.forEach(loc => {
     const slug = getUniqueSlug();
+
+    // Randomly assign a custom pin style (70% chance to get one, 30% default)
+    const pinStyle = Math.random() > 0.3 ? randomChoice(pinStyles) : null;
+
     pins.push({
       slug,
       name: `${loc.name} - ${slug.split('-').join(' ')}`,
       team: randomChoice(teams),
+      pinStyle,
       lat: loc.lat,
       lng: loc.lng,
       continent: loc.continent,

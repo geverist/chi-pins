@@ -75,3 +75,106 @@ export function getPinSlugFromUrl(search = window.location.search) {
   return params.get('pin');
 }
 
+/**
+ * Generate Facebook share URL with deep link
+ * @param {string} slug - The pin's unique slug
+ * @param {Object} options - Share options
+ * @param {string} options.facebookPage - Facebook page handle to tag
+ * @returns {string} Facebook share URL
+ */
+export function getFacebookShareUrl(slug, { facebookPage = 'ChicagoMikes' } = {}) {
+  const shareUrl = getPinShareUrl(slug);
+  // Use Facebook's web-based sharer (most reliable across devices)
+  // Note: Facebook doesn't support pre-filled text with tags anymore, but the user can manually tag @ChicagoMikes
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+}
+
+/**
+ * Generate Twitter share URL with mention
+ * @param {string} slug - The pin's unique slug
+ * @param {Object} options - Share options
+ * @param {string} options.text - Tweet text
+ * @param {string} options.via - Twitter handle to mention
+ * @returns {string} Twitter share URL
+ */
+export function getTwitterShareUrl(slug, { text = '', via = 'ChicagoMikes' } = {}) {
+  const shareUrl = getPinShareUrl(slug);
+  const tweetText = text || `Just dropped a pin at Chicago Mike's! 📍 Check it out!`;
+  // Add @mention in the tweet text
+  const textWithMention = `${tweetText} @${via}`;
+  return `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(textWithMention)}`;
+}
+
+/**
+ * Generate Instagram share URL (opens Instagram app)
+ * Note: Instagram doesn't support URL parameters, but we can encourage users to tag
+ * @param {string} slug - The pin's unique slug
+ * @param {Object} options - Share options
+ * @param {string} options.instagramHandle - Instagram handle to tag
+ * @returns {string} Instagram URL
+ */
+export function getInstagramShareUrl(slug, { instagramHandle = 'chicagomikes' } = {}) {
+  // Instagram doesn't have a web share API, so we open their profile
+  // Users will need to manually post and tag
+  return `https://www.instagram.com/${instagramHandle}/`;
+}
+
+/**
+ * Generate SMS share URL
+ * @param {string} slug - The pin's unique slug
+ * @param {Object} options - Share options
+ * @param {string} options.message - SMS message text
+ * @returns {string} SMS URL
+ */
+export function getSMSShareUrl(slug, { message = '' } = {}) {
+  const shareUrl = getPinShareUrl(slug);
+  const smsText = message || `Check out my pin: ${shareUrl}`;
+  // iOS uses 'sms:', Android supports both 'sms:' and 'smsto:'
+  return `sms:?&body=${encodeURIComponent(smsText)}`;
+}
+
+/**
+ * Generate Email share URL
+ * @param {string} slug - The pin's unique slug
+ * @param {Object} options - Share options
+ * @param {string} options.subject - Email subject
+ * @param {string} options.body - Email body
+ * @returns {string} Email URL
+ */
+export function getEmailShareUrl(slug, { subject = '', body = '' } = {}) {
+  const shareUrl = getPinShareUrl(slug);
+  const emailSubject = subject || 'Check out my pin!';
+  const emailBody = body || `I dropped a pin on the map! View it here: ${shareUrl}`;
+  return `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+}
+
+/**
+ * Copy URL to clipboard
+ * @param {string} slug - The pin's unique slug
+ * @returns {Promise<boolean>} Success status
+ */
+export async function copyPinUrlToClipboard(slug) {
+  const shareUrl = getPinShareUrl(slug);
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    return true;
+  } catch (error) {
+    console.error('Failed to copy URL:', error);
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = shareUrl;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return true;
+    } catch (err) {
+      document.body.removeChild(textArea);
+      return false;
+    }
+  }
+}
+

@@ -99,6 +99,9 @@ const DEFAULTS = {
   // Performance
   voicePromptsScrollSpeed: 60, // Seconds for full scroll animation
 
+  // Custom Voice Prompts (configurable in admin panel)
+  customVoicePrompts: [], // Array of {id, text, aiInstruction, category, enabled}
+
   // Fun Facts
   funFactsEnabled: true,           // Show fun facts when clicking on Chicago map
   funFactDurationSeconds: 15,      // How long fun fact toast stays visible

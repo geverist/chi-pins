@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { supabase } from '../lib/supabase';
 import { getVoicePrompts } from '../config/voicePrompts';
+import { getEnabledPrompts, getAIInstruction, DEFAULT_CUSTOM_PROMPTS } from '../config/customVoicePrompts';
 
 /**
  * Voice Assistant Modal Component
@@ -24,6 +25,7 @@ function VoiceAssistant({
   scrollSpeed = 60, // seconds for full scroll animation (configurable in admin)
   downloadingBarVisible = false,
   nowPlayingVisible = false,
+  customVoicePrompts = [], // Custom configurable prompts from admin panel
 }) {
   const [isOpen, setIsOpen] = useState(true); // Show on page load
   const [isListening, setIsListening] = useState(false);
@@ -68,41 +70,36 @@ function VoiceAssistant({
   }, [shouldShow]);
 
   function generateDynamicPrompts() {
+    // Use custom prompts if configured, otherwise fall back to default behavior
+    if (customVoicePrompts && customVoicePrompts.length > 0) {
+      const enabled = getEnabledPrompts(customVoicePrompts);
+      setSuggestedPrompts(enabled.map(p => p.text));
+      return;
+    }
+
+    // Fall back to legacy dynamic prompt generation
     const prompts = [];
     const basePrompts = getVoicePrompts(industry);
 
-    // Always include general prompts
-    prompts.push("What can you help me with?");
-    prompts.push("Tell me about this business");
+    // Use defaults from customVoicePrompts as fallback
+    const defaultPrompts = getEnabledPrompts(DEFAULT_CUSTOM_PROMPTS);
 
-    // Add feature-specific prompts based on what's enabled
-    if (enabledFeatures.games || navSettings?.games?.enabled) {
-      prompts.push("What games can I play?");
-      prompts.push("Start a trivia game");
-    }
+    // Filter defaults based on enabled features
+    const filteredDefaults = defaultPrompts.filter(p => {
+      if (p.category === 'general') return true;
+      if (p.id === 'games' && (enabledFeatures.games || navSettings?.games?.enabled)) return true;
+      if (p.id === 'music' && (enabledFeatures.jukebox || navSettings?.jukebox?.enabled)) return true;
+      if (p.id === 'photo' && (enabledFeatures.photoBooth || navSettings?.photoBooth?.enabled)) return true;
+      if (p.id === 'feedback' && (enabledFeatures.feedback || navSettings?.feedback?.enabled)) return true;
+      if (p.id === 'popular' && (enabledFeatures.popularSpots || navSettings?.popularSpots?.enabled)) return true;
+      return false;
+    });
 
-    if (enabledFeatures.jukebox || navSettings?.jukebox?.enabled) {
-      prompts.push("Play some music");
-      prompts.push("What songs can I request?");
-    }
-
-    if (enabledFeatures.photoBooth || navSettings?.photoBooth?.enabled) {
-      prompts.push("Take a photo");
-      prompts.push("Where's the photo booth?");
-    }
-
-    if (enabledFeatures.feedback || navSettings?.feedback?.enabled) {
-      prompts.push("Leave feedback");
-      prompts.push("I want to give a review");
-    }
-
-    if (enabledFeatures.popularSpots || navSettings?.popularSpots?.enabled) {
-      prompts.push("Show me popular spots");
-      prompts.push("What's nearby?");
-    }
+    // Add filtered default prompts
+    filteredDefaults.forEach(p => prompts.push(p.text));
 
     // Add industry-specific prompts (filter to unique)
-    const industrySpecific = basePrompts.slice(0, 5);
+    const industrySpecific = basePrompts.slice(0, 3);
     industrySpecific.forEach(prompt => {
       if (!prompts.includes(prompt)) {
         prompts.push(prompt);
@@ -180,8 +177,11 @@ function VoiceAssistant({
     setIsProcessing(true);
 
     try {
-      // Get AI response (mock for now - will integrate with backend)
-      const aiResponse = await getAIResponse(command);
+      // Get custom AI instruction for this command
+      const aiInstruction = getAIInstruction(command, customVoicePrompts);
+
+      // Get AI response with custom instruction if available
+      const aiResponse = await getAIResponse(command, aiInstruction);
       setResponse(aiResponse);
 
       // Speak the response
@@ -197,7 +197,7 @@ function VoiceAssistant({
     }
   }
 
-  async function getAIResponse(userMessage) {
+  async function getAIResponse(userMessage, aiInstruction = null) {
     try {
       // Build context from enabled features
       const features = Object.entries(enabledFeatures)
@@ -218,6 +218,7 @@ function VoiceAssistant({
           message: userMessage,
           industry,
           context,
+          aiInstruction, // Pass custom AI instruction to backend
         }),
       });
 
@@ -292,7 +293,8 @@ function VoiceAssistant({
 
     try {
       recognitionRef.current?.start();
-      setIsListening(true);
+      // Don't set isListening here - let the onstart callback handle it
+      // This prevents the red flash when start() is called but hasn't actually started yet
     } catch (err) {
       console.error('[VoiceAssistant] Failed to start recognition:', err);
       setError(null); // Don't show error to user

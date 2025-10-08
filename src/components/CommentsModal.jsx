@@ -125,13 +125,13 @@ export default function CommentsModal({ onClose }) {
           padding: '20px',
           maxWidth: 600,
           width: '100%',
-          maxHeight: '95vh',
+          maxHeight: '100%',
+          height: 'auto',
           boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
           border: '1px solid #374151',
           color: '#f3f4f6',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -158,14 +158,14 @@ export default function CommentsModal({ onClose }) {
           </button>
         </div>
 
-        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div style={{ flex: '1 1 auto', minHeight: 0 }}>
           <p style={{ margin: '0 0 20px 0', color: '#9ca3af', fontSize: 'clamp(12px, 3vw, 14px)', lineHeight: 1.4 }}>
             We'd love to hear about your visit! Share your thoughts, suggestions, or any feedback you have.
           </p>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Rating */}
-          <div style={{ marginBottom: 20 }}>
+          <div>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
               How was your experience?
             </label>
@@ -197,7 +197,7 @@ export default function CommentsModal({ onClose }) {
           </div>
 
           {/* Name (optional) */}
-          <div style={{ marginBottom: 16 }}>
+          <div>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
               Your Name <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional)</span>
             </label>
@@ -221,7 +221,7 @@ export default function CommentsModal({ onClose }) {
           </div>
 
           {/* Contact Info (optional) */}
-          <div style={{ marginBottom: 16 }}>
+          <div>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
               Contact Info <span style={{ color: '#6b7280', fontWeight: 400 }}>(optional - for response)</span>
             </label>
@@ -281,7 +281,7 @@ export default function CommentsModal({ onClose }) {
           </div>
 
           {/* Comment */}
-          <div style={{ marginBottom: 20 }}>
+          <div>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
               Your Comment *
             </label>
@@ -292,7 +292,7 @@ export default function CommentsModal({ onClose }) {
               disabled={submitting}
               required
               maxLength={maxCommentLength}
-              rows={6}
+              rows={4}
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -301,9 +301,10 @@ export default function CommentsModal({ onClose }) {
                 borderRadius: 8,
                 color: '#f3f4f6',
                 fontSize: 14,
-                resize: 'vertical',
+                resize: 'none',
                 boxSizing: 'border-box',
                 fontFamily: 'inherit',
+                minHeight: 80,
               }}
             />
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6, textAlign: 'right' }}>

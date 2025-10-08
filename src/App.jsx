@@ -1359,6 +1359,9 @@ export default function App() {
           setPinToShare(null);
         }}
         pin={pinToShare}
+        loyaltyPhone={form?.loyaltyPhone}
+        onUpdateLoyaltyPhone={(phone) => setForm(f => ({ ...f, loyaltyPhone: phone }))}
+        loyaltyEnabled={adminSettings.loyaltyEnabled}
       />
 
       {messageModalOpen && pinToMessage && (
@@ -1488,6 +1491,7 @@ export default function App() {
           shouldShow={voiceAssistantVisible}
           downloadingBarVisible={downloadingBarVisible}
           nowPlayingVisible={!isMobile && (currentTrack || queue[0])}
+          customVoicePrompts={adminSettings.customVoicePrompts}
         />
       )}
 
