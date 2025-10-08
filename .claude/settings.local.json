@@ -29,7 +29,9 @@
       "Bash(chmod:*)",
       "Bash(/opt/homebrew/share/android-commandlinetools/build-tools/34.0.0/aapt:*)",
       "Bash(./scripts/deploy-latest-apk.sh:*)",
-      "Bash(keytool:*)"
+      "Bash(keytool:*)",
+      "Bash(gh release download:*)",
+      "Bash(gh release view:*)"
     ],
     "deny": [],
     "ask": []

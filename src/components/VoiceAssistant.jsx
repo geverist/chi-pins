@@ -432,7 +432,7 @@ const styles = {
   },
   microphoneWrapper: {
     position: 'fixed',
-    top: '62%', // Position in lower area of screen, above footer which starts ~85%
+    top: '70%', // Position lower to expose more of central Chicago map, still above footer which starts ~85%
     left: '50%',
     transform: 'translate(-50%, -50%)',
     zIndex: 300, // Above footer/banner (250), independent of UI below
@@ -519,7 +519,7 @@ const styles = {
   },
   promptsContainer: {
     position: 'fixed',
-    top: 'calc(62% + 100px)', // Just below microphone (which is at 62%), well above footer
+    top: 'calc(70% + 100px)', // Just below microphone (which is at 70%), well above footer
     left: 0,
     right: 0,
     zIndex: 300, // Same level as microphone, above footer (50) and banners (200-250)
