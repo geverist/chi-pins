@@ -40,8 +40,8 @@ export function playPinDropSound() {
  */
 export function showConfetti(container = document.body, options = {}) {
   const {
-    count = 50, // Reduced from 100 for less frequent confetti
-    duration = 4000, // Increased duration for cleanup
+    count = 100, // Increased from 50 for more confetti
+    duration = 8000, // Increased duration for slower cleanup
     colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
   } = options;
 
@@ -64,9 +64,9 @@ export function showConfetti(container = document.body, options = {}) {
     container.appendChild(confetti);
     confettiPieces.push(confetti);
 
-    // Animate falling - slower and longer duration
+    // Animate falling - even slower and longer duration
     const fallDistance = window.innerHeight + 50;
-    const fallDuration = 3500 + Math.random() * 2500; // Slower: 3500-6000ms instead of 2000-4000ms
+    const fallDuration = 5000 + Math.random() * 3000; // Much slower: 5000-8000ms (almost double previous speed)
     const horizontalDrift = (Math.random() - 0.5) * 200;
     const rotation = Math.random() * 720;
 
