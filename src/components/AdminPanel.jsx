@@ -424,6 +424,12 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, attractorHintEnabled: v }))}
                   />
                 </FieldRow>
+                <FieldRow label="Enable confetti screensaver">
+                  <Toggle
+                    checked={settings.confettiScreensaverEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, confettiScreensaverEnabled: v }))}
+                  />
+                </FieldRow>
               </Card>
 
               <Card title="Feature Idle Timeouts">

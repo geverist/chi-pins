@@ -16,6 +16,7 @@ const DEFAULTS = {
   idleAttractorSeconds: 60,
   kioskAutoStart: true,
   attractorHintEnabled: true,
+  confettiScreensaverEnabled: false, // Enable confetti screensaver after idle period
 
   // Timers (internal)
   idleTimeoutMs: 60_000,
