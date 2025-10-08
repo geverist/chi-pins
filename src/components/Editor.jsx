@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import PhotoCaptureModal from './PhotoCaptureModal';
 import VoiceInput from './VoiceInput';
+import { AVAILABLE_PIN_STYLES } from '../config/pinStyles';
 
 export default function Editor({
   mapMode,
@@ -204,19 +205,42 @@ export default function Editor({
           paddingTop: 2,
         }}>
           {IdAndActionsRow}
-          <div style={{
-            gridColumn: '1 / -1',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            alignItems: 'center',
-            gap: 10,
-          }}>
-            {['cubs', 'whitesox'].map((t) => (
-              <button key={t} onClick={() => update({ team: form.team === t ? null : t })} style={{ background: form.team === t ? '#0ea5e9' : 'transparent' }}>
-                {t.toUpperCase()}
-              </button>
-            ))}
+
+          {/* Pin Style Selector */}
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
+              Choose Your Pin Style
+            </label>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 10,
+            }}>
+              {AVAILABLE_PIN_STYLES.map((style) => (
+                <button
+                  key={style.id}
+                  onClick={() => update({ pinStyle: form.pinStyle === style.id ? null : style.id })}
+                  style={{
+                    background: form.pinStyle === style.id ? style.colors.primary : 'rgba(255, 255, 255, 0.05)',
+                    border: `2px solid ${form.pinStyle === style.id ? style.colors.primary : 'rgba(255, 255, 255, 0.1)'}`,
+                    borderRadius: 8,
+                    padding: '12px 8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 4,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    color: form.pinStyle === style.id ? '#fff' : '#a7b0b8',
+                  }}
+                >
+                  <span style={{ fontSize: 24 }}>{style.emoji}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>{style.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
+
           {InlineFieldsChicago}
           {LoyaltySection}
         </div>
