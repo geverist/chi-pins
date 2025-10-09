@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "chi-pins-kiosk",
   "builds": [
     {
       "src": "package.json",
@@ -11,6 +10,9 @@
     }
   ],
   "routes": [
+    {
+      "handle": "filesystem"
+    },
     {
       "src": "/(.*)",
       "dest": "/index.html"
