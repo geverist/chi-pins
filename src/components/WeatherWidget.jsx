@@ -3,10 +3,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAdminSettings } from '../state/useAdminSettings';
 import { isIndustryDemo } from '../config/industryConfigs';
 import { useLayoutStack } from '../hooks/useLayoutStack';
+import DraggableElement from './DraggableElement';
+import { useLayoutEditor } from '../hooks/useLayoutEditor';
 
-export default function WeatherWidget({ autoDismissOnEdit = false }) {
+export default function WeatherWidget({ autoDismissOnEdit = false, isMobile = false }) {
   const { settings: adminSettings } = useAdminSettings();
   const { layout } = useLayoutStack();
+  const { isEditorActive, handlePositionChange } = useLayoutEditor(isMobile);
   const widgetRef = useRef(null);
   const isDemoMode = isIndustryDemo();
   const newsTickerEnabled = adminSettings.newsTickerEnabled && adminSettings.newsTickerRssUrl;
@@ -16,7 +19,8 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
   const [isDismissed, setIsDismissed] = useState(false);
 
   // Calculate position based on layout stack
-  const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 10; // 10px spacing
+  // Add 10px gap below comments banner
+  const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 10;
 
   // Debug logging
   console.log('[WeatherWidget] Layout values:', JSON.stringify({
@@ -128,13 +132,17 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
 
   const locationName = adminSettings.weatherLocation || 'Chicago, IL';
 
-  return (
+  // Default position for the weather widget
+  const defaultPosition = {
+    top: `${topPosition}px`,
+    right: '20px',
+    zIndex: 900,
+  };
+
+  const widgetContent = (
     <div
       ref={widgetRef}
       style={{
-        position: 'fixed',
-        top: `${topPosition}px`,
-        right: 20,
         background: 'linear-gradient(135deg, rgba(59,130,246,0.95) 0%, rgba(37,99,235,0.95) 100%)',
         borderRadius: 16,
         padding: '16px 20px',
@@ -144,7 +152,6 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
         color: '#fff',
         minWidth: 280,
         maxWidth: 320,
-        zIndex: 900,
         pointerEvents: 'auto',
       }}
     >
@@ -236,5 +243,17 @@ export default function WeatherWidget({ autoDismissOnEdit = false }) {
         📍 {locationName}
       </div>
     </div>
+  );
+
+  return (
+    <DraggableElement
+      elementId="weatherWidget"
+      defaultPosition={defaultPosition}
+      enabled={isEditorActive}
+      onPositionChange={handlePositionChange}
+      isMobile={isMobile}
+    >
+      {widgetContent}
+    </DraggableElement>
   );
 }

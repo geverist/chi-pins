@@ -47,10 +47,24 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
   useEffect(() => {
     // Auto-start download if enabled and running in native app
     if (autoStart && isNative && !downloading) {
-      // Start download after 5 second delay to let app initialize
-      const timer = setTimeout(() => {
+      // Check if download is already complete before starting
+      const checkAndStart = async () => {
+        const storage = getOfflineTileStorage();
+        const { isComplete, stats: completionStats } = await storage.isChicagoDownloadComplete();
+
+        if (isComplete) {
+          console.log('[OfflineMapDownloader] Download already complete, skipping:', completionStats);
+          setStats(completionStats);
+          setIsVisible(false); // Hide the downloader
+          return;
+        }
+
+        console.log('[OfflineMapDownloader] Download not complete, starting:', completionStats);
         startDownload();
-      }, 5000);
+      };
+
+      // Start check after 5 second delay to let app initialize
+      const timer = setTimeout(checkAndStart, 5000);
 
       return () => clearTimeout(timer);
     }
@@ -116,10 +130,22 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
   // Trigger download when mode changes
   useEffect(() => {
     if (mode === 'global' && isNative && !downloading && !stats) {
-      // Auto-start global download when switching to global mode
-      setTimeout(() => {
+      // Check if global download is already complete before starting
+      const checkAndStartGlobal = async () => {
+        const storage = getOfflineTileStorage();
+        const { isComplete, stats: completionStats } = await storage.isGlobalDownloadComplete();
+
+        if (isComplete) {
+          console.log('[OfflineMapDownloader] Global download already complete, skipping:', completionStats);
+          setStats(completionStats);
+          return;
+        }
+
+        console.log('[OfflineMapDownloader] Global download not complete, starting:', completionStats);
         startDownload('global');
-      }, 2000);
+      };
+
+      setTimeout(checkAndStartGlobal, 2000);
     }
   }, [mode, isNative]);
 

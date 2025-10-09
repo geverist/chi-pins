@@ -488,7 +488,7 @@ export const TRIVIA_QUESTIONS = [
 function shuffleAnswers(question) {
   const { options, correctAnswer } = question;
 
-  // Create array of indices and shuffle them
+  // Create array of indices and shuffle them using Fisher-Yates
   const indices = options.map((_, i) => i);
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -500,6 +500,13 @@ function shuffleAnswers(question) {
 
   // Find new position of correct answer
   const newCorrectAnswer = indices.indexOf(correctAnswer);
+
+  console.log('[Trivia] Shuffled question:', {
+    original: options[correctAnswer],
+    originalIndex: correctAnswer,
+    newIndex: newCorrectAnswer,
+    shuffledOptions: shuffledOptions
+  });
 
   return {
     ...question,

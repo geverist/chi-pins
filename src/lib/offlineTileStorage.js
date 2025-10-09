@@ -592,6 +592,68 @@ class OfflineTileStorage {
 
     return stats;
   }
+
+  /**
+   * Check if Chicago tiles download is complete
+   * Returns { isComplete: boolean, stats: { total, cached, missing } }
+   */
+  async isChicagoDownloadComplete(zoomLevels = [10, 11, 12, 13, 14, 15, 16, 17]) {
+    const tiles = getChicagoTileCoords(zoomLevels);
+    let cached = 0;
+
+    // Sample check - check every 10th tile for performance
+    const sampleSize = Math.min(100, Math.ceil(tiles.length / 10));
+    const step = Math.floor(tiles.length / sampleSize);
+
+    for (let i = 0; i < tiles.length; i += step) {
+      const { x, y, z } = tiles[i];
+      const existing = await this.getTile(z, x, y);
+      if (existing) {
+        cached++;
+      }
+    }
+
+    const percentCached = (cached / sampleSize) * 100;
+    const isComplete = percentCached >= 95; // Consider complete if 95%+ cached
+
+    return {
+      isComplete,
+      stats: {
+        total: tiles.length,
+        sampleSize,
+        cachedInSample: cached,
+        percentCached: Math.round(percentCached),
+      },
+    };
+  }
+
+  /**
+   * Check if global tiles download is complete
+   */
+  async isGlobalDownloadComplete(zoomLevels = [3, 4, 5]) {
+    const tiles = getGlobalTileCoords(zoomLevels);
+    let cached = 0;
+
+    // Check all global tiles (there aren't many)
+    for (const { x, y, z } of tiles) {
+      const existing = await this.getTile(z, x, y);
+      if (existing) {
+        cached++;
+      }
+    }
+
+    const percentCached = (cached / tiles.length) * 100;
+    const isComplete = percentCached >= 95;
+
+    return {
+      isComplete,
+      stats: {
+        total: tiles.length,
+        cached,
+        percentCached: Math.round(percentCached),
+      },
+    };
+  }
 }
 
 // Singleton instance

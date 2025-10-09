@@ -17,6 +17,20 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
     // Use WebView chromium for better performance
     webContentsDebuggingEnabled: true
+  },
+  plugins: {
+    CapacitorUpdater: {
+      // Auto update configuration
+      autoUpdate: true,
+      // Server URL for updates (you can host on your own server or use Capgo cloud)
+      updateUrl: 'https://api.capgo.app/updates',
+      // Check for updates on app startup
+      autoUpdateCheckOnStart: true,
+      // Reset to built-in version if update fails
+      resetWhenUpdate: false,
+      // Notification for updates
+      directUpdate: true,
+    }
   }
 };
 

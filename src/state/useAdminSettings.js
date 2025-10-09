@@ -15,7 +15,7 @@ const DEFAULTS = {
   // Kiosk behavior
   idleAttractorSeconds: 60,
   kioskAutoStart: true,
-  attractorHintEnabled: true,
+  attractorHintEnabled: false, // Disabled by default for performance
   confettiScreensaverEnabled: false, // Enable confetti screensaver after idle period
   databaseSyncMinutes: 30, // Database sync interval in minutes (pins, trivia, jukebox)
 
@@ -71,21 +71,22 @@ const DEFAULTS = {
   heatmapMax: 2.0,          // Max heat value for color scaling (0.5-5.0)
 
   // Content layers
-  showPinsSinceMonths: 24,
-  showPopularSpots: true,
+  showPinsSinceMonths: 6, // Reduced from 24 to 6 months for performance
+  showPopularSpots: false, // Disabled by default for performance
   showCommunityPins: true,
-  enableGlobalBubbles: true,
+  enableGlobalBubbles: false, // Disabled by default for performance
 
   // Features
-  loyaltyEnabled: true,
+  loyaltyEnabled: false, // Disabled by default for performance
   vestaboardEnabled: false,
   facebookShareEnabled: false,
   photoBackgroundsEnabled: true,
   newsTickerEnabled: false,
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
+  showOfflineMapDownloader: false, // Disabled by default for performance
 
   // Comments Banner
-  commentsBannerEnabled: true, // Enable scrolling comments banner at top
+  commentsBannerEnabled: false, // Enable scrolling comments banner at top (disabled by default for performance)
   commentsBannerScrollSpeed: 60, // Seconds for full scroll
   commentsBannerMaxComments: 20, // Max number of comments to display
   commentsBannerRefreshInterval: 120000, // 2 minutes - rotate comments
@@ -125,15 +126,27 @@ const DEFAULTS = {
   nowPlayingScrollSpeedMobile: 20, // Seconds for now playing banner in mobile mode
 
   // Mobile UI Controls
-  showNowPlayingOnMobile: true,    // Show "Now Playing" banner on mobile devices
-  showNavMenuOnMobile: true,       // Show navigation menu (Games/Jukebox/Order) on mobile devices
+  showNowPlayingOnMobile: false,   // Show "Now Playing" banner on mobile devices (disabled by default for performance)
+  showNavMenuOnMobile: false,      // Show navigation menu (Games/Jukebox/Order) on mobile devices (disabled by default for performance)
 
   // Widget Controls
-  showWeatherWidget: true,         // Show weather widget with hot dog recommendations
+  voiceAssistantEnabled: false,    // Enable voice assistant (disabled by default for performance)
+  showWeatherWidget: false,        // Show weather widget with hot dog recommendations (disabled by default for performance)
   weatherLocation: 'Chicago, IL',  // Display name for weather location
   weatherLat: 41.8781,             // Latitude for weather data
   weatherLng: -87.6298,            // Longitude for weather data
   weatherTimezone: 'America/Chicago', // Timezone for weather data
+
+  // UI Layout Positions (drag-and-drop customization)
+  uiPositions: {
+    desktop: {
+      // Default positions - overridden by admin layout editor
+    },
+    mobile: {
+      // Default positions - overridden by admin layout editor
+    },
+  },
+  layoutEditorEnabled: false, // Enable drag-and-drop layout editor in admin panel
 
   // Audio Output Settings
   audioOutputType: 'local', // 'local' | 'bluetooth' | 'sonos'

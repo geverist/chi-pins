@@ -86,9 +86,39 @@ export default function HeaderBar({
   /** Mobile table view toggle */
   showTableView = false,
   onToggleView,
+  /** Admin panel trigger */
+  onAdminOpen,
 }) {
   const headerRef = useRef(null);
   const { updateHeight } = useLayoutStack();
+
+  // Triple-tap detection for admin panel
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef(null);
+
+  const handleLogoClick = () => {
+    tapCountRef.current += 1;
+
+    if (tapCountRef.current === 3) {
+      // Triple-tap detected - open admin panel
+      tapCountRef.current = 0;
+      clearTimeout(tapTimerRef.current);
+      onAdminOpen?.();
+      return;
+    }
+
+    // Reset tap count after 800ms
+    clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      if (tapCountRef.current < 3) {
+        // Single or double tap - execute normal logo click
+        if (tapCountRef.current === 1 && onLogoClick) {
+          onLogoClick();
+        }
+      }
+      tapCountRef.current = 0;
+    }, 800);
+  };
 
   // Fetch uploaded logo from Supabase
   const { logoUrl: uploadedLogoUrl } = useLogo()
@@ -144,8 +174,8 @@ export default function HeaderBar({
         {/* Optional logo button keeps the same behavior but is not required */}
         {logoSrc ? (
           <button
-            onClick={onLogoClick}
-            title="Home"
+            onClick={handleLogoClick}
+            title="Home (Triple-tap for Admin)"
             aria-label="Home"
             style={{
               display:'inline-flex', alignItems:'center', justifyContent:'center',
@@ -215,8 +245,8 @@ export default function HeaderBar({
       <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
         {logoSrc ? (
           <button
-            onClick={onLogoClick}
-            title="Home"
+            onClick={handleLogoClick}
+            title="Home (Triple-tap for Admin)"
             aria-label="Home"
             style={{
               display:'inline-flex', alignItems:'center', justifyContent:'center',

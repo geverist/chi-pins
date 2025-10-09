@@ -211,6 +211,36 @@ export default function AdminPanel({ open, onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // ---------- Performance Defaults ----------
+  const applyPerformanceDefaults = useCallback(() => {
+    if (!confirm('Apply performance-optimized defaults? This will disable heavy features like voice assistant, overlays, and reduce pin history to 6 months.')) {
+      return
+    }
+
+    const performanceSettings = {
+      // Disable heavy features
+      voiceAssistantEnabled: false,
+      attractorHintEnabled: false,
+      showPopularSpots: false,
+      showWeatherWidget: false,
+      commentsBannerEnabled: false,
+      showNowPlayingOnMobile: false,
+      showNavMenuOnMobile: false,
+      showOfflineMapDownloader: false,
+      enableGlobalBubbles: false,
+      loyaltyEnabled: false,
+      newsTickerEnabled: false,
+
+      // Optimize settings
+      showPinsSinceMonths: 6,
+    }
+
+    setSettings(s => ({ ...s, ...performanceSettings }))
+    setHasUnsavedChanges(true)
+
+    alert('Performance defaults applied! Click "Save & Close" to persist changes.')
+  }, [])
+
   // ---------- Persist helpers ----------
   const saveSupabase = useCallback(async () => {
     try {
@@ -365,6 +395,13 @@ export default function AdminPanel({ open, onClose }) {
             <h3 style={s.title}>Control Panel</h3>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              style={{ ...btn.secondary, fontSize: 13, padding: '8px 12px' }}
+              onClick={applyPerformanceDefaults}
+              title="Apply optimized settings for better performance"
+            >
+              ⚡ Performance Mode
+            </button>
             <button
               style={{ ...btn.primary, opacity: hasUnsavedChanges ? 1 : 0.5 }}
               onClick={saveAndClose}

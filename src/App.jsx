@@ -9,9 +9,6 @@ import { useIdleAttractor } from './hooks/useIdleAttractor';
 import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
-import { useQuadrantTouch } from './hooks/useQuadrantTouch';
-import { useTouchSequence } from './hooks/useTouchSequence';
-import { useZPatternGesture } from './hooks/useZPatternGesture';
 import { getSyncService } from './lib/syncService';
 import { LayoutStackProvider } from './hooks/useLayoutStack';
 
@@ -1064,24 +1061,7 @@ export default function App() {
     if (shouldCountTap(e)) registerTap();
   };
 
-  // Four-quadrant touch: quick=admin panel, hold 3s=refresh app
-  useQuadrantTouch(
-    () => {
-      console.log('Four quadrant quick touch - opening admin panel');
-      setAdminOpen(true);
-    },
-    !adminOpen, // Only enable when admin panel is closed
-    () => {
-      console.log('Four quadrant hold - refreshing app');
-      window.location.reload();
-    }
-  );
-
-  // Z-pattern gesture to open admin panel (new method)
-  useZPatternGesture(() => {
-    console.log('Z-pattern gesture detected - opening admin panel');
-    setAdminOpen(true);
-  });
+  // Admin panel is now opened via triple-tap on logo (no screen-wide listener for performance)
   const handleFooterTouch = (e) => {
     if (shouldCountTap(e)) registerTap();
   };
@@ -1122,6 +1102,7 @@ export default function App() {
         isMobile={isMobile}
         showTableView={showMobileList}
         onToggleView={() => setShowMobileList(!showMobileList)}
+        onAdminOpen={() => setAdminOpen(true)}
       >
         {headerRight}
       </HeaderBar>
@@ -1260,7 +1241,7 @@ export default function App() {
           )}
         </MapShell>
 
-        {showAttractor && !draft && !submapCenter && !exploring && (
+        {adminSettings.attractorHintEnabled && showAttractor && !draft && !submapCenter && !exploring && (
           <AttractorOverlay onDismiss={() => setShowAttractor(false)} />
         )}
 
@@ -1458,7 +1439,7 @@ export default function App() {
       )}
 
       {adminSettings.showWeatherWidget && (
-        <WeatherWidget autoDismissOnEdit={draft !== null || exploring} />
+        <WeatherWidget autoDismissOnEdit={draft !== null || exploring} isMobile={isMobile} />
       )}
 
       {(() => {
@@ -1486,8 +1467,8 @@ export default function App() {
       <AchievementNotification />
       <DemoModeSwitcher />
 
-      {/* Voice AI Agent - enabled for all demos and industries, hidden in admin panel */}
-      {!adminOpen && (
+      {/* Voice AI Agent - disabled by default for performance */}
+      {!adminOpen && adminSettings.voiceAssistantEnabled && (
         <VoiceAssistant
           locationId={isDemoMode ? `demo-${industryConfig.industry}` : 'default'}
           industry={isDemoMode ? industryConfig.industry : 'default'}
@@ -1503,8 +1484,8 @@ export default function App() {
         />
       )}
 
-      {/* Offline Map Downloader - Auto-starts in native app, hidden in browser */}
-      {adminSettings.showOfflineMapDownloader !== false && (
+      {/* Offline Map Downloader - Disabled by default for performance */}
+      {adminSettings.showOfflineMapDownloader === true && (
         <OfflineMapDownloader
           autoStart={true}
           mode={mapMode}

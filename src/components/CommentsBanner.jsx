@@ -28,17 +28,23 @@ export default function CommentsBanner({
   const { layout } = useLayoutStack();
 
   useEffect(() => {
-    // Use layout stack header height for positioning
+    // Position directly below header (no gap)
     if (layout.headerHeight) {
-      setTopPosition(layout.headerHeight);
+      const newTop = layout.headerHeight;
+      console.log('[CommentsBanner] Positioning at top:', newTop, 'headerHeight:', layout.headerHeight);
+      setTopPosition(newTop);
     }
   }, [layout.headerHeight]);
 
-  // Report height to layout system (56px fixed height + update when visibility changes)
+  // Measure and report actual height dynamically
   useEffect(() => {
-    const height = allComments.length > 0 ? 56 : 0;
-    console.log('[CommentsBanner] Reporting height to layout:', height, 'comments:', allComments.length);
-    updateHeight('commentsBannerHeight', height);
+    if (containerRef.current && allComments.length > 0) {
+      const actualHeight = containerRef.current.offsetHeight;
+      console.log('[CommentsBanner] Reporting actual height:', actualHeight, 'comments:', allComments.length);
+      updateHeight('commentsBannerHeight', actualHeight);
+    } else {
+      updateHeight('commentsBannerHeight', 0);
+    }
   }, [allComments.length, updateHeight]);
 
   // Refresh random comments periodically
@@ -90,15 +96,16 @@ const styles = {
     // top set dynamically from layout stack
     left: 0,
     right: 0,
+    // height auto-fits content
     background: 'linear-gradient(90deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%)',
-    zIndex: 600, // Above header (500), voice assistant (300), below admin (9999)
+    zIndex: 400, // Below header (500) and footer (50), above voice assistant (300)
     overflow: 'hidden',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+    padding: '12px 0', // Add vertical padding for spacing
   },
   scrollWrapper: {
     overflow: 'hidden',
     position: 'relative',
-    height: '56px',
     display: 'flex',
     alignItems: 'center',
   },

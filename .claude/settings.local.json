@@ -42,7 +42,9 @@
       "Bash(java:*)",
       "Bash(brew info:*)",
       "Bash(cat:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(npx cap copy:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

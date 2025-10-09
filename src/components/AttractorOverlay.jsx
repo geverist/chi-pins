@@ -1,6 +1,19 @@
+import { useLayoutStack } from '../hooks/useLayoutStack';
+
 export default function AttractorOverlay({ onDismiss }) {
+  const { layout } = useLayoutStack();
+
+  // Position below header, comments banner, and search bar
+  // Search bar is at headerHeight + commentsBannerHeight + 10px
+  // Add 60px for search bar height + spacing
+  const topPadding = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 70;
+
   return (
-    <div className="attractor-overlay" onClick={onDismiss}>
+    <div
+      className="attractor-overlay"
+      onClick={onDismiss}
+      style={{ paddingTop: `${topPadding}px` }}
+    >
       <div
         className="cta glass"
         style={{

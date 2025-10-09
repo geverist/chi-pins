@@ -103,7 +103,7 @@ function GeocoderTopCenter({
   nowPlayingVisible = false,
 }) {
   const map = useMap();
-  const { getTopPosition } = useLayoutStack();
+  const { layout } = useLayoutStack();
   const hostRef = useRef(null);
   const shellRef = useRef(null);
   const geocoderRef = useRef(null);
@@ -185,6 +185,14 @@ function GeocoderTopCenter({
     };
   }, [isMobile, map, dynamicMode]);
 
+  // Update position when layout stack changes
+  useEffect(() => {
+    if (hostRef.current) {
+      const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 10;
+      hostRef.current.style.top = `${topPosition}px`;
+    }
+  }, [layout.headerHeight, layout.commentsBannerHeight]);
+
   useEffect(() => {
     if (!map) {
       console.warn('GeocoderTopCenter: Map not available');
@@ -205,8 +213,8 @@ function GeocoderTopCenter({
       geocoderRef.current = null;
     }
 
-    // Position search bar below comments banner (which is below header)
-    const topPosition = getTopPosition('commentsBanner') + 10; // 10px spacing
+    // Position search bar below header and comments banner using layout stack
+    const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 10; // 10px spacing
 
     const host = L.DomUtil.create('div', 'map-search-host');
     Object.assign(host.style, {
@@ -215,7 +223,7 @@ function GeocoderTopCenter({
       top: `${topPosition}px`,
       transform: 'translateX(-50%)',
       transition: 'top 0.3s ease',
-      zIndex: 3600,
+      zIndex: 5000,
       pointerEvents: 'auto',
       maxWidth: 'min(92vw, 720px)',
       width: 'max-content',
@@ -273,6 +281,11 @@ function GeocoderTopCenter({
       if (center) {
         const targetZoom = Math.max(map.getZoom() ?? 0, 13);
         map.flyTo(center, targetZoom);
+
+        // Dismiss keyboard after selecting a location
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
       }
     });
 
