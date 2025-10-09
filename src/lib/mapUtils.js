@@ -221,10 +221,16 @@ export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = n
     }
   }
 
-  const ICON_W = 30, ICON_H = 46;
+  // Make pin head MUCH larger when displaying custom images (3x larger)
+  const hasCustomImage = !!imageUrl;
+  const ICON_W = hasCustomImage ? 50 : 30;
+  const ICON_H = hasCustomImage ? 70 : 46;
   const AX = ICON_W / 2, AY = ICON_H;
-  const headR = 10, headBorder = 2;
-  const stemW = 3, stemLen = 22, tipLen = 6;
+  const headR = hasCustomImage ? 18 : 10;  // 3x larger head for custom images
+  const headBorder = 2;
+  const stemW = hasCustomImage ? 4 : 3;
+  const stemLen = hasCustomImage ? 34 : 22;  // Longer stem for larger head
+  const tipLen = hasCustomImage ? 8 : 6;
   const theta = (STEM_ANGLE_DEG * Math.PI) / 180;
   const Ltot = stemLen + tipLen;
   const dx = Math.sin(theta) * Ltot;
@@ -319,11 +325,16 @@ export const iconFor = (teamOrPin) => {
   const team = typeof teamOrPin === 'string' ? teamOrPin : (teamOrPin?.team || 'other');
   const pinStyle = typeof teamOrPin === 'object' ? teamOrPin?.pinStyle : null;
 
+  // Check if pin style has custom image to determine size
+  const hasCustomImage = pinStyle && getPinStyle(pinStyle)?.imageUrl;
+  const iconWidth = hasCustomImage ? 50 : 30;
+  const iconHeight = hasCustomImage ? 70 : 46;
+
   return L.divIcon({
     className: `pin pin-${pinStyle || team}`,
     html: pushpinHTMLFor(team, false, pinStyle),
-    iconSize: [30, 46],
-    iconAnchor: [15, 46],
+    iconSize: [iconWidth, iconHeight],
+    iconAnchor: [iconWidth / 2, iconHeight],
   });
 };
 

@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useMemo, useRef, useState, useEffect, lazy, Suspense } from 'react';
+import { useMemo, useRef, useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import logoUrl from './assets/logo.png';
 import { getIndustryConfig, isIndustryDemo } from './config/industryConfigs';
 
@@ -10,6 +10,7 @@ import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
 import { useTouchSequence } from './hooks/useTouchSequence';
+import { useProximityDetection } from './hooks/useProximityDetection';
 import { getSyncService } from './lib/syncService';
 import { LayoutStackProvider } from './hooks/useLayoutStack';
 
@@ -40,6 +41,7 @@ import HeaderBar from './components/HeaderBar';
 import TeamCount from './components/TeamCount';
 import MapShell from './components/MapShell';
 import SavedPins from './components/SavedPins';
+import PinPlacementEffect from './components/PinPlacementEffect';
 import DraftMarker from './components/DraftMarker';
 import SubMapModal from './components/SubMapModal';
 import ShareConfirmModal from './components/ShareConfirmModal';
@@ -47,6 +49,7 @@ import PopularSpotsOverlay from './components/PopularSpotsOverlay';
 import PopularSpotModal from './components/PopularSpotModal';
 import Toast from './components/Toast';
 import AttractorOverlay from './components/AttractorOverlay';
+import WalkupAttractor from './components/WalkupAttractor';
 import PinShareModal from './components/PinShareModal';
 import NewsTicker from './components/NewsTicker';
 import CommentsBanner from './components/CommentsBanner';
@@ -56,6 +59,7 @@ const EnhancedPhotoBooth = lazy(() => import('./components/EnhancedPhotoBooth'))
 import ThenAndNow from './components/ThenAndNow';
 import { initRemoteLogger } from './utils/remoteLogger';
 import WeatherWidget from './components/WeatherWidget';
+import QRCodeWidget from './components/QRCodeWidget';
 import OfflineIndicator from './components/OfflineIndicator';
 import TouchSequenceIndicator from './components/TouchSequenceIndicator';
 import AnonymousMessageModal from './components/AnonymousMessageModal';
@@ -72,6 +76,12 @@ import FloatingExploreButton from './components/FloatingExploreButton';
 import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
 import { getPersistentStorage } from './lib/persistentStorage';
 import { enableImmersiveMode, maintainImmersiveMode } from './lib/immersiveMode';
+import { useLayoutEditMode } from './hooks/useLayoutEditMode';
+import DraggableEditWrapper from './components/DraggableEditWrapper';
+import LayoutEditModeOverlay from './components/LayoutEditModeOverlay';
+import { useBusinessHours } from './hooks/useBusinessHours';
+import ClosedOverlay from './components/ClosedOverlay';
+import MotionIndicator from './components/MotionIndicator';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -124,6 +134,141 @@ export default function App() {
   const { settings: adminSettings } = useAdminSettings();
   const { settings: navSettings, enabledCount } = useNavigationSettings();
   const { currentTrack, isPlaying, lastPlayed, queue } = useNowPlaying();
+
+  // Layout edit mode (4-corner tap sequence for dragging widgets)
+  const { isEditMode, setIsEditMode, savePosition, getPosition, getAllPositions } = useLayoutEditMode();
+
+  // Business hours management
+  const { isOpen: isBusinessHoursOpen, nextChange, businessHoursEnabled, openTime } = useBusinessHours();
+
+  // Ambient music player ref for proximity-triggered playback
+  const ambientMusicPlayerRef = useRef(null);
+  const [ambientMusicPlaying, setAmbientMusicPlaying] = useState(false);
+
+  // Ambient music playback functions (wrapped in useCallback to prevent infinite re-renders)
+  const playAmbientMusic = useCallback(() => {
+    if (!ambientMusicPlayerRef.current && adminSettings.ambientMusicPlaylist?.length > 0) {
+      const playlist = adminSettings.ambientMusicPlaylist;
+      const randomTrack = playlist[Math.floor(Math.random() * playlist.length)];
+
+      const audio = new Audio(randomTrack.url);
+      audio.volume = adminSettings.ambientMusicVolume || 0.5;
+      audio.loop = true;
+
+      if (adminSettings.ambientMusicFadeIn) {
+        audio.volume = 0;
+        audio.play();
+        let vol = 0;
+        const fadeInterval = setInterval(() => {
+          vol += 0.05;
+          if (vol >= (adminSettings.ambientMusicVolume || 0.5)) {
+            audio.volume = adminSettings.ambientMusicVolume || 0.5;
+            clearInterval(fadeInterval);
+          } else {
+            audio.volume = vol;
+          }
+        }, 100);
+      } else {
+        audio.play();
+      }
+
+      ambientMusicPlayerRef.current = audio;
+      setAmbientMusicPlaying(true);
+      console.log('[App] Ambient music started:', randomTrack.name);
+    }
+  }, [adminSettings.ambientMusicPlaylist, adminSettings.ambientMusicVolume, adminSettings.ambientMusicFadeIn]);
+
+  const stopAmbientMusic = useCallback(() => {
+    if (ambientMusicPlayerRef.current) {
+      const audio = ambientMusicPlayerRef.current;
+
+      if (adminSettings.ambientMusicFadeOut) {
+        let vol = audio.volume;
+        const fadeInterval = setInterval(() => {
+          vol -= 0.05;
+          if (vol <= 0) {
+            audio.pause();
+            audio.src = '';
+            ambientMusicPlayerRef.current = null;
+            setAmbientMusicPlaying(false);
+            clearInterval(fadeInterval);
+          } else {
+            audio.volume = vol;
+          }
+        }, 100);
+      } else {
+        audio.pause();
+        audio.src = '';
+        ambientMusicPlayerRef.current = null;
+        setAmbientMusicPlaying(false);
+      }
+
+      console.log('[App] Ambient music stopped');
+    }
+  }, [adminSettings.ambientMusicFadeOut]);
+
+  // Proximity detection callbacks (wrapped in useCallback to prevent infinite re-renders)
+  const handleProximityApproach = useCallback(({ proximityLevel }) => {
+    console.log('[App] Person detected approaching! Proximity:', proximityLevel);
+    setShowAttractor(true);
+    // Voice greeting will be triggered by WalkupAttractor component
+    // if adminSettings.proximityTriggerVoice && adminSettings.walkupAttractorVoiceEnabled
+  }, []);
+
+  const handleProximityLeave = useCallback(() => {
+    console.log('[App] Person left walkup zone');
+  }, []);
+
+  const handleAmbientDetected = useCallback(({ proximityLevel }) => {
+    console.log('[App] Ambient motion detected! Proximity:', proximityLevel);
+    // DEMO: Force play ambient music (hardcoded for demo)
+    if (!ambientMusicPlaying) {
+      // Hardcoded demo track
+      if (!ambientMusicPlayerRef.current) {
+        const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+        audio.volume = 0.5;
+        audio.loop = true;
+        audio.play();
+        ambientMusicPlayerRef.current = audio;
+        setAmbientMusicPlaying(true);
+        console.log('[App] DEMO - Ambient music started (hardcoded)');
+      }
+    }
+  }, [ambientMusicPlaying]);
+
+  const handleAmbientCleared = useCallback(() => {
+    console.log('[App] Ambient area cleared');
+    // Fade out or stop ambient music after idle timeout
+    if (adminSettings.ambientMusicEnabled && ambientMusicPlaying) {
+      stopAmbientMusic();
+    }
+  }, [adminSettings.ambientMusicEnabled, ambientMusicPlaying, stopAmbientMusic]);
+
+  const handleStareDetected = useCallback(({ proximityLevel, stareDuration }) => {
+    console.log('[App] Stare detected! Proximity:', proximityLevel, 'Duration:', stareDuration, 'ms');
+    // Future: Trigger employee clock-in UI or other stare-based features
+  }, []);
+
+  const handleStareEnded = useCallback(({ stareDuration }) => {
+    console.log('[App] Stare ended. Duration was:', stareDuration, 'ms');
+  }, []);
+
+  // Proximity detection - camera-based approach detection (FORCED ON FOR TESTING)
+  const { isPersonDetected, isAmbientDetected, isStaring, stareDuration, proximityLevel, cameraError } = useProximityDetection({
+    enabled: adminSettings.proximityDetectionEnabled, // REMOVED business hours gate for testing
+    sensitivityThreshold: adminSettings.proximitySensitivity || 15, // Higher = less sensitive to small movements
+    proximityThreshold: adminSettings.proximityThreshold || 60, // HIGH = very close (~2 feet) for walkup/voice prompt
+    ambientThreshold: adminSettings.ambientMusicThreshold || 85, // ULTRA HIGH = need to be extremely close (~3 feet) for ambient music
+    stareThreshold: adminSettings.stareThreshold || 50, // Keep stare detection close
+    stareDurationMs: adminSettings.stareDurationMs || 3000,
+    detectionInterval: adminSettings.proximityDetectionInterval || 500,
+    onApproach: handleProximityApproach,
+    onLeave: handleProximityLeave,
+    onAmbientDetected: handleAmbientDetected,
+    onAmbientCleared: handleAmbientCleared,
+    onStareDetected: handleStareDetected,
+    onStareEnded: handleStareEnded,
+  });
 
   // Debug logging for Now Playing state
   useEffect(() => {
@@ -228,6 +373,9 @@ export default function App() {
   // highlight
   const [highlightSlug, setHighlightSlug] = useState(null);
   const { trigger: triggerHighlight, clear: clearHighlight } = useHighlightPin(setHighlightSlug);
+
+  // Pin placement effect trigger
+  const [pinPlacementEffect, setPinPlacementEffect] = useState({ lat: null, lng: null, trigger: 0 });
 
   // Handle shared pin URLs (e.g., ?pin=deep-dish-delight)
   useEffect(() => {
@@ -509,7 +657,9 @@ export default function App() {
     enabled: true
   });
 
-  // Touch sequence to refresh page (triple-tap center)
+  // Touch sequence to refresh page (triple-tap center) - DISABLED to avoid conflict with admin panel trigger
+  // Use double-tap opposite corners for kiosk mode instead
+  // To refresh manually: open admin panel and use browser refresh, or use ?admin=1 URL parameter
   useTouchSequence(() => {
     console.log('Triple-tap detected - refreshing page');
     // Clear service worker cache if available
@@ -528,7 +678,7 @@ export default function App() {
   }, {
     sequence: 'triple-tap',
     timeoutMs: 1000, // 1 second window for three taps
-    enabled: true
+    enabled: false // DISABLED - conflicts with admin panel triple-tap on pin count badge
   });
 
   // dedupe pins
@@ -600,7 +750,11 @@ export default function App() {
       // Close all modals and reset to main map
       cancelEditing();
       setClearSearchToken((t) => t + 1);
+
+      // Restore all overlay UI elements even if previously dismissed by user
       setVoiceAssistantVisible(true);
+      setShowAttractor(true);
+      setShowPopularSpots(adminSettings.showPopularSpots || false);
 
       // Dismiss keyboard by blurring any focused input
       if (document.activeElement instanceof HTMLElement) {
@@ -655,20 +809,47 @@ export default function App() {
       const candidate = addr.city || addr.town || addr.village || addr.suburb || addr.locality || 'Chicago';
       const key = String(candidate).toLowerCase();
       console.log('Location key:', key, 'Available facts:', funFacts[key]);
-      const fact = getRandomFact(funFacts, key) || `You're near ${candidate}.`;
-      console.log('Showing toast with fact:', fact);
-      setToast({ title: candidate, text: fact });
-      const duration = (adminSettings.funFactDurationSeconds || 15) * 1000;
-      setTimeout(() => setToast(null), duration);
+      const fact = getRandomFact(funFacts, key);
+
+      // Only show toast if we have an actual fun fact (don't show fallback messages)
+      if (fact) {
+        console.log('Showing toast with fact:', fact);
+        setToast({ title: candidate, text: fact });
+        const duration = (adminSettings.funFactDurationSeconds || 15) * 1000;
+        setTimeout(() => setToast(null), duration);
+      } else {
+        console.log('No fun fact available for:', candidate);
+      }
     } catch (err) {
       console.error('Failed to fetch fun fact:', err);
     }
   }
 
-  // Handle any map click for fun facts (desktop only)
+  // Check if coordinates are within Chicago city limits (not entire metro area)
+  function isWithinChicagoCityLimits(lat, lng) {
+    // Chicago city boundaries (approximate bounding box)
+    // North: Rogers Park (~42.02), South: Hegewisch (~41.65)
+    // West: O'Hare area (~-87.93), East: Lake Michigan (~-87.52)
+    const CHICAGO_CITY_BOUNDS = {
+      north: 42.02,
+      south: 41.65,
+      west: -87.93,
+      east: -87.52
+    };
+
+    return lat >= CHICAGO_CITY_BOUNDS.south &&
+           lat <= CHICAGO_CITY_BOUNDS.north &&
+           lng >= CHICAGO_CITY_BOUNDS.west &&
+           lng <= CHICAGO_CITY_BOUNDS.east;
+  }
+
+  // Handle any map click for fun facts (desktop only, within Chicago city limits)
   function handleMapClick(ll) {
     if (mapMode === 'chicago' && adminSettings.funFactsEnabled && !isMobile) {
-      showNearestTownFact(ll.lat, ll.lng);
+      // Only show fun facts if click is within Chicago city limits AND not in Lake Michigan
+      if (isWithinChicagoCityLimits(ll.lat, ll.lng) && !isInLakeMichigan(ll.lat, ll.lng)) {
+        showNearestTownFact(ll.lat, ll.lng);
+      }
     }
   }
 
@@ -1079,6 +1260,11 @@ export default function App() {
     };
   }, []);
 
+  // Calculate if WalkupAttractor is currently active (for full-screen mode)
+  const walkupAttractorActive = adminSettings.simulationMode
+    ? !draft && !submapCenter && !exploring
+    : adminSettings.walkupAttractorEnabled && showAttractor && !draft && !submapCenter && !exploring;
+
   return (
     <LayoutStackProvider>
       <div
@@ -1097,7 +1283,7 @@ export default function App() {
           willChange: 'transform',
         }}
       >
-      <HeaderBar
+      {!walkupAttractorActive && <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
         onGlobal={goGlobal}
@@ -1112,9 +1298,9 @@ export default function App() {
         onAdminOpen={() => setAdminOpen(true)}
       >
         {headerRight}
-      </HeaderBar>
+      </HeaderBar>}
 
-      {isDemoMode && (
+      {!walkupAttractorActive && isDemoMode && (
         <div style={{
           background: industryConfig.brandColor,
           color: 'white',
@@ -1150,14 +1336,14 @@ export default function App() {
         </div>
       )}
 
-      <NewsTicker
+      {!walkupAttractorActive && <NewsTicker
         enabled={adminSettings.newsTickerEnabled}
         feedUrl={adminSettings.newsTickerRssUrl}
         scrollSpeed={isMobile ? adminSettings.newsTickerScrollSpeedMobile : adminSettings.newsTickerScrollSpeedKiosk}
         isMobile={isMobile}
-      />
+      />}
 
-      {adminSettings.commentsBannerEnabled && (
+      {!walkupAttractorActive && adminSettings.commentsBannerEnabled && (
         <CommentsBanner
           enabled={adminSettings.commentsBannerEnabled}
           customKeywords={adminSettings.commentsBannerProhibitedKeywords || []}
@@ -1194,10 +1380,11 @@ export default function App() {
           isMobile={isMobile}
           downloadingBarVisible={downloadingBarVisible}
           nowPlayingVisible={nowPlayingActuallyVisible}
+          walkupAttractorActive={walkupAttractorActive}
         >
           {(() => {
-            const shouldShow = !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots);
-            console.log('PopularSpots check:', { isMobile, showPopularSpots, mapMode, hasDraft: !!draft, isDemoMode, popularSpotsEnabled: !isDemoMode || industryConfig.enabledFeatures.popularSpots, shouldShow });
+            const shouldShow = !walkupAttractorActive && !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots);
+            console.log('PopularSpots check:', { walkupAttractorActive, isMobile, showPopularSpots, mapMode, hasDraft: !!draft, isDemoMode, popularSpotsEnabled: !isDemoMode || industryConfig.enabledFeatures.popularSpots, shouldShow });
             return shouldShow ? (
               <PopularSpotsOverlay
                 labelsAbove
@@ -1257,9 +1444,40 @@ export default function App() {
           )}
         </MapShell>
 
-        {adminSettings.attractorHintEnabled && showAttractor && !draft && !submapCenter && !exploring && (
-          <AttractorOverlay onDismiss={() => setShowAttractor(false)} />
-        )}
+        {(() => {
+          const shouldShowOverlay = !walkupAttractorActive && adminSettings.attractorHintEnabled && showAttractor && !draft && !submapCenter && !exploring;
+          console.log('[App] AttractorOverlay conditions:', {
+            walkupAttractorActive,
+            attractorHintEnabled: adminSettings.attractorHintEnabled,
+            showAttractor,
+            hasDraft: !!draft,
+            hasSubmapCenter: !!submapCenter,
+            exploring,
+            shouldShowOverlay
+          });
+          return shouldShowOverlay ? <AttractorOverlay onDismiss={() => setShowAttractor(false)} /> : null;
+        })()}
+
+        {/* Walkup Attractor - AI voice greeting when idle */}
+        <WalkupAttractor
+          active={
+            // Simulation mode forces attractor to show immediately
+            adminSettings.simulationMode
+              ? !draft && !submapCenter && !exploring
+              : adminSettings.walkupAttractorEnabled && showAttractor && !draft && !submapCenter && !exploring
+          }
+          onDismiss={() => setShowAttractor(false)}
+          voiceEnabled={adminSettings.walkupAttractorVoiceEnabled ?? false}
+          enabledFeatures={[
+            navSettings.games_enabled && 'games',
+            navSettings.jukebox_enabled && 'jukebox',
+            navSettings.photobooth_enabled && 'photobooth',
+            navSettings.order_enabled && 'order',
+          ].filter(Boolean)}
+          businessName={adminSettings.businessName || "Chicago Mike's"}
+          rotationSeconds={adminSettings.walkupAttractorRotationSeconds || 4}
+          customPrompts={adminSettings.walkupAttractorPrompts || []}
+        />
 
         {toast && <Toast title={toast.title} text={toast.text} onClose={() => setToast(null)} />}
       </div>
@@ -1300,7 +1518,7 @@ export default function App() {
 
       <GlobalAudioPlayer />
 
-      <Footer
+      {!walkupAttractorActive && <Footer
         isMobile={isMobile}
         draft={draft}
         exploring={exploring}
@@ -1328,9 +1546,9 @@ export default function App() {
         adminSettings={adminSettings}
         downloadingBarVisible={downloadingBarVisible}
         nowPlayingVisible={nowPlayingActuallyVisible}
-      />
+      />}
 
-      {(!isMobile || adminSettings.showNowPlayingOnMobile) && (
+      {!walkupAttractorActive && (!isMobile || adminSettings.showNowPlayingOnMobile) && (
         <NowPlayingBanner
           currentTrack={currentTrack}
           isPlaying={isPlaying}
@@ -1388,7 +1606,21 @@ export default function App() {
       )}
 
       {adminOpen && (
-        <AdminPanel open={adminOpen} onClose={() => setAdminOpen(false)} />
+        <AdminPanel
+          open={adminOpen}
+          onClose={() => setAdminOpen(false)}
+          isLayoutEditMode={isEditMode}
+          setLayoutEditMode={setIsEditMode}
+          proximityDetection={{
+            enabled: adminSettings.proximityDetectionEnabled,
+            proximityLevel,
+            isAmbientDetected,
+            isPersonDetected,
+            isStaring,
+            stareDuration,
+            cameraError,
+          }}
+        />
       )}
 
       <PinCodeModal
@@ -1454,8 +1686,37 @@ export default function App() {
         <CommentsModal onClose={() => setCommentsOpen(false)} />
       )}
 
-      {adminSettings.showWeatherWidget && (
-        <WeatherWidget autoDismissOnEdit={draft !== null || exploring} isMobile={isMobile} />
+      {!walkupAttractorActive && adminSettings.showWeatherWidget && (
+        <DraggableEditWrapper
+          elementId="weather-widget"
+          isEditMode={isEditMode}
+          savedPosition={getPosition('weather-widget')}
+          onPositionChange={savePosition}
+          defaultPosition={{ gridCell: 'top-right', offsetY: 0 }}
+          getAllPositions={getAllPositions}
+        >
+          <WeatherWidget autoDismissOnEdit={draft !== null || exploring} isMobile={isMobile} />
+        </DraggableEditWrapper>
+      )}
+
+      {/* QR Code Widget for mobile continuation - only show on kiosk/desktop */}
+      {!walkupAttractorActive && !isMobile && adminSettings.qrCodeEnabled && (
+        <DraggableEditWrapper
+          elementId="qr-code"
+          isEditMode={isEditMode}
+          savedPosition={getPosition('qr-code')}
+          onPositionChange={savePosition}
+          defaultPosition={{ gridCell: 'bottom-right', offsetY: 0 }}
+          getAllPositions={getAllPositions}
+        >
+          <QRCodeWidget
+            url={window.location.origin}
+            title="Continue Exploring on Your Phone"
+            description="Scan this QR code to view the map on your mobile device"
+            enabled={true}
+            exploreButtonVisible={navSettings.explore_enabled && !adminOpen}
+          />
+        </DraggableEditWrapper>
       )}
 
       {(() => {
@@ -1480,17 +1741,26 @@ export default function App() {
       <LocationSwitcher />
 
       {/* Floating Explore Pins button (only show when enabled in nav settings) */}
-      {navSettings.explore_enabled && !adminOpen && (
-        <FloatingExploreButton
-          exploring={exploring}
-          setExploring={setExploring}
-          setShowAttractor={setShowAttractor}
-          setVoiceAssistantVisible={setVoiceAssistantVisible}
-          enabled={true}
-          downloadingBarVisible={downloadingBarVisible}
-          nowPlayingVisible={nowPlayingActuallyVisible}
-          footerVisible={!isMobile && (navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled)}
-        />
+      {!walkupAttractorActive && navSettings.explore_enabled && !adminOpen && (
+        <DraggableEditWrapper
+          elementId="explore-button"
+          isEditMode={isEditMode}
+          savedPosition={getPosition('explore-button')}
+          onPositionChange={savePosition}
+          defaultPosition={{ gridCell: 'bottom-right', offsetY: 100 }}
+          getAllPositions={getAllPositions}
+        >
+          <FloatingExploreButton
+            exploring={exploring}
+            setExploring={setExploring}
+            setShowAttractor={setShowAttractor}
+            setVoiceAssistantVisible={setVoiceAssistantVisible}
+            enabled={true}
+            downloadingBarVisible={downloadingBarVisible}
+            nowPlayingVisible={nowPlayingActuallyVisible}
+            footerVisible={!isMobile && (navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled)}
+          />
+        </DraggableEditWrapper>
       )}
       <HolidayTheme />
       <PWAInstallPrompt />
@@ -1498,7 +1768,7 @@ export default function App() {
       <DemoModeSwitcher />
 
       {/* Voice AI Agent - disabled by default for performance */}
-      {!adminOpen && adminSettings.voiceAssistantEnabled && (
+      {!walkupAttractorActive && !adminOpen && adminSettings.voiceAssistantEnabled && (
         <VoiceAssistant
           locationId={isDemoMode ? `demo-${industryConfig.industry}` : 'default'}
           industry={isDemoMode ? industryConfig.industry : 'default'}
@@ -1542,6 +1812,26 @@ export default function App() {
       <PopularSpotModal
         spot={selectedPopularSpot}
         onClose={() => setSelectedPopularSpot(null)}
+      />
+
+      {/* Layout Edit Mode Overlay - Blocks interactions and shows grid during edit mode */}
+      <LayoutEditModeOverlay
+        isActive={isEditMode}
+        onExit={() => setIsEditMode(false)}
+      />
+
+      {/* Business Hours Closed Overlay - Shows when outside business hours */}
+      {businessHoursEnabled && !isBusinessHoursOpen && (
+        <ClosedOverlay nextChange={nextChange} openTime={openTime} />
+      )}
+
+      {/* Motion Detection Visual Indicator - Shows green for ambient, orange for walkup, red for stare */}
+      <MotionIndicator
+        isAmbientDetected={isAmbientDetected}
+        isPersonDetected={isPersonDetected}
+        isStaring={isStaring}
+        stareDuration={stareDuration}
+        proximityLevel={proximityLevel}
       />
     </div>
     </LayoutStackProvider>

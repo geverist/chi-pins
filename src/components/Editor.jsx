@@ -1,5 +1,9 @@
 // src/components/Editor.jsx
 import { useState } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { FreeMode } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/free-mode';
 import PhotoCaptureModal from './PhotoCaptureModal';
 import VoiceInput from './VoiceInput';
 import { AVAILABLE_PIN_STYLES } from '../config/pinStyles';
@@ -21,7 +25,6 @@ export default function Editor({
   const phoneLooksValid = digitsOnly.length >= 10 && digitsOnly.length <= 15;
 
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
-  const [showAllPinStyles, setShowAllPinStyles] = useState(false);
 
   const { counts } = usePinStyleCounts();
 
@@ -185,71 +188,61 @@ export default function Editor({
         }}>
           {IdAndActionsRow}
 
-          {/* Pin Style Selector */}
+          {/* Pin Style Selector - Horizontal Swiper */}
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600 }}>
-              Choose Your Pin Style
+              Choose Your Pin Style <span style={{ fontSize: 12, color: '#a7b0b8', fontWeight: 400 }}>(Swipe to see more →)</span>
             </label>
-            <div>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 10,
-                marginBottom: 10,
-              }}>
-                {(showAllPinStyles ? AVAILABLE_PIN_STYLES : AVAILABLE_PIN_STYLES.slice(0, 6)).map((style) => {
+            <Swiper
+              modules={[FreeMode]}
+              spaceBetween={12}
+              slidesPerView="auto"
+              freeMode={true}
+              style={{ padding: '4px 0' }}
+            >
+              {AVAILABLE_PIN_STYLES.map((style) => {
                 const count = counts[style.id] || 0;
                 return (
-                  <button
+                  <SwiperSlide
                     key={style.id}
-                    onClick={() => update({ pinStyle: form.pinStyle === style.id ? null : style.id })}
-                    style={{
-                      background: form.pinStyle === style.id ? style.colors.primary : 'rgba(255, 255, 255, 0.05)',
-                      border: `2px solid ${form.pinStyle === style.id ? style.colors.primary : 'rgba(255, 255, 255, 0.1)'}`,
-                      borderRadius: 8,
-                      padding: '12px 8px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 4,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      color: form.pinStyle === style.id ? '#fff' : '#a7b0b8',
-                    }}
+                    style={{ width: 'auto' }}
                   >
-                    <span style={{ fontSize: 24 }}>{style.emoji}</span>
-                    <span style={{ fontSize: 12, fontWeight: 500 }}>{style.name}</span>
-                    {count > 0 && (
-                      <span style={{
-                        fontSize: 10,
-                        opacity: 0.7,
-                        fontWeight: 400,
-                      }}>
-                        {count} pin{count !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      onClick={() => update({ pinStyle: form.pinStyle === style.id ? null : style.id })}
+                      style={{
+                        background: form.pinStyle === style.id ? style.colors.primary : 'rgba(255, 255, 255, 0.05)',
+                        border: `2px solid ${form.pinStyle === style.id ? style.colors.primary : 'rgba(255, 255, 255, 0.1)'}`,
+                        borderRadius: 8,
+                        padding: '12px 16px',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        color: form.pinStyle === style.id ? '#fff' : '#a7b0b8',
+                        whiteSpace: 'nowrap',
+                        minWidth: 'auto',
+                      }}
+                    >
+                      <span style={{ fontSize: 28 }}>{style.emoji}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600 }}>{style.name}</span>
+                        {count > 0 && (
+                          <span style={{
+                            fontSize: 10,
+                            opacity: 0.7,
+                            fontWeight: 400,
+                          }}>
+                            {count} pin{count !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  </SwiperSlide>
                 );
               })}
-              </div>
-              {AVAILABLE_PIN_STYLES.length > 6 && (
-                <button
-                  onClick={() => setShowAllPinStyles(!showAllPinStyles)}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 6,
-                    padding: '8px 12px',
-                    color: '#a7b0b8',
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    width: '100%',
-                  }}
-                >
-                  {showAllPinStyles ? '▲ Show Less' : `▼ Show More (${AVAILABLE_PIN_STYLES.length - 6} more)`}
-                </button>
-              )}
-            </div>
+            </Swiper>
           </div>
 
           {InlineFieldsChicago}

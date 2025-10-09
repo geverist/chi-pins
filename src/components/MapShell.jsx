@@ -188,7 +188,7 @@ function GeocoderTopCenter({
   // Update position when layout stack changes
   useEffect(() => {
     if (hostRef.current) {
-      const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 10;
+      const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 5; // Reduced from 10 to 5
       hostRef.current.style.top = `${topPosition}px`;
     }
   }, [layout.headerHeight, layout.commentsBannerHeight]);
@@ -200,21 +200,40 @@ function GeocoderTopCenter({
     }
 
     // Clean up any existing geocoder to prevent duplicates
+    // Remove all existing search bars from the DOM
+    const existingHosts = map.getContainer().querySelectorAll('.map-search-host');
+    existingHosts.forEach(host => {
+      console.log('[GeocoderTopCenter] Removing existing search host:', host);
+      host.remove();
+    });
+
     if (hostRef.current) {
-      hostRef.current.remove();
+      try {
+        hostRef.current.remove();
+      } catch (e) {
+        console.warn('[GeocoderTopCenter] Error removing hostRef:', e);
+      }
       hostRef.current = null;
     }
     if (shellRef.current) {
-      shellRef.current.remove();
+      try {
+        shellRef.current.remove();
+      } catch (e) {
+        console.warn('[GeocoderTopCenter] Error removing shellRef:', e);
+      }
       shellRef.current = null;
     }
     if (geocoderRef.current) {
-      geocoderRef.current.remove();
+      try {
+        geocoderRef.current.remove();
+      } catch (e) {
+        console.warn('[GeocoderTopCenter] Error removing geocoderRef:', e);
+      }
       geocoderRef.current = null;
     }
 
     // Position search bar below header and comments banner using layout stack
-    const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 50; // 50px spacing (raised higher)
+    const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 20; // Reduced from 50 to 20 to raise search bar higher
 
     const host = L.DomUtil.create('div', 'map-search-host');
     Object.assign(host.style, {
@@ -582,18 +601,29 @@ function GeocoderTopCenter({
 
     return () => {
       try {
+        console.log('[GeocoderTopCenter] Cleanup: removing all search elements');
         clearBtn?.remove();
         micBtn?.remove();
         if (recognition) {
           recognition.abort();
         }
-        geocoder.remove();
-      } catch {}
+        if (geocoderRef.current) {
+          geocoderRef.current.remove();
+        }
+        if (shellRef.current) {
+          shellRef.current.remove();
+        }
+        if (hostRef.current) {
+          hostRef.current.remove();
+        }
+      } catch (e) {
+        console.warn('[GeocoderTopCenter] Cleanup error:', e);
+      }
       geocoderRef.current = null;
       inputRef.current = null;
       clearBtnRef.current = null;
-      shellRef.current?.parentNode?.removeChild(shellRef.current);
       shellRef.current = null;
+      hostRef.current = null;
     };
   }, [map, mode, debouncedGeocode, dynamicMode, dynamicPlaceholder]);
 
@@ -668,7 +698,13 @@ function MapModeController({ mode, isMobile }) {
       map.setMaxBounds(null);
       map.setMinZoom(2);
       map.setMaxZoom(GLOBAL_MAX_ZOOM);
-      map.setView([USA.lat, USA.lng], GLOBAL_ZOOM, { animate: true });
+      // Use flyTo for smooth animated transition with easing
+      console.log('[MapModeController] Animating to global view...');
+      map.flyTo([USA.lat, USA.lng], GLOBAL_ZOOM, {
+        animate: true,
+        duration: 1.5, // 1.5 second smooth animation
+        easeLinearity: 0.25, // Smooth easing (0 = very smooth, 1 = linear)
+      });
       map.dragging?.enable();
       map.scrollWheelZoom?.enable();
       map.touchZoom?.enable();
@@ -678,7 +714,15 @@ function MapModeController({ mode, isMobile }) {
       map.setMaxBounds(null);
       map.setMinZoom(isMobile ? 1 : CHI_MIN_ZOOM);
       map.setMaxZoom(CHI_MAX_ZOOM);
-      map.fitBounds(CHI_BOUNDS, { animate: true });
+      // Use flyToBounds for smooth animated transition back to Chicago
+      console.log('[MapModeController] Animating to Chicago view...');
+      map.flyToBounds(CHI_BOUNDS, {
+        animate: true,
+        duration: 1.5, // 1.5 second smooth animation
+        easeLinearity: 0.25, // Smooth easing
+        paddingTopLeft: [0, 0],
+        paddingBottomRight: [0, 0],
+      });
       map.dragging?.enable();
       map.scrollWheelZoom?.enable();
       map.touchZoom?.enable();
@@ -732,6 +776,51 @@ function TapToPlace({ onPick, onMapClick, disabled = false, mapReady }) {
   return null;
 }
 
+// Disable map dragging during pin placement when fully zoomed in
+function PinPlacementLock({ editing, mapMode }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const checkAndLock = () => {
+      const currentZoom = map.getZoom();
+      const maxZoom = mapMode === 'global' ? GLOBAL_MAX_ZOOM : CHI_MAX_ZOOM;
+      const isMaxZoom = currentZoom >= maxZoom;
+
+      // Lock dragging when editing AND at max zoom
+      if (editing && isMaxZoom) {
+        console.log('[PinPlacementLock] Locking map dragging - editing mode at max zoom');
+        map.dragging?.disable();
+        map.touchZoom?.disable();
+        map.scrollWheelZoom?.disable();
+        map.doubleClickZoom?.disable();
+      } else {
+        console.log('[PinPlacementLock] Unlocking map dragging');
+        map.dragging?.enable();
+        map.touchZoom?.enable();
+        map.scrollWheelZoom?.enable();
+        map.doubleClickZoom?.enable();
+      }
+    };
+
+    // Check initially and on zoom changes
+    checkAndLock();
+    map.on('zoomend', checkAndLock);
+
+    return () => {
+      map.off('zoomend', checkAndLock);
+      // Re-enable dragging on unmount
+      map.dragging?.enable();
+      map.touchZoom?.enable();
+      map.scrollWheelZoom?.enable();
+      map.doubleClickZoom?.enable();
+    };
+  }, [map, editing, mapMode]);
+
+  return null;
+}
+
 function SetMapRef({ mainMapRef, setMapReady }) {
   const map = useMap();
   useEffect(() => {
@@ -765,6 +854,7 @@ export default function MapShell({
   onSearchInteraction,
   downloadingBarVisible = false,
   nowPlayingVisible = false,
+  walkupAttractorActive = false,
 }) {
   const center = useMemo(() => [CHI.lat, CHI.lng], []);
   // Mobile: zoom 11 (Chicago proper, shows neighborhoods). Desktop: zoom 9 (full metro)
@@ -804,6 +894,16 @@ export default function MapShell({
         renderer={L.svg()}
         fullscreenControl={false}
         aria-label="Interactive map"
+        // Enhanced touch gestures
+        touchZoom={true}  // Pinch-to-zoom
+        tap={true}  // Enable tap events
+        tapTolerance={15}  // Tolerance for tap detection (px)
+        doubleClickZoom={true}  // Double-tap/click to zoom
+        bounceAtZoomLimits={true}  // Visual feedback at zoom limits
+        zoomAnimation={true}  // Smooth zoom animations
+        zoomAnimationThreshold={4}  // Animation for zoom changes less than this
+        fadeAnimation={true}  // Fade tiles when zooming
+        markerZoomAnimation={true}  // Animate markers on zoom
       >
         <SetMapRef mainMapRef={mainMapRef} setMapReady={setMapReady} />
         <OfflineTileLayer
@@ -828,7 +928,8 @@ export default function MapShell({
         />
         <MapModeController mode={mapMode} isMobile={isMobile} />
         <CameraReset mode={mapMode} resetCameraToken={resetCameraToken} isMobile={isMobile} />
-        {!editing && (
+        <PinPlacementLock editing={editing} mapMode={mapMode} />
+        {!editing && !walkupAttractorActive && (
           <GeocoderTopCenter
             mode={mapMode === 'global' ? 'global' : 'chicago'}
             clearToken={clearSearchToken}

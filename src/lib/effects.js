@@ -57,7 +57,8 @@ export function showConfetti(container = document.body, options = {}) {
   const {
     count = 100, // Increased from 50 for more confetti
     duration = 8000, // Increased duration for slower cleanup
-    colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+    colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],
+    screensaver = false // New: screensaver mode for burn-in prevention
   } = options;
 
   const confettiPieces = [];
@@ -68,8 +69,17 @@ export function showConfetti(container = document.body, options = {}) {
     confetti.style.width = '20px'; // Bigger: 20px instead of 10px
     confetti.style.height = '20px'; // Bigger: 20px instead of 10px
     confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    confetti.style.left = Math.random() * 100 + '%';
-    confetti.style.top = '-20px'; // Adjusted for larger size
+
+    // Screensaver mode: spawn from random positions across entire screen
+    if (screensaver) {
+      confetti.style.left = Math.random() * 100 + '%';
+      confetti.style.top = Math.random() * 100 + '%';
+    } else {
+      // Celebration mode: fall from top
+      confetti.style.left = Math.random() * 100 + '%';
+      confetti.style.top = '-20px'; // Adjusted for larger size
+    }
+
     confetti.style.opacity = '1';
     confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
     confetti.style.pointerEvents = 'none';
@@ -80,34 +90,64 @@ export function showConfetti(container = document.body, options = {}) {
     confettiPieces.push(confetti);
     activeConfettiPieces.add(confetti);
 
-    // Animate falling - even slower and longer duration
-    const fallDistance = window.innerHeight + 50;
-    const fallDuration = 5000 + Math.random() * 3000; // Much slower: 5000-8000ms (almost double previous speed)
-    const horizontalDrift = (Math.random() - 0.5) * 200;
-    const rotation = Math.random() * 720;
+    // Screensaver mode: slow continuous drift across screen
+    if (screensaver) {
+      const driftDistance = 300 + Math.random() * 200;
+      const driftDuration = 12000 + Math.random() * 6000; // Very slow: 12-18s
+      const horizontalDrift = (Math.random() - 0.5) * driftDistance;
+      const verticalDrift = (Math.random() - 0.5) * driftDistance;
+      const rotation = Math.random() * 720;
 
-    confetti.animate([
-      {
-        transform: `translateY(0) translateX(0) rotate(0deg)`,
-        opacity: 1
-      },
-      {
-        transform: `translateY(${fallDistance}px) translateX(${horizontalDrift}px) rotate(${rotation}deg)`,
-        opacity: 0
-      }
-    ], {
-      duration: fallDuration,
-      easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-    });
+      confetti.animate([
+        {
+          transform: `translate(0, 0) rotate(0deg)`,
+          opacity: 0.8
+        },
+        {
+          transform: `translate(${horizontalDrift}px, ${verticalDrift}px) rotate(${rotation}deg)`,
+          opacity: 0.4
+        },
+        {
+          transform: `translate(0, 0) rotate(${rotation * 2}deg)`,
+          opacity: 0.8
+        }
+      ], {
+        duration: driftDuration,
+        easing: 'ease-in-out',
+        iterations: Infinity // Loop forever in screensaver mode
+      });
+    } else {
+      // Celebration mode: fall from top
+      const fallDistance = window.innerHeight + 50;
+      const fallDuration = 5000 + Math.random() * 3000; // Much slower: 5000-8000ms (almost double previous speed)
+      const horizontalDrift = (Math.random() - 0.5) * 200;
+      const rotation = Math.random() * 720;
+
+      confetti.animate([
+        {
+          transform: `translateY(0) translateX(0) rotate(0deg)`,
+          opacity: 1
+        },
+        {
+          transform: `translateY(${fallDistance}px) translateX(${horizontalDrift}px) rotate(${rotation}deg)`,
+          opacity: 0
+        }
+      ], {
+        duration: fallDuration,
+        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      });
+    }
   }
 
-  // Cleanup
-  setTimeout(() => {
-    confettiPieces.forEach(piece => {
-      piece.remove();
-      activeConfettiPieces.delete(piece);
-    });
-  }, duration);
+  // Cleanup (only in celebration mode - screensaver loops forever until cleared)
+  if (!screensaver) {
+    setTimeout(() => {
+      confettiPieces.forEach(piece => {
+        piece.remove();
+        activeConfettiPieces.delete(piece);
+      });
+    }, duration);
+  }
 }
 
 /**

@@ -13,12 +13,20 @@ import AnalyticsDashboard from './AnalyticsDashboard'
 import VoiceAgentTab from './VoiceAgentTab'
 import KioskVoiceTab from './KioskVoiceTab'
 import MarketplaceAdmin from './MarketplaceAdmin'
+import MarketplaceTab from './MarketplaceTab'
 import ContentLayoutTab from './ContentLayoutTab'
 import PerformanceTab from './PerformanceTab'
+import VestaboardTab from './VestaboardTab'
+import PreviewBanner from './PreviewBanner'
+import { ProximityMonitor } from './ProximityMonitor'
+import { auditDatabase, autoFixDatabase, syncMissingData } from '../lib/databaseAudit'
+import { getOfflineTileStorage } from '../lib/offlineTileStorage'
+import { getSpotifyClient } from '../lib/spotifyClient'
 
-export default function AdminPanel({ open, onClose }) {
+export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutEditMode, proximityDetection }) {
   const [authenticated, setAuthenticated] = useState(true) // Skip PIN for now - keyboard dismissal issue
-  const [tab, setTab] = useState('general')
+  const [tab, setTab] = useState('kiosk') // Default to new 'kiosk' tab
+  const [systemSubtab, setSystemSubtab] = useState('database') // Subtabs for System tab
 
   // Reset authentication and initial states when panel closes
   useEffect(() => {
@@ -114,8 +122,51 @@ export default function AdminPanel({ open, onClose }) {
     try {
       const raw = localStorage.getItem('adminPopularSpots')
       return raw ? JSON.parse(raw) : [
-        { label: 'Portillo\'s - River North', category: 'hotdog' },
-        { label: 'Al\'s #1 Italian Beef - Little Italy', category: 'beef' },
+        {
+          label: 'Cloud Gate (The Bean)',
+          category: 'attraction',
+          description: 'Designed by artist Anish Kapoor and completed in 2006, this 110-ton stainless steel sculpture in Millennium Park reflects the city skyline. Made of 168 seamlessly welded plates, it cost $23 million and is power-washed daily!'
+        },
+        {
+          label: 'Willis Tower',
+          category: 'attraction',
+          description: 'Opened in 1973 as Sears Tower, this 110-story, 1,451-foot skyscraper was the world\'s tallest building for 25 years. The Skydeck\'s glass Ledge extends 4.3 feet out from the 103rd floor - on a clear day, you can see four states!'
+        },
+        {
+          label: 'Navy Pier',
+          category: 'attraction',
+          description: 'Built in 1916 as Municipal Pier, this lakefront landmark features the 196-foot Centennial Wheel (added in 2016 for the pier\'s 100th anniversary) with climate-controlled gondolas. It\'s Chicago\'s #1 tourist destination!'
+        },
+        {
+          label: 'Wrigley Field',
+          category: 'attraction',
+          description: 'Built in 1914, it\'s the second-oldest ballpark in the majors. The iconic ivy covering the outfield walls was planted in 1937 by Bill Veeck. It\'s been home to the Chicago Cubs for over 100 years!'
+        },
+        {
+          label: 'Art Institute of Chicago',
+          category: 'attraction',
+          description: 'Founded in 1879 and moved to its current home in 1893 after the World\'s Fair. The bronze lions guarding the entrance were sculpted by Edward Kemeys in 1894 and each weighs over 2 tons!'
+        },
+        {
+          label: 'Portillo\'s - River North',
+          category: 'hotdog',
+          description: 'Founded by Dick Portillo in 1963 in a trailer with no restroom or running water! Now famous for Chicago-style hot dogs, Italian beef, and chocolate cake shakes. Still serves Vienna Beef products.'
+        },
+        {
+          label: 'Lou Malnati\'s Pizzeria',
+          category: 'pizza',
+          description: 'Opened March 17, 1971 by Lou Malnati (whose father helped develop Chicago deep dish in the 1940s). Still family-owned and ranked America\'s top pizza chain by Yelp in 2025!'
+        },
+        {
+          label: 'Giordano\'s Pizza',
+          category: 'pizza',
+          description: 'Founded in 1974 by brothers Efren and Joseph Boglio, who brought their mother\'s Italian Easter Pie recipe from Torino, Italy. Their stuffed pizza has an extra crust layer - that\'s what makes it different!'
+        },
+        {
+          label: 'Al\'s #1 Italian Beef',
+          category: 'beef',
+          description: 'The original Al\'s has been serving authentic Chicago Italian beef since 1938, using the secret recipe passed down through generations. A Chicago tradition for over 85 years!'
+        },
       ]
     } catch { return [] }
   })
@@ -126,11 +177,34 @@ export default function AdminPanel({ open, onClose }) {
   const [initialNavSettings, setInitialNavSettings] = useState(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
+  // Preview mode state
+  const [isPreviewMode, setIsPreviewMode] = useState(false)
+  const [previewSettings, setPreviewSettings] = useState(null)
+  const [previewPopularSpots, setPreviewPopularSpots] = useState(null)
+  const [previewNavSettings, setPreviewNavSettings] = useState(null)
+
   // Moderation – selected IDs for deletion
   const [pendingDeletes, setPendingDeletes] = useState(new Set())
   const [modLoading, setModLoading] = useState(false)
   const [modRows, setModRows] = useState([]) // live pins from supabase
   const [search, setSearch] = useState('')
+
+  // Database audit state
+  const [dbAudit, setDbAudit] = useState(null)
+  const [dbAuditLoading, setDbAuditLoading] = useState(false)
+  const [dbAutoFixing, setDbAutoFixing] = useState(false)
+  const [dbAutoFixResult, setDbAutoFixResult] = useState(null)
+
+  // Tile cache state
+  const [tileStorage] = useState(() => getOfflineTileStorage())
+  const [tileStats, setTileStats] = useState(null)
+  const [tileStatsLoading, setTileStatsLoading] = useState(false)
+  const [chicagoDownloadProgress, setChicagoDownloadProgress] = useState(null)
+  const [globalDownloadProgress, setGlobalDownloadProgress] = useState(null)
+  const [metroDownloadProgress, setMetroDownloadProgress] = useState(null)
+  const [chicagoDownloading, setChicagoDownloading] = useState(false)
+  const [globalDownloading, setGlobalDownloading] = useState(false)
+  const [metroDownloading, setMetroDownloading] = useState(false)
 
   // Then & Now comparisons
   // Use hook data directly
@@ -148,14 +222,14 @@ export default function AdminPanel({ open, onClose }) {
       // Settings are loaded by useAdminSettings hook, just set initial state
       setInitialSettings(adminSettingsFromHook)
 
-      // POPULAR SPOTS: table "popular_spots" with columns {id, label, category, city?}
-      const { data: pData, error: pErr } = await supabase
+      // POPULAR SPOTS: table "popular_spots" with columns {id, label, category, description}
+      const { data: pData, error: pErr} = await supabase
         .from('popular_spots')
-        .select('id,label,category')
+        .select('id,label,category,description')
         .order('id', { ascending: true })
 
       if (!pErr && Array.isArray(pData)) {
-        const rows = pData.map(({ id, label, category }) => ({ id, label, category }))
+        const rows = pData.map(({ id, label, category, description }) => ({ id, label, category, description: description || '' }))
         setPopularSpots(rows)
         setInitialPopularSpots(rows)
         localStorage.setItem('adminPopularSpots', JSON.stringify(rows))
@@ -216,14 +290,14 @@ export default function AdminPanel({ open, onClose }) {
 
   // ---------- Performance Defaults ----------
   const applyPerformanceDefaults = useCallback(async () => {
-    if (!confirm('Apply performance-optimized defaults? This will disable all navigation items and heavy features, save the changes, and reload the app.')) {
+    if (!confirm('Apply performance-optimized defaults? This will disable all navigation items and heavy features, but keep text overlays enabled.')) {
       return
     }
 
     const performanceSettings = {
       // Disable heavy features
       voiceAssistantEnabled: false,
-      attractorHintEnabled: false,
+      attractorHintEnabled: true, // Keep text overlays enabled for kiosk mode
       showPopularSpots: false,
       showWeatherWidget: false,
       commentsBannerEnabled: false,
@@ -248,6 +322,7 @@ export default function AdminPanel({ open, onClose }) {
       thenandnow_enabled: false,
       comments_enabled: false,
       recommendations_enabled: false,
+      default_navigation_app: 'map', // Keep default navigation app
     }
 
     // Update state
@@ -267,12 +342,10 @@ export default function AdminPanel({ open, onClose }) {
       await updateNavSettingsAPI(updatedNavSettings)
       console.log('[AdminPanel] Navigation settings saved successfully')
 
-      console.log('[AdminPanel] Performance mode saved successfully - reloading app')
+      console.log('[AdminPanel] Performance mode saved successfully - use Reload App button to apply')
 
-      // Reload the webview to apply changes
-      setTimeout(() => {
-        window.location.href = window.location.origin
-      }, 500)
+      // Don't auto-reload - let user click Reload App button
+      alert('Performance mode settings saved! Click "Reload App" to apply changes.')
     } catch (error) {
       console.error('[AdminPanel] Failed to save performance mode:', error)
       alert(`Failed to save performance settings: ${error.message}. Please check the console for details.`)
@@ -304,6 +377,8 @@ export default function AdminPanel({ open, onClose }) {
         photobooth_enabled: Boolean(navSettings.photobooth_enabled),
         thenandnow_enabled: Boolean(navSettings.thenandnow_enabled),
         comments_enabled: Boolean(navSettings.comments_enabled),
+        recommendations_enabled: Boolean(navSettings.recommendations_enabled || false),
+        default_navigation_app: navSettings.default_navigation_app || 'map',
       }
       await updateNavSettingsAPI(completeNavSettings)
       console.log('[AdminPanel] ✓ Navigation settings saved to local storage')
@@ -330,6 +405,7 @@ export default function AdminPanel({ open, onClose }) {
         const payload = popularSpots.map((r) => ({
           label: r.label || '',
           category: r.category || 'other',
+          description: r.description || '',
         }))
         const { error: insErr } = await supabase.from('popular_spots').insert(payload)
         if (insErr) {
@@ -422,8 +498,50 @@ export default function AdminPanel({ open, onClose }) {
     }
   }
 
+  // Preview mode handlers
+  const handlePreviewChanges = () => {
+    console.log('[AdminPanel] Entering preview mode')
+
+    // Store current state as preview
+    setPreviewSettings({ ...settings })
+    setPreviewPopularSpots([...popularSpots])
+    setPreviewNavSettings({ ...navSettings })
+
+    // Enter preview mode
+    setIsPreviewMode(true)
+  }
+
+  const handleCommitChanges = async () => {
+    console.log('[AdminPanel] Committing preview changes')
+
+    // Exit preview mode and save
+    setIsPreviewMode(false)
+    setPreviewSettings(null)
+    setPreviewPopularSpots(null)
+    setPreviewNavSettings(null)
+
+    // Save changes permanently
+    await saveAndClose()
+  }
+
+  const handleDiscardChanges = () => {
+    console.log('[AdminPanel] Discarding preview changes')
+
+    // Restore to saved state
+    if (initialSettings) setSettings(initialSettings)
+    if (initialPopularSpots) setPopularSpots(initialPopularSpots)
+    if (initialNavSettings) setNavSettings(initialNavSettings)
+
+    // Exit preview mode
+    setIsPreviewMode(false)
+    setPreviewSettings(null)
+    setPreviewPopularSpots(null)
+    setPreviewNavSettings(null)
+    setHasUnsavedChanges(false)
+  }
+
   // Popular spots CRUD
-  const addSpot = () => setPopularSpots((s) => [...s, { label: '', category: 'hotdog' }])
+  const addSpot = () => setPopularSpots((s) => [...s, { label: '', category: 'hotdog', description: '' }])
   const updateSpot = (idx, patch) =>
     setPopularSpots((s) => s.map((row, i) => (i === idx ? { ...row, ...patch } : row)))
   const removeSpot = (idx) => setPopularSpots((s) => s.filter((_, i) => i !== idx))
@@ -484,6 +602,166 @@ export default function AdminPanel({ open, onClose }) {
     }
   }
 
+  // ---------- Database Audit Functions ----------
+  const runDatabaseAudit = async () => {
+    setDbAuditLoading(true)
+    setDbAutoFixResult(null)
+    try {
+      const audit = await auditDatabase()
+      setDbAudit(audit)
+      console.log('[AdminPanel] Database audit complete:', audit)
+    } catch (err) {
+      console.error('[AdminPanel] Database audit failed:', err)
+      alert(`Database audit failed: ${err.message}`)
+    } finally {
+      setDbAuditLoading(false)
+    }
+  }
+
+  const runAutoFix = async () => {
+    if (!confirm('This will automatically fix schema issues and sync missing data. Continue?')) {
+      return
+    }
+
+    setDbAutoFixing(true)
+    try {
+      const result = await autoFixDatabase()
+      setDbAutoFixResult(result)
+      setDbAudit(result.afterAudit)
+      console.log('[AdminPanel] Auto-fix complete:', result)
+      alert(`Auto-fix complete! Applied ${result.schemaFixes?.appliedFixes?.length || 0} schema fixes.`)
+    } catch (err) {
+      console.error('[AdminPanel] Auto-fix failed:', err)
+      alert(`Auto-fix failed: ${err.message}`)
+    } finally {
+      setDbAutoFixing(false)
+    }
+  }
+
+  const syncTableData = async (tableName) => {
+    try {
+      const result = await syncMissingData(tableName, 1000)
+      console.log(`[AdminPanel] Synced ${tableName}:`, result)
+      alert(`Synced ${result.synced || 0} records to ${tableName}`)
+      // Re-audit to see updated status
+      await runDatabaseAudit()
+    } catch (err) {
+      console.error(`[AdminPanel] Sync ${tableName} failed:`, err)
+      alert(`Sync failed: ${err.message}`)
+    }
+  }
+
+  // ---------- Tile Cache Functions ----------
+  const loadTileStats = async () => {
+    setTileStatsLoading(true)
+    try {
+      await tileStorage.init()
+      const stats = await tileStorage.getStats()
+
+      // Check download completion status
+      const [chicagoStatus, globalStatus, metroStatus] = await Promise.all([
+        tileStorage.isChicagoDownloadComplete(),
+        tileStorage.isGlobalDownloadComplete(),
+        tileStorage.isMetroDownloadComplete(),
+      ])
+
+      setTileStats({
+        ...stats,
+        chicago: chicagoStatus,
+        global: globalStatus,
+        metro: metroStatus,
+      })
+    } catch (err) {
+      console.error('[AdminPanel] Failed to load tile stats:', err)
+    } finally {
+      setTileStatsLoading(false)
+    }
+  }
+
+  const downloadChicagoTiles = async () => {
+    setChicagoDownloading(true)
+    setChicagoDownloadProgress({ completed: 0, total: 0, cached: 0, failed: 0, skipped: 0 })
+
+    try {
+      await tileStorage.downloadChicagoTiles({
+        onProgress: (completed, total, { cached, failed, skipped }) => {
+          setChicagoDownloadProgress({ completed, total, cached, failed, skipped })
+        },
+        onComplete: (stats) => {
+          console.log('[AdminPanel] Chicago tiles download complete:', stats)
+          alert(`Chicago tiles downloaded!\n${stats.cached} new, ${stats.skipped} already cached`)
+          loadTileStats()
+        },
+      })
+    } catch (err) {
+      console.error('[AdminPanel] Chicago download failed:', err)
+      alert(`Download failed: ${err.message}`)
+    } finally {
+      setChicagoDownloading(false)
+    }
+  }
+
+  const downloadGlobalTiles = async () => {
+    setGlobalDownloading(true)
+    setGlobalDownloadProgress({ completed: 0, total: 0, cached: 0, failed: 0, skipped: 0 })
+
+    try {
+      await tileStorage.downloadGlobalTiles({
+        onProgress: (completed, total, { cached, failed, skipped }) => {
+          setGlobalDownloadProgress({ completed, total, cached, failed, skipped })
+        },
+        onComplete: (stats) => {
+          console.log('[AdminPanel] Global tiles download complete:', stats)
+          alert(`Global tiles downloaded!\n${stats.cached} new, ${stats.skipped} already cached`)
+          loadTileStats()
+        },
+      })
+    } catch (err) {
+      console.error('[AdminPanel] Global download failed:', err)
+      alert(`Download failed: ${err.message}`)
+    } finally {
+      setGlobalDownloading(false)
+    }
+  }
+
+  const downloadMetroTiles = async () => {
+    setMetroDownloading(true)
+    setMetroDownloadProgress({ completed: 0, total: 0, cached: 0, failed: 0, skipped: 0 })
+
+    try {
+      await tileStorage.downloadMetroTiles({
+        onProgress: (completed, total, { cached, failed, skipped }) => {
+          setMetroDownloadProgress({ completed, total, cached, failed, skipped })
+        },
+        onComplete: (stats) => {
+          console.log('[AdminPanel] Metro tiles download complete:', stats)
+          alert(`Metro tiles downloaded!\n${stats.cached} new, ${stats.skipped} already cached, ${stats.cities} cities`)
+          loadTileStats()
+        },
+      })
+    } catch (err) {
+      console.error('[AdminPanel] Metro download failed:', err)
+      alert(`Download failed: ${err.message}`)
+    } finally {
+      setMetroDownloading(false)
+    }
+  }
+
+  const clearTileCache = async () => {
+    if (!confirm('This will delete all cached map tiles. They will need to be re-downloaded. Continue?')) {
+      return
+    }
+
+    try {
+      await tileStorage.clearAll()
+      alert('Tile cache cleared successfully!')
+      loadTileStats()
+    } catch (err) {
+      console.error('[AdminPanel] Failed to clear tile cache:', err)
+      alert(`Failed to clear cache: ${err.message}`)
+    }
+  }
+
   if (!open) return null
 
   return (
@@ -499,6 +777,15 @@ export default function AdminPanel({ open, onClose }) {
       {authenticated && (
         <div style={s.overlay}>
           <div style={s.backdrop} onClick={onClose} />
+
+          {/* Preview mode banner */}
+          {isPreviewMode && (
+            <PreviewBanner
+              onCommit={handleCommitChanges}
+              onDiscard={handleDiscardChanges}
+            />
+          )}
+
           <div style={s.panel}>
         {/* Fixed header */}
         <div style={s.header}>
@@ -516,7 +803,10 @@ export default function AdminPanel({ open, onClose }) {
             </button>
             <button
               style={{ ...btn.secondary, fontSize: 13, padding: '8px 12px' }}
-              onClick={() => window.location.href = window.location.origin}
+              onClick={() => {
+                // Force hard reload with cache busting
+                window.location.href = window.location.origin + '?reload=' + Date.now();
+              }}
               title="Reload app to apply changes"
             >
               🔄 Reload App
@@ -528,37 +818,110 @@ export default function AdminPanel({ open, onClose }) {
             >
               📤 Push to Kiosk
             </button>
-            <button
-              style={{ ...btn.primary, opacity: hasUnsavedChanges ? 1 : 0.5 }}
-              onClick={saveAndClose}
-              disabled={!hasUnsavedChanges}
-              title={hasUnsavedChanges ? "Save changes and close" : "No changes to save"}
-            >
-              {hasUnsavedChanges ? '💾 Save & Close' : '✓ Saved'}
-            </button>
+            {!isPreviewMode && (
+              <button
+                style={{
+                  ...btn.secondary,
+                  opacity: hasUnsavedChanges ? 1 : 0.5,
+                  borderColor: '#f59e0b',
+                  color: hasUnsavedChanges ? '#f59e0b' : '#9ca3af'
+                }}
+                onClick={handlePreviewChanges}
+                disabled={!hasUnsavedChanges}
+                title={hasUnsavedChanges ? "Preview changes without saving" : "No changes to preview"}
+              >
+                👁️ Preview
+              </button>
+            )}
+            {!isPreviewMode && (
+              <button
+                style={{ ...btn.primary, opacity: hasUnsavedChanges ? 1 : 0.5 }}
+                onClick={saveAndClose}
+                disabled={!hasUnsavedChanges}
+                title={hasUnsavedChanges ? "Save changes and close" : "No changes to save"}
+              >
+                {hasUnsavedChanges ? '💾 Save & Close' : '✓ Saved'}
+              </button>
+            )}
             <button style={btn.ghost} onClick={onClose} aria-label="Close">✕</button>
           </div>
         </div>
 
-        {/* Fixed tabs bar */}
+        {/* Fixed tabs bar - 8 main tabs with subtabs for System */}
         <div style={s.tabs}>
-          <TabBtn active={tab === 'general'} onClick={() => setTab('general')}>⚙️ General</TabBtn>
-          <TabBtn active={tab === 'display'} onClick={() => setTab('display')}>🖥️ Display & Layout</TabBtn>
-          <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>📝 Content</TabBtn>
-          <TabBtn active={tab === 'games'} onClick={() => setTab('games')}>🎮 Games</TabBtn>
-          <TabBtn active={tab === 'branding'} onClick={() => setTab('branding')}>🎨 Branding</TabBtn>
-          <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>🔊 Media & Audio</TabBtn>
-          <TabBtn active={tab === 'voice'} onClick={() => setTab('voice')}>🎙️ Voice</TabBtn>
-          <TabBtn active={tab === 'clusters'} onClick={() => setTab('clusters')}>🏢 Clusters</TabBtn>
+          <TabBtn active={tab === 'kiosk'} onClick={() => setTab('kiosk')}>⚙️ Kiosk</TabBtn>
+          <TabBtn active={tab === 'appearance'} onClick={() => setTab('appearance')}>🎨 Appearance</TabBtn>
+          <TabBtn active={tab === 'content'} onClick={() => setTab('content')}>📍 Content</TabBtn>
+          <TabBtn active={tab === 'marketplace'} onClick={() => setTab('marketplace')}>🏪 Marketplace</TabBtn>
+          <TabBtn active={tab === 'features'} onClick={() => setTab('features')}>🎮 Features</TabBtn>
+          <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>🔊 Media</TabBtn>
+          <TabBtn active={tab === 'system'} onClick={() => setTab('system')}>🔧 System</TabBtn>
           <TabBtn active={tab === 'analytics'} onClick={() => setTab('analytics')}>📊 Analytics</TabBtn>
-          <TabBtn active={tab === 'performance'} onClick={() => setTab('performance')}>⚡ Performance</TabBtn>
-          <TabBtn active={tab === 'moderate'} onClick={() => setTab('moderate')}>✅ Moderation</TabBtn>
-          <TabBtn active={tab === 'marketplace'} onClick={() => setTab('marketplace')}>🧩 Marketplace</TabBtn>
         </div>
+
+        {/* Subtabs for System tab */}
+        {tab === 'system' && (
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            padding: '12px 20px',
+            background: 'rgba(0,0,0,0.3)',
+            borderBottom: '1px solid #2a2f37',
+          }}>
+            <button
+              onClick={() => setSystemSubtab('database')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                background: systemSubtab === 'database' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                border: systemSubtab === 'database' ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid #2a2f37',
+                color: systemSubtab === 'database' ? '#60a5fa' : '#9ca3af',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              💾 Database
+            </button>
+            <button
+              onClick={() => setSystemSubtab('tiles')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                background: systemSubtab === 'tiles' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                border: systemSubtab === 'tiles' ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid #2a2f37',
+                color: systemSubtab === 'tiles' ? '#60a5fa' : '#9ca3af',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              🗺️ Tiles
+            </button>
+            <button
+              onClick={() => setSystemSubtab('multiLocation')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                background: systemSubtab === 'multiLocation' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                border: systemSubtab === 'multiLocation' ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid #2a2f37',
+                color: systemSubtab === 'multiLocation' ? '#60a5fa' : '#9ca3af',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              🏢 Multi-Location
+            </button>
+          </div>
+        )}
 
         {/* Scrollable body (consistent size across tabs) */}
         <div style={s.body}>
-          {tab === 'general' && (
+          {tab === 'kiosk' && (
             <SectionGrid>
               <Card title="Idle / Kiosk">
                 <FieldRow label="Idle attractor (seconds)">
@@ -595,6 +958,114 @@ export default function AdminPanel({ open, onClose }) {
                     onChange={(v) => setSettings(s => ({ ...s, databaseSyncMinutes: v }))}
                   />
                 </FieldRow>
+              </Card>
+
+              <Card title="Business Hours">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Automatically show a "Closed" overlay outside business hours. Helps save battery and manage customer expectations.
+                </p>
+                <FieldRow label="Enable business hours">
+                  <Toggle
+                    checked={settings.businessHoursEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, businessHoursEnabled: v }))}
+                  />
+                </FieldRow>
+
+                {settings.businessHoursEnabled && (
+                  <>
+                    <FieldRow label="Opening time">
+                      <input
+                        type="time"
+                        value={settings.businessHoursOpen || '09:00'}
+                        onChange={(e) => setSettings(s => ({ ...s, businessHoursOpen: e.target.value }))}
+                        style={{
+                          padding: '8px 12px',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          borderRadius: 6,
+                          color: 'white',
+                          fontSize: 14,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Closing time">
+                      <input
+                        type="time"
+                        value={settings.businessHoursClose || '21:00'}
+                        onChange={(e) => setSettings(s => ({ ...s, businessHoursClose: e.target.value }))}
+                        style={{
+                          padding: '8px 12px',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          borderRadius: 6,
+                          color: 'white',
+                          fontSize: 14,
+                          width: '100%',
+                        }}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Days open">
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => {
+                          const isSelected = (settings.businessHoursDays || [1, 2, 3, 4, 5]).includes(idx);
+                          return (
+                            <button
+                              key={day}
+                              onClick={() => {
+                                const current = settings.businessHoursDays || [1, 2, 3, 4, 5];
+                                const updated = isSelected
+                                  ? current.filter(d => d !== idx)
+                                  : [...current, idx].sort();
+                                setSettings(s => ({ ...s, businessHoursDays: updated }));
+                              }}
+                              style={{
+                                padding: '8px 16px',
+                                background: isSelected ? '#3b82f6' : 'rgba(255,255,255,0.05)',
+                                border: `1px solid ${isSelected ? '#3b82f6' : 'rgba(255,255,255,0.2)'}`,
+                                borderRadius: 6,
+                                color: 'white',
+                                fontSize: 13,
+                                fontWeight: isSelected ? 600 : 400,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </FieldRow>
+
+                    <FieldRow label="Closed message">
+                      <textarea
+                        value={settings.businessHoursClosedMessage || "We're currently closed. Please come back during business hours!"}
+                        onChange={(e) => setSettings(s => ({ ...s, businessHoursClosedMessage: e.target.value }))}
+                        rows={3}
+                        style={{
+                          padding: '8px 12px',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.2)',
+                          borderRadius: 6,
+                          color: 'white',
+                          fontSize: 14,
+                          width: '100%',
+                          fontFamily: 'inherit',
+                          resize: 'vertical',
+                        }}
+                      />
+                    </FieldRow>
+
+                    <p style={{ ...s.muted, margin: '16px 0 0', fontSize: 11 }}>
+                      💡 <strong>Hardware Wake-Up:</strong> This feature can't physically turn on a sleeping device.
+                      For automatic screen on/off, use <strong>Fully Kiosk Browser</strong> which has built-in scheduling,
+                      or enable "Stay Awake" in Android Developer Options.
+                    </p>
+                  </>
+                )}
               </Card>
 
               <Card title="Feature Idle Timeouts">
@@ -716,6 +1187,86 @@ export default function AdminPanel({ open, onClose }) {
                 </p>
               </Card>
 
+              <Card title="Layout Edit Mode">
+                <p style={{ ...s.muted, margin: '0 0 16px', fontSize: 12 }}>
+                  Reposition widgets (QR Code, Weather, Explore button) by dragging them to snap positions
+                </p>
+                <button
+                  onClick={() => {
+                    setLayoutEditMode(!isLayoutEditMode);
+                    onClose(); // Close admin panel so user can see and edit the widgets
+                  }}
+                  style={{
+                    padding: '12px 20px',
+                    background: isLayoutEditMode ? '#f59e0b' : '#3b82f6',
+                    border: 'none',
+                    borderRadius: 8,
+                    color: 'white',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    width: '100%',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                >
+                  {isLayoutEditMode ? '✅ Exit Layout Edit Mode' : '🎨 Enter Layout Edit Mode'}
+                </button>
+
+                {/* Grid Configuration */}
+                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <FieldRow label="Grid Layout Type">
+                    <select
+                      value={settings.layoutGridType || '2x3'}
+                      onChange={(e) => setSettings(s => ({ ...s, layoutGridType: e.target.value }))}
+                      style={{
+                        padding: '8px 12px',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: 6,
+                        color: 'white',
+                        fontSize: 14,
+                        width: '100%',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="2x2">2×2 Grid (4 Quadrants)</option>
+                      <option value="2x3">2×3 Grid (6 Sections)</option>
+                      <option value="3-2-3">3-2-3 Grid (8 Sections)</option>
+                    </select>
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+                    {settings.layoutGridType === '2x2' && '4 equal quadrants'}
+                    {settings.layoutGridType === '2x3' && '2 rows × 3 columns'}
+                    {settings.layoutGridType === '3-2-3' && '3 left, 2 center, 3 right sections'}
+                  </p>
+
+                  <FieldRow label="Vertical Snap Increment (px)">
+                    <NumberInput
+                      value={settings.layoutVerticalIncrement || 10}
+                      min={5}
+                      max={50}
+                      onChange={(v) => setSettings(s => ({ ...s, layoutVerticalIncrement: v }))}
+                    />
+                  </FieldRow>
+                  <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                    Widgets snap to this pixel increment when dragging vertically
+                  </p>
+                </div>
+
+                <p style={{ ...s.muted, margin: '16px 0 0', fontSize: 11 }}>
+                  • Drag widgets to grid cells, they snap automatically<br />
+                  • Collision detection prevents overlapping widgets<br />
+                  • Changes save automatically when you release
+                </p>
+              </Card>
+
               <Card title="Data window">
                 <FieldRow label="Show pins from last (months)">
                   <NumberInput
@@ -741,12 +1292,6 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={settings.photoBackgroundsEnabled}
                     onChange={(v) => setSettings(s => ({ ...s, photoBackgroundsEnabled: v }))}
-                  />
-                </FieldRow>
-                <FieldRow label="Vestaboard notifications">
-                  <Toggle
-                    checked={settings.vestaboardEnabled}
-                    onChange={(v) => setSettings(s => ({ ...s, vestaboardEnabled: v }))}
                   />
                 </FieldRow>
                 <FieldRow label="Facebook share option">
@@ -1107,7 +1652,7 @@ export default function AdminPanel({ open, onClose }) {
             </SectionGrid>
           )}
 
-          {tab === 'display' && (
+          {tab === 'appearance' && (
             <>
               <SectionGrid>
                 <Card title="Zoom thresholds">
@@ -1421,7 +1966,13 @@ export default function AdminPanel({ open, onClose }) {
             </div>
           )}
 
-          {tab === 'navigation' && (
+          {tab === 'marketplace' && (
+            <div style={{ padding: 20 }}>
+              <MarketplaceTab settings={adminSettingsFromHook} onSave={saveAdminSettings} />
+            </div>
+          )}
+
+          {tab === 'features' && (
             <SectionGrid>
               <Card title="Footer Navigation Items">
                 <p style={s.muted}>
@@ -1432,7 +1983,12 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.games_enabled}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, games_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        games_enabled: v,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1443,7 +1999,12 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.jukebox_enabled}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, jukebox_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        jukebox_enabled: v,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1454,7 +2015,12 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.order_enabled}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, order_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        order_enabled: v,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1465,7 +2031,12 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.explore_enabled}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, explore_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        explore_enabled: v,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1476,7 +2047,12 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.photobooth_enabled}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, photobooth_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        photobooth_enabled: v,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1487,7 +2063,12 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.thenandnow_enabled}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, thenandnow_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        thenandnow_enabled: v,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1498,7 +2079,12 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.comments_enabled}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, comments_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        comments_enabled: v,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1509,7 +2095,11 @@ export default function AdminPanel({ open, onClose }) {
                   <Toggle
                     checked={navSettings.recommendations_enabled || false}
                     onChange={async (v) => {
-                      const updated = { ...navSettings, recommendations_enabled: v };
+                      const updated = {
+                        ...navSettings,
+                        recommendations_enabled: v,
+                        default_navigation_app: navSettings.default_navigation_app || 'map',
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1527,7 +2117,11 @@ export default function AdminPanel({ open, onClose }) {
                   <select
                     value={navSettings.default_navigation_app || 'map'}
                     onChange={async (e) => {
-                      const updated = { ...navSettings, default_navigation_app: e.target.value };
+                      const updated = {
+                        ...navSettings,
+                        default_navigation_app: e.target.value,
+                        recommendations_enabled: navSettings.recommendations_enabled || false,
+                      };
                       setNavSettings(updated);
                       await updateNavSettingsAPI(updated);
                     }}
@@ -1638,31 +2232,520 @@ export default function AdminPanel({ open, onClose }) {
                   Weather widget shows current weather with hot dog recommendations. Configure location coordinates for accurate weather data.
                 </p>
               </Card>
+
+              <Card title="QR Code Widget">
+                <FieldRow label="Show QR Code">
+                  <Toggle
+                    checked={settings.qrCodeEnabled}
+                    onChange={(v) => setSettings(s => ({ ...s, qrCodeEnabled: v }))}
+                  />
+                </FieldRow>
+
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Display a QR code that patrons can scan to continue exploring on their mobile device. Only shown on kiosk/desktop view.
+                </p>
+              </Card>
+
+              <Card title="🤖 Walkup Attractor (AI Voice Greeting)">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Greet customers approaching an idle kiosk with animated prompts and optional AI voice.
+                </p>
+
+                <FieldRow label="Enable Walkup Greeting">
+                  <Toggle
+                    checked={settings.walkupAttractorEnabled ?? true}
+                    onChange={(v) => setSettings(s => ({ ...s, walkupAttractorEnabled: v }))}
+                  />
+                </FieldRow>
+
+                {settings.walkupAttractorEnabled && (
+                  <>
+                    <FieldRow label="Voice Prompts">
+                      <Toggle
+                        checked={settings.walkupAttractorVoiceEnabled ?? false}
+                        onChange={(v) => setSettings(s => ({ ...s, walkupAttractorVoiceEnabled: v }))}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Rotation Speed">
+                      <input
+                        type="number"
+                        min="2"
+                        max="10"
+                        value={settings.walkupAttractorRotationSeconds || 4}
+                        onChange={(e) => setSettings(s => ({ ...s, walkupAttractorRotationSeconds: parseInt(e.target.value) || 4 }))}
+                        style={{ ...s.input, width: '80px' }}
+                      />
+                      <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                    </FieldRow>
+
+                    <FieldRow label="Simulation Mode">
+                      <Toggle
+                        checked={settings.simulationMode ?? false}
+                        onChange={(v) => setSettings(s => ({ ...s, simulationMode: v }))}
+                      />
+                    </FieldRow>
+                    <p style={{ ...s.muted, margin: '4px 0 0', fontSize: 11 }}>
+                      Simulation mode forces the attractor to show immediately for browser demos (ignores idle timeout)
+                    </p>
+
+                    <div style={{ marginTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16 }}>
+                      <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600 }}>
+                        Custom Call-to-Action Prompts (Max 3)
+                      </h4>
+                      <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 11 }}>
+                        Create up to 3 custom prompts. Leave empty to use default context-aware prompts based on enabled features.
+                      </p>
+
+                      {((settings.walkupAttractorPrompts || []).length < 3) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const prompts = settings.walkupAttractorPrompts || [];
+                            setSettings(s => ({
+                              ...s,
+                              walkupAttractorPrompts: [
+                                ...prompts,
+                                { emoji: '👋', text: 'Welcome!', subtext: 'Tap to get started', voiceText: 'Welcome! Tap the screen to begin.' }
+                              ]
+                            }));
+                          }}
+                          style={{
+                            ...s.button,
+                            padding: '8px 16px',
+                            fontSize: 13,
+                            marginBottom: 12,
+                          }}
+                        >
+                          + Add Custom Prompt
+                        </button>
+                      )}
+
+                      {(settings.walkupAttractorPrompts || []).map((prompt, index) => (
+                        <div key={index} style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          padding: 12,
+                          borderRadius: 8,
+                          marginBottom: 12,
+                          border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>Prompt {index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const prompts = [...(settings.walkupAttractorPrompts || [])];
+                                prompts.splice(index, 1);
+                                setSettings(s => ({ ...s, walkupAttractorPrompts: prompts }));
+                              }}
+                              style={{
+                                ...s.button,
+                                padding: '4px 12px',
+                                fontSize: 11,
+                                background: 'rgba(239, 68, 68, 0.2)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          <FieldRow label="Emoji">
+                            <input
+                              type="text"
+                              maxLength={2}
+                              value={prompt.emoji || ''}
+                              onChange={(e) => {
+                                const prompts = [...(settings.walkupAttractorPrompts || [])];
+                                prompts[index] = { ...prompts[index], emoji: e.target.value };
+                                setSettings(s => ({ ...s, walkupAttractorPrompts: prompts }));
+                              }}
+                              placeholder="📍"
+                              style={{ ...s.input, width: '60px', textAlign: 'center' }}
+                            />
+                          </FieldRow>
+
+                          <FieldRow label="Main Text">
+                            <input
+                              type="text"
+                              value={prompt.text || ''}
+                              onChange={(e) => {
+                                const prompts = [...(settings.walkupAttractorPrompts || [])];
+                                prompts[index] = { ...prompts[index], text: e.target.value };
+                                setSettings(s => ({ ...s, walkupAttractorPrompts: prompts }));
+                              }}
+                              placeholder="Leave Your Pin!"
+                              style={s.input}
+                            />
+                          </FieldRow>
+
+                          <FieldRow label="Subtext">
+                            <input
+                              type="text"
+                              value={prompt.subtext || ''}
+                              onChange={(e) => {
+                                const prompts = [...(settings.walkupAttractorPrompts || [])];
+                                prompts[index] = { ...prompts[index], subtext: e.target.value };
+                                setSettings(s => ({ ...s, walkupAttractorPrompts: prompts }));
+                              }}
+                              placeholder="Mark your spot on our map"
+                              style={s.input}
+                            />
+                          </FieldRow>
+
+                          <FieldRow label="Voice Text">
+                            <input
+                              type="text"
+                              value={prompt.voiceText || ''}
+                              onChange={(e) => {
+                                const prompts = [...(settings.walkupAttractorPrompts || [])];
+                                prompts[index] = { ...prompts[index], voiceText: e.target.value };
+                                setSettings(s => ({ ...s, walkupAttractorPrompts: prompts }));
+                              }}
+                              placeholder="Have you already placed a pin on our map?"
+                              style={s.input}
+                            />
+                          </FieldRow>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <p style={{ ...s.muted, margin: '12px 0 0', fontSize: 11 }}>
+                  The walkup attractor appears after {settings.idleAttractorSeconds || 60} seconds of inactivity and shows contextual prompts based on enabled features. Voice prompts use the browser's built-in speech synthesis.
+                </p>
+              </Card>
+
+              <Card title="📷 Proximity Detection (Camera-Based Approach)">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Automatically detect when someone approaches the kiosk using the front-facing camera. Triggers walkup greeting when motion is detected.
+                </p>
+
+                <FieldRow label="Enable Proximity Detection">
+                  <Toggle
+                    checked={settings.proximityDetectionEnabled ?? false}
+                    onChange={(v) => setSettings(s => ({ ...s, proximityDetectionEnabled: v }))}
+                  />
+                </FieldRow>
+
+                {settings.proximityDetectionEnabled && (
+                  <>
+                    <FieldRow label="Motion Sensitivity">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                        <input
+                          type="range"
+                          min="5"
+                          max="50"
+                          value={settings.proximitySensitivity || 15}
+                          onChange={(e) => setSettings(s => ({ ...s, proximitySensitivity: parseInt(e.target.value) }))}
+                          style={{ flex: 1 }}
+                        />
+                        <span style={{ ...s.muted, fontSize: 12, minWidth: '60px' }}>
+                          {settings.proximitySensitivity || 15} (lower = more sensitive)
+                        </span>
+                      </div>
+                    </FieldRow>
+
+                    <FieldRow label="Proximity Threshold (Walkup)">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                        <input
+                          type="range"
+                          min="10"
+                          max="80"
+                          value={settings.proximityThreshold || 30}
+                          onChange={(e) => setSettings(s => ({ ...s, proximityThreshold: parseInt(e.target.value) }))}
+                          style={{ flex: 1 }}
+                        />
+                        <span style={{ ...s.muted, fontSize: 12, minWidth: '60px' }}>
+                          {settings.proximityThreshold || 30} (higher = closer)
+                        </span>
+                      </div>
+                    </FieldRow>
+
+                    <FieldRow label="Stare Threshold (Very Close)">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                        <input
+                          type="range"
+                          min="20"
+                          max="90"
+                          value={settings.stareThreshold || 40}
+                          onChange={(e) => setSettings(s => ({ ...s, stareThreshold: parseInt(e.target.value) }))}
+                          style={{ flex: 1 }}
+                        />
+                        <span style={{ ...s.muted, fontSize: 12, minWidth: '60px' }}>
+                          {settings.stareThreshold || 40} (for employee clock-in)
+                        </span>
+                      </div>
+                    </FieldRow>
+
+                    <FieldRow label="Stare Duration">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <input
+                          type="number"
+                          min="1000"
+                          max="10000"
+                          step="500"
+                          value={settings.stareDurationMs || 3000}
+                          onChange={(e) => setSettings(s => ({ ...s, stareDurationMs: parseInt(e.target.value) || 3000 }))}
+                          style={{ ...s.input, width: '100px' }}
+                        />
+                        <span style={{ ...s.muted, fontSize: 12 }}>ms (how long to trigger)</span>
+                      </div>
+                    </FieldRow>
+
+                    <FieldRow label="Detection Interval">
+                      <input
+                        type="number"
+                        min="100"
+                        max="2000"
+                        step="100"
+                        value={settings.proximityDetectionInterval || 500}
+                        onChange={(e) => setSettings(s => ({ ...s, proximityDetectionInterval: parseInt(e.target.value) || 500 }))}
+                        style={{ ...s.input, width: '100px' }}
+                      />
+                      <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>ms</span>
+                    </FieldRow>
+
+                    <FieldRow label="Trigger Voice Greeting">
+                      <Toggle
+                        checked={settings.proximityTriggerVoice ?? true}
+                        onChange={(v) => setSettings(s => ({ ...s, proximityTriggerVoice: v }))}
+                      />
+                    </FieldRow>
+
+                    <p style={{ ...s.muted, margin: '12px 0 0', fontSize: 11 }}>
+                      ⚠️ Requires camera permission. Three detection tiers: <strong>Motion sensitivity</strong> (how much pixel change), <strong>Walkup</strong> (for greetings), <strong>Stare</strong> (very close + prolonged for employee features). Lower detection interval = faster response but more CPU usage.
+                    </p>
+                  </>
+                )}
+
+                <p style={{ ...s.muted, margin: '12px 0 0', fontSize: 11 }}>
+                  Uses front-facing camera to detect when customers approach. Runs continuously during business hours when enabled. All processing happens locally in the browser - no external services required.
+                </p>
+              </Card>
+
+              {/* Proximity Detection Visual Monitor */}
+              {settings.proximityDetectionEnabled && proximityDetection && (
+                <Card title="📊 Proximity Detection Monitor">
+                  <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                    Real-time visual monitoring of camera feed and motion detection events. Use this to verify proximity detection is working correctly.
+                  </p>
+                  <ProximityMonitor
+                    enabled={proximityDetection.enabled}
+                    proximityLevel={proximityDetection.proximityLevel}
+                    isAmbientDetected={proximityDetection.isAmbientDetected}
+                    isPersonDetected={proximityDetection.isPersonDetected}
+                    isStaring={proximityDetection.isStaring}
+                    stareDuration={proximityDetection.stareDuration}
+                    cameraError={proximityDetection.cameraError}
+                  />
+                </Card>
+              )}
+
+              <Card title="🎵 Ambient Music Auto-Play">
+                <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
+                  Automatically play ambient music when motion is detected in the area (triggered at farther range than walkup greeting).
+                </p>
+
+                <FieldRow label="Enable Ambient Music">
+                  <Toggle
+                    checked={settings.ambientMusicEnabled ?? false}
+                    onChange={(v) => setSettings(s => ({ ...s, ambientMusicEnabled: v }))}
+                  />
+                </FieldRow>
+
+                {settings.ambientMusicEnabled && (
+                  <>
+                    <FieldRow label="Detection Threshold">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                        <input
+                          type="range"
+                          min="5"
+                          max="25"
+                          value={settings.ambientMusicThreshold || 15}
+                          onChange={(e) => setSettings(s => ({ ...s, ambientMusicThreshold: parseInt(e.target.value) }))}
+                          style={{ flex: 1 }}
+                        />
+                        <span style={{ ...s.muted, fontSize: 12, minWidth: '80px' }}>
+                          {settings.ambientMusicThreshold || 15} (lower = farther)
+                        </span>
+                      </div>
+                    </FieldRow>
+
+                    <FieldRow label="Volume">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={(settings.ambientMusicVolume || 0.5) * 100}
+                          onChange={(e) => setSettings(s => ({ ...s, ambientMusicVolume: parseInt(e.target.value) / 100 }))}
+                          style={{ flex: 1 }}
+                        />
+                        <span style={{ ...s.muted, fontSize: 12, minWidth: '40px' }}>
+                          {Math.round((settings.ambientMusicVolume || 0.5) * 100)}%
+                        </span>
+                      </div>
+                    </FieldRow>
+
+                    <FieldRow label="Fade In">
+                      <Toggle
+                        checked={settings.ambientMusicFadeIn ?? true}
+                        onChange={(v) => setSettings(s => ({ ...s, ambientMusicFadeIn: v }))}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Fade Out">
+                      <Toggle
+                        checked={settings.ambientMusicFadeOut ?? true}
+                        onChange={(v) => setSettings(s => ({ ...s, ambientMusicFadeOut: v }))}
+                      />
+                    </FieldRow>
+
+                    <FieldRow label="Idle Timeout">
+                      <input
+                        type="number"
+                        min="10"
+                        max="120"
+                        value={settings.ambientMusicIdleTimeout || 30}
+                        onChange={(e) => setSettings(s => ({ ...s, ambientMusicIdleTimeout: parseInt(e.target.value) || 30 }))}
+                        style={{ ...s.input, width: '80px' }}
+                      />
+                      <span style={{ ...s.muted, fontSize: 12, marginLeft: 8 }}>seconds</span>
+                    </FieldRow>
+
+                    <div style={{ marginTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16 }}>
+                      <h4 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 600 }}>
+                        Music Playlist
+                      </h4>
+                      <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 11 }}>
+                        Add local music files for ambient playback. Upload audio files to your server and provide the URLs here.
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const playlist = settings.ambientMusicPlaylist || [];
+                          setSettings(s => ({
+                            ...s,
+                            ambientMusicPlaylist: [
+                              ...playlist,
+                              { name: 'Track ' + (playlist.length + 1), url: '' }
+                            ]
+                          }));
+                        }}
+                        style={{
+                          ...s.button,
+                          padding: '8px 16px',
+                          fontSize: 13,
+                          marginBottom: 12,
+                        }}
+                      >
+                        + Add Track
+                      </button>
+
+                      {(settings.ambientMusicPlaylist || []).map((track, index) => (
+                        <div key={index} style={{
+                          background: 'rgba(255,255,255,0.05)',
+                          padding: 12,
+                          borderRadius: 8,
+                          marginBottom: 12,
+                          border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>Track {index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const playlist = [...(settings.ambientMusicPlaylist || [])];
+                                playlist.splice(index, 1);
+                                setSettings(s => ({ ...s, ambientMusicPlaylist: playlist }));
+                              }}
+                              style={{
+                                ...s.button,
+                                padding: '4px 12px',
+                                fontSize: 11,
+                                background: 'rgba(239, 68, 68, 0.2)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          <FieldRow label="Name">
+                            <input
+                              type="text"
+                              value={track.name || ''}
+                              onChange={(e) => {
+                                const playlist = [...(settings.ambientMusicPlaylist || [])];
+                                playlist[index] = { ...playlist[index], name: e.target.value };
+                                setSettings(s => ({ ...s, ambientMusicPlaylist: playlist }));
+                              }}
+                              placeholder="Track name"
+                              style={s.input}
+                            />
+                          </FieldRow>
+
+                          <FieldRow label="URL">
+                            <input
+                              type="text"
+                              value={track.url || ''}
+                              onChange={(e) => {
+                                const playlist = [...(settings.ambientMusicPlaylist || [])];
+                                playlist[index] = { ...playlist[index], url: e.target.value };
+                                setSettings(s => ({ ...s, ambientMusicPlaylist: playlist }));
+                              }}
+                              placeholder="/audio/track.mp3 or https://..."
+                              style={s.input}
+                            />
+                          </FieldRow>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p style={{ ...s.muted, margin: '12px 0 0', fontSize: 11 }}>
+                      💡 Tip: Ambient music threshold should be lower (farther range) than walkup greeting threshold for best experience. Music starts playing when people enter the area, then greeting appears when they get closer.
+                    </p>
+                  </>
+                )}
+              </Card>
             </SectionGrid>
           )}
 
           {tab === 'content' && (
             <div style={{ display: 'grid', gap: 12 }}>
               <Card title="Popular spots (shown on Chicago map)">
-                <div style={{ display: 'grid', gap: 8, maxHeight: 360, overflow: 'auto', paddingRight: 2 }}>
+                <div style={{ display: 'grid', gap: 12, maxHeight: 500, overflow: 'auto', paddingRight: 2 }}>
                   {popularSpots.map((row, i) => (
-                    <div key={row.id ?? i} style={s.row}>
-                      <select
-                        value={row.category}
-                        onChange={(e) => updateSpot(i, { category: e.target.value })}
-                        style={inp.select}
-                      >
-                        <option value="hotdog">Hot Dog</option>
-                        <option value="beef">Italian Beef</option>
-                        <option value="other">Other</option>
-                      </select>
-                      <input
-                        style={inp.text}
-                        value={row.label}
-                        placeholder="Display label"
-                        onChange={(e) => updateSpot(i, { label: e.target.value })}
+                    <div key={row.id ?? i} style={{ ...s.row, flexDirection: 'column', gap: 8, alignItems: 'stretch', padding: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 8 }}>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <select
+                          value={row.category}
+                          onChange={(e) => updateSpot(i, { category: e.target.value })}
+                          style={{ ...inp.select, flex: '0 0 140px' }}
+                        >
+                          <option value="hotdog">🌭 Hot Dog</option>
+                          <option value="beef">🥩 Italian Beef</option>
+                          <option value="pizza">🍕 Pizza</option>
+                          <option value="attraction">🏛️ Attraction</option>
+                          <option value="other">📍 Other</option>
+                        </select>
+                        <input
+                          style={{ ...inp.text, flex: 1 }}
+                          value={row.label}
+                          placeholder="Display label (e.g., Willis Tower)"
+                          onChange={(e) => updateSpot(i, { label: e.target.value })}
+                        />
+                        <button style={btn.dangerMini} onClick={() => removeSpot(i)}>Remove</button>
+                      </div>
+                      <textarea
+                        style={{ ...inp.text, minHeight: 60, resize: 'vertical', fontFamily: 'inherit' }}
+                        value={row.description || ''}
+                        placeholder="Description / fun fact / history (e.g., Built in 1973 as Sears Tower...)"
+                        onChange={(e) => updateSpot(i, { description: e.target.value })}
                       />
-                      <button style={btn.dangerMini} onClick={() => removeSpot(i)}>Remove</button>
                     </div>
                   ))}
                 </div>
@@ -2042,7 +3125,7 @@ export default function AdminPanel({ open, onClose }) {
             </div>
           )}
 
-          {tab === 'clusters' && (
+          {tab === 'system' && systemSubtab === 'multiLocation' && (
             <div style={{ display: 'grid', gap: 12 }}>
               <Card title="Kiosk Clusters & Multi-Location Management">
                 <p style={s.muted}>
@@ -2285,6 +3368,382 @@ export default function AdminPanel({ open, onClose }) {
                   </div>
                 )}
               </Card>
+            </div>
+          )}
+
+          {tab === 'system' && systemSubtab === 'database' && (
+            <div>
+              <SectionGrid>
+                <Card title="💾 Database Sync Status">
+                  <p style={{...s.muted, marginBottom: 16}}>
+                    Monitor and manage synchronization between local SQLite database and Supabase cloud database.
+                  </p>
+
+                  <div style={{display: 'flex', gap: 12, marginBottom: 20}}>
+                    <button
+                      style={{...btn.primary, flex: 1}}
+                      onClick={runDatabaseAudit}
+                      disabled={dbAuditLoading}
+                    >
+                      {dbAuditLoading ? '⏳ Auditing...' : '🔍 Run Audit'}
+                    </button>
+                    <button
+                      style={{...btn.secondary, flex: 1}}
+                      onClick={runAutoFix}
+                      disabled={dbAutoFixing || !dbAudit}
+                    >
+                      {dbAutoFixing ? '⏳ Fixing...' : '🔧 Auto-Fix All'}
+                    </button>
+                  </div>
+
+                  {!dbAudit && !dbAuditLoading && (
+                    <div style={{padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 14}}>
+                      Click "Run Audit" to check database synchronization status
+                    </div>
+                  )}
+
+                  {dbAudit && (
+                    <div style={{marginTop: 20}}>
+                      {/* Summary Card */}
+                      <div style={{
+                        background: dbAudit.summary.totalIssues === 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        border: `1px solid ${dbAudit.summary.totalIssues === 0 ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                        borderRadius: 8,
+                        padding: 16,
+                        marginBottom: 20,
+                      }}>
+                        <div style={{fontSize: 18, fontWeight: 600, marginBottom: 8}}>
+                          {dbAudit.summary.totalIssues === 0 ? '✅ All Systems Synced' : `⚠️ ${dbAudit.summary.totalIssues} Issues Found`}
+                        </div>
+                        {dbAudit.summary.totalIssues > 0 && (
+                          <div style={{fontSize: 13, color: '#9ca3af'}}>
+                            Critical: {dbAudit.summary.critical} • High: {dbAudit.summary.high} • Low: {dbAudit.summary.low}
+                          </div>
+                        )}
+                        <div style={{fontSize: 11, color: '#6b7280', marginTop: 8}}>
+                          Last audit: {new Date(dbAudit.timestamp).toLocaleString()}
+                        </div>
+                      </div>
+
+                      {/* Table Status Cards */}
+                      {Object.entries(dbAudit.tables).map(([tableName, tableAudit]) => (
+                        <div key={tableName} style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid #2a2f37',
+                          borderRadius: 8,
+                          padding: 16,
+                          marginBottom: 12,
+                        }}>
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+                            <div>
+                              <div style={{fontSize: 16, fontWeight: 600}}>{tableName}</div>
+                              <div style={{fontSize: 12, color: '#9ca3af', marginTop: 4}}>
+                                {!tableAudit.exists && '❌ Table missing'}
+                                {tableAudit.exists && tableAudit.dataSyncStatus === 'synced' && '✅ Fully synced'}
+                                {tableAudit.dataSyncStatus === 'local_behind' && `⚠️ Local behind by ${tableAudit.missingCount} records`}
+                                {tableAudit.dataSyncStatus === 'local_ahead' && `⚠️ Local ahead by ${tableAudit.extraCount} records`}
+                                {tableAudit.dataSyncStatus === 'supabase_error' && '❌ Supabase connection error'}
+                              </div>
+                            </div>
+                            {tableAudit.dataSyncStatus === 'local_behind' && (
+                              <button
+                                style={{...btn.secondary, padding: '6px 12px', fontSize: 13}}
+                                onClick={() => syncTableData(tableName)}
+                              >
+                                Sync Now
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Row Counts */}
+                          {tableAudit.exists && tableAudit.rowCounts && (
+                            <div style={{display: 'flex', gap: 16, marginTop: 12, fontSize: 13}}>
+                              <div>
+                                <span style={{color: '#9ca3af'}}>Local:</span>{' '}
+                                <span style={{fontWeight: 600}}>{tableAudit.rowCounts.localCount}</span>
+                              </div>
+                              <div>
+                                <span style={{color: '#9ca3af'}}>Cloud:</span>{' '}
+                                <span style={{fontWeight: 600}}>{tableAudit.rowCounts.supabaseCount ?? 'N/A'}</span>
+                              </div>
+                              {tableAudit.rowCounts.diff !== 0 && (
+                                <div>
+                                  <span style={{color: '#9ca3af'}}>Diff:</span>{' '}
+                                  <span style={{fontWeight: 600, color: tableAudit.rowCounts.diff < 0 ? '#ef4444' : '#f59e0b'}}>
+                                    {tableAudit.rowCounts.diff > 0 ? '+' : ''}{tableAudit.rowCounts.diff}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Schema Issues */}
+                          {tableAudit.schemaIssues && tableAudit.schemaIssues.length > 0 && (
+                            <div style={{marginTop: 12, paddingTop: 12, borderTop: '1px solid #2a2f37'}}>
+                              <div style={{fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#f59e0b'}}>
+                                Schema Issues ({tableAudit.schemaIssues.length})
+                              </div>
+                              {tableAudit.schemaIssues.slice(0, 5).map((issue, idx) => (
+                                <div key={idx} style={{fontSize: 12, color: '#9ca3af', marginBottom: 4}}>
+                                  • {issue.type}: {issue.column || 'Table'}
+                                  {issue.severity && ` (${issue.severity})`}
+                                </div>
+                              ))}
+                              {tableAudit.schemaIssues.length > 5 && (
+                                <div style={{fontSize: 12, color: '#6b7280', marginTop: 4}}>
+                                  ... and {tableAudit.schemaIssues.length - 5} more
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Auto-Fix Result */}
+                      {dbAutoFixResult && (
+                        <div style={{
+                          background: 'rgba(34, 197, 94, 0.1)',
+                          border: '1px solid rgba(34, 197, 94, 0.3)',
+                          borderRadius: 8,
+                          padding: 16,
+                          marginTop: 20,
+                        }}>
+                          <div style={{fontSize: 16, fontWeight: 600, marginBottom: 12}}>
+                            ✅ Auto-Fix Complete
+                          </div>
+                          <div style={{fontSize: 13, color: '#9ca3af'}}>
+                            Applied {dbAutoFixResult.schemaFixes?.appliedFixes?.length || 0} schema fixes
+                          </div>
+                          {Object.entries(dbAutoFixResult.dataSyncs || {}).map(([table, result]) => (
+                            <div key={table} style={{fontSize: 13, color: '#9ca3af', marginTop: 4}}>
+                              • {table}: Synced {result.synced || 0}/{result.total || 0} records
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              </SectionGrid>
+            </div>
+          )}
+
+          {tab === 'system' && systemSubtab === 'tiles' && (
+            <div>
+              <SectionGrid>
+                <Card title="🗺️ Map Tile Cache">
+                  <p style={{...s.muted, marginBottom: 16}}>
+                    Manage offline map tiles. Tiles are stored in <strong>native filesystem</strong> on Android (persists across reinstalls) or IndexedDB on web (cleared on uninstall).
+                  </p>
+
+                  <div style={{display: 'flex', gap: 12, marginBottom: 20}}>
+                    <button
+                      style={{...btn.primary, flex: 1}}
+                      onClick={loadTileStats}
+                      disabled={tileStatsLoading}
+                    >
+                      {tileStatsLoading ? '⏳ Loading...' : '📊 Check Status'}
+                    </button>
+                    <button
+                      style={{...btn.danger, flex: 1}}
+                      onClick={clearTileCache}
+                    >
+                      🗑️ Clear Cache
+                    </button>
+                  </div>
+
+                  {!tileStats && !tileStatsLoading && (
+                    <div style={{padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 14}}>
+                      Click "Check Status" to see tile cache statistics
+                    </div>
+                  )}
+
+                  {tileStats && (
+                    <div>
+                      {/* Storage Backend Info */}
+                      <div style={{
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: 8,
+                        padding: 16,
+                        marginBottom: 20,
+                      }}>
+                        <div style={{fontSize: 16, fontWeight: 600, marginBottom: 8}}>
+                          📦 Storage: {tileStats.storage}
+                        </div>
+                        <div style={{fontSize: 13, color: '#9ca3af'}}>
+                          {tileStats.storage === 'Native Filesystem' && '✅ Tiles persist across app reinstalls'}
+                          {tileStats.storage === 'IndexedDB' && '⚠️ Tiles are cleared when app is uninstalled (browser mode)'}
+                        </div>
+                        {tileStats.tileCount && tileStats.tileCount !== 'N/A' && (
+                          <div style={{fontSize: 13, color: '#9ca3af', marginTop: 4}}>
+                            Total cached tiles: {tileStats.tileCount}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Chicago Tiles */}
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid #2a2f37',
+                        borderRadius: 8,
+                        padding: 16,
+                        marginBottom: 12,
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+                          <div>
+                            <div style={{fontSize: 16, fontWeight: 600}}>🏙️ Chicago Area</div>
+                            <div style={{fontSize: 12, color: '#9ca3af', marginTop: 4}}>
+                              {tileStats.chicago.isComplete ? '✅ Fully cached' : `⏳ ${tileStats.chicago.stats.percentCached}% complete`}
+                            </div>
+                            <div style={{fontSize: 11, color: '#6b7280', marginTop: 2}}>
+                              Zoom 10-17 • ~{tileStats.chicago.stats.total} tiles
+                            </div>
+                          </div>
+                          {!tileStats.chicago.isComplete && (
+                            <button
+                              style={{...btn.secondary, padding: '6px 12px', fontSize: 13}}
+                              onClick={downloadChicagoTiles}
+                              disabled={chicagoDownloading}
+                            >
+                              {chicagoDownloading ? '⏳ Downloading...' : 'Download'}
+                            </button>
+                          )}
+                        </div>
+                        {chicagoDownloadProgress && chicagoDownloadProgress.total > 0 && (
+                          <div style={{marginTop: 12}}>
+                            <div style={{
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: 4,
+                              height: 8,
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                background: '#3b82f6',
+                                height: '100%',
+                                width: `${(chicagoDownloadProgress.completed / chicagoDownloadProgress.total) * 100}%`,
+                                transition: 'width 0.3s ease',
+                              }} />
+                            </div>
+                            <div style={{fontSize: 11, color: '#9ca3af', marginTop: 4}}>
+                              {chicagoDownloadProgress.completed} / {chicagoDownloadProgress.total} tiles
+                              ({chicagoDownloadProgress.cached} new, {chicagoDownloadProgress.skipped} cached)
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Global Tiles */}
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid #2a2f37',
+                        borderRadius: 8,
+                        padding: 16,
+                        marginBottom: 12,
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+                          <div>
+                            <div style={{fontSize: 16, fontWeight: 600}}>🌍 Global Overview</div>
+                            <div style={{fontSize: 12, color: '#9ca3af', marginTop: 4}}>
+                              {tileStats.global.isComplete ? '✅ Fully cached' : `⏳ ${tileStats.global.stats.percentCached}% complete`}
+                            </div>
+                            <div style={{fontSize: 11, color: '#6b7280', marginTop: 2}}>
+                              Zoom 3-5 • {tileStats.global.stats.total} tiles • ~2MB
+                            </div>
+                          </div>
+                          {!tileStats.global.isComplete && (
+                            <button
+                              style={{...btn.secondary, padding: '6px 12px', fontSize: 13}}
+                              onClick={downloadGlobalTiles}
+                              disabled={globalDownloading}
+                            >
+                              {globalDownloading ? '⏳ Downloading...' : 'Download'}
+                            </button>
+                          )}
+                        </div>
+                        {globalDownloadProgress && globalDownloadProgress.total > 0 && (
+                          <div style={{marginTop: 12}}>
+                            <div style={{
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: 4,
+                              height: 8,
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                background: '#10b981',
+                                height: '100%',
+                                width: `${(globalDownloadProgress.completed / globalDownloadProgress.total) * 100}%`,
+                                transition: 'width 0.3s ease',
+                              }} />
+                            </div>
+                            <div style={{fontSize: 11, color: '#9ca3af', marginTop: 4}}>
+                              {globalDownloadProgress.completed} / {globalDownloadProgress.total} tiles
+                              ({globalDownloadProgress.cached} new, {globalDownloadProgress.skipped} cached)
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Major Metro Tiles */}
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid #2a2f37',
+                        borderRadius: 8,
+                        padding: 16,
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+                          <div>
+                            <div style={{fontSize: 16, fontWeight: 600}}>🌆 Major Cities (20 metros)</div>
+                            <div style={{fontSize: 12, color: '#9ca3af', marginTop: 4}}>
+                              {tileStats.metro.isComplete ? '✅ Fully cached' : `⏳ ${tileStats.metro.stats.percentCached}% complete`}
+                            </div>
+                            <div style={{fontSize: 11, color: '#6b7280', marginTop: 2}}>
+                              Zoom 10-12 • ~{tileStats.metro.stats.total} tiles • ~50MB
+                            </div>
+                            <div style={{fontSize: 11, color: '#6b7280', marginTop: 2}}>
+                              NYC, LA, London, Paris, Tokyo, Beijing, Mumbai, Dubai, São Paulo, Sydney + 10 more
+                            </div>
+                          </div>
+                          {!tileStats.metro.isComplete && (
+                            <button
+                              style={{...btn.secondary, padding: '6px 12px', fontSize: 13}}
+                              onClick={downloadMetroTiles}
+                              disabled={metroDownloading}
+                            >
+                              {metroDownloading ? '⏳ Downloading...' : 'Download'}
+                            </button>
+                          )}
+                        </div>
+                        {metroDownloadProgress && metroDownloadProgress.total > 0 && (
+                          <div style={{marginTop: 12}}>
+                            <div style={{
+                              background: 'rgba(255, 255, 255, 0.1)',
+                              borderRadius: 4,
+                              height: 8,
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                background: '#f59e0b',
+                                height: '100%',
+                                width: `${(metroDownloadProgress.completed / metroDownloadProgress.total) * 100}%`,
+                                transition: 'width 0.3s ease',
+                              }} />
+                            </div>
+                            <div style={{fontSize: 11, color: '#9ca3af', marginTop: 4}}>
+                              {metroDownloadProgress.completed} / {metroDownloadProgress.total} tiles
+                              ({metroDownloadProgress.cached} new, {metroDownloadProgress.skipped} cached)
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{marginTop: 16, padding: 12, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 6, fontSize: 12, color: '#9ca3af'}}>
+                        💡 <strong>Tip:</strong> Download tiles once, and they persist across app reinstalls (Android only). Downloads run in background and won't block map usage.
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </SectionGrid>
             </div>
           )}
 
@@ -2536,7 +3995,7 @@ export default function AdminPanel({ open, onClose }) {
 
               <Card title="Spotify Integration">
                 <p style={{ ...s.muted, margin: '0 0 12px', fontSize: 12 }}>
-                  Search and play music from Spotify's catalog
+                  Connect your Spotify account to display currently playing music in the Now Playing banner
                 </p>
                 <div style={{
                   padding: '12px',
@@ -2547,10 +4006,10 @@ export default function AdminPanel({ open, onClose }) {
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span style={{ fontSize: 20 }}>🎧</span>
-                    <span style={{ fontWeight: 600, color: '#1ed760' }}>Spotify Connected</span>
+                    <span style={{ fontWeight: 600, color: '#1ed760' }}>Spotify API Connected</span>
                   </div>
                   <div style={{ fontSize: 12, color: '#9ca3af' }}>
-                    Spotify credentials are configured via Vercel environment variables:
+                    Spotify credentials are configured via environment variables:
                     <br/>
                     <code style={{
                       background: 'rgba(0,0,0,0.3)',
@@ -2560,7 +4019,7 @@ export default function AdminPanel({ open, onClose }) {
                       marginTop: 4,
                       display: 'inline-block'
                     }}>
-                      SPOTIFY_CLIENT_ID
+                      VITE_SPOTIFY_CLIENT_ID
                     </code>
                     {' and '}
                     <code style={{
@@ -2569,12 +4028,62 @@ export default function AdminPanel({ open, onClose }) {
                       borderRadius: 4,
                       fontSize: 11
                     }}>
-                      SPOTIFY_CLIENT_SECRET
+                      VITE_SPOTIFY_CLIENT_SECRET
                     </code>
                   </div>
                 </div>
+
+                <FieldRow label="🎵 Now Playing Sync">
+                  <button
+                    onClick={() => {
+                      const client = getSpotifyClient();
+
+                      if (client.isAuthenticated()) {
+                        if (confirm('Disconnect Spotify account?')) {
+                          client.logout();
+                          alert('Spotify account disconnected');
+                        }
+                      } else {
+                        // Open OAuth flow in popup window
+                        const authUrl = client.getAuthUrl();
+                        const popup = window.open(authUrl, 'Spotify Authorization', 'width=500,height=700');
+
+                        // Listen for OAuth callback
+                        window.addEventListener('message', async (event) => {
+                          if (event.data.type === 'spotify-auth-code') {
+                            try {
+                              await client.authorize(event.data.code);
+                              alert('Spotify account connected! Now playing music will appear in the banner.');
+                              popup?.close();
+                            } catch (err) {
+                              alert('Failed to connect Spotify: ' + err.message);
+                            }
+                          }
+                        });
+                      }
+                    }}
+                    style={{
+                      ...s.button,
+                      width: '100%',
+                      background: getSpotifyClient().isAuthenticated() ? '#ef4444' : '#1ed760',
+                      color: '#fff',
+                    }}
+                  >
+                    {getSpotifyClient().isAuthenticated()
+                      ? '🔌 Disconnect Spotify Account'
+                      : '🔗 Connect Spotify Account'}
+                  </button>
+                </FieldRow>
+
+                <p style={{ ...s.muted, margin: '8px 0 0', fontSize: 11 }}>
+                  Once connected, your currently playing Spotify track will automatically sync to the Now Playing banner.
+                  The banner polls every 5 seconds for updates.
+                </p>
+
+                <hr style={{ margin: '16px 0', border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)' }} />
+
                 <p style={{ ...s.muted, margin: '0', fontSize: 11 }}>
-                  The Spotify tab in the Jukebox allows searching millions of songs.
+                  💡 The Spotify tab in the Jukebox allows searching millions of songs.
                   Preview clips (30 seconds) will be saved to your Media Library for playback.
                 </p>
               </Card>
@@ -3103,6 +4612,10 @@ export default function AdminPanel({ open, onClose }) {
                 <KioskVoiceTab />
               </div>
             </>
+          )}
+
+          {tab === 'vestaboard' && (
+            <VestaboardTab settings={settings} setSettings={setSettings} />
           )}
 
           {tab === 'performance' && (

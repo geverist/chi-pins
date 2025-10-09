@@ -4,9 +4,9 @@ export default function AttractorOverlay({ onDismiss }) {
   const { layout } = useLayoutStack();
 
   // Position below header, comments banner, and search bar
-  // Search bar is at headerHeight + commentsBannerHeight + 10px
-  // Add 60px for search bar height + spacing
-  const topPadding = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 70;
+  // Search bar is now at headerHeight + commentsBannerHeight + 20px
+  // Attractor needs additional space for search bar height (~48px) + small gap
+  const topPadding = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 75;
 
   return (
     <div
@@ -25,41 +25,6 @@ export default function AttractorOverlay({ onDismiss }) {
         }}
       >
         Tap the map to drop your pin
-
-        {/* Attached mini bubble */}
-        <div
-          className="cta-mini glass"
-          style={{
-            position:'absolute',
-            left:'50%',
-            transform:'translateX(-50%)',
-            top:'100%',
-            marginTop:8,
-            padding:'6px 10px',
-            borderRadius:10,
-            fontSize:14,
-            lineHeight:1.2,
-            whiteSpace:'nowrap',
-          }}
-        >
-          Pinch to zoom in
-          {/* tiny “tail” to attach bubbles */}
-          <div
-            aria-hidden
-            style={{
-              position:'absolute',
-              top:-6,
-              left:'50%',
-              transform:'translateX(-50%)',
-              width:0, height:0,
-              borderLeft:'6px solid transparent',
-              borderRight:'6px solid transparent',
-              borderBottom:'6px solid rgba(255,255,255,0.14)', // matches glass border
-              opacity:0.9,
-              pointerEvents:'none',
-            }}
-          />
-        </div>
       </div>
     </div>
   )

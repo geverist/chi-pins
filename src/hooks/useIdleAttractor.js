@@ -25,13 +25,13 @@ export function useIdleAttractor({
   const confettiInterval = useRef(null)
 
   const startConfettiScreensaver = useCallback(() => {
-    console.log('[IdleAttractor] Starting confetti screensaver')
-    // Show confetti burst immediately
-    showConfetti()
-    // Then show it every 6 seconds (less frequent)
-    confettiInterval.current = setInterval(() => {
-      showConfetti()
-    }, 6000)
+    console.log('[IdleAttractor] Starting confetti screensaver (burn-in prevention mode)')
+    // Show confetti in screensaver mode (covers entire screen, loops forever)
+    showConfetti(document.body, {
+      screensaver: true,
+      count: 50, // Fewer particles for cleaner screensaver
+      colors: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+    })
   }, [])
 
   const stopConfettiScreensaver = useCallback(() => {
@@ -62,11 +62,12 @@ export function useIdleAttractor({
     // Set timer for confetti screensaver (only if enabled)
     if (confettiScreensaverEnabled) {
       confettiTimer.current = setTimeout(() => {
-        // Inline confetti start to avoid function dependency
-        showConfetti()
-        confettiInterval.current = setInterval(() => {
-          showConfetti()
-        }, 6000)
+        // Start screensaver mode (covers entire screen, loops forever until user interaction)
+        showConfetti(document.body, {
+          screensaver: true,
+          count: 50,
+          colors: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899']
+        })
       }, confettiScreensaverMs)
     }
 

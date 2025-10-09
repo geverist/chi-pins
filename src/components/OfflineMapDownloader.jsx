@@ -17,7 +17,7 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
   const [isVisible, setIsVisible] = useState(true);
-  const [downloadMode, setDownloadMode] = useState('chicago'); // 'chicago' or 'global'
+  const [downloadMode, setDownloadMode] = useState('chicago'); // 'chicago', 'global', or 'metro'
   const barRef = useRef(null);
   const { updateHeight } = useLayoutStack();
 
@@ -85,6 +85,25 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
         await storage.downloadGlobalTiles({
           zoomLevels: [3, 4, 5],
           maxConcurrent: isNative ? 3 : 2, // Reduced to prevent UI blocking
+          onProgress: (current, total, { cached, failed, skipped }) => {
+            setProgress({ current, total, cached, failed, skipped });
+          },
+          onComplete: (finalStats) => {
+            setStats(finalStats);
+            setDownloading(false);
+
+            // Auto-hide after 10 seconds if download was successful
+            if (autoStart && finalStats.cached > 0) {
+              setTimeout(() => {
+                setIsVisible(false);
+              }, 10000);
+            }
+          },
+        });
+      } else if (targetMode === 'metro') {
+        await storage.downloadMetroTiles({
+          zoomLevels: [10, 11, 12], // Limited zoom for 20 major cities
+          maxConcurrent: isNative ? 3 : 2, // Lower concurrency to respect tile server
           onProgress: (current, total, { cached, failed, skipped }) => {
             setProgress({ current, total, cached, failed, skipped });
           },
@@ -188,9 +207,9 @@ export default function OfflineMapDownloader({ autoStart = false, mode = 'chicag
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>
               {downloading
-                ? `Downloading ${downloadMode === 'global' ? 'global' : 'Chicago'} map (${progressPercent}%)`
+                ? `Downloading ${downloadMode === 'metro' ? 'metro cities' : downloadMode === 'global' ? 'global' : 'Chicago'} map (${progressPercent}%)`
                 : stats
-                  ? `✅ ${downloadMode === 'global' ? 'Global' : 'Chicago'} map cached`
+                  ? `✅ ${downloadMode === 'metro' ? `${stats.cities || 20} metro cities` : downloadMode === 'global' ? 'Global' : 'Chicago'} map cached`
                   : 'Offline Maps'
               }
             </div>

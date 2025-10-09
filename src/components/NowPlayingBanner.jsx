@@ -1,18 +1,10 @@
 // src/components/NowPlayingBanner.jsx
-import { useState, useEffect } from 'react';
+// High-performance scrolling banner using react-fast-marquee
+import Marquee from 'react-fast-marquee';
 import { useLayoutStack } from '../hooks/useLayoutStack';
 
 export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, nextInQueue, scrollSpeed = 60, isMobile = false, downloadingBarVisible = false }) {
-  const [animate, setAnimate] = useState(false);
   const { layout } = useLayoutStack();
-
-  // Restart animation when track changes
-  useEffect(() => {
-    if (currentTrack || nextInQueue) {
-      setAnimate(false);
-      setTimeout(() => setAnimate(true), 50);
-    }
-  }, [currentTrack?.url, currentTrack?.title, nextInQueue?.url, nextInQueue?.title, isPlaying]);
 
   // Only show banner if there's currently playing music OR upcoming tracks
   // Don't show if only lastPlayed exists (no active music)
@@ -33,26 +25,35 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
     isPlaying
   });
 
-  // Build the display text with clear visual separation
-  const parts = [];
-  const separator = ' '.repeat(50) + '●●●' + ' '.repeat(50); // Wide visual separator for clear text separation
+  // Build the display items with clear visual separation
+  const items = [];
 
   if (lastPlayed) {
-    parts.push(`⏮ Last Played: ${lastPlayed.title}${lastPlayed.artist ? ` - ${lastPlayed.artist}` : ''}`);
+    items.push({
+      icon: '⏮',
+      label: 'Last Played',
+      title: lastPlayed.title,
+      artist: lastPlayed.artist
+    });
   }
 
   if (currentTrack) {
-    parts.push(`${isPlaying ? '♫' : '⏸'} NOW PLAYING: ${currentTrack.title}${currentTrack.artist ? ` - ${currentTrack.artist}` : ''}`);
+    items.push({
+      icon: isPlaying ? '♫' : '⏸',
+      label: 'NOW PLAYING',
+      title: currentTrack.title,
+      artist: currentTrack.artist
+    });
   }
 
   if (nextInQueue) {
-    parts.push(`⏭ Up Next: ${nextInQueue.title}${nextInQueue.artist ? ` - ${nextInQueue.artist}` : ''}`);
+    items.push({
+      icon: '⏭',
+      label: 'Up Next',
+      title: nextInQueue.title,
+      artist: nextInQueue.artist
+    });
   }
-
-  const displayText = parts.join(separator);
-
-  // Duplicate text for seamless scrolling - fewer copies needed with slower speed
-  const scrollContent = Array(6).fill(displayText).join(separator);
 
   // Position at bottom (0) or above downloading bar using actual measured height
   const downloadingHeight = layout.downloadingBarHeight || 0;
@@ -63,6 +64,11 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
     downloadingHeight,
     downloadingBarVisible
   }));
+
+  // Calculate speed - assuming average item width ~400px
+  const avgItemWidth = 450; // 400px content + 50px gap
+  const totalWidth = items.length * avgItemWidth;
+  const speed = totalWidth / scrollSpeed; // pixels per second
 
   return (
     <div
@@ -80,39 +86,38 @@ export default function NowPlayingBanner({ currentTrack, isPlaying, lastPlayed, 
         boxShadow: '0 -2px 8px rgba(0,0,0,0.2)',
       }}
     >
-      <div
+      <Marquee
+        speed={speed}
+        gradient={false}
+        pauseOnHover={false}
+        pauseOnClick={false}
         style={{
-          display: 'inline-block',
           height: '100%',
-          animation: animate ? `scroll-left ${scrollSpeed}s linear infinite` : 'none',
-          whiteSpace: 'nowrap',
+          display: 'flex',
+          alignItems: 'center',
         }}
       >
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            height: '100%',
-            color: '#fff',
-            fontSize: isMobile ? 15 : 16,
-            fontWeight: 600,
-            letterSpacing: '0.3px',
-          }}
-        >
-          {scrollContent}
-        </span>
-      </div>
-
-      <style>{`
-        @keyframes scroll-left {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
+        {items.map((item, index) => (
+          <div
+            key={index}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              marginRight: '50px', // Gap between items
+              color: '#fff',
+              fontSize: isMobile ? 15 : 16,
+              fontWeight: 600,
+              letterSpacing: '0.3px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <span style={{ marginRight: '8px' }}>{item.icon}</span>
+            <span style={{ marginRight: '8px', textTransform: 'uppercase' }}>{item.label}:</span>
+            <span>{item.title}</span>
+            {item.artist && <span style={{ marginLeft: '8px', opacity: 0.9 }}>- {item.artist}</span>}
+          </div>
+        ))}
+      </Marquee>
     </div>
   );
 }

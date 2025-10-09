@@ -30,10 +30,11 @@ function InlineCount({ color, label, count, onClick }) {
           border:'2px solid #fff',
           background: color,
           boxShadow:'0 1px 2px rgba(0,0,0,0.35)',
-          transform:'translateY(-1px)'
+          transform:'translateY(-1px)',
+          flexShrink: 0
         }}
       />
-      <span style={{ opacity:0.95 }}>
+      <span style={{ opacity:0.95, fontSize: '14px', whiteSpace: 'nowrap' }}>
         <strong style={{ fontWeight:700 }}>{label}</strong>: {count ?? 0}
       </span>
     </>
@@ -92,11 +93,12 @@ export default function HeaderBar({
   const headerRef = useRef(null);
   const { updateHeight } = useLayoutStack();
 
-  // Triple-tap detection for admin panel
+  // Triple-tap detection for admin panel (moved to pin count badge)
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef(null);
 
-  const handleLogoClick = () => {
+  const handleAdminTriggerClick = (e) => {
+    e.stopPropagation(); // Prevent any parent handlers
     tapCountRef.current += 1;
 
     if (tapCountRef.current === 3) {
@@ -110,14 +112,15 @@ export default function HeaderBar({
     // Reset tap count after 800ms
     clearTimeout(tapTimerRef.current);
     tapTimerRef.current = setTimeout(() => {
-      if (tapCountRef.current < 3) {
-        // Single or double tap - execute normal logo click
-        if (tapCountRef.current === 1 && onLogoClick) {
-          onLogoClick();
-        }
-      }
       tapCountRef.current = 0;
     }, 800);
+  };
+
+  const handleLogoClick = () => {
+    // Simple logo click - no admin panel trigger
+    if (onLogoClick) {
+      onLogoClick();
+    }
   };
 
   // Fetch uploaded logo from Supabase
@@ -151,10 +154,15 @@ export default function HeaderBar({
   const isMobile = typeof isMobileProp === 'boolean' ? isMobileProp : isMobileDetected
 
   const switchBtnStyle = (pressed) => ({
-    padding:'10px 12px', borderRadius:12,
+    padding:'10px 14px', borderRadius:12,
     border:'1px solid #2a2f37',
     background: pressed ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
-    color:'#f4f6f8', boxShadow: pressed
+    color:'#f4f6f8',
+    fontSize: '14px',
+    fontWeight: 500,
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
+    boxShadow: pressed
       ? 'inset 0 2px 6px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.06)'
       : '0 3px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)',
   })
@@ -175,7 +183,7 @@ export default function HeaderBar({
         {logoSrc ? (
           <button
             onClick={handleLogoClick}
-            title="Home (Triple-tap for Admin)"
+            title="Home"
             aria-label="Home"
             style={{
               display:'inline-flex', alignItems:'center', justifyContent:'center',
@@ -230,23 +238,38 @@ export default function HeaderBar({
     )
   }
 
-  // ---------- Desktop/kiosk header (unchanged) ----------
+  // ---------- Desktop/kiosk header with centered custom pin counts ----------
+  // Check if we have custom pin counts to display
+  const hasCustomPinCounts = mapMode === 'chicago' && continentCounts && (
+    (continentCounts.bears || 0) > 0 ||
+    (continentCounts.bulls || 0) > 0 ||
+    (continentCounts.cubs || 0) > 0 ||
+    (continentCounts.whitesox || 0) > 0 ||
+    (continentCounts.blackhawks || 0) > 0 ||
+    (continentCounts.chicagostar || 0) > 0
+  );
+
   return (
     <header
       ref={headerRef}
       style={{
-        display:'flex', alignItems:'center', gap:12, justifyContent:'space-between',
-        flexWrap:'wrap', padding:'10px 14px', position:'relative',
+        display:'flex',
+        alignItems:'center',
+        justifyContent:'space-between',
+        gap:12,
+        padding:'16px 20px',
+        position:'relative',
         borderBottom:'1px solid #222',
         zIndex: 500, // Above voice assistant (300) and other overlays
+        minHeight: '80px',
       }}
     >
       {/* Left: logo + title + total */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0, flex:'0 1 auto' }}>
         {logoSrc ? (
           <button
             onClick={handleLogoClick}
-            title="Home (Triple-tap for Admin)"
+            title="Home"
             aria-label="Home"
             style={{
               display:'inline-flex', alignItems:'center', justifyContent:'center',
@@ -264,35 +287,56 @@ export default function HeaderBar({
             : 'Where in Chicago are you from?'}
         </h1>
 
-        <span style={{ display:'inline-flex', alignItems:'center', gap:6, marginLeft:10 }}>
+        <button
+          onClick={handleAdminTriggerClick}
+          title="Triple-tap for Admin Panel"
+          aria-label="Total pins"
+          style={{
+            display:'inline-flex',
+            alignItems:'center',
+            gap:6,
+            marginLeft:10,
+            padding:'4px 8px',
+            borderRadius:8,
+            background:'transparent',
+            border:'none',
+            cursor:'default',
+            transition:'background 0.2s',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
           <span>📍</span>
           <strong style={{ fontWeight:700 }}>{totalCount}</strong>
-        </span>
+        </button>
       </div>
 
-      {/* Right: continent counts (inline, no boxes) + children + switch */}
-      <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'nowrap', overflow:'hidden', minWidth:0 }}>
+      {/* Center: Custom pin counts (Chicago mode) or continent counts (Global mode) */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12, flexWrap:'wrap', flex:'1 1 auto' }}>
         {mapMode === 'global' && continentCounts && (
-          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'nowrap', overflow:'hidden' }}>
-            <InlineCount color={PIN_COLOR.chicago} label="CHI"       count={continentCounts.chicago} onClick={() => onContinentClick?.('chicago')} />
+          <>
+            <InlineCount color={PIN_COLOR.chicago} label="CHI"  count={continentCounts.chicago} onClick={() => onContinentClick?.('chicago')} />
             <InlineCount color={PIN_COLOR.na}      label="N.Am" count={continentCounts.na}      onClick={() => onContinentClick?.('na')} />
             <InlineCount color={PIN_COLOR.sa}      label="S.Am" count={continentCounts.sa}      onClick={() => onContinentClick?.('sa')} />
-            <InlineCount color={PIN_COLOR.eu}      label="EUR"        count={continentCounts.eu}      onClick={() => onContinentClick?.('eu')} />
-            <InlineCount color={PIN_COLOR.as}      label="ASIA"          count={continentCounts.as}      onClick={() => onContinentClick?.('as')} />
-            <InlineCount color={PIN_COLOR.af}      label="AFR"        count={continentCounts.af}      onClick={() => onContinentClick?.('af')} />
-          </div>
+            <InlineCount color={PIN_COLOR.eu}      label="EUR"  count={continentCounts.eu}      onClick={() => onContinentClick?.('eu')} />
+            <InlineCount color={PIN_COLOR.as}      label="ASIA" count={continentCounts.as}      onClick={() => onContinentClick?.('as')} />
+            <InlineCount color={PIN_COLOR.af}      label="AFR"  count={continentCounts.af}      onClick={() => onContinentClick?.('af')} />
+          </>
         )}
-        {mapMode === 'chicago' && continentCounts && (
-          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'nowrap', overflow:'hidden' }}>
-            {continentCounts.bears > 0 && <InlineCount color={PIN_COLOR.bears} label="🐻" count={continentCounts.bears} />}
-            {continentCounts.bulls > 0 && <InlineCount color={PIN_COLOR.bulls} label="🐂" count={continentCounts.bulls} />}
-            {continentCounts.cubs > 0 && <InlineCount color={PIN_COLOR.cubs} label="⚾" count={continentCounts.cubs} />}
-            {continentCounts.whitesox > 0 && <InlineCount color={PIN_COLOR.whitesox} label="⚪" count={continentCounts.whitesox} />}
-            {continentCounts.blackhawks > 0 && <InlineCount color={PIN_COLOR.blackhawks} label="🏒" count={continentCounts.blackhawks} />}
-            {continentCounts.chicagostar > 0 && <InlineCount color={PIN_COLOR.chicagostar} label="⭐" count={continentCounts.chicagostar} />}
-          </div>
+        {hasCustomPinCounts && (
+          <>
+            {(continentCounts?.bears || 0) > 0 && <InlineCount color={PIN_COLOR.bears} label="🐻 Bears" count={continentCounts.bears} />}
+            {(continentCounts?.bulls || 0) > 0 && <InlineCount color={PIN_COLOR.bulls} label="🐂 Bulls" count={continentCounts.bulls} />}
+            {(continentCounts?.cubs || 0) > 0 && <InlineCount color={PIN_COLOR.cubs} label="⚾ Cubs" count={continentCounts.cubs} />}
+            {(continentCounts?.whitesox || 0) > 0 && <InlineCount color={PIN_COLOR.whitesox} label="⚪ Sox" count={continentCounts.whitesox} />}
+            {(continentCounts?.blackhawks || 0) > 0 && <InlineCount color={PIN_COLOR.blackhawks} label="🏒 Hawks" count={continentCounts.blackhawks} />}
+            {(continentCounts?.chicagostar || 0) > 0 && <InlineCount color={PIN_COLOR.chicagostar} label="⭐ Star" count={continentCounts.chicagostar} />}
+          </>
         )}
+      </div>
 
+      {/* Right: children (buttons) + map mode switch */}
+      <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', justifyContent:'flex-end', minWidth:0, flex:'0 1 auto' }}>
         {children}
 
         {mapMode === 'chicago' ? (

@@ -27,6 +27,44 @@ const GLOBAL_BOUNDS = {
   west: -180,
 };
 
+// Major metro areas for strategic tile preloading
+// Limited to ~20 cities globally to keep storage manageable (~50MB total)
+const MAJOR_METROS = [
+  // North America
+  { name: 'New York', lat: 40.7128, lng: -74.0060, radius: 0.3 },
+  { name: 'Los Angeles', lat: 34.0522, lng: -118.2437, radius: 0.3 },
+  { name: 'Mexico City', lat: 19.4326, lng: -99.1332, radius: 0.3 },
+  { name: 'Toronto', lat: 43.6532, lng: -79.3832, radius: 0.25 },
+
+  // Europe
+  { name: 'London', lat: 51.5074, lng: -0.1278, radius: 0.25 },
+  { name: 'Paris', lat: 48.8566, lng: 2.3522, radius: 0.25 },
+  { name: 'Berlin', lat: 52.5200, lng: 13.4050, radius: 0.25 },
+  { name: 'Rome', lat: 41.9028, lng: 12.4964, radius: 0.25 },
+
+  // Asia
+  { name: 'Tokyo', lat: 35.6762, lng: 139.6503, radius: 0.3 },
+  { name: 'Beijing', lat: 39.9042, lng: 116.4074, radius: 0.3 },
+  { name: 'Mumbai', lat: 19.0760, lng: 72.8777, radius: 0.25 },
+  { name: 'Singapore', lat: 1.3521, lng: 103.8198, radius: 0.2 },
+
+  // Middle East
+  { name: 'Dubai', lat: 25.2048, lng: 55.2708, radius: 0.25 },
+  { name: 'Istanbul', lat: 41.0082, lng: 28.9784, radius: 0.25 },
+
+  // South America
+  { name: 'São Paulo', lat: -23.5505, lng: -46.6333, radius: 0.3 },
+  { name: 'Buenos Aires', lat: -34.6037, lng: -58.3816, radius: 0.25 },
+
+  // Africa
+  { name: 'Cairo', lat: 30.0444, lng: 31.2357, radius: 0.25 },
+  { name: 'Lagos', lat: 6.5244, lng: 3.3792, radius: 0.25 },
+
+  // Oceania
+  { name: 'Sydney', lat: -33.8688, lng: 151.2093, radius: 0.25 },
+  { name: 'Melbourne', lat: -37.8136, lng: 144.9631, radius: 0.2 },
+];
+
 // Check if running in native Capacitor app
 const isNative = Capacitor.isNativePlatform();
 
@@ -73,6 +111,37 @@ function getGlobalTileCoords(zoomLevels = [3, 4, 5]) {
     for (let x = nw.x; x <= se.x; x++) {
       for (let y = nw.y; y <= se.y; y++) {
         tiles.push({ x, y, z: zoom });
+      }
+    }
+  }
+
+  return tiles;
+}
+
+/**
+ * Get tile coordinates for all major metro areas
+ * Limited zoom levels (10-12) to keep storage under ~50MB
+ */
+function getMetroTileCoords(zoomLevels = [10, 11, 12]) {
+  const tiles = [];
+
+  for (const metro of MAJOR_METROS) {
+    // Calculate bounds based on radius (in degrees)
+    const bounds = {
+      north: metro.lat + metro.radius,
+      south: metro.lat - metro.radius,
+      east: metro.lng + metro.radius,
+      west: metro.lng - metro.radius,
+    };
+
+    for (const zoom of zoomLevels) {
+      const nw = latLngToTile(bounds.north, bounds.west, zoom);
+      const se = latLngToTile(bounds.south, bounds.east, zoom);
+
+      for (let x = nw.x; x <= se.x; x++) {
+        for (let y = nw.y; y <= se.y; y++) {
+          tiles.push({ x, y, z: zoom, metro: metro.name });
+        }
       }
     }
   }
@@ -594,6 +663,105 @@ class OfflineTileStorage {
   }
 
   /**
+   * Download and cache major metro area tiles (strategic preloading)
+   * Limited to zoom 10-12 for ~20 major cities globally (~50MB total)
+   */
+  async downloadMetroTiles(options = {}) {
+    const {
+      zoomLevels = [10, 11, 12], // Limited zoom for storage efficiency
+      maxConcurrent = 3, // Lower concurrency to be respectful to tile server
+      onProgress = null,
+      onComplete = null,
+    } = options;
+
+    console.log('[OfflineTileStorage] Starting major metro tiles download...');
+    console.log(`[OfflineTileStorage] Preloading ${MAJOR_METROS.length} cities: ${MAJOR_METROS.map(m => m.name).join(', ')}`);
+
+    const tiles = getMetroTileCoords(zoomLevels);
+    let completed = 0;
+    let cached = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    console.log(`[OfflineTileStorage] ${tiles.length} metro tiles to download across ${MAJOR_METROS.length} cities`);
+
+    // Process tiles in batches
+    for (let i = 0; i < tiles.length; i += maxConcurrent) {
+      const batch = tiles.slice(i, i + maxConcurrent);
+      let batchHadDownloads = false;
+
+      await Promise.all(batch.map(async ({ x, y, z, metro }) => {
+        try {
+          // Check if already cached
+          const existing = await this.getTile(z, x, y);
+          if (existing) {
+            skipped++;
+            completed++;
+            if (onProgress) onProgress(completed, tiles.length, { cached, failed, skipped });
+            return;
+          }
+
+          batchHadDownloads = true;
+
+          // Download tile
+          const subdomain = ['a', 'b', 'c'][Math.floor(Math.random() * 3)];
+          const url = `https://${subdomain}.tile.openstreetmap.org/${z}/${x}/${y}.png`;
+
+          const response = await fetch(url, {
+            cache: 'force-cache',
+            priority: 'low',
+          });
+
+          if (!response.ok) {
+            failed++;
+            console.warn(`[OfflineTileStorage] Failed to download metro tile ${z}/${x}/${y} (${metro}): ${response.status}`);
+            return;
+          }
+
+          const blob = await response.blob();
+          await this.saveTile(z, x, y, blob);
+          cached++;
+        } catch (err) {
+          failed++;
+          console.warn(`[OfflineTileStorage] Error downloading metro tile ${z}/${x}/${y}:`, err.message);
+        } finally {
+          completed++;
+          if (onProgress) {
+            onProgress(completed, tiles.length, { cached, failed, skipped });
+          }
+        }
+      }));
+
+      // Log progress every 200 tiles
+      if (completed % 200 === 0 || batchHadDownloads) {
+        console.log(`[OfflineTileStorage] Metro progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%) - ${skipped} cached, ${cached} downloaded`);
+      }
+
+      // Longer delay to be respectful to tile server (75ms vs 50ms)
+      if (batchHadDownloads) {
+        await new Promise(resolve => setTimeout(resolve, 75));
+      }
+    }
+
+    const stats = {
+      total: tiles.length,
+      cached,
+      failed,
+      skipped,
+      completed,
+      cities: MAJOR_METROS.length,
+    };
+
+    console.log('[OfflineTileStorage] Metro download complete:', stats);
+
+    if (onComplete) {
+      onComplete(stats);
+    }
+
+    return stats;
+  }
+
+  /**
    * Check if Chicago tiles download is complete
    * Returns { isComplete: boolean, stats: { total, cached, missing } }
    */
@@ -651,6 +819,40 @@ class OfflineTileStorage {
         total: tiles.length,
         cached,
         percentCached: Math.round(percentCached),
+      },
+    };
+  }
+
+  /**
+   * Check if metro tiles download is complete
+   */
+  async isMetroDownloadComplete(zoomLevels = [10, 11, 12]) {
+    const tiles = getMetroTileCoords(zoomLevels);
+    let cached = 0;
+
+    // Sample check for performance (check every 20th tile)
+    const sampleSize = Math.min(100, Math.ceil(tiles.length / 20));
+    const step = Math.floor(tiles.length / sampleSize);
+
+    for (let i = 0; i < tiles.length; i += step) {
+      const { x, y, z } = tiles[i];
+      const existing = await this.getTile(z, x, y);
+      if (existing) {
+        cached++;
+      }
+    }
+
+    const percentCached = (cached / sampleSize) * 100;
+    const isComplete = percentCached >= 95;
+
+    return {
+      isComplete,
+      stats: {
+        total: tiles.length,
+        sampleSize,
+        cachedInSample: cached,
+        percentCached: Math.round(percentCached),
+        cities: MAJOR_METROS.length,
       },
     };
   }

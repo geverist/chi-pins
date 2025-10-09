@@ -1,6 +1,7 @@
 // src/hooks/useNavigationSettings.js
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { setTenantContext, getCurrentTenant } from '../lib/tenancy';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const CACHE_KEY = 'navigation_settings_cache';
@@ -15,7 +16,7 @@ const DEFAULT_SETTINGS = {
   explore_enabled: true,
   photobooth_enabled: false,
   thenandnow_enabled: false,
-  comments_enabled: false,
+  comments_enabled: true, // Changed to true - comment scroll bar enabled by default
   recommendations_enabled: false,
   default_navigation_app: 'map',
 };
@@ -104,6 +105,16 @@ export function useNavigationSettings() {
       setLoading(true);
       console.log('[useNavigationSettings] Fetching from Supabase navigation_settings table');
 
+      // Set tenant context before fetching (required by RLS policies)
+      try {
+        const tenantId = getCurrentTenant();
+        console.log('[useNavigationSettings] Setting tenant context for fetch:', tenantId);
+        await setTenantContext(supabase, tenantId);
+      } catch (tenantError) {
+        console.warn('[useNavigationSettings] Failed to set tenant context for fetch, attempting without:', tenantError);
+        // Continue anyway - might work if tenant context is already set or not required
+      }
+
       const { data, error: supabaseError } = await supabase
         .from('navigation_settings')
         .select('*')
@@ -152,6 +163,16 @@ export function useNavigationSettings() {
 
       // Optimistically update UI immediately
       setSettings(newSettings);
+
+      // Set tenant context before updating (required by RLS policies)
+      try {
+        const tenantId = getCurrentTenant();
+        console.log('[useNavigationSettings] Setting tenant context:', tenantId);
+        await setTenantContext(supabase, tenantId);
+      } catch (tenantError) {
+        console.warn('[useNavigationSettings] Failed to set tenant context, attempting without:', tenantError);
+        // Continue anyway - might work if tenant context is already set or not required
+      }
 
       // Save to Supabase navigation_settings table
       const { data, error: supabaseError } = await supabase

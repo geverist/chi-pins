@@ -76,9 +76,9 @@ function Footer({
   // Check if ANY nav items are enabled (excluding explore_enabled which is now a floating button)
   const hasNavItems = navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled;
 
-  // Don't show footer if no navigation items are configured
+  // Don't show footer if no navigation items are configured AND not editing
   if (!hasNavItems && !draft) {
-    console.log('[Footer] Hidden - no navigation items configured');
+    console.log('[Footer] Hidden - no navigation items configured, navSettings:', JSON.stringify(navSettings));
     return null;
   }
 
@@ -95,9 +95,6 @@ function Footer({
         zIndex: 50, // Above map (0), below download bar (200) and NowPlayingBanner (250)
         background: 'rgba(17, 24, 39, 0.95)', // Semi-transparent dark background
         backdropFilter: 'blur(8px)',
-        // Debug border
-        borderTop: '3px solid red',
-        borderBottom: '3px solid blue',
       }}
       onClick={handleFooterClick}
       onTouchStart={handleFooterTouch}

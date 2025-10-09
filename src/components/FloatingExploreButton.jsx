@@ -30,13 +30,13 @@ function FloatingExploreButton({
   };
 
   // Calculate bottom offset based on visible bars
-  // Footer/Navigation bar is ~70px
-  // Downloading bar is ~40px
-  // Now Playing bar is ~50px
+  // Footer/Navigation bar varies by content, typically 70-90px
+  // Downloading bar is ~56px (measured from OfflineMapDownloader)
+  // Now Playing bar is ~48px
   let bottomOffset = 24; // Base offset
-  if (footerVisible) bottomOffset += 75;
-  if (downloadingBarVisible) bottomOffset += 45;
-  if (nowPlayingVisible) bottomOffset += 55;
+  if (footerVisible) bottomOffset += 90; // Increased to account for taller footer
+  if (downloadingBarVisible) bottomOffset += 60; // Match actual downloading bar height
+  if (nowPlayingVisible) bottomOffset += 52; // Match actual now playing height
 
   return (
     <button

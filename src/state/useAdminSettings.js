@@ -79,9 +79,11 @@ const DEFAULTS = {
   // Features
   loyaltyEnabled: false, // Disabled by default for performance
   vestaboardEnabled: false,
+  vestaboardNowPlaying: true, // Default to true when vestaboard is enabled
+  vestaboardOrders: false, // Default to false (stubbed)
   facebookShareEnabled: false,
   photoBackgroundsEnabled: true,
-  newsTickerEnabled: false,
+  newsTickerEnabled: true, // Changed to true to enable RSS news feed by default
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
   showOfflineMapDownloader: true, // Enable map tile downloader
 
@@ -136,6 +138,34 @@ const DEFAULTS = {
   weatherLat: 41.8781,             // Latitude for weather data
   weatherLng: -87.6298,            // Longitude for weather data
   weatherTimezone: 'America/Chicago', // Timezone for weather data
+  qrCodeEnabled: false,            // Show QR code widget for mobile continuation (kiosk only) (disabled by default for performance)
+
+  // Walkup Attractor Configuration
+  walkupAttractorEnabled: true,    // Enable walkup greeting screen after idle timeout
+  walkupAttractorVoiceEnabled: true, // Enable voice prompts (requires voiceAssistantEnabled)
+  walkupAttractorPrompts: [
+    { emoji: '👋', text: 'Welcome!', subtext: 'How can I help you?', voiceText: 'Hi, how can I help you?' }
+  ],      // Custom prompts (falls back to default context-aware prompts)
+  walkupAttractorRotationSeconds: 4, // Seconds between prompt rotation
+  simulationMode: false,           // Enable simulation mode for browser demos (forces attractor to show)
+
+  // Proximity Detection (Camera-based approach detection)
+  proximityDetectionEnabled: true, // Enable camera-based proximity detection
+  proximitySensitivity: 15,        // Motion sensitivity threshold (0-100, lower = more sensitive)
+  proximityThreshold: 30,          // Distance threshold to trigger walkup greeting (0-100, higher = closer)
+  proximityDetectionInterval: 500, // How often to check for motion (ms)
+  proximityTriggerVoice: true,     // Trigger voice greeting when person approaches
+
+  // Ambient Music Auto-Play (triggered at longer range than walkup greeting)
+  ambientMusicEnabled: true,      // Enable ambient music when people detected in area
+  ambientMusicThreshold: 25,       // Distance threshold for ambient music (lower = farther range, should be < proximityThreshold)
+  ambientMusicPlaylist: [
+    { name: 'Sample', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
+  ],        // Array of {name, url} for ambient playlist
+  ambientMusicVolume: 0.5,         // Volume for ambient music (0.0 - 1.0)
+  ambientMusicFadeIn: true,        // Fade in music gradually
+  ambientMusicFadeOut: true,       // Fade out when no motion detected
+  ambientMusicIdleTimeout: 30,     // Seconds of no motion before fading out music
 
   // UI Layout Positions (drag-and-drop customization)
   uiPositions: {
@@ -166,6 +196,14 @@ const DEFAULTS = {
   initialRadiusMiles: 0.5,
   chiMinZoom: 10,
 
+  // Business Hours
+  businessHoursEnabled: false,               // Enable business hours restrictions
+  businessHoursOpen: '09:00',                // Opening time (24-hour format HH:MM)
+  businessHoursClose: '21:00',               // Closing time (24-hour format HH:MM)
+  businessHoursDays: [1, 2, 3, 4, 5],       // Days open (0=Sun, 1=Mon, ..., 6=Sat)
+  businessHoursClosedMessage: "We're currently closed. Please come back during business hours!",
+  businessHoursSleepAction: 'overlay',       // 'overlay' | 'dimScreen' | 'none'
+
   // Kiosk defaults (legacy)
   autoKiosk: false,
   showPopularSpotsDefault: true,
@@ -180,6 +218,63 @@ const DEFAULTS = {
     { name: 'Portillo\'s (Clark & Ontario)', type: 'hotdog', lat: 41.8922, lng: -87.6305 },
     { name: 'Gene & Jude\'s', type: 'hotdog', lat: 41.9099, lng: -87.8847 },
   ],
+
+  // Layout Configuration - Scroll bars and banners positioning
+  layoutConfig: {
+    commentsBanner: {
+      position: 'top',           // 'top' | 'bottom'
+      order: 1,                  // Stacking order (lower number = closer to edge)
+      estimatedHeight: 60,       // Estimated height in pixels for space calculation
+    },
+    newsTicker: {
+      position: 'top',
+      order: 2,
+      estimatedHeight: 60,
+    },
+    demoBanner: {
+      position: 'top',
+      order: 3,
+      estimatedHeight: 50,
+    },
+    downloadingBar: {
+      position: 'bottom',
+      order: 1,
+      estimatedHeight: 50,
+    },
+    nowPlaying: {
+      position: 'bottom',
+      order: 2,
+      estimatedHeight: 60,
+    },
+  },
+
+  // Navigation & Feature Limits
+  maxNavigationItems: 5,          // Maximum number of navigation items allowed (prevent UI crowding)
+
+  // Map Tile Cache Management
+  globalTileCacheExpirationDays: 30,  // Delete global map tiles older than this (0 = never delete)
+  chicagoTileCacheExpirationDays: 0,   // Delete Chicago tiles older than this (0 = never delete, Chicago tiles kept indefinitely by default)
+
+  // Installed Features (from Marketplace)
+  // Features must be "installed" from marketplace before appearing in Features tab
+  installedFeatures: [
+    'games',           // Gaming suite (Deep Dish, Popcorn, Trivia, Hotdog)
+    'jukebox',         // Music player with Spotify/local integration
+    'ordering',        // Food ordering system
+    'photoBooth',      // Photo capture with backgrounds
+    'thenAndNow',      // Historical comparison photos
+    'comments',        // Customer feedback/comments scrolling banner
+    'recommendations', // Local recommendations/popular spots
+  ],
+
+  // ElevenLabs TTS Settings
+  ttsProvider: 'elevenlabs',                  // 'browser' | 'elevenlabs'
+  elevenlabsApiKey: '3dc920776d9f94425a7ac398c897e0ad1156e4683579c3fcd2625e8e95be3c61',
+  elevenlabsVoiceId: 'pNInz6obpgDQGcFmaJgB',  // Adam - deep, natural male voice
+  elevenlabsPhoneVoiceId: 'pNInz6obpgDQGcFmaJgB', // Same voice for phone calls
+  elevenlabsModel: 'eleven_turbo_v2_5',       // Fast, high-quality model
+  elevenlabsStability: 0.5,                   // Voice stability (0-1)
+  elevenlabsSimilarity: 0.75,                 // Similarity boost (0-1)
 }
 
 const LS_KEY = 'adminSettings_v1'

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useNowPlaying } from '../state/useNowPlaying.jsx';
 import { useAdminSettings } from '../state/useAdminSettings';
+import { notifyNowPlaying } from '../lib/vestaboard';
 
 const LS_PLAYBACK_POSITION = 'nowPlaying_position';
 const LS_PLAYBACK_URL = 'nowPlaying_positionUrl';
@@ -71,6 +72,17 @@ export default function GlobalAudioPlayer() {
     // Handle Bluetooth device selection if configured
     const playAudio = async () => {
       try {
+        // Send "Now Playing" to Vestaboard BEFORE playback starts (if enabled)
+        if (adminSettings.vestaboardEnabled && currentTrack) {
+          await notifyNowPlaying(
+            {
+              artist: currentTrack.artist || 'Unknown Artist',
+              title: currentTrack.title || 'Unknown Title',
+            },
+            adminSettings.vestaboardEnabled
+          );
+        }
+
         if (adminSettings.audioOutputType === 'bluetooth' && 'setSinkId' in audio) {
           if (adminSettings.bluetoothDeviceId) {
             await audio.setSinkId(adminSettings.bluetoothDeviceId);

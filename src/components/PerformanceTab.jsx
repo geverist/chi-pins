@@ -7,6 +7,8 @@ import { getSyncService } from '../lib/syncService';
 export default function PerformanceTab({ settings, onSave }) {
   const [cacheStats, setCacheStats] = useState(null);
   const [clearing, setClearing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(null);
   const [heosHost, setHeosHost] = useState(settings.heosHost || '');
   const [heosConnected, setHeosConnected] = useState(false);
   const [heosPlayers, setHeosPlayers] = useState([]);
@@ -56,6 +58,36 @@ export default function PerformanceTab({ settings, onSave }) {
       alert('Sync failed: ' + error.message);
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function handleDownloadMetroTiles() {
+    if (!confirm('Download map tiles for 20 major metro areas? (~50MB storage)\n\nCities: New York, Los Angeles, London, Paris, Tokyo, and 15 more.')) {
+      return;
+    }
+
+    setDownloading(true);
+    setDownloadProgress({ current: 0, total: 0 });
+
+    try {
+      const offlineTileStorage = getOfflineTileStorage();
+      await offlineTileStorage.downloadMetroTiles({
+        zoomLevels: [10, 11, 12],
+        maxConcurrent: 3,
+        onProgress: (current, total, { cached, failed, skipped }) => {
+          setDownloadProgress({ current, total, cached, failed, skipped });
+        },
+        onComplete: (stats) => {
+          setDownloadProgress(null);
+          alert(`Metro tiles downloaded!\n${stats.cached} tiles cached, ${stats.skipped} already existed.`);
+          loadCacheStats();
+        },
+      });
+    } catch (error) {
+      console.error('[PerformanceTab] Failed to download metro tiles:', error);
+      alert('Failed to download metro tiles: ' + error.message);
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -230,22 +262,55 @@ export default function PerformanceTab({ settings, onSave }) {
           <div style={{ padding: '16px', color: '#9ca3af' }}>Loading cache stats...</div>
         )}
 
-        <button
-          onClick={handleClearCache}
-          disabled={clearing}
-          style={{
-            padding: '12px 24px',
-            background: clearing ? '#6b7280' : '#ef4444',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: clearing ? 'not-allowed' : 'pointer',
-            fontSize: '14px',
-            fontWeight: 600
-          }}
-        >
-          {clearing ? 'Clearing...' : 'Clear All Tiles'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleDownloadMetroTiles}
+            disabled={downloading}
+            style={{
+              padding: '12px 24px',
+              background: downloading ? '#6b7280' : '#10b981',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: downloading ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: 600
+            }}
+          >
+            {downloading
+              ? downloadProgress
+                ? `Downloading... ${Math.round((downloadProgress.current / downloadProgress.total) * 100)}%`
+                : 'Preparing...'
+              : '🌍 Download Metro Tiles'}
+          </button>
+
+          <button
+            onClick={handleClearCache}
+            disabled={clearing}
+            style={{
+              padding: '12px 24px',
+              background: clearing ? '#6b7280' : '#ef4444',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: clearing ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: 600
+            }}
+          >
+            {clearing ? 'Clearing...' : 'Clear All Tiles'}
+          </button>
+        </div>
+
+        {downloadProgress && (
+          <div style={{
+            marginTop: '12px',
+            fontSize: '12px',
+            color: '#9ca3af'
+          }}>
+            {downloadProgress.current} of {downloadProgress.total} tiles • {downloadProgress.cached} cached, {downloadProgress.skipped} skipped
+          </div>
+        )}
       </section>
 
       {/* Voice Prompts Scroll Speed */}

@@ -330,6 +330,14 @@ export function usePins(mainMapRef) {
       await addPendingPin(pin);
       setPins((prev) => mergeRows(prev, [pin]));
       console.log('Pin saved offline to IndexedDB:', pin.slug);
+
+      // Zoom to pin location after save
+      if (mainMapRef.current && pin.lat && pin.lng) {
+        setTimeout(() => {
+          mainMapRef.current.setView([pin.lat, pin.lng], 16, { animate: true });
+        }, 300);
+      }
+
       return pin;
     }
     try {
@@ -345,12 +353,27 @@ export function usePins(mainMapRef) {
         setTimeout(() => showConfetti(), 200);
       }
 
+      // Zoom to pin location after save
+      if (mainMapRef.current && inserted.lat && inserted.lng) {
+        setTimeout(() => {
+          mainMapRef.current.setView([inserted.lat, inserted.lng], 16, { animate: true });
+        }, 300);
+      }
+
       return inserted;
     } catch (err) {
       console.error('Pin save failed, storing offline:', err);
       // Fallback to offline storage on error
       await addPendingPin(pin);
       setPins((prev) => mergeRows(prev, [pin]));
+
+      // Zoom to pin location even on error
+      if (mainMapRef.current && pin.lat && pin.lng) {
+        setTimeout(() => {
+          mainMapRef.current.setView([pin.lat, pin.lng], 16, { animate: true });
+        }, 300);
+      }
+
       return pin;
     }
   };

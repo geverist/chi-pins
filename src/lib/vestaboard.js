@@ -168,6 +168,119 @@ export async function notifyPinPlacement(pin) {
 }
 
 /**
+ * Format "Now Playing" track for Vestaboard display
+ * @param {Object} track - The track data with artist and title
+ * @returns {string} Formatted message text
+ */
+export function formatNowPlayingForVestaboard(track) {
+  const lines = [];
+
+  // Header
+  lines.push('NOW PLAYING');
+  lines.push('');
+
+  // Artist name (truncate if needed)
+  if (track.artist) {
+    const artist = track.artist.length > 22
+      ? track.artist.substring(0, 19) + '...'
+      : track.artist;
+    lines.push(artist.toUpperCase());
+  }
+
+  lines.push('');
+
+  // Song title (truncate if needed, can span 2 lines)
+  if (track.title) {
+    const title = track.title.length > 44
+      ? track.title.substring(0, 41) + '...'
+      : track.title;
+    lines.push(title.toUpperCase());
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Send "Now Playing" notification to Vestaboard
+ * @param {Object} track - The track data with artist and title
+ * @param {boolean} enabled - Whether Vestaboard integration is enabled (from admin settings)
+ * @returns {Promise<{status: string, id?: string, created?: number}>}
+ */
+export async function notifyNowPlaying(track, enabled = false) {
+  // Check if Vestaboard is enabled in admin settings
+  if (!enabled) {
+    console.log('[Vestaboard] Skipping - not enabled in admin settings');
+    return { status: 'disabled', message: 'Vestaboard not enabled in admin settings' };
+  }
+
+  // Check if API key is configured
+  if (!isVestaboardConfigured()) {
+    console.warn('[Vestaboard] Skipping - API key not configured');
+    return { status: 'error', message: 'API key not configured' };
+  }
+
+  const message = formatNowPlayingForVestaboard(track);
+  console.log('[Vestaboard] Sending Now Playing:', message);
+
+  return await sendTextToVestaboard(message);
+}
+
+/**
+ * Format order notification for Vestaboard display
+ * @param {Object} order - The order data with customer name and order number
+ * @returns {string} Formatted message text
+ */
+export function formatOrderForVestaboard(order) {
+  const lines = [];
+
+  // Header
+  lines.push('ORDER READY');
+  lines.push('');
+
+  // Customer name (truncate if needed)
+  if (order.customerName) {
+    const name = order.customerName.length > 22
+      ? order.customerName.substring(0, 19) + '...'
+      : order.customerName;
+    lines.push(name.toUpperCase());
+  }
+
+  lines.push('');
+
+  // Order number
+  if (order.orderNumber) {
+    lines.push(`ORDER #${order.orderNumber}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Send order notification to Vestaboard
+ * @param {Object} order - The order data with customerName and orderNumber
+ * @param {boolean} enabled - Whether Vestaboard integration is enabled (from admin settings)
+ * @returns {Promise<{status: string, id?: string, created?: number}>}
+ */
+export async function notifyOrderReady(order, enabled = false) {
+  // Check if Vestaboard is enabled in admin settings
+  if (!enabled) {
+    console.log('[Vestaboard] Skipping order notification - not enabled in admin settings');
+    return { status: 'disabled', message: 'Vestaboard not enabled in admin settings' };
+  }
+
+  // Check if API key is configured
+  if (!isVestaboardConfigured()) {
+    console.warn('[Vestaboard] Skipping order notification - API key not configured');
+    return { status: 'error', message: 'API key not configured' };
+  }
+
+  const message = formatOrderForVestaboard(order);
+  console.log('[Vestaboard] Sending Order Ready notification:', message);
+
+  return await sendTextToVestaboard(message);
+}
+
+/**
  * Check if Vestaboard is configured
  * @returns {boolean}
  */
