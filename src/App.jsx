@@ -258,7 +258,7 @@ export default function App() {
     enabled: adminSettings.proximityDetectionEnabled, // REMOVED business hours gate for testing
     sensitivityThreshold: adminSettings.proximitySensitivity || 15, // Higher = less sensitive to small movements
     proximityThreshold: adminSettings.proximityThreshold || 60, // HIGH = very close (~2 feet) for walkup/voice prompt
-    ambientThreshold: adminSettings.ambientMusicThreshold || 85, // ULTRA HIGH = need to be extremely close (~3 feet) for ambient music
+    ambientThreshold: adminSettings.ambientMusicThreshold || 95, // MAXIMUM = need to be within arm's reach (~2 feet or less) for ambient music
     stareThreshold: adminSettings.stareThreshold || 50, // Keep stare detection close
     stareDurationMs: adminSettings.stareDurationMs || 3000,
     detectionInterval: adminSettings.proximityDetectionInterval || 500,
