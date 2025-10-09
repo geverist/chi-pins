@@ -1,28 +1,23 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Visual feedback for touch sequences
- * Shows corner indicators when touches are registered
+ * Visual feedback for ALL touch interactions
+ * Shows ripple effect at exact touch location for better UX
  */
 export default function TouchSequenceIndicator() {
   const [touches, setTouches] = useState([]);
 
   useEffect(() => {
     const handleTouch = (e) => {
-      if (e.touches && e.touches.length > 1) return;
+      // Handle all touches (including multi-touch)
+      const touchList = e.touches ? Array.from(e.touches) : [e];
 
-      const touch = e.touches ? e.touches[0] : e;
-      const x = touch.clientX;
-      const y = touch.clientY;
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      touchList.forEach(touch => {
+        const x = touch.clientX;
+        const y = touch.clientY;
 
-      const corner = getCorner(x, y, width, height);
-
-      if (corner) {
         const touchData = {
-          corner,
-          id: Date.now(),
+          id: `${Date.now()}-${Math.random()}`,
           x,
           y
         };
@@ -32,14 +27,17 @@ export default function TouchSequenceIndicator() {
         // Remove after animation
         setTimeout(() => {
           setTouches(prev => prev.filter(t => t.id !== touchData.id));
-        }, 1000);
-      }
+        }, 600);
+      });
     };
 
+    // Listen for both touch and mouse events for better compatibility
     window.addEventListener('touchstart', handleTouch, { passive: true });
+    window.addEventListener('mousedown', handleTouch, { passive: true });
 
     return () => {
       window.removeEventListener('touchstart', handleTouch);
+      window.removeEventListener('mousedown', handleTouch);
     };
   }, []);
 
@@ -50,7 +48,8 @@ export default function TouchSequenceIndicator() {
           key={touch.id}
           style={{
             position: 'fixed',
-            ...getCornerPosition(touch.corner),
+            left: touch.x - 30, // Center the 60px circle on touch point
+            top: touch.y - 30,
             width: '60px',
             height: '60px',
             borderRadius: '50%',
@@ -58,7 +57,7 @@ export default function TouchSequenceIndicator() {
             border: '3px solid rgba(59, 130, 246, 0.8)',
             pointerEvents: 'none',
             zIndex: 99999,
-            animation: 'touchPulse 1s ease-out forwards',
+            animation: 'touchPulse 0.6s ease-out forwards',
           }}
         />
       ))}
@@ -66,7 +65,7 @@ export default function TouchSequenceIndicator() {
       <style>{`
         @keyframes touchPulse {
           0% {
-            transform: scale(0.5);
+            transform: scale(0.3);
             opacity: 1;
           }
           100% {
@@ -77,34 +76,4 @@ export default function TouchSequenceIndicator() {
       `}</style>
     </>
   );
-}
-
-function getCorner(x, y, width, height) {
-  const cornerSize = 100;
-
-  const isTopLeft = x < cornerSize && y < cornerSize;
-  const isTopRight = x > width - cornerSize && y < cornerSize;
-  const isBottomLeft = x < cornerSize && y > height - cornerSize;
-  const isBottomRight = x > width - cornerSize && y > height - cornerSize;
-
-  if (isTopLeft) return 'top-left';
-  if (isTopRight) return 'top-right';
-  if (isBottomLeft) return 'bottom-left';
-  if (isBottomRight) return 'bottom-right';
-  return null;
-}
-
-function getCornerPosition(corner) {
-  switch (corner) {
-    case 'top-left':
-      return { top: '10px', left: '10px' };
-    case 'top-right':
-      return { top: '10px', right: '10px' };
-    case 'bottom-left':
-      return { bottom: '10px', left: '10px' };
-    case 'bottom-right':
-      return { bottom: '10px', right: '10px' };
-    default:
-      return {};
-  }
 }

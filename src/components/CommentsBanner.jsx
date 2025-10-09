@@ -1,28 +1,28 @@
 // src/components/CommentsBanner.jsx
-// Scrolling banner that displays random comments from pins
+// High-performance scrolling banner using local-first storage
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { filterComments, getRandomComments } from '../config/moderation';
+import { useEffect, useRef, useState } from 'react';
 import { useLayoutStack } from '../hooks/useLayoutStack';
+import { useLocalComments } from '../hooks/useLocalComments';
 
 export default function CommentsBanner({
-  pins = [],
   customKeywords = [],
   scrollSpeed = 60, // seconds for full scroll
   maxComments = 20,
   refreshInterval = 120000, // 2 minutes - rotate comments
+  enabled = true,
 }) {
   const { updateHeight } = useLayoutStack();
-  const [commentIndex, setCommentIndex] = useState(0);
   const containerRef = useRef(null);
   const [topPosition, setTopPosition] = useState(60); // Default fallback
+  const [animationKey, setAnimationKey] = useState(0); // Force animation restart on comment changes
 
-  // Extract comments from pins and filter out prohibited content
-  const allComments = useMemo(() => {
-    const pinsWithComments = pins.filter(pin => pin.note && pin.note.trim().length > 0);
-    const filtered = filterComments(pinsWithComments, customKeywords);
-    return getRandomComments(filtered, maxComments);
-  }, [pins, customKeywords, maxComments]);
+  // Use local-first comments (much faster!)
+  const { comments: allComments, refresh } = useLocalComments({
+    maxComments,
+    customKeywords,
+    enabled
+  });
 
   // Position below header using layout stack
   const { layout } = useLayoutStack();
@@ -47,14 +47,22 @@ export default function CommentsBanner({
     }
   }, [allComments.length, updateHeight]);
 
-  // Refresh random comments periodically
+  // Refresh random comments periodically (no network, just shuffle)
   useEffect(() => {
+    if (!enabled) return;
+
     const interval = setInterval(() => {
-      setCommentIndex(prev => (prev + 1) % 100); // Force re-render to shuffle
+      refresh(); // Shuffle existing comments without network call
+      setAnimationKey(prev => prev + 1); // Restart animation
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [refreshInterval]);
+  }, [refreshInterval, refresh, enabled]);
+
+  // Update animation key when comments change
+  useEffect(() => {
+    setAnimationKey(prev => prev + 1);
+  }, [allComments]);
 
   if (allComments.length === 0) {
     return null; // No comments to display
@@ -66,7 +74,7 @@ export default function CommentsBanner({
   return (
     <div ref={containerRef} style={{...styles.container, top: `${topPosition}px`}}>
       <div style={styles.scrollWrapper}>
-        <div style={styles.scrollContent(scrollSpeed)} key={commentIndex}>
+        <div style={styles.scrollContent(scrollSpeed)} key={animationKey}>
           {displayComments.map((comment, index) => (
             <div key={`${comment.id}-${index}`} style={styles.commentCard}>
               <div style={styles.commentText}>
@@ -115,6 +123,10 @@ const styles = {
     padding: '0',
     animation: `scroll ${scrollSpeed}s linear infinite`,
     willChange: 'transform',
+    // GPU acceleration for smooth 60fps scrolling
+    transform: 'translateZ(0)',
+    backfaceVisibility: 'hidden',
+    perspective: 1000,
   }),
   commentCard: {
     background: 'rgba(255, 255, 255, 0.15)',

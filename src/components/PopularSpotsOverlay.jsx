@@ -41,26 +41,44 @@ function toKind(category, name = '') {
   return t
 }
 
-function makeBizIcon(kind = 'hotdog') {
+function makeBizIcon(kind = 'hotdog', isClickable = false) {
   const emoji = kind === 'beef' ? '🥩' : (kind === 'pizza' ? '🍕' : '🌭')
   const bg =   kind === 'beef' ? '#7b4a2b' : (kind === 'pizza' ? '#cc1b1b' : '#2a6ae0')
+  const cursor = isClickable ? 'pointer' : 'default'
+
   return L.divIcon({
     className: `biz-pin biz-${kind}`,
-    iconSize: [30, 42],
-    iconAnchor: [15, 42],
+    iconSize: [50, 60], // Increased from 30x42 for larger clickable area
+    iconAnchor: [25, 60], // Adjusted anchor point
     html: `
-      <div style="position:relative;width:30px;height:42px;">
+      <div style="position:relative;width:50px;height:60px;cursor:${cursor};">
+        <!-- Larger invisible clickable area -->
         <div style="
-          position:absolute;left:5px;top:0;width:20px;height:20px;
+          position:absolute;left:0;top:0;width:100%;height:100%;
+          z-index:1;
+        "></div>
+        <!-- Visual pin -->
+        <div style="
+          position:absolute;left:15px;top:10px;width:20px;height:20px;
           background:${bg};color:#fff;border:2px solid #fff;border-radius:50%;
           display:flex;align-items:center;justify-content:center;
-          box-shadow:0 1px 2px rgba(0,0,0,0.35);font-size:14px;line-height:1">${emoji}</div>
-        <svg width="30" height="42" viewBox="0 0 30 42" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <ellipse cx="15" cy="39" rx="9" ry="3" fill="rgba(0,0,0,0.25)"/>
-          <line x1="15" y1="22" x2="15" y2="36" stroke="#8c99a6" stroke-width="3" stroke-linecap="round"/>
-          <path d="M 13 36 L 17 36 L 15 42 Z" fill="#c7ccd3"/>
+          box-shadow:0 1px 2px rgba(0,0,0,0.35);font-size:14px;line-height:1;
+          z-index:2;
+          ${isClickable ? 'transition: transform 0.2s;' : ''}"
+          class="biz-pin-icon">${emoji}</div>
+        <svg width="50" height="60" viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;left:0;top:0;z-index:0;">
+          <ellipse cx="25" cy="54" rx="12" ry="4" fill="rgba(0,0,0,0.25)"/>
+          <line x1="25" y1="32" x2="25" y2="50" stroke="#8c99a6" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 23 50 L 27 50 L 25 58 Z" fill="#c7ccd3"/>
         </svg>
-      </div>`
+      </div>
+      ${isClickable ? `
+      <style>
+        .biz-pin:hover .biz-pin-icon {
+          transform: scale(1.15);
+        }
+      </style>
+      ` : ''}`
   })
 }
 
@@ -71,6 +89,8 @@ export default function PopularSpotsOverlay({
   labelsAbove = true,
   labelStyle = 'pill',   // 'clean' | 'pill'
   minLabelZoom = 12,
+  exploring = false,
+  onSpotClick = null,
 }) {
   const map = useMap()
   const [rows, setRows] = useState(null)
@@ -123,10 +143,10 @@ export default function PopularSpotsOverlay({
   }, [map, minLabelZoom])
 
   const icons = useMemo(() => ({
-    hotdog: makeBizIcon('hotdog'),
-    beef: makeBizIcon('beef'),
-    pizza: makeBizIcon('pizza'),
-  }), [])
+    hotdog: makeBizIcon('hotdog', exploring),
+    beef: makeBizIcon('beef', exploring),
+    pizza: makeBizIcon('pizza', exploring),
+  }), [exploring])
 
   const bounds = useMemo(() => CHI_BOUNDS, [])
   const visible = useMemo(() => {
@@ -160,11 +180,18 @@ export default function PopularSpotsOverlay({
             position={[r.lat, r.lng]}
             icon={icon}
             zIndexOffset={500}
+            eventHandlers={{
+              click: () => {
+                if (exploring && onSpotClick) {
+                  onSpotClick(r);
+                }
+              }
+            }}
           >
             {showLabels && (
               <Tooltip
                 direction="top"
-                offset={[0, labelsAbove ? -32 : -6]}
+                offset={[0, labelsAbove ? -42 : -6]}
                 opacity={1}
                 permanent
                 interactive={false}

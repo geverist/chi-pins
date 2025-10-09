@@ -73,6 +73,15 @@ function Footer({
     nowPlayingVisible
   }));
 
+  // Check if ANY nav items are enabled (excluding explore_enabled which is now a floating button)
+  const hasNavItems = navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled;
+
+  // Don't show footer if no navigation items are configured
+  if (!hasNavItems && !draft) {
+    console.log('[Footer] Hidden - no navigation items configured');
+    return null;
+  }
+
   return (
     <footer
       ref={footerRef}
@@ -103,7 +112,7 @@ function Footer({
           }}
         >
           {/* Top row: Games, Jukebox, Order Now, Photo Booth, Then & Now, Leave Feedback, and new items */}
-          {(navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled || navSettings.appointment_checkin_enabled || navSettings.reservation_checkin_enabled || navSettings.guestbook_enabled) && (
+          {hasNavItems && (
             <div
               style={{
                 display: 'flex',
@@ -206,75 +215,7 @@ function Footer({
                   🗺️ Explore
                 </button>
               )}
-              {navSettings.appointment_checkin_enabled && (
-                <button
-                  onClick={() => {
-                    setAppointmentCheckInOpen(true);
-                    setVoiceAssistantVisible?.(false);
-                  }}
-                  style={btn3d(false)}
-                  className="btn-kiosk"
-                  aria-label="Appointment Check-In"
-                >
-                  📋 Check-In
-                </button>
-              )}
-              {navSettings.reservation_checkin_enabled && (
-                <button
-                  onClick={() => {
-                    setReservationCheckInOpen(true);
-                    setVoiceAssistantVisible?.(false);
-                  }}
-                  style={btn3d(false)}
-                  className="btn-kiosk"
-                  aria-label="Reservation Check-In"
-                >
-                  🍽️ Reservation
-                </button>
-              )}
-              {navSettings.guestbook_enabled && (
-                <button
-                  onClick={() => {
-                    setGuestBookOpen(true);
-                    setVoiceAssistantVisible?.(false);
-                  }}
-                  style={btn3d(false)}
-                  className="btn-kiosk"
-                  aria-label="Guest Book"
-                >
-                  📖 Guest Book
-                </button>
-              )}
-              {navSettings.explore_enabled && (
-                <>
-                  {!exploring ? (
-                    <button
-                      onClick={() => {
-                        setExploring(true);
-                        setShowAttractor(false);
-                        setVoiceAssistantVisible?.(false);
-                      }}
-                      style={btn3d(false)}
-                      className="btn-kiosk"
-                      aria-label="Explore community pins"
-                    >
-                      🔎 Pins
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setExploring(false);
-                        setVoiceAssistantVisible?.(false);
-                      }}
-                      style={btn3d(false)}
-                      className="btn-kiosk"
-                      aria-label="Close explore mode"
-                    >
-                      ✖ Close
-                    </button>
-                  )}
-                </>
-              )}
+              {/* Explore pins button moved to floating overlay - removed from footer */}
             </div>
           )}
         </div>

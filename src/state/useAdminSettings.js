@@ -83,7 +83,7 @@ const DEFAULTS = {
   photoBackgroundsEnabled: true,
   newsTickerEnabled: false,
   newsTickerRssUrl: 'https://news.google.com/rss/search?q=chicago&hl=en-US&gl=US&ceid=US:en',
-  showOfflineMapDownloader: false, // Disabled by default for performance
+  showOfflineMapDownloader: true, // Enable map tile downloader
 
   // Comments Banner
   commentsBannerEnabled: false, // Enable scrolling comments banner at top (disabled by default for performance)
@@ -190,44 +190,105 @@ export function useAdminSettings() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  // Load from Supabase → fallback to Persistent Storage → defaults
+  // Priority: Local Storage (SQL/Preferences) → Supabase → defaults
+  // Sync from Supabase every 5 minutes
   useEffect(() => {
     let mounted = true
     const storage = getPersistentStorage()
-    ;(async () => {
+
+    const loadSettings = async () => {
       setLoading(true)
       setError(null)
+
       try {
-        const { data, error } = await supabase
+        // 1. PRIORITY: Load from local storage first (survives APK updates)
+        const localSettings = await storage.get(LS_KEY)
+
+        if (localSettings) {
+          console.log('[useAdminSettings] Loaded from local storage (priority)')
+          if (mounted) {
+            setSettings({ ...DEFAULTS, ...localSettings })
+          }
+        } else {
+          // 2. FALLBACK: Load from Supabase if no local settings
+          console.log('[useAdminSettings] No local settings, loading from Supabase')
+          const { data, error: supabaseError } = await supabase
+            .from('settings')
+            .select('value')
+            .eq('key', 'app')
+            .maybeSingle()
+
+          if (!supabaseError && data?.value) {
+            const supabaseSettings = { ...DEFAULTS, ...data.value }
+            if (mounted) {
+              setSettings(supabaseSettings)
+              // Save to local storage for next time
+              await storage.set(LS_KEY, supabaseSettings)
+              console.log('[useAdminSettings] Saved Supabase settings to local storage')
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[useAdminSettings] Error loading settings:', e)
+        setError(e?.message || 'Failed to load settings')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    // Initial load
+    loadSettings()
+
+    // Function to sync from Supabase
+    const syncFromSupabase = async () => {
+      try {
+        console.log('[useAdminSettings] Syncing from Supabase...')
+        const { data, error: supabaseError } = await supabase
           .from('settings')
           .select('value')
           .eq('key', 'app')
           .maybeSingle()
 
-        if (error) throw error
-        if (mounted) {
-          if (data?.value) {
-            setSettings(s => ({ ...DEFAULTS, ...s, ...data.value }))
-          } else {
-            // Persistent storage fallback
-            try {
-              const cached = await storage.get(LS_KEY)
-              if (cached) setSettings(s => ({ ...DEFAULTS, ...s, ...cached }))
-            } catch {}
-          }
+        if (!supabaseError && data?.value && mounted) {
+          const supabaseSettings = { ...DEFAULTS, ...data.value }
+          // Update local storage with Supabase data
+          await storage.set(LS_KEY, supabaseSettings)
+          setSettings(supabaseSettings)
+          console.log('[useAdminSettings] Synced from Supabase to local storage')
         }
       } catch (e) {
-        // Fallback to persistent storage if table missing / not provisioned
-        try {
-          const cached = await storage.get(LS_KEY)
-          if (cached) setSettings(s => ({ ...DEFAULTS, ...s, ...cached }))
-        } catch {}
-        setError(e?.message || 'Failed to load settings')
-      } finally {
-        if (mounted) setLoading(false)
+        console.error('[useAdminSettings] Sync error:', e)
       }
-    })()
-    return () => { mounted = false }
+    }
+
+    // Sync from Supabase every 5 minutes
+    const syncInterval = setInterval(syncFromSupabase, 5 * 60 * 1000)
+
+    // Listen for push notifications from admin panel
+    const channel = supabase
+      .channel('settings-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'settings_updates',
+        },
+        (payload) => {
+          console.log('[useAdminSettings] Push notification received:', payload)
+          if (payload.new?.trigger_reload) {
+            console.log('[useAdminSettings] Reloading settings immediately...')
+            syncFromSupabase()
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      mounted = false
+      clearInterval(syncInterval)
+      channel.unsubscribe()
+    }
   }, [])
 
   const save = useCallback(async (next) => {

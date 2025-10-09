@@ -214,7 +214,7 @@ function GeocoderTopCenter({
     }
 
     // Position search bar below header and comments banner using layout stack
-    const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 10; // 10px spacing
+    const topPosition = (layout.headerHeight || 0) + (layout.commentsBannerHeight || 0) + 50; // 50px spacing (raised higher)
 
     const host = L.DomUtil.create('div', 'map-search-host');
     Object.assign(host.style, {
@@ -236,7 +236,7 @@ function GeocoderTopCenter({
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
-      padding: '8px 10px',
+      padding: '6px 8px', // Reduced padding to prevent overlap
       borderRadius: '12px',
       backdropFilter: 'blur(6px) saturate(115%)',
       WebkitBackdropFilter: 'blur(6px) saturate(115%)',
@@ -244,8 +244,8 @@ function GeocoderTopCenter({
       border: '1px solid rgba(255,255,255,0.14)',
       boxShadow: '0 8px 24px rgba(0,0,0,0.30)',
       position: 'relative',
-      minHeight: '52px', // Fixed height to prevent shifting
-      maxHeight: '52px', // Fixed height to prevent shifting
+      minHeight: '48px', // Slightly reduced to fit inner input better
+      maxHeight: '48px',
     });
     hostRef.current.appendChild(shell);
     shellRef.current = shell;
@@ -311,9 +311,10 @@ function GeocoderTopCenter({
       ctrlEl.querySelector('.leaflet-control-geocoder-form input');
     inputRef.current = input;
     if (input) {
-      input.style.padding = '12px 96px 12px 14px'; // Right padding for mic (88px) + clear (40px) buttons with gap
-      input.style.borderRadius = '10px';
+      input.style.padding = '8px 96px 8px 12px'; // Reduced vertical padding, right padding for mic (88px) + clear (40px) buttons
+      input.style.borderRadius = '8px'; // Match inner radius
       input.style.outline = 'none';
+      input.style.height = '36px'; // Fixed height for inner input
       input.style.width = 'min(70vw, 520px)'; // Clean width for input field
       input.placeholder = effectivePlaceholder;
       input.setAttribute('aria-label', effectiveMode === 'global' ? 'Search places worldwide' : 'Search Chicago and nearby');

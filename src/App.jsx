@@ -9,6 +9,7 @@ import { useIdleAttractor } from './hooks/useIdleAttractor';
 import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
+import { useTouchSequence } from './hooks/useTouchSequence';
 import { getSyncService } from './lib/syncService';
 import { LayoutStackProvider } from './hooks/useLayoutStack';
 
@@ -43,6 +44,7 @@ import DraftMarker from './components/DraftMarker';
 import SubMapModal from './components/SubMapModal';
 import ShareConfirmModal from './components/ShareConfirmModal';
 import PopularSpotsOverlay from './components/PopularSpotsOverlay';
+import PopularSpotModal from './components/PopularSpotModal';
 import Toast from './components/Toast';
 import AttractorOverlay from './components/AttractorOverlay';
 import PinShareModal from './components/PinShareModal';
@@ -66,6 +68,7 @@ import DemoModeSwitcher from './components/DemoModeSwitcher';
 import VoiceAssistant from './components/VoiceAssistant';
 import DebugPanel from './components/DebugPanel';
 import PerformanceDiagnostics from './components/PerformanceDiagnostics';
+import FloatingExploreButton from './components/FloatingExploreButton';
 import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
 import { getPersistentStorage } from './lib/persistentStorage';
 import { enableImmersiveMode, maintainImmersiveMode } from './lib/immersiveMode';
@@ -208,15 +211,18 @@ export default function App() {
   // Anonymous message modal specific state
   const [pinToMessage, setPinToMessage] = useState(null);
 
+  // Popular spot modal state
+  const [selectedPopularSpot, setSelectedPopularSpot] = useState(null);
+
   // voice assistant visibility
   const [voiceAssistantVisible, setVoiceAssistantVisible] = useState(true);
 
   // downloading bar visibility (for footer margin adjustment)
   const [downloadingBarVisible, setDownloadingBarVisible] = useState(false);
 
-  // layer toggles
-  const [showPopularSpots, setShowPopularSpots] = useState(true);
-  const [showCommunityPins, setShowCommunityPins] = useState(true);
+  // layer toggles (initialized from admin settings)
+  const [showPopularSpots, setShowPopularSpots] = useState(adminSettings.showPopularSpots || false);
+  const [showCommunityPins, setShowCommunityPins] = useState(adminSettings.showCommunityPins !== false);
   const [showMobileList, setShowMobileList] = useState(false);
 
   // highlight
@@ -587,6 +593,7 @@ export default function App() {
     draft,
     submapOpen: !!submapCenter,
     exploring,
+    adminOpen, // Don't trigger idle reset when admin panel is open
     timeoutMs: 60 * 1000,
     confettiScreensaverEnabled: adminSettings.confettiScreensaverEnabled,
     onIdle: () => {
@@ -600,7 +607,7 @@ export default function App() {
         document.activeElement.blur();
       }
 
-      // Close all modals using centralized function
+      // Close all modals using centralized function (except admin)
       closeAllModals();
     },
   });
@@ -1152,7 +1159,7 @@ export default function App() {
 
       {adminSettings.commentsBannerEnabled && (
         <CommentsBanner
-          pins={pins}
+          enabled={adminSettings.commentsBannerEnabled}
           customKeywords={adminSettings.commentsBannerProhibitedKeywords || []}
           scrollSpeed={adminSettings.commentsBannerScrollSpeed || 60}
           maxComments={adminSettings.commentsBannerMaxComments || 20}
@@ -1191,7 +1198,16 @@ export default function App() {
           {(() => {
             const shouldShow = !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots);
             console.log('PopularSpots check:', { isMobile, showPopularSpots, mapMode, hasDraft: !!draft, isDemoMode, popularSpotsEnabled: !isDemoMode || industryConfig.enabledFeatures.popularSpots, shouldShow });
-            return shouldShow ? <PopularSpotsOverlay labelsAbove showHotDog showItalianBeef labelStyle="pill" /> : null;
+            return shouldShow ? (
+              <PopularSpotsOverlay
+                labelsAbove
+                showHotDog
+                showItalianBeef
+                labelStyle="pill"
+                exploring={exploring}
+                onSpotClick={setSelectedPopularSpot}
+              />
+            ) : null;
           })()}
           {showCommunityPins && !draft && (
             <>
@@ -1462,6 +1478,20 @@ export default function App() {
       <OfflineIndicator />
       <TouchSequenceIndicator />
       <LocationSwitcher />
+
+      {/* Floating Explore Pins button (only show when enabled in nav settings) */}
+      {navSettings.explore_enabled && !adminOpen && (
+        <FloatingExploreButton
+          exploring={exploring}
+          setExploring={setExploring}
+          setShowAttractor={setShowAttractor}
+          setVoiceAssistantVisible={setVoiceAssistantVisible}
+          enabled={true}
+          downloadingBarVisible={downloadingBarVisible}
+          nowPlayingVisible={nowPlayingActuallyVisible}
+          footerVisible={!isMobile && (navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled)}
+        />
+      )}
       <HolidayTheme />
       <PWAInstallPrompt />
       <AchievementNotification />
@@ -1507,6 +1537,12 @@ export default function App() {
       {new URLSearchParams(window.location.search).get('diagnostics') === 'true' && (
         <PerformanceDiagnostics />
       )}
+
+      {/* Popular Spot Modal - Shows details when clicking on popular spots in explore mode */}
+      <PopularSpotModal
+        spot={selectedPopularSpot}
+        onClose={() => setSelectedPopularSpot(null)}
+      />
     </div>
     </LayoutStackProvider>
   );

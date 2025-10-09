@@ -6,6 +6,7 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
   const [error, setError] = useState('')
   const [attempts, setAttempts] = useState(0)
   const inputRef = useRef(null)
+  const openTimeRef = useRef(0)
 
   // Use provided PIN or fallback to env var or default
   // Ensure PIN is a 4-digit string
@@ -17,13 +18,28 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
 
   useEffect(() => {
     if (open) {
+      openTimeRef.current = Date.now()
       setCode('')
       setError('')
       setAttempts(0)
-      // Auto-focus input when modal opens
-      setTimeout(() => inputRef.current?.focus(), 100)
+      // Auto-focus input with longer delay to avoid touch sequence interference
+      setTimeout(() => {
+        inputRef.current?.focus()
+        // Force keyboard to show on mobile
+        if (inputRef.current) {
+          inputRef.current.click()
+        }
+      }, 300)
     }
   }, [open])
+
+  const handleCancel = () => {
+    // Prevent dismissal within first 500ms to avoid touch sequence interference
+    const timeSinceOpen = Date.now() - openTimeRef.current
+    if (timeSinceOpen > 500) {
+      onCancel?.()
+    }
+  }
 
   const handleSubmit = (e) => {
     e?.preventDefault()
@@ -106,7 +122,13 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
         background: 'rgba(0, 0, 0, 0.75)',
         backdropFilter: 'blur(4px)',
       }}
-      onClick={onCancel}
+      onClick={handleCancel}
+      onTouchEnd={(e) => {
+        // Prevent backdrop touch from dismissing if touch is on the modal content
+        if (e.target === e.currentTarget) {
+          handleCancel();
+        }
+      }}
     >
       <div
         style={{
@@ -119,6 +141,8 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
           boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
         }}
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
       >
         <h2 style={{ margin: '0 0 24px', color: '#f3f5f7', fontSize: 24 }}>{title}</h2>
 

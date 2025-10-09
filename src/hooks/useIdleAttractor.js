@@ -13,6 +13,7 @@ export function useIdleAttractor({
   draft,
   submapOpen,
   exploring,
+  adminOpen, // Don't trigger idle when admin panel is open
   timeoutMs = 60_000,
   confettiScreensaverMs = 60_000, // Show confetti screensaver after 60s (was 15s for testing)
   confettiScreensaverEnabled = false, // Enable/disable confetti screensaver
@@ -52,8 +53,11 @@ export function useIdleAttractor({
     }
     clearAllConfetti() // Immediately remove all confetti on user interaction
 
-    // While user is interacting (editor/submap/explore), keep attractor hidden
-    if (draft || submapOpen || exploring) setShowAttractor(false)
+    // While user is interacting (editor/submap/explore/admin), keep attractor hidden
+    if (draft || submapOpen || exploring || adminOpen) setShowAttractor(false)
+
+    // Don't start idle timer if admin panel is open
+    if (adminOpen) return
 
     // Set timer for confetti screensaver (only if enabled)
     if (confettiScreensaverEnabled) {
@@ -77,7 +81,7 @@ export function useIdleAttractor({
         setShowAttractor(true)
       }
     }, timeoutMs)
-  }, [draft, submapOpen, exploring, onIdle, timeoutMs, confettiScreensaverMs, confettiScreensaverEnabled, mainMapRef])
+  }, [draft, submapOpen, exploring, adminOpen, onIdle, timeoutMs, confettiScreensaverMs, confettiScreensaverEnabled, mainMapRef])
   // Removed startConfettiScreensaver and stopConfettiScreensaver from dependencies
 
   useEffect(() => {

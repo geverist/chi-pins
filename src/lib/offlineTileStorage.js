@@ -469,9 +469,9 @@ class OfflineTileStorage {
         }
       }));
 
-      // Log progress every batch
-      if (completed % 50 === 0) {
-        console.log(`[OfflineTileStorage] Progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%)`);
+      // Log progress every 100 tiles (less frequent logging for cached tiles)
+      if (completed % 100 === 0 || batchHadDownloads) {
+        console.log(`[OfflineTileStorage] Progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%) - ${skipped} cached, ${cached} downloaded`);
       }
 
       // Only delay if we actually downloaded tiles (not all cached)
@@ -565,9 +565,9 @@ class OfflineTileStorage {
         }
       }));
 
-      // Log progress every batch
-      if (completed % 50 === 0) {
-        console.log(`[OfflineTileStorage] Global progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%)`);
+      // Log progress every 100 tiles (less frequent logging for cached tiles)
+      if (completed % 100 === 0 || batchHadDownloads) {
+        console.log(`[OfflineTileStorage] Global progress: ${completed}/${tiles.length} (${Math.round(completed / tiles.length * 100)}%) - ${skipped} cached, ${cached} downloaded`);
       }
 
       // Only delay if we actually downloaded tiles (not all cached)

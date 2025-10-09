@@ -6,19 +6,17 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 const CACHE_KEY = 'navigation_settings_cache';
 const CACHE_VERSION = 1; // Increment to invalidate old caches
 const CACHE_DURATION = 1000 * 60 * 5; // 5 minutes
+const SETTINGS_ID = '00000000-0000-0000-0000-000000000001'; // Fixed UUID for single settings row
 
 const DEFAULT_SETTINGS = {
-  games_enabled: true,
-  jukebox_enabled: true,
-  order_enabled: true,
+  games_enabled: false,
+  jukebox_enabled: false,
+  order_enabled: false,
   explore_enabled: true,
-  photobooth_enabled: true,
-  thenandnow_enabled: true,
-  comments_enabled: true,
+  photobooth_enabled: false,
+  thenandnow_enabled: false,
+  comments_enabled: false,
   recommendations_enabled: false,
-  appointment_checkin_enabled: false,
-  reservation_checkin_enabled: false,
-  guestbook_enabled: false,
   default_navigation_app: 'map',
 };
 
@@ -104,23 +102,29 @@ export function useNavigationSettings() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      console.log('[useNavigationSettings] Fetching from API:', `${API_BASE}/api/navigation-settings`);
-      const response = await fetch(`${API_BASE}/api/navigation-settings`);
-      console.log('[useNavigationSettings] Response status:', response.status);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[useNavigationSettings] API error:', errorText);
-        throw new Error(`Failed to fetch navigation settings: ${response.status}`);
+      console.log('[useNavigationSettings] Fetching from Supabase navigation_settings table');
+
+      const { data, error: supabaseError } = await supabase
+        .from('navigation_settings')
+        .select('*')
+        .eq('id', SETTINGS_ID)
+        .single();
+
+      if (supabaseError) {
+        console.error('[useNavigationSettings] Supabase error:', supabaseError);
+        throw new Error(`Failed to fetch navigation settings: ${supabaseError.message}`);
       }
-      const data = await response.json();
-      console.log('[useNavigationSettings] Fetched from API:', data);
-      console.log('[useNavigationSettings] games_enabled:', data.games_enabled);
-      setSettings(data);
+
+      console.log('[useNavigationSettings] Fetched from Supabase:', data);
+      console.log('[useNavigationSettings] games_enabled:', data?.games_enabled);
+
+      const settingsData = data || DEFAULT_SETTINGS;
+      setSettings(settingsData);
       setError(null);
 
       // Update cache
       localStorage.setItem(CACHE_KEY, JSON.stringify({
-        data,
+        data: settingsData,
         timestamp: Date.now(),
         version: CACHE_VERSION
       }));
@@ -149,22 +153,25 @@ export function useNavigationSettings() {
       // Optimistically update UI immediately
       setSettings(newSettings);
 
-      const response = await fetch(`${API_BASE}/api/navigation-settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newSettings),
-      });
+      // Save to Supabase navigation_settings table
+      const { data, error: supabaseError } = await supabase
+        .from('navigation_settings')
+        .upsert({
+          id: SETTINGS_ID, // Single row for global settings (UUID)
+          ...newSettings,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        })
+        .select()
+        .single();
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Navigation settings update failed:', response.status, errorText);
-        throw new Error(`Failed to update navigation settings: ${response.status}`);
+      if (supabaseError) {
+        console.error('Navigation settings update failed:', supabaseError);
+        throw new Error(`Failed to update navigation settings: ${supabaseError.message}`);
       }
 
-      const data = await response.json();
-      console.log('[useNavigationSettings] Update successful, API returned:', data);
+      console.log('[useNavigationSettings] Update successful, Supabase returned:', data);
       setSettings(data);
       setError(null);
 

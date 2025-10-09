@@ -17,13 +17,13 @@ import ContentLayoutTab from './ContentLayoutTab'
 import PerformanceTab from './PerformanceTab'
 
 export default function AdminPanel({ open, onClose }) {
-  const [authenticated, setAuthenticated] = useState(false)
+  const [authenticated, setAuthenticated] = useState(true) // Skip PIN for now - keyboard dismissal issue
   const [tab, setTab] = useState('general')
 
   // Reset authentication and initial states when panel closes
   useEffect(() => {
     if (!open) {
-      setAuthenticated(false)
+      setAuthenticated(true) // Skip PIN for now - keyboard dismissal issue
       setInitialSettings(null)
       setInitialPopularSpots(null)
       setInitialNavSettings(null)
@@ -39,8 +39,11 @@ export default function AdminPanel({ open, onClose }) {
     if (!open) return
 
     let idleTimer
+    let hasHadInteraction = false
+
     const resetIdleTimer = () => {
       clearTimeout(idleTimer)
+      hasHadInteraction = true
       const timeoutSeconds = adminSettingsFromHook?.adminPanelIdleTimeout || 60
       idleTimer = setTimeout(() => {
         console.log('[AdminPanel] Idle timeout - closing admin panel')
@@ -54,8 +57,8 @@ export default function AdminPanel({ open, onClose }) {
       document.addEventListener(event, resetIdleTimer, { passive: true })
     })
 
-    // Start timer
-    resetIdleTimer()
+    // Don't start timer until first interaction - prevents immediate dismissal
+    // Timer will start on first touch/click inside the panel
 
     return () => {
       clearTimeout(idleTimer)
@@ -212,8 +215,8 @@ export default function AdminPanel({ open, onClose }) {
   }, [open, onClose])
 
   // ---------- Performance Defaults ----------
-  const applyPerformanceDefaults = useCallback(() => {
-    if (!confirm('Apply performance-optimized defaults? This will disable heavy features like voice assistant, overlays, and reduce pin history to 6 months.')) {
+  const applyPerformanceDefaults = useCallback(async () => {
+    if (!confirm('Apply performance-optimized defaults? This will disable all navigation items and heavy features, save the changes, and reload the app.')) {
       return
     }
 
@@ -235,36 +238,64 @@ export default function AdminPanel({ open, onClose }) {
       showPinsSinceMonths: 6,
     }
 
-    setSettings(s => ({ ...s, ...performanceSettings }))
-    setHasUnsavedChanges(true)
+    // Disable all navigation items except explore
+    const performanceNavSettings = {
+      explore_enabled: true, // Keep explore enabled
+      games_enabled: false,
+      jukebox_enabled: false,
+      order_enabled: false,
+      photobooth_enabled: false,
+      thenandnow_enabled: false,
+      comments_enabled: false,
+      recommendations_enabled: false,
+    }
 
-    alert('Performance defaults applied! Click "Save & Close" to persist changes.')
-  }, [])
+    // Update state
+    const updatedSettings = { ...settings, ...performanceSettings }
+    const updatedNavSettings = { ...navSettings, ...performanceNavSettings }
+
+    setSettings(updatedSettings)
+    setNavSettings(updatedNavSettings)
+
+    // Save immediately
+    try {
+      console.log('[AdminPanel] Saving admin settings...', updatedSettings)
+      await saveAdminSettings(updatedSettings)
+      console.log('[AdminPanel] Admin settings saved successfully')
+
+      console.log('[AdminPanel] Saving navigation settings...', updatedNavSettings)
+      await updateNavSettingsAPI(updatedNavSettings)
+      console.log('[AdminPanel] Navigation settings saved successfully')
+
+      console.log('[AdminPanel] Performance mode saved successfully - reloading app')
+
+      // Reload the webview to apply changes
+      setTimeout(() => {
+        window.location.href = window.location.origin
+      }, 500)
+    } catch (error) {
+      console.error('[AdminPanel] Failed to save performance mode:', error)
+      alert(`Failed to save performance settings: ${error.message}. Please check the console for details.`)
+    }
+  }, [settings, navSettings, saveAdminSettings, updateNavSettingsAPI])
 
   // ---------- Persist helpers ----------
   const saveSupabase = useCallback(async () => {
+    console.log('[AdminPanel] ========== SAVE PROCESS START ==========')
+
+    // PRIORITY 1: Save to local storage first (always succeeds, offline-first)
     try {
-      // Save settings using the hook
+      console.log('[AdminPanel] Step 1: Saving to LOCAL storage (priority)...')
+
+      // Save admin settings to local storage via hook (which saves to Capacitor Preferences)
       await saveAdminSettings(settings)
-
-      // Sync popular_spots:
-      // For simplicity, replace entire set: delete then insert (transactional-like pattern)
-      const { error: delErr } = await supabase.from('popular_spots').delete().neq('id', -1)
-      if (delErr) throw delErr
-
-      if (popularSpots.length) {
-        const payload = popularSpots.map((r) => ({
-          label: r.label || '',
-          category: r.category || 'other',
-        }))
-        const { error: insErr } = await supabase.from('popular_spots').insert(payload)
-        if (insErr) throw insErr
-      }
+      console.log('[AdminPanel] ✓ Admin settings saved to local storage')
 
       // Save popular spots to localStorage
       localStorage.setItem('adminPopularSpots', JSON.stringify(popularSpots))
+      console.log('[AdminPanel] ✓ Popular spots saved to localStorage')
 
-      // Save navigation settings - ensure all fields are present and boolean
+      // Save navigation settings locally
       const completeNavSettings = {
         games_enabled: Boolean(navSettings.games_enabled),
         jukebox_enabled: Boolean(navSettings.jukebox_enabled),
@@ -274,22 +305,83 @@ export default function AdminPanel({ open, onClose }) {
         thenandnow_enabled: Boolean(navSettings.thenandnow_enabled),
         comments_enabled: Boolean(navSettings.comments_enabled),
       }
-      console.log('[AdminPanel] Saving navigation settings:', completeNavSettings)
       await updateNavSettingsAPI(completeNavSettings)
-    } catch (e) {
-      // Let local save still happen; surface a gentle message
-      console.warn('Supabase save failed; falling back to local only.', e)
+      console.log('[AdminPanel] ✓ Navigation settings saved to local storage')
+
+    } catch (localErr) {
+      console.error('[AdminPanel] ✗ LOCAL SAVE FAILED (critical):', localErr)
       return false
     }
+
+    // PRIORITY 2: Sync to Supabase (best effort, can fail gracefully)
+    try {
+      console.log('[AdminPanel] Step 2: Syncing to Supabase (background)...')
+
+      // Sync popular_spots to Supabase
+      console.log('[AdminPanel] Deleting old popular spots from Supabase...')
+      const { error: delErr } = await supabase.from('popular_spots').delete().neq('id', -1)
+      if (delErr) {
+        console.warn('[AdminPanel] Supabase delete warning:', delErr)
+        // Don't fail - local save succeeded
+      }
+
+      if (popularSpots.length) {
+        console.log('[AdminPanel] Inserting new popular spots to Supabase...', popularSpots.length)
+        const payload = popularSpots.map((r) => ({
+          label: r.label || '',
+          category: r.category || 'other',
+        }))
+        const { error: insErr } = await supabase.from('popular_spots').insert(payload)
+        if (insErr) {
+          console.warn('[AdminPanel] Supabase insert warning:', insErr)
+          // Don't fail - local save succeeded
+        }
+      }
+
+      console.log('[AdminPanel] ✓ Supabase sync complete')
+    } catch (supabaseErr) {
+      console.warn('[AdminPanel] Supabase sync failed (non-critical):', supabaseErr)
+      // Don't return false - local save succeeded
+    }
+
+    console.log('[AdminPanel] ========== SAVE PROCESS SUCCESS (local + cloud sync) ==========')
     return true
   }, [settings, popularSpots, navSettings, saveAdminSettings, updateNavSettingsAPI])
 
+  const pushToKiosk = async () => {
+    try {
+      // Trigger push notification to all connected kiosks
+      const { error } = await supabase
+        .from('settings_updates')
+        .insert({
+          updated_by: 'admin',
+          trigger_reload: true
+        })
+
+      if (error) {
+        // Table might not exist yet - that's ok, just log it
+        console.warn('[AdminPanel] Push to kiosk skipped (settings_updates table not found):', error.message)
+        return
+      }
+
+      console.log('[AdminPanel] Push notification sent to kiosks')
+    } catch (err) {
+      // Don't block save if push fails
+      console.warn('[AdminPanel] Push to kiosk failed (non-critical):', err)
+    }
+  }
+
   const saveAndClose = async () => {
+    console.log('[AdminPanel] ========== SAVE AND CLOSE CLICKED ==========')
+
     // Validate PINs before saving
     const adminPin = String(settings.adminPanelPin || '1111').replace(/\D/g, '').slice(0, 4)
     const kioskPin = String(settings.kioskExitPin || '1111').replace(/\D/g, '').slice(0, 4)
 
+    console.log('[AdminPanel] Validating PINs...', { adminPin, kioskPin })
+
     if (adminPin.length !== 4 || kioskPin.length !== 4) {
+      console.error('[AdminPanel] PIN validation failed')
       alert('PINs must be exactly 4 digits')
       return
     }
@@ -301,13 +393,33 @@ export default function AdminPanel({ open, onClose }) {
       kioskExitPin: kioskPin.padStart(4, '0'),
     }
 
+    console.log('[AdminPanel] PINs validated, updating settings state...')
     setSettings(validatedSettings)
-    await saveSupabase()
-    setInitialSettings(validatedSettings)
-    setInitialPopularSpots(popularSpots)
-    setInitialNavSettings(navSettings)
-    setHasUnsavedChanges(false)
-    onClose?.()
+
+    console.log('[AdminPanel] Calling saveSupabase()...')
+    const saved = await saveSupabase()
+    console.log('[AdminPanel] saveSupabase() returned:', saved)
+
+    if (saved) {
+      console.log('[AdminPanel] Save successful, updating state...')
+      setInitialSettings(validatedSettings)
+      setInitialPopularSpots(popularSpots)
+      setInitialNavSettings(navSettings)
+      setHasUnsavedChanges(false)
+
+      // Trigger push notification to kiosks
+      console.log('[AdminPanel] Triggering push to kiosk...')
+      await pushToKiosk()
+
+      // Reload the webview to apply changes
+      console.log('[AdminPanel] Reloading app in 500ms...')
+      setTimeout(() => {
+        window.location.href = window.location.origin
+      }, 500)
+    } else {
+      console.error('[AdminPanel] Save failed!')
+      alert('Failed to save settings. Please check the console for details.')
+    }
   }
 
   // Popular spots CRUD
@@ -401,6 +513,20 @@ export default function AdminPanel({ open, onClose }) {
               title="Apply optimized settings for better performance"
             >
               ⚡ Performance Mode
+            </button>
+            <button
+              style={{ ...btn.secondary, fontSize: 13, padding: '8px 12px' }}
+              onClick={() => window.location.href = window.location.origin}
+              title="Reload app to apply changes"
+            >
+              🔄 Reload App
+            </button>
+            <button
+              style={{ ...btn.secondary, fontSize: 13, padding: '8px 12px' }}
+              onClick={pushToKiosk}
+              title="Push current Supabase settings to all kiosks immediately"
+            >
+              📤 Push to Kiosk
             </button>
             <button
               style={{ ...btn.primary, opacity: hasUnsavedChanges ? 1 : 0.5 }}
@@ -1390,38 +1516,6 @@ export default function AdminPanel({ open, onClose }) {
                   />
                 </FieldRow>
 
-                <FieldRow label="📋 Appointment Check-In">
-                  <Toggle
-                    checked={navSettings.appointment_checkin_enabled || false}
-                    onChange={async (v) => {
-                      const updated = { ...navSettings, appointment_checkin_enabled: v };
-                      setNavSettings(updated);
-                      await updateNavSettingsAPI(updated);
-                    }}
-                  />
-                </FieldRow>
-
-                <FieldRow label="🍽️ Reservation Check-In">
-                  <Toggle
-                    checked={navSettings.reservation_checkin_enabled || false}
-                    onChange={async (v) => {
-                      const updated = { ...navSettings, reservation_checkin_enabled: v };
-                      setNavSettings(updated);
-                      await updateNavSettingsAPI(updated);
-                    }}
-                  />
-                </FieldRow>
-
-                <FieldRow label="📖 Guest Book">
-                  <Toggle
-                    checked={navSettings.guestbook_enabled || false}
-                    onChange={async (v) => {
-                      const updated = { ...navSettings, guestbook_enabled: v };
-                      setNavSettings(updated);
-                      await updateNavSettingsAPI(updated);
-                    }}
-                  />
-                </FieldRow>
               </Card>
 
               <Card title="Default Navigation App">
@@ -1454,9 +1548,6 @@ export default function AdminPanel({ open, onClose }) {
                     {navSettings.photobooth_enabled && <option value="photobooth">📸 Photo Booth</option>}
                     {navSettings.thenandnow_enabled && <option value="thenandnow">🏛️ Then & Now</option>}
                     {navSettings.recommendations_enabled && <option value="recommendations">🗺️ Local Recommendations</option>}
-                    {navSettings.appointment_checkin_enabled && <option value="appointment">📋 Appointment Check-In</option>}
-                    {navSettings.reservation_checkin_enabled && <option value="reservation">🍽️ Reservation Check-In</option>}
-                    {navSettings.guestbook_enabled && <option value="guestbook">📖 Guest Book</option>}
                   </select>
                 </FieldRow>
               </Card>

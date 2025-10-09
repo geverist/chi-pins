@@ -1,6 +1,6 @@
 // src/lib/mapUtils.js
 import L from 'leaflet';
-import { getPinStyle } from '../config/pinStyles';
+import { getPinStyle, getPinImageUrl } from '../config/pinStyles';
 
 /* ---------- Camera / bounds constants ---------- */
 export const CHI = { lat: 41.8781, lng: -87.6298 };
@@ -208,14 +208,19 @@ const STEM_ANGLE_DEG = 8;
 export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = null) {
   // Use pin style colors if available
   let color = TEAM_COLOR[team] || TEAM_COLOR.other;
+  let imageUrl = null;
 
-  // Override with custom pin style color if available
+  // Override with custom pin style color and image if available
   if (pinStyle) {
     const style = getPinStyle(pinStyle);
     if (style?.colors?.primary) {
       color = style.colors.primary;
     }
+    if (style?.imageUrl) {
+      imageUrl = style.imageUrl;
+    }
   }
+
   const ICON_W = 30, ICON_H = 46;
   const AX = ICON_W / 2, AY = ICON_H;
   const headR = 10, headBorder = 2;
@@ -233,6 +238,26 @@ export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = n
   const b2x = sx - px * halfTipW, b2y = sy - py * halfTipW;
   const headShiftX = Math.round(-STEM_ANGLE_DEG * 0.12);
 
+  // If custom image URL is available, use clipPath to show image in circle
+  const headContent = imageUrl
+    ? `
+      <defs>
+        <clipPath id="circleClip-${pinStyle}">
+          <circle cx="${hx}" cy="${hy}" r="${headR - headBorder}"/>
+        </clipPath>
+      </defs>
+      <circle cx="${hx}" cy="${hy}" r="${headR}" fill="${color}" stroke="#fff" stroke-width="${headBorder}" filter="url(#headShadow)"/>
+      <image
+        href="${imageUrl}"
+        x="${hx - headR + headBorder}"
+        y="${hy - headR + headBorder}"
+        width="${(headR - headBorder) * 2}"
+        height="${(headR - headBorder) * 2}"
+        clip-path="url(#circleClip-${pinStyle})"
+      />
+    `
+    : `<circle cx="${hx}" cy="${hy}" r="${headR}" fill="${color}" stroke="#fff" stroke-width="${headBorder}" filter="url(#headShadow)"/>`;
+
   return `
   <div style="position:relative;width:${ICON_W}px;height:${ICON_H}px;pointer-events:auto;">
     <svg width="${ICON_W}" height="${ICON_H}" viewBox="0 0 ${ICON_W} ${ICON_H}" xmlns="http://www.w3.org/2000/svg">
@@ -248,7 +273,7 @@ export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = n
       <line x1="${hx}" y1="${hy}" x2="${sx}" y2="${sy}" stroke="#8c99a6" stroke-width="${stemW}" stroke-linecap="round" filter="url(#stemShadow)"/>
       <path d="M ${b1x} ${b1y} L ${b2x} ${b2y} L ${AX} ${AY} Z" fill="#c7ccd3"/>
       <g transform="translate(${headShiftX},0)">
-        <circle cx="${hx}" cy="${hy}" r="${headR}" fill="${color}" stroke="#fff" stroke-width="${headBorder}" filter="url(#headShadow)"/>
+        ${headContent}
       </g>
     </svg>
     ${includeHalo ? `
