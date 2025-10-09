@@ -18,9 +18,9 @@ export default function WalkupAttractor({
   const defaultPrompts = [
     {
       emoji: "📍",
-      text: "Leave Your Pin!",
+      text: "Welcome to Chicago Mike's",
       subtext: "Mark your spot on our map",
-      voiceText: "Have you already placed a pin on our map?"
+      voiceText: "Welcome to Chicago Mike's"
     }
   ]
 
@@ -44,7 +44,7 @@ export default function WalkupAttractor({
     if (!active) return
 
     // DEMO: Always use voice greeting regardless of voiceEnabled setting
-    const voiceText = currentPrompt?.voiceText || 'Welcome, how can I help you?'
+    const voiceText = currentPrompt?.voiceText || "Welcome to Chicago Mike's"
 
     const speakGreeting = async () => {
       // Try ElevenLabs first if configured
