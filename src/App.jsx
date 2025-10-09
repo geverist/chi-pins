@@ -210,10 +210,26 @@ export default function App() {
   // Proximity detection callbacks (wrapped in useCallback to prevent infinite re-renders)
   const handleProximityApproach = useCallback(({ proximityLevel }) => {
     console.log('[App] Person detected approaching! Proximity:', proximityLevel);
+
+    // Stop ambient music when person approaches for voice greeting
+    if (ambientMusicPlaying) {
+      console.log('[App] Stopping ambient music for voice greeting');
+      stopAmbientMusic();
+    }
+
+    // Pause any jukebox music playing via GlobalAudioPlayer
+    const globalAudio = document.querySelector('audio[data-global-audio]');
+    if (globalAudio && !globalAudio.paused) {
+      console.log('[App] Pausing jukebox audio for voice greeting');
+      globalAudio.pause();
+      // Store reference so we can resume later if needed
+      globalAudio.dataset.pausedForVoice = 'true';
+    }
+
     setShowAttractor(true);
     // Voice greeting will be triggered by WalkupAttractor component
     // if adminSettings.proximityTriggerVoice && adminSettings.walkupAttractorVoiceEnabled
-  }, []);
+  }, [ambientMusicPlaying, stopAmbientMusic]);
 
   const handleProximityLeave = useCallback(() => {
     console.log('[App] Person left walkup zone');
@@ -221,17 +237,23 @@ export default function App() {
 
   const handleAmbientDetected = useCallback(({ proximityLevel }) => {
     console.log('[App] Ambient motion detected! Proximity:', proximityLevel);
-    // DEMO: Force play ambient music (hardcoded for demo)
+    // DEMO: Force play ambient music (hardcoded for demo) - plays only once
     if (!ambientMusicPlaying) {
       // Hardcoded demo track
       if (!ambientMusicPlayerRef.current) {
         const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
         audio.volume = 0.5;
-        audio.loop = true;
+        audio.loop = false; // Play only once, not continuously
         audio.play();
+        // Auto-cleanup when song ends
+        audio.addEventListener('ended', () => {
+          ambientMusicPlayerRef.current = null;
+          setAmbientMusicPlaying(false);
+          console.log('[App] Ambient music ended');
+        });
         ambientMusicPlayerRef.current = audio;
         setAmbientMusicPlaying(true);
-        console.log('[App] DEMO - Ambient music started (hardcoded)');
+        console.log('[App] DEMO - Ambient music started (will play once)');
       }
     }
   }, [ambientMusicPlaying]);

@@ -44,7 +44,7 @@ export default function WalkupAttractor({
     if (!active) return
 
     // DEMO: Always use voice greeting regardless of voiceEnabled setting
-    const voiceText = currentPrompt?.voiceText || 'Hi, how can I help you?'
+    const voiceText = currentPrompt?.voiceText || 'Welcome, how can I help you?'
 
     const speakGreeting = async () => {
       // Try ElevenLabs first if configured
