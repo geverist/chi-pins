@@ -94,6 +94,7 @@ class SyncService {
       trivia: 0,
       jukebox: 0,
       settings: 0,
+      learningSessions: 0,
       errors: [],
     };
 
@@ -130,6 +131,14 @@ class SyncService {
       } catch (error) {
         console.error('[SyncService] Failed to sync settings:', error);
         stats.errors.push({ table: 'settings', error: error.message });
+      }
+
+      // Sync proximity learning sessions (optional - for analytics/debugging)
+      try {
+        stats.learningSessions = await this.syncLearningSessions();
+      } catch (error) {
+        console.error('[SyncService] Failed to sync learning sessions:', error);
+        stats.errors.push({ table: 'learning_sessions', error: error.message });
       }
 
       const duration = Date.now() - startTime;
@@ -260,6 +269,39 @@ class SyncService {
 
     console.log(`[SyncService] Synced ${settings?.length || 0} settings`);
     return settings?.length || 0;
+  }
+
+  /**
+   * Sync proximity learning sessions from Supabase to SQLite (for analytics)
+   */
+  async syncLearningSessions() {
+    console.log('[SyncService] Syncing learning sessions...');
+
+    // Only sync recent sessions (last 24 hours) to keep local DB small
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const { data: sessions, error } = await supabase
+      .from('proximity_learning_sessions')
+      .select('*')
+      .gte('created_at', yesterday.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    if (error) {
+      await this.db.updateSyncMetadata('proximity_learning_sessions', error.message);
+      throw error;
+    }
+
+    // Insert sessions
+    for (const session of (sessions || [])) {
+      await this.db.upsertLearningSession(session);
+    }
+
+    await this.db.updateSyncMetadata('proximity_learning_sessions');
+
+    console.log(`[SyncService] Synced ${sessions?.length || 0} learning sessions`);
+    return sessions?.length || 0;
   }
 
   /**
