@@ -151,6 +151,34 @@ class LocalDatabase {
         synced_at TEXT DEFAULT CURRENT_TIMESTAMP
       )`,
 
+      // Autonomous tasks table (for SMS-triggered development)
+      `CREATE TABLE IF NOT EXISTS autonomous_tasks (
+        id TEXT PRIMARY KEY,
+        request_text TEXT NOT NULL,
+        request_source TEXT DEFAULT 'sms',
+        requester_phone TEXT,
+        task_type TEXT,
+        estimated_complexity TEXT,
+        affected_files TEXT,
+        status TEXT DEFAULT 'pending',
+        ai_plan TEXT,
+        ai_confidence INTEGER,
+        ai_provider TEXT DEFAULT 'anthropic',
+        ai_model TEXT DEFAULT 'claude-sonnet-4-20250514',
+        requires_confirmation INTEGER DEFAULT 1,
+        confirmation_response TEXT,
+        code_changes TEXT,
+        git_branch TEXT,
+        git_commits TEXT,
+        success INTEGER,
+        error_message TEXT,
+        tenant_id TEXT DEFAULT 'chicago-mikes',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        started_at TEXT,
+        completed_at TEXT,
+        synced_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )`,
+
       // Sync metadata table
       `CREATE TABLE IF NOT EXISTS sync_metadata (
         table_name TEXT PRIMARY KEY,

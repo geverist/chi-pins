@@ -111,7 +111,8 @@ async function processCommand(command, from) {
       return getHelpText();
 
     default:
-      return `❓ Unknown command: "${command}"\n\nSend "commands" for available commands.`;
+      // Treat as free-form development request
+      return await createDevelopmentTask(command, from);
   }
 }
 
@@ -398,18 +399,86 @@ github.com/geverist/chi-pins/actions`;
 
 // Approve last action
 async function approveLastAction() {
-  // This would be used to approve pending fixes
-  // For now, just acknowledge
-  return `✅ Approved
+  try {
+    const supabase = getSupabaseClient();
 
-The system will proceed with the pending action.`;
+    // Check for pending task
+    const { data: tasks, error } = await supabase
+      .from('autonomous_tasks')
+      .select('*')
+      .eq('status', 'awaiting_confirmation')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    if (!tasks || tasks.length === 0) {
+      return `✅ No pending tasks to approve`;
+    }
+
+    const task = tasks[0];
+
+    // Update task to confirmed status
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: 'confirmed',
+        confirmation_received_at: new Date().toISOString(),
+        confirmation_response: 'YES',
+      })
+      .eq('id', task.id);
+
+    return `✅ Task Approved!
+
+"${task.request_text}"
+
+The autonomous developer will begin implementation shortly. You'll receive SMS updates as it progresses.
+
+Implementation typically takes 2-5 minutes.`;
+  } catch (err) {
+    return `❌ Failed to approve: ${err.message}`;
+  }
 }
 
 // Reject last action
 async function rejectLastAction() {
-  return `❌ Rejected
+  try {
+    const supabase = getSupabaseClient();
 
-The pending action has been cancelled.`;
+    // Check for pending task
+    const { data: tasks, error } = await supabase
+      .from('autonomous_tasks')
+      .select('*')
+      .eq('status', 'awaiting_confirmation')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    if (!tasks || tasks.length === 0) {
+      return `✅ No pending tasks to reject`;
+    }
+
+    const task = tasks[0];
+
+    // Update task to cancelled status
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: 'cancelled',
+        confirmation_received_at: new Date().toISOString(),
+        confirmation_response: 'NO',
+      })
+      .eq('id', task.id);
+
+    return `❌ Task Cancelled
+
+"${task.request_text}"
+
+The task will not be implemented.`;
+  } catch (err) {
+    return `❌ Failed to reject: ${err.message}`;
+  }
 }
 
 // Ignore last error
@@ -483,6 +552,145 @@ Send "fix" to auto-fix
 Send "ignore" to skip`;
   } catch (err) {
     return `❌ Failed to get error details: ${err.message}`;
+  }
+}
+
+// Create development task from free-form request
+async function createDevelopmentTask(request, requesterPhone) {
+  try {
+    const supabase = getSupabaseClient();
+
+    console.log(`[SMS] Creating development task: "${request}"`);
+
+    // Use Claude AI to analyze the request
+    const analysis = await analyzeTaskWithAI(request);
+
+    if (!analysis.success) {
+      return `❌ Could not analyze request: ${analysis.error}`;
+    }
+
+    // Create task record
+    const { data: task, error: insertError } = await supabase
+      .from('autonomous_tasks')
+      .insert({
+        request_text: request,
+        request_source: 'sms',
+        requester_phone: requesterPhone,
+        task_type: analysis.taskType,
+        estimated_complexity: analysis.complexity,
+        affected_files: analysis.affectedFiles,
+        status: 'awaiting_confirmation',
+        ai_plan: analysis.plan,
+        ai_confidence: analysis.confidence,
+        ai_provider: 'anthropic',
+        ai_model: 'claude-sonnet-4-20250514',
+        requires_confirmation: analysis.confidence < 90, // Auto-approve high confidence
+        tenant_id: 'chicago-mikes',
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    // Format confirmation message
+    const filesText = analysis.affectedFiles && analysis.affectedFiles.length > 0
+      ? `\nFiles: ${analysis.affectedFiles.slice(0, 3).join(', ')}${analysis.affectedFiles.length > 3 ? '...' : ''}`
+      : '';
+
+    return `🤖 Task Analysis Complete
+
+Request: ${request}
+
+Type: ${analysis.taskType}
+Complexity: ${analysis.complexity}
+Confidence: ${analysis.confidence}%${filesText}
+
+Plan:
+${analysis.plan}
+
+${analysis.confidence >= 90 ? '✅ Auto-approved! Implementation starting...' : 'Reply YES to proceed, NO to cancel'}`;
+
+  } catch (err) {
+    console.error('[SMS] Failed to create task:', err);
+    return `❌ Failed to create task: ${err.message}\n\nSend "commands" for available commands.`;
+  }
+}
+
+// Analyze task with Claude AI
+async function analyzeTaskWithAI(request) {
+  try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return {
+        success: false,
+        error: 'ANTHROPIC_API_KEY not configured',
+      };
+    }
+
+    const prompt = `You are analyzing a development task request for a React kiosk application.
+
+Request: "${request}"
+
+Analyze this request and provide:
+1. taskType: feature, bug_fix, refactor, config, docs, or other
+2. complexity: simple, medium, complex, or very_complex
+3. confidence: 0-100 score of how well you understand the request
+4. affectedFiles: Array of likely files that will be modified (max 5)
+5. plan: 2-3 sentence implementation plan
+
+Respond in JSON format:
+{
+  "taskType": "feature",
+  "complexity": "medium",
+  "confidence": 85,
+  "affectedFiles": ["src/App.jsx", "src/components/Settings.jsx"],
+  "plan": "Add a dark mode toggle to the settings page. Implement theme context and CSS variables. Update all components to support theming."
+}`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: prompt,
+        }],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Claude API error: ${response.status} - ${error}`);
+    }
+
+    const result = await response.json();
+    const analysisText = result.content[0].text;
+
+    // Parse JSON from response
+    const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Could not parse AI response');
+    }
+
+    const analysis = JSON.parse(jsonMatch[0]);
+
+    return {
+      success: true,
+      ...analysis,
+    };
+
+  } catch (err) {
+    console.error('[SMS] AI analysis failed:', err);
+    return {
+      success: false,
+      error: err.message,
+    };
   }
 }
 
