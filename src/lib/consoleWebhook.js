@@ -87,6 +87,7 @@ export function initConsoleWebhook(url, enabled = true, options = {}) {
 
   // Capture global runtime errors (window.onerror)
   if (typeof window !== 'undefined') {
+    originalConsole.log('[ConsoleWebhook] 🎣 Setting up window.onerror listener');
     window.addEventListener('error', (event) => {
       if (webhookEnabled && webhookUrl) {
         try {
@@ -105,8 +106,8 @@ export function initConsoleWebhook(url, enabled = true, options = {}) {
             }),
           };
 
+          originalConsole.error('[ConsoleWebhook] 🚨 Runtime error captured via window.onerror:', message);
           queueEvent(errorEvent);
-          originalConsole.error('[ConsoleWebhook] Runtime error captured:', message);
         } catch (err) {
           originalConsole.error('[ConsoleWebhook] Error capturing runtime error:', err);
         }
@@ -114,6 +115,7 @@ export function initConsoleWebhook(url, enabled = true, options = {}) {
     });
 
     // Capture unhandled promise rejections
+    originalConsole.log('[ConsoleWebhook] 🎣 Setting up unhandledrejection listener');
     window.addEventListener('unhandledrejection', (event) => {
       if (webhookEnabled && webhookUrl) {
         try {
@@ -131,8 +133,8 @@ export function initConsoleWebhook(url, enabled = true, options = {}) {
             }),
           };
 
+          originalConsole.error('[ConsoleWebhook] 🚨 Unhandled rejection captured:', message);
           queueEvent(errorEvent);
-          originalConsole.error('[ConsoleWebhook] Unhandled rejection captured:', message);
         } catch (err) {
           originalConsole.error('[ConsoleWebhook] Error capturing unhandled rejection:', err);
         }
@@ -148,15 +150,18 @@ export function initConsoleWebhook(url, enabled = true, options = {}) {
  */
 function queueEvent(event) {
   eventQueue.push(event);
+  originalConsole.log(`[ConsoleWebhook] 📥 Event queued (${event.level}): ${event.message?.substring(0, 80)}... | Queue size: ${eventQueue.length}`);
 
   // Send immediately if queue is full
   if (eventQueue.length >= MAX_BATCH_SIZE) {
+    originalConsole.log(`[ConsoleWebhook] 🚀 Queue full (${eventQueue.length}), sending batch immediately`);
     sendBatch();
     return;
   }
 
   // Otherwise, schedule a batched send
   if (!sendTimeout) {
+    originalConsole.log(`[ConsoleWebhook] ⏰ Scheduling batch send in ${BATCH_DELAY_MS}ms`);
     sendTimeout = setTimeout(() => {
       sendBatch();
     }, BATCH_DELAY_MS);
@@ -167,7 +172,10 @@ function queueEvent(event) {
  * Send batched events to webhook
  */
 function sendBatch() {
-  if (!webhookUrl || eventQueue.length === 0) return;
+  if (!webhookUrl || eventQueue.length === 0) {
+    originalConsole.log('[ConsoleWebhook] ⏭️  Batch send skipped (no URL or empty queue)');
+    return;
+  }
 
   const batch = [...eventQueue];
   eventQueue = [];
@@ -177,21 +185,34 @@ function sendBatch() {
     sendTimeout = null;
   }
 
+  const payload = {
+    source: 'chi-pins-kiosk',
+    tenantId: getTenantId(),
+    events: batch,
+    batchTimestamp: new Date().toISOString(),
+  };
+
+  originalConsole.log(`[ConsoleWebhook] 📤 Sending batch of ${batch.length} events to ${webhookUrl}`);
+  originalConsole.log(`[ConsoleWebhook] 📦 Batch payload:`, payload);
+
   // Send via fetch (fire and forget)
   fetch(webhookUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      source: 'chi-pins-kiosk',
-      tenantId: getTenantId(),
-      events: batch,
-      batchTimestamp: new Date().toISOString(),
-    }),
-  }).catch(err => {
-    originalConsole.error('[ConsoleWebhook] Failed to send batch:', err);
-  });
+    body: JSON.stringify(payload),
+  })
+    .then(response => {
+      if (response.ok) {
+        originalConsole.log(`[ConsoleWebhook] ✅ Batch sent successfully (${response.status})`);
+      } else {
+        originalConsole.error(`[ConsoleWebhook] ❌ Batch failed with status: ${response.status}`);
+      }
+    })
+    .catch(err => {
+      originalConsole.error('[ConsoleWebhook] ❌ Failed to send batch:', err);
+    });
 }
 
 /**

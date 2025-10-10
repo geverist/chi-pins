@@ -18,7 +18,9 @@
       "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:38081 shell am start -n com.chipinspinboard.app/.MainActivity)",
       "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:38081 shell monkey -p com.chipinspinboard.app -c android.intent.category.LAUNCHER 1)",
       "Bash(adb -s 192.168.2.112:38081 shell dumpsys package com.chipinspinboard.app)",
-      "Bash(adb:*)"
+      "Bash(adb:*)",
+      "Bash(tree:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

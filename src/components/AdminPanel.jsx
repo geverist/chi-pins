@@ -25,7 +25,9 @@ import { getSpotifyClient } from '../lib/spotifyClient'
 import { sendTestEvent, getWebhookStatus } from '../lib/consoleWebhook'
 
 export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutEditMode, proximityDetection }) {
-  const [authenticated, setAuthenticated] = useState(true) // Skip PIN for now - keyboard dismissal issue
+  // ✅ SECURITY FIX: Re-enabled PIN authentication
+  // PinCodeModal now properly handles touch events to prevent accidental dismissal
+  const [authenticated, setAuthenticated] = useState(false)
   const [tab, setTab] = useState('kiosk') // Default to new 'kiosk' tab
   const [systemSubtab, setSystemSubtab] = useState('database') // Subtabs for System tab
   const [toast, setToast] = useState(null) // Toast for webhook test feedback
@@ -33,7 +35,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
   // Reset authentication and initial states when panel closes
   useEffect(() => {
     if (!open) {
-      setAuthenticated(true) // Skip PIN for now - keyboard dismissal issue
+      setAuthenticated(false) // ✅ Require re-auth on next open
       setInitialSettings(null)
       setInitialPopularSpots(null)
       setInitialNavSettings(null)
@@ -3835,6 +3837,65 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
                     >
                       📊 Check Status
                     </button>
+                  </div>
+
+                  {/* Error Testing Section */}
+                  <div style={{marginTop: 20, padding: 16, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: 8}}>
+                    <div style={{fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#ef4444'}}>
+                      🧪 Test Error Capture & Autonomous Healing
+                    </div>
+                    <p style={{fontSize: 12, color: '#9ca3af', marginBottom: 12}}>
+                      Trigger different error types to test the webhook → error_log → autonomous healer pipeline
+                    </p>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+                      <button
+                        style={{...btn.secondary, background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', fontSize: 12}}
+                        onClick={() => {
+                          console.error('[AdminPanel TEST] 🧪 Test console.error() from admin panel');
+                          console.error('[AdminPanel TEST] Error details:', {
+                            type: 'manual_test',
+                            source: 'admin_panel',
+                            timestamp: new Date().toISOString(),
+                            message: 'This is a test error triggered from the admin panel'
+                          });
+                          setToast({ title: '❌ Error Logged', text: 'Check webhook and error_log table in ~2s' });
+                          setTimeout(() => setToast(null), 3000);
+                        }}
+                      >
+                        1️⃣ Test console.error()
+                      </button>
+
+                      <button
+                        style={{...btn.secondary, background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', fontSize: 12}}
+                        onClick={() => {
+                          setToast({ title: '💥 Triggering...', text: 'Uncaught error in 1 second' });
+                          setTimeout(() => {
+                            // This will trigger window.onerror
+                            const undefinedVar = null;
+                            undefinedVar.someMethod(); // Uncaught TypeError
+                          }, 1000);
+                        }}
+                      >
+                        2️⃣ Test Uncaught Runtime Error
+                      </button>
+
+                      <button
+                        style={{...btn.secondary, background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', fontSize: 12}}
+                        onClick={() => {
+                          setToast({ title: '🚫 Triggering...', text: 'Promise rejection in 1 second' });
+                          setTimeout(() => {
+                            // This will trigger unhandledrejection
+                            Promise.reject(new Error('[AdminPanel TEST] 🧪 Test unhandled promise rejection'));
+                          }, 1000);
+                        }}
+                      >
+                        3️⃣ Test Unhandled Promise Rejection
+                      </button>
+
+                      <div style={{marginTop: 8, padding: 8, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 4, fontSize: 11, color: '#9ca3af'}}>
+                        <strong>Expected flow:</strong> Error → consoleWebhook.js → webhook-processor → error_log table → autonomous-healer (polls every 60s)
+                      </div>
+                    </div>
                   </div>
 
                   <div style={{marginTop: 20, padding: 16, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 8}}>

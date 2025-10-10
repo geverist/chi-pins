@@ -101,6 +101,7 @@ import OrderMenu from './components/OrderMenu';
 const Jukebox = lazy(() => import('./components/Jukebox'));
 import GamesMenu from './components/GamesMenu';
 import Footer from './components/Footer';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useAdminSettings } from './state/useAdminSettings';
 import { useNowPlaying } from './state/useNowPlaying.jsx';
 import { useNavigationSettings } from './hooks/useNavigationSettings';
@@ -1407,23 +1408,24 @@ export default function App() {
     : adminSettings.walkupAttractorEnabled && showAttractor && !draft && !submapCenter && !exploring;
 
   return (
-    <LayoutStackProvider>
-      <div
-        className="app"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '100vh',
-          height: '-webkit-fill-available',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          overflow: 'hidden',
-          willChange: 'transform',
-        }}
-      >
+    <ErrorBoundary name="Main App">
+      <LayoutStackProvider>
+        <div
+          className="app"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: '100vh',
+            height: '-webkit-fill-available',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            overflow: 'hidden',
+            willChange: 'transform',
+          }}
+        >
       {!walkupAttractorActive && <HeaderBar
         mapMode={mapMode}
         totalCount={pinsDeduped.length}
@@ -1979,5 +1981,6 @@ export default function App() {
       <CallBorderIndicator enabled={true} />
     </div>
     </LayoutStackProvider>
+  </ErrorBoundary>
   );
 }

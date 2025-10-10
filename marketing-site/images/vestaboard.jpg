@@ -1,0 +1,1326 @@
+<!doctype html><!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en" > <![endif]--><!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en" >        <![endif]--><!--[if IE 8]>    <html class="no-js lt-ie9" lang="en" >               <![endif]--><!--[if gt IE 8]><!--><html class="no-js" lang="en"><!--<![endif]--><head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="author" content="Vestaboard, Inc.">
+    <meta name="description" content="Vestaboard has totally re-imagined the design of a split-flap display you might see at a train station in Europe.">
+    <meta name="generator" content="HubSpot">
+    <title>Vestaboard - A Smart Display To Connect And Inspire</title>
+    <link rel="shortcut icon" href="https://www.vestaboard.com/hubfs/VB_Icon_SQ-FAVICON-48px.png">
+    
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="/hs/hsstatic/jquery-libs/static-1.1/jquery/jquery-1.7.1.js"></script>
+<script>hsjQuery = window['jQuery'];</script>
+    <meta property="og:description" content="Vestaboard has totally re-imagined the design of a split-flap display you might see at a train station in Europe.">
+    <meta property="og:title" content="Vestaboard - A Smart Display To Connect And Inspire">
+    <meta name="twitter:description" content="Vestaboard has totally re-imagined the design of a split-flap display you might see at a train station in Europe.">
+    <meta name="twitter:title" content="Vestaboard - A Smart Display To Connect And Inspire">
+
+    
+
+    
+
+    <style>
+a.cta_button{-moz-box-sizing:content-box !important;-webkit-box-sizing:content-box !important;box-sizing:content-box !important;vertical-align:middle}.hs-breadcrumb-menu{list-style-type:none;margin:0px 0px 0px 0px;padding:0px 0px 0px 0px}.hs-breadcrumb-menu-item{float:left;padding:10px 0px 10px 10px}.hs-breadcrumb-menu-divider:before{content:'›';padding-left:10px}.hs-featured-image-link{border:0}.hs-featured-image{float:right;margin:0 0 20px 20px;max-width:50%}@media (max-width: 568px){.hs-featured-image{float:none;margin:0;width:100%;max-width:100%}}.hs-screen-reader-text{clip:rect(1px, 1px, 1px, 1px);height:1px;overflow:hidden;position:absolute !important;width:1px}
+</style>
+
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/179390286883/1747884339575/module_Vestaboard_-_Header_home_page.min.css">
+ 
+<style>
+  #top-bar p{
+  padding: 8px 15px 8px !important;
+  margin-bottom: -2em;
+  margin:0;
+  font-size: 18px;
+  line-height: 25px;
+}
+ 
+</style>
+
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/76788113930/1741735141221/module_Vestaboard_-_New_Video_Modal.min.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/76172635202/1759785991037/module_Vestaboard_-_Home_-_New_Hero.min.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/166397326747/1747882328464/module_Vestaboard_-_Home_-_Offer_Module.min.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/77051150504/1746033648917/module_Vestaboard_-_White_-_Home_-_New_Text_on_Right_Image_on_Left.min.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/76263414357/1741285603433/module_Vestaboard_-_Home_-_New_Case_Studies.min.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/76295968591/1746149302379/module_Vestaboard_-_Stacked_cards_-_video_and_image.min.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/37694030605/1752277920178/module_Vestaboard_-_Home_-_Newsroom.min.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/37075794602/1752521296573/module_Vestaboard_-_Footer.min.css">
+    
+
+
+    
+<!--  Added by GoogleTagManager integration -->
+<script>
+var _hsp = window._hsp = window._hsp || [];
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+
+var useGoogleConsentModeV2 = true;
+var waitForUpdateMillis = 1000;
+
+
+
+var hsLoadGtm = function loadGtm() {
+    if(window._hsGtmLoadOnce) {
+      return;
+    }
+
+    if (useGoogleConsentModeV2) {
+
+      gtag('set','developer_id.dZTQ1Zm',true);
+
+      gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'analytics_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'wait_for_update': waitForUpdateMillis
+      });
+
+      _hsp.push(['useGoogleConsentModeV2'])
+    }
+
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-NX4CTFV');
+
+    window._hsGtmLoadOnce = true;
+};
+
+_hsp.push(['addPrivacyConsentListener', function(consent){
+  if(consent.allowed || (consent.categories && consent.categories.analytics)){
+    hsLoadGtm();
+  }
+}]);
+
+</script>
+
+<!-- /Added by GoogleTagManager integration -->
+
+    <link rel="canonical" href="https://www.vestaboard.com">
+
+
+
+<script src="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/38957950171/1741265304131/template_v2-vestaboard.min.js"></script>
+
+<!-- Vibe Pixel -->
+<script>
+  !function(v,i,b,e,c,o){if(!v[c]){var s=v[c]=function(){s.process?s.process.apply(s,arguments):s.queue.push(arguments)};s.queue=[],s.b=1*new Date;var t=i.createElement(b);t.async=!0,t.src=e;var n=i.getElementsByTagName(b)[0];n.parentNode.insertBefore(t,n)}}(window,document,"script","https://s.vibe.co/vbpx.js","vbpx");
+  vbpx('init','schUUg');
+  vbpx('event', 'page_view');
+</script>
+
+
+
+<meta property="og:image" content="https://www.vestaboard.com/hubfs/mock-app-vb_2to1.jpg">
+<meta property="og:image:width" content="691">
+<meta property="og:image:height" content="345">
+
+<meta name="twitter:image" content="https://www.vestaboard.com/hubfs/mock-app-vb_2to1.jpg">
+
+
+<meta property="og:url" content="https://www.vestaboard.com">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="//7052064.fs1.hubspotusercontent-na1.net/hubfs/7052064/hub_generated/template_assets/DEFAULT_ASSET/1759778193368/template_layout.min.css">
+
+
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/35818436140/1752274658643/template_v2-vestaboard.css">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/38259449047/1750957556874/template_v2-home.css">
+
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/35818436140/1752274658643/template_v2-vestaboard.css">
+    </head><body class="   hs-content-id-76172166781 hs-site-page page " style="color: #f5f5f7; background-color: #171818;">
+<!--  Added by GoogleTagManager integration -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NX4CTFV" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<!-- /Added by GoogleTagManager integration -->
+<div itemprop="offers" itemscope itemtype="http://schema.org/Offer">
+                             
+                  <!-- price -->
+                                <meta itemprop="price" content="3295">
+  
+                <span itemprop="priceCurrency" content="USD">
+
+                                <link itemprop="availability" href="https://schema.org/InStock">
+                                
+
+                <span itemprop="priceValidUntil" content="2030-01-01">
+                <span itemprop="url" content="https://www.vestaboard.com/">
+
+                
+
+                </span></span></span></div>
+<style>
+  @media(767px){
+    .hs-content-id-76172166781 .hs-form-private .hs_trade_contact_interest .hs-form-booleancheckbox label span span{
+      margin-left: 1.1rem;
+    }
+  }
+#customer-recent {
+    padding-top: 5rem !important;
+  }
+.pb-5, .py-5 {
+    padding-top: 1rem !important;
+  }
+  /*#top-bar {
+    display: block !important;
+    max-height: 70px;
+    font-size: 16px;
+    transition: max-height 0.50s ease-in-out;
+    text-align: center;
+    padding-top: .8em;
+    padding-bottom: .8em;
+    background-color: #000;
+
+}
+
+#top-bar a {
+    display: block;
+}
+
+#v2-header-container .v2-header {
+    padding-top: 4em;
+    transition: padding-top 0.50s ease-in-out;
+}
+
+@media(max-width:1139px) {
+    #v2-header-container .v2-header {
+        padding-top: 6.4em;
+    }
+}
+
+body.scrolled #v2-header-container .v2-header {
+    padding-top: 0 !important;
+}
+
+body.scrolled #top-bar {
+    max-height: 0 !important;
+}*/
+</style>
+
+
+
+
+
+
+    <div class="header-container-wrapper">
+    <div class="header-container container-fluid">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-1 ">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget " style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_172723338511260" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<!-- <link href="http://fonts.cdnfonts.com/css/helveticaneue-2" rel="stylesheet"> -->
+ 
+<div id="v2-header-total">
+<div id="top-bar" style="background-color: rgba(0, 154, 68, 1.0);"><strong data-stringify-type="bold"><a href="https://share.hsforms.com/19rijBOVBRZula1bz4zbspQ16iyr" rel="noopener" target="_blank"><span style="text-decoration: underline;">Sign up</span></a> to receive the latest news, product updates, and exclusive offers.</strong></div>
+<div style="z-index: 999;position:relative;display:none;" id="v2-header-container__background" class="v2-header-container"></div>
+
+
+<div style="z-index: 999;position:relative;" id="v2-header-container" class="us v2-header-container">
+ 
+  <div class="v2-header ">
+    <div class="v-header__menu-icon">
+      <div id="v2-header-button" class="v2-header__menu-button">
+        <svg width="28px" height="28px" viewbox="0 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg">
+          <g>
+            <line x1="0" y1="8" x2="28" y2="8" stroke-width="1.5" />
+            <line x1="0" y1="20" x2="28" y2="20" stroke-width="1.5" />
+          </g>
+
+          <g>
+            <line x1="0" y1="14" x2="28" y2="14" stroke-width="1.5" />
+            <line x1="0" y1="14" x2="28" y2="14" stroke-width="1.5" />
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="v2-header__logo-container">
+      <div class="v2-header__logo">
+       
+        <span id="hs_cos_wrapper_module_172723338511260_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_logo" style="" data-hs-cos-general-type="widget" data-hs-cos-type="logo"><a href="https://www.vestaboard.com/" id="hs-link-module_172723338511260_" style="border-width:0px;border:0px;"><img src="https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=683&amp;height=60&amp;name=vestaboard-logo-white-1.png" class="hs-image-widget " height="60" style="height: auto;width:683px;border-width:0px;border:0px;" width="683" alt="vestaboard.png" title="vestaboard.png" srcset="https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=342&amp;height=30&amp;name=vestaboard-logo-white-1.png 342w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=683&amp;height=60&amp;name=vestaboard-logo-white-1.png 683w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=1025&amp;height=90&amp;name=vestaboard-logo-white-1.png 1025w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=1366&amp;height=120&amp;name=vestaboard-logo-white-1.png 1366w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=1708&amp;height=150&amp;name=vestaboard-logo-white-1.png 1708w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=2049&amp;height=180&amp;name=vestaboard-logo-white-1.png 2049w" sizes="(max-width: 683px) 100vw, 683px"></a></span>
+      </div>
+    </div>
+    <div class="v2-header__cta">
+      <div id="v2-header__cta__container" class="v2-header__cta__container">
+       
+         <div class="none_inspire_comm" style="display: block;">
+           <span id="hs_cos_wrapper_module_172723338511260_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_cta" style="" data-hs-cos-general-type="widget" data-hs-cos-type="cta"><!--HubSpot Call-to-Action Code --><span class="hs-cta-wrapper" id="hs-cta-wrapper-34bbb2c9-448f-4a6c-873e-bae2b9c6540c"><span class="hs-cta-node hs-cta-34bbb2c9-448f-4a6c-873e-bae2b9c6540c" id="hs-cta-34bbb2c9-448f-4a6c-873e-bae2b9c6540c"><!--[if lte IE 8]><div id="hs-cta-ie-element"></div><![endif]--><a href="https://cta-redirect.hubspot.com/cta/redirect/1984131/34bbb2c9-448f-4a6c-873e-bae2b9c6540c" target="_blank" rel="noopener"><img class="hs-cta-img" id="hs-cta-img-34bbb2c9-448f-4a6c-873e-bae2b9c6540c" style="border-width:0px;" src="https://no-cache.hubspot.com/cta/default/1984131/34bbb2c9-448f-4a6c-873e-bae2b9c6540c.png" alt="Zum Shop  Shop Now  Shop"></a></span><script charset="utf-8" src="/hs/cta/cta/current.js"></script><script type="text/javascript"> hbspt.cta._relativeUrls=true;hbspt.cta.load(1984131, '34bbb2c9-448f-4a6c-873e-bae2b9c6540c', {"useNewLoader":"true","region":"na1"}); </script></span><!-- end HubSpot Call-to-Action Code --></span> </div>
+       
+       <div class="inspire_comm" style="display: none;">
+         
+     <span id="hs_cos_wrapper_module_172723338511260_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_cta" style="" data-hs-cos-general-type="widget" data-hs-cos-type="cta"><!--HubSpot Call-to-Action Code --><span class="hs-cta-wrapper" id="hs-cta-wrapper-02373f07-e652-457a-8c3b-76c09743da04"><span class="hs-cta-node hs-cta-02373f07-e652-457a-8c3b-76c09743da04" id="hs-cta-02373f07-e652-457a-8c3b-76c09743da04"><!--[if lte IE 8]><div id="hs-cta-ie-element"></div><![endif]--><a href="https://cta-redirect.hubspot.com/cta/redirect/1984131/02373f07-e652-457a-8c3b-76c09743da04"><img class="hs-cta-img" id="hs-cta-img-02373f07-e652-457a-8c3b-76c09743da04" style="border-width:0px;" src="https://no-cache.hubspot.com/cta/default/1984131/02373f07-e652-457a-8c3b-76c09743da04.png" alt="Nominate"></a></span><script charset="utf-8" src="/hs/cta/cta/current.js"></script><script type="text/javascript"> hbspt.cta._relativeUrls=true;hbspt.cta.load(1984131, '02373f07-e652-457a-8c3b-76c09743da04', {"useNewLoader":"true","region":"na1"}); </script></span><!-- end HubSpot Call-to-Action Code --></span>   </div> 
+      </div>
+      
+      
+      
+    </div>
+  </div>
+</div>
+<div id="v2-mobile-menu-container" class="v2-mobile-menu-container" style="top:0;">
+  <div id="v2-mobile-menu" class="v2-mobile-menu">
+    <div style="margin-bottom: 1.75rem">
+  
+      <div class="none_inspire_comm" style="display: block;">
+      <span id="hs_cos_wrapper_module_172723338511260_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_cta" style="" data-hs-cos-general-type="widget" data-hs-cos-type="cta"><!--HubSpot Call-to-Action Code --><span class="hs-cta-wrapper" id="hs-cta-wrapper-34bbb2c9-448f-4a6c-873e-bae2b9c6540c"><span class="hs-cta-node hs-cta-34bbb2c9-448f-4a6c-873e-bae2b9c6540c" id="hs-cta-34bbb2c9-448f-4a6c-873e-bae2b9c6540c"><!--[if lte IE 8]><div id="hs-cta-ie-element"></div><![endif]--><a href="https://cta-redirect.hubspot.com/cta/redirect/1984131/34bbb2c9-448f-4a6c-873e-bae2b9c6540c" target="_blank" rel="noopener"><img class="hs-cta-img" id="hs-cta-img-34bbb2c9-448f-4a6c-873e-bae2b9c6540c" style="border-width:0px;" src="https://no-cache.hubspot.com/cta/default/1984131/34bbb2c9-448f-4a6c-873e-bae2b9c6540c.png" alt="Zum Shop  Shop Now  Shop"></a></span><script charset="utf-8" src="/hs/cta/cta/current.js"></script><script type="text/javascript"> hbspt.cta._relativeUrls=true;hbspt.cta.load(1984131, '34bbb2c9-448f-4a6c-873e-bae2b9c6540c', {"useNewLoader":"true","region":"na1"}); </script></span><!-- end HubSpot Call-to-Action Code --></span> 
+      </div>
+       <div class="inspire_comm" style="display: none;">
+         
+     <span id="hs_cos_wrapper_module_172723338511260_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_cta" style="" data-hs-cos-general-type="widget" data-hs-cos-type="cta"><!--HubSpot Call-to-Action Code --><span class="hs-cta-wrapper" id="hs-cta-wrapper-02373f07-e652-457a-8c3b-76c09743da04"><span class="hs-cta-node hs-cta-02373f07-e652-457a-8c3b-76c09743da04" id="hs-cta-02373f07-e652-457a-8c3b-76c09743da04"><!--[if lte IE 8]><div id="hs-cta-ie-element"></div><![endif]--><a href="https://cta-redirect.hubspot.com/cta/redirect/1984131/02373f07-e652-457a-8c3b-76c09743da04"><img class="hs-cta-img" id="hs-cta-img-02373f07-e652-457a-8c3b-76c09743da04" style="border-width:0px;" src="https://no-cache.hubspot.com/cta/default/1984131/02373f07-e652-457a-8c3b-76c09743da04.png" alt="Nominate"></a></span><script charset="utf-8" src="/hs/cta/cta/current.js"></script><script type="text/javascript"> hbspt.cta._relativeUrls=true;hbspt.cta.load(1984131, '02373f07-e652-457a-8c3b-76c09743da04', {"useNewLoader":"true","region":"na1"}); </script></span><!-- end HubSpot Call-to-Action Code --></span>   </div> 
+      
+    </div>
+<!--     <hr class="v2-mobile-menu__divider mobile-only"> -->
+    <a href="/"><h6>Home</h6></a>
+    <a href="/shop-detail"><h6>Vestaboard</h6></a>
+    <a href="/white"><h6>Vestaboard White</h6></a>
+    <a href="/note"><h6>Vestaboard Note</h6></a>
+    <a href="/product"><h6>Product Detail</h6></a>
+    <a href="/software"><h6>Software</h6></a>
+    <a href="/customer-stories"><h6>Meet Our Customers</h6></a>
+    <a href="/home"><h6>At Home</h6></a>
+    <a href="/work"><h6>At Work</h6></a>
+    <a href="/trade"><h6>A&amp;D / Trade</h6></a>
+    <a href="/dealers"><h6>Dealer Program</h6></a>
+    <hr class="v2-mobile-menu__divider">
+    <a href="/invest"><h6>Invest</h6></a>
+    <a href="/help"><h6>For Customers</h6></a>
+    <a href="https://shop.vestaboard.com/collections/accessories"><h6>Accessories &amp; Install</h6></a>
+    <a href="/news"><h6>Newsroom</h6></a>
+    <a href="/team"><h6>About Us</h6></a>
+    <a href="/inspire-community"><h6>Community</h6></a>
+    <hr class="v2-mobile-menu__divider">
+    <a href="/contact"><h6>Contact</h6></a>
+    <div class="v2-socials">
+      <!-- <a href="https://www.linkedin.com/company/vestaboard-inc-"><img class="v2-socials__icon" src="https://f.hubspotusercontent30.net/hubfs/1984131/Assets/social_media_icons/linkedin-white.png" /></a> -->
+      <a href="https://twitter.com/vestaboard"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Assets/social_media_icons/twitter-white.png"></a>
+      <a href="https://www.facebook.com/vestaboard"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Assets/social_media_icons/facebook-white.png"></a>
+      <a href="https://www.instagram.com/vestaboard/"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Assets/social_media_icons/instagram-white.png"></a>
+      <a href="https://youtube.com/vestaboard"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Assets/social_media_icons/youtube-white.png"></a>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+    </div><!--end header -->
+</div><!--end header wrapper -->
+
+<div class="body-container-wrapper">
+    <div class="body-container container-fluid">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-1 ">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget " style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_165555537513923" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div id="modal" class="modal fade">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <img src="https://www.vestaboard.com/hubfs/Assets/icons/close.svg" width="33" alt="Close">
+                </button>
+                <!-- 16:9 aspect ratio -->
+                <div class="embed-responsive embed-responsive-16by9">
+                    <video id="video" controls loop name="media" preload="none" poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+                        <!-- Source will be set dynamically when modal opens -->
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
+</div></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-2 ">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget " style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_165515442857749" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div id="new-home-hero" class="new-home-hero container-fluid">
+    <div class="row m-0" id="new-hero-title">
+        <div class="order-md-2 col-md-6 p-0">
+            <a class="video-btn" data-toggle="modal" data-target="#modal" data-src="https://1984131.fs1.hubspotusercontent-na1.net/hubfs/1984131/30s-4k-16x9-Inhouse-adjusted-Compressed.mp4" type="video/mp4">
+                <span>Watch&nbsp;</span>&nbsp;<img src="https://www.vestaboard.com/hubfs/Vestaboard%20-%20v2%20-%20Assets/video-play.svg" width="30">
+            </a>
+            <video autoplay muted loop playsinline id="myVideo" class="new-video">
+                <source src="https://www.vestaboard.com/hubfs/30s-4k-16x9-Inhouse-adjusted-Compressed.mp4" type="video/mp4">
+            </video>
+        </div>
+        <div class="order-md-1 col-md-6 align-self-center">
+            <h1>Meet the most beautiful messaging display</h1>
+            <h5>
+                Delight your family, guests or team with your Vestaboard.
+            </h5>
+          
+            <div class="flex-row home-hero-links">
+              
+              
+              
+                  <a class="v2-p2 v2-arrow-link" href="https://shop.vestaboard.com/products/vestaboard"><span class="v2-arrow-link__text">Shop Vestaboard</span><img src="https://www.vestaboard.com/hubfs/Assets/icons/arrow_small.svg" class="v2-arrow-link__arrow"></a>
+              
+              
+              
+              
+                  <p>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>
+                  <a class="v2-p2 v2-arrow-link" href="https://vestaboard.com/note"><span class="v2-arrow-link__text">Shop Vestaboard Note</span><img src="https://www.vestaboard.com/hubfs/Assets/icons/arrow_small.svg" class="v2-arrow-link__arrow"></a>
+              
+              
+            </div>
+        </div>
+    </div>
+    <div class="row m-0" id="new-hero-slider">
+        <div class="col-md-6 order-md-2">
+            <div class="red-dot-img">
+              
+                <a href="https://www.vestaboard.com/news/fast-company" taget="_blank" class="hidden-phone">
+                    <img src="https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany_300-min.png?width=180&amp;name=FastCompany_300-min.png" loading="lazy" alt="fast company logo" width="180" srcset="https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany_300-min.png?width=90&amp;name=FastCompany_300-min.png 90w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany_300-min.png?width=180&amp;name=FastCompany_300-min.png 180w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany_300-min.png?width=270&amp;name=FastCompany_300-min.png 270w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany_300-min.png?width=360&amp;name=FastCompany_300-min.png 360w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany_300-min.png?width=450&amp;name=FastCompany_300-min.png 450w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany_300-min.png?width=540&amp;name=FastCompany_300-min.png 540w" sizes="(max-width: 180px) 100vw, 180px">
+                </a>
+                <a href="https://www.vestaboard.com/news/fast-company" taget="_blank" class="show-mobile">
+                    <img src="https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany.png?width=100&amp;name=FastCompany.png" loading="lazy" alt="fast company logo" width="100" srcset="https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany.png?width=50&amp;name=FastCompany.png 50w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany.png?width=100&amp;name=FastCompany.png 100w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany.png?width=150&amp;name=FastCompany.png 150w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany.png?width=200&amp;name=FastCompany.png 200w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany.png?width=250&amp;name=FastCompany.png 250w, https://www.vestaboard.com/hs-fs/hubfs/Assets/photos/FastCompany.png?width=300&amp;name=FastCompany.png 300w" sizes="(max-width: 100px) 100vw, 100px">
+                </a>
+            </div>
+        </div> 
+        <div class="col-md-6 order-md-1"> 
+          <div id="carouselContainer">
+            
+          
+          <div id="as-seen-in">
+            As seen in
+          </div>
+            <div id="carouselTicker" class="carouselTicker">
+                <ul class="carouselTicker__list">
+                    
+                    
+                    <li class="carouselTicker__item">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/wsj-wordmark.svg" alt="Wall Street Journal" loading="lazy" width="120">
+                    </li>
+                    
+                    
+                    
+                    <li class="carouselTicker__item">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/Shape%202.svg" alt="Rolling Stone" loading="lazy" width="120">
+                    </li>
+                    
+                    
+                    
+                    <li class="carouselTicker__item">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/logo-theweek%20black-01.svg" alt="logo-theweek black-01" loading="" width="120">
+                    </li>
+                    
+                    
+                    
+                    <li class="carouselTicker__item">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/Group%203.svg" alt="designboom" loading="" width="120">
+                    </li>
+                    
+                    
+                    
+                    <li class="carouselTicker__item">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/Group%202.svg" alt="design\milk" loading="lazy" width="120">
+                    </li>
+                    
+                    
+                    
+                    <li class="carouselTicker__item">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/Group.svg" alt="The Verge" loading="lazy" width="120">
+                    </li>
+                    
+                    
+                    
+                    <li class="carouselTicker__item">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/Group%2016%20Copy%202.svg" alt="boingboing" loading="lazy" width="120">
+                    </li>
+                    
+                    
+                </ul>
+            </div>
+            </div>
+        </div>
+       
+    </div>
+</div>
+<script defer src="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/76201107573/1741265305216/template_jquery.carouselTicker.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/76201961785/1741265293511/template_carouselTicker.min.css"></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+<div class="row-fluid-wrapper row-depth-1 row-number-3 ">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-widget_container " style="" data-widget-type="widget_container" data-x="0" data-w="12">
+<span id="hs_cos_wrapper_module_169490053228488" class="hs_cos_wrapper hs_cos_wrapper_widget_container hs_cos_wrapper_type_widget_container" style="" data-hs-cos-general-type="widget_container" data-hs-cos-type="widget_container"><div id="hs_cos_wrapper_widget_1735928445876" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div class="custom-module custom-module-boy">
+  <div class="underBac"></div>
+    <div class="image-container">
+      <div>
+        <img src="https://www.vestaboard.com/hubfs/Note%20Apples%201920x1080.webp" alt="Note Apples 1920x1080">
+      </div>
+    </div>
+  
+    <div class="content-container content-con">
+     
+        <h2 class="green-heading">Introducing Vestaboard Note</h2>
+      <!--  <h3 class="custom-heading"> 
+          Save $300 if you order by 12/15. Guaranteed delivery by 12/24. Plus pay over time for as low as $83 per month with 0% interest.
+      </h3> -->
+        <p class="middle-text"></p><p><span style="color: #000000;">Set the tempo for the ones you love with Vestaboard Note: an inviting, playful, and versatile take on our award-winning design.</span></p>
+<p>&nbsp;</p><p></p>
+    <!--    <p style="font-size:10px;color:#222">
+          *Free installation only in US and Canada
+      </p> -->
+       <div class="flex-row home-hero-links">
+         
+        <br>
+            <a class="v2-p2 v2-arrow-link" href="https://www.vestaboard.com/note">
+                <span class="v2-arrow-link__text-black">Learn more</span>
+                <img src="https://www.vestaboard.com/hubfs/Assets/icons/icon-arrow1.svg" class="v2-arrow-link__arrow">
+            </a>
+           
+        
+      </div>
+  </div>
+</div></div>
+<div id="hs_cos_wrapper_widget_165584269582433" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div class="white-bg off-white-bg">
+    <div class="container-fluid">
+      <div class="row m-0">
+        <div class="col-md-6 p-0">
+        
+              <img class="white-hero-image-temp" src="https://www.vestaboard.com/hubfs/Press%20-%20Assets/White/Vestaboard-White_2000x1400-min.jpg" alt="">
+           
+
+        </div>
+        <div class="col-md-6 d-flex flex-column justify-content-center mw-500 pl-md-5 py-0 py-md-5">
+          <div class="padding-sm-42-32">
+            <h2 class="new-h2  new-h2">
+                Vestaboard White
+            </h2>
+            <p>Brighten your day with Vestaboard White. Inspire family, team members, or guests by easily sending messages from anywhere with a fresh take on the award-winning Flagship&nbsp;display.&nbsp;</p>
+<a href="https://www.vestaboard.com/white"></a>
+            
+            
+            <a class="v2-p2 v2-arrow-link" href="https://www.vestaboard.com/white"><span class="v2-arrow-link__text">Learn more</span><img src="https://www.vestaboard.com/hubfs/Assets/icons/icon-arrow1.svg" class="v2-arrow-link__arrow"></a>
+             
+          </div>
+        </div>
+      </div>
+    </div>
+</div></div>
+<div id="hs_cos_wrapper_widget_1655203083994139" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div class="new-case-studies white-bg">
+    <div class="container">
+        <div class="row" id="new-case-studies-top">
+            <div class="col-md-7">
+                <h2 class="new-h2"><div id="hs_cos_wrapper_widget_1655203083994139_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_inline_text" style="" data-hs-cos-general-type="widget" data-hs-cos-type="inline_text" data-hs-cos-field="title">Inspire your favorite people from anywhere</div></h2>
+            </div>
+            <div class="col-md-4 offset-md-1 px-lg-0">
+                <p>Vestaboard creates a focal point that enhances any setting every day and captures attention with a shared messaging experience.</p>
+            </div>
+        </div>
+        <div class="row" id="new-case-studies-bottom">
+            <div class="col-md-6 pr-md-4">
+                <div class="new-case-studies-image">
+                    <a href="/home">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/athome.jpg" alt="Art, organization and inspiration in a single frame.">
+                        
+                    </a>
+                    <div class="px-4 px-md-5 new-case-studies-text  row">
+                        <div class="col-lg-7 col-md-9">
+                            <h4>At Home</h4>
+                            <p>Art, organization and inspiration in a single frame.
+                            </p>
+                        </div>
+                        <div class="col-lg-5 col-md-3 mt-4 mt-md-0">
+                            <a href="/home" class="btn btn-outline-dark new-button">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 pl-md-4">
+                <div class="new-case-studies-image">
+                    <a href="/work">
+                        
+                        <img src="https://www.vestaboard.com/hubfs/vestaboard%20at%20work.jpg" alt="Inform and inspire the people that move your business.">
+                        
+                    </a>
+                    <div class="px-4 px-md-5 new-case-studies-text row">
+                        <div class="col-lg-7 col-md-9">
+                            <h4>At Work</h4>
+                            <p>Inform and inspire the people that move your business.
+                            </p>
+                        </div>
+                        <div class="col-lg-5 col-md-3 mt-4 mt-md-0">
+                            <a href="/work" class="btn btn-outline-dark new-button">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div></div>
+<div id="hs_cos_wrapper_widget_165521716568053" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div class="stacked-cards">
+    <div class="container container-870">
+        <div class="row  stacked-cards-title">
+            <div class="col-md-12">
+                <h2 class="new-h2">The best of analog and digital</h2>
+                <h5>It’s not a digital screen. It's thousands of spinning flaps you control with your device from anywhere.</h5>
+            </div>
+        </div>
+        <div class="row stacked-row stacked-video-row">
+            <div class="col-md-7">
+                <div class="white-bg off-white-bg stacked-card" id="top-card" style="background-color: #e6e6ea; color: black;">
+                    <h4>Controlled from your phone or desktop</h4>
+<p>Inspire others, display lists, menus, quotes, patterns, or connect to hundreds of services for automated content*.</p>
+<img src="https://www.vestaboard.com/hubfs/AppIcons.png"> <a class="v2-p2 v2-arrow-link" href="https://www.vestaboard.com/software"><span class="v2-arrow-link__text">Learn More</span><img src="https://www.vestaboard.com/hubfs/Assets/icons/icon-arrow1.svg" class="v2-arrow-link__arrow"></a>
+<p class="small">*Integrations and more now available with Vestaboard+</p>
+                </div>
+            </div> 
+            <div class="col-md-5 px-0 my-auto stacked-video-col">
+              <div id="stacked-video-outer">      
+              
+                <div class="new-video" id="stacked-video-container">
+                   <a class="video-btn">
+                        <img src="" width="30">
+                  </a>
+                    <video autoplay muted loop playsinline id="stackedVideo">
+                        <source src="https://www.vestaboard.com/hubfs/Test_ThumbnailVideo.mp4" type="video/mp4">
+                    </video>
+                </div>
+                </div>
+            </div>
+        </div>
+        <div class="row stacked-row stacked-image-row">
+          <div class="col-md-7 order-md-2">
+                <div class="white-bg off-white-bg stacked-card" id="bottom-card" style="background-color: #e6e6ea; color: black;">
+                    <h4><span>Award-winning product design</span></h4>
+<p><span>Built with the highest quality, vetted materials. Designed by a seasoned team of experts, it’s beautiful inside and out.</span></p>
+<a class="v2-p2 v2-arrow-link" href="https://www.vestaboard.com/product"><span class="v2-arrow-link__text">Learn More</span><img src="https://www.vestaboard.com/hubfs/Assets/icons/icon-arrow1.svg" class="v2-arrow-link__arrow"></a> 
+                </div>
+            </div>
+            <div class="col-md-5 stacked-image-col order-md-1">
+                
+                <img src="https://www.vestaboard.com/hubfs/vb-bit-persp.png" alt="vb-bit-persp" class="stacked-image">
+                
+            </div>            
+        </div><!-- row -->
+    </div><!-- cont -->
+</div></div>
+<div id="hs_cos_wrapper_widget_165522015418450" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div class="customer_dark_bg" id="customer-recent">
+  <div class="container container-1300">
+      <div class="align-items-end row py-md-5 mb-5 white-underline">
+          <div class="col-md-6 px-0">
+              <h2 class="new-h2">Meet Our <br class="hidden-phone">Customers</h2>
+          </div>
+          <div class="col-md-6 pb-5 px-0">
+            
+                 <a class="btn btn-outline-white float-md-right" href="https://www.vestaboard.com/customer-stories">Learn More</a>
+            
+             
+          </div>
+      </div>
+  </div>
+  <div id="customer-recent-posts-container">
+      <div class="customer-recent-posts-inner container">
+          <div id="customer-recent-posts">           
+              
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/beekstudios"><img src="https://www.vestaboard.com/hubfs/beek%20full%20setup-2.jpeg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/beekstudios">Beek Studios uses Vestaboard as a "collaboration catalyst" for innovation</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/office">Office</a>,</span>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/work">Work</a>,</span>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/api">API</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/marcelg"><img src="https://www.vestaboard.com/hubfs/0c4f32f0-3b43-4863-94ea-8cd587dbeb82-TICKET.favorite_vestaboard_image-IMG_0923%20copy-1.jpeg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/marcelg">A glimpse into Marcel’s artfully designed space, complete with Vestaboard</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/home">Home</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/marqueepinball"><img src="https://www.vestaboard.com/hubfs/IMG_9275-1.jpg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/marqueepinball">Marquee Pinball brings vintage vibes to downtown Napa</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/hospitality">Hospitality</a>,</span>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/work">Work</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/markc"><img src="https://www.vestaboard.com/hubfs/7b882681-0dff-4165-be15-bf424481114a-TICKET.favorite_vestaboard_image-PXL_20250413_005820947%20(2).jpg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/markc">Mark's formula for effortless entertaining with Vestaboard</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/home">Home</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/theministry"><img src="https://www.vestaboard.com/hubfs/image00004-2.jpeg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/theministry">The Ministry&nbsp;shares news in sustainable, engaging, and visually striking ways with Vestaboard</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/multiple">Multiple</a>,</span>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/hospitality">Hospitality</a>,</span>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/work">Work</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/beverlytheater"><img src="https://www.vestaboard.com/hubfs/4vesta%203.jpg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/beverlytheater">A Modern Retro Marquee: Vestaboard at The Beverly Theater</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/work">Work</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/stl"><img src="https://www.vestaboard.com/hubfs/TYVBSTLORG%202.jpeg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/stl">STL.org uses Vestaboard to celebrate creativity, curiosity, and community</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/inspire-community">Inspire Community</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+              <div class="customer-rec"> 
+                  <div class="customer-rec-inner"> 
+                      <div class="post-featured-image"><a href="https://www.vestaboard.com/customer-stories/nickw"><img src="https://www.vestaboard.com/hubfs/Nick%20Wooller%20-%20square.jpeg"></a></div>
+                      <div class="customer-title">
+                          <h3><a href="https://www.vestaboard.com/customer-stories/nickw">Vestaboard remains a daily essential for early adopter Nick W.</a></h3>
+                          
+                          <span style="color:#7e878e;"> <a class="topic-link" href="/customer-stories/tag/home">Home</a></span>
+                           
+                      </div>
+                  </div>
+              </div>
+              
+          </div>
+      </div>
+  </div>
+</div>
+ 
+<style type="text/css">
+#customer-recent-posts-container {
+    background: linear-gradient(to bottom, #171818 0px, #171818 150px, #ffffff 150px);
+    overflow: hidden;
+   padding-bottom:35px;
+}
+.customer_light_bg #customer-recent-posts-container {
+  background:white;
+  
+  }
+.customer_light_bg {
+    background-color: white;
+    color: #0A0A0B;
+} 
+
+.customer_light_bg .newh2,
+  .customer_light_bg a,
+  .customer_light_bg .v2-industry-right__inner h5 strong{
+    color: #0A0A0B;
+}
+
+.customer-rec {
+    display: inline-block;
+}
+
+.customer-rec-inner {
+    padding: 0 40px 0 0;
+}
+
+.customer-rec .post-featured-image {
+    padding-bottom: 100%;
+    position: relative;
+}
+
+.customer-rec img {
+    position: absolute;
+    top: 0;
+    object-fit: cover;
+    border-radius: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+.customer-title {
+    padding: 16px 8px;
+}
+
+.customer-rec h3 {
+    font-size: 16px;
+    line-height: 26px;
+    position: relative;
+    font-weight: bold;
+    max-width: 300px;
+}
+
+.customer-rec h3 a {
+    color: #0A0A0B;
+}
+
+#hubspot-topic_data,
+.topic-link {
+    font-size: 12px;
+    color: #7e878e;
+}
+
+.new-photos-nav {
+    position: absolute;
+    display: block;
+    z-index: 800;
+    transform: translateY(-50%)
+}
+
+.customer-recent-title {
+    text-align: center;
+    margin-bottom: 2em;
+    margin-top: 1.5em;
+}
+
+
+#customer-recent-posts .new-photos-nav {
+    top: 36%;
+}
+
+#customer-recent-posts #prev-image {
+    left: 1%;
+    right: unset
+}
+
+#customer-recent-posts #next-image {
+    right: 1%;
+}
+
+
+.btn-outline-white {
+    border-color: white;
+    color: white;
+}
+
+.btn-outline-dark {
+  border-color: black;
+  color: black;
+  }
+
+@media (min-width: 1130px) {}
+
+@media (min-width: 1300px) {
+    #customer-recent-posts {
+        width: 150%;
+    }
+
+    #customer-recent-posts #next-image {
+        left: 65%;
+    }
+
+    .container-1300,
+    .customer-recent-posts-inner {
+        max-width: 1300px !important;
+    }
+
+
+
+}
+
+@media (min-width: 100%) {
+    .white-underline {
+        border-bottom: 1px solid white;
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+
+    .customer_light_bg .white-underline {
+        border-bottom-color: #0A0A0B;
+    }
+
+    .customer-recent-posts-inner {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 100%) {
+
+    .white-underline,
+    .customer-recent-posts-inner {
+        padding-left: 32px;
+        padding-right: 32px;
+    }
+
+    .white-underline .col-md-6:last-child {
+        border-bottom: 1px solid white;
+    }
+
+    .customer_light_bg .white-underline .col-md-6:last-child {
+        border-bottom-color: #0A0A0B;
+    }
+
+    .customer-rec-inner {
+        padding: 0;
+    }
+    #next-image {
+        right: 1%;
+    }
+  #customer-recent {
+    padding-top: 80px;
+  }
+}
+  
+@media (max-width:768px){
+  .customer-rec-inner{
+    padding: 0 20px 0 20px;
+  }
+  
+  .new-h2{
+    text-align:center;
+  }
+  
+  .pb-5{
+    text-align:center;
+    padding-bottom:0px!important;
+    
+  }
+  
+}
+</style>
+<script>
+    $(document).ready(function(){
+  $('#customer-recent-posts').slick({
+  infinite: true,
+  slidesToShow: 5,
+  slidesToScroll: 1,
+    prevArrow: '<a class="new-photos-nav" id="prev-image"><img src="https://www.vestaboard.com/hubfs/Assets/icons/arrow_left.svg" alt="arrow_left"><span class="sr-only">Previous</span></a>',
+    nextArrow: '<a class="new-photos-nav" id="next-image"><img src="https://www.vestaboard.com/hubfs/Assets/icons/arrow_right.svg" alt="arrow_right"><span class="sr-only">Next</span></a>',
+    responsive: [
+    {
+      breakpoint: 1130,
+      settings: {
+        slidesToShow: 3,
+        slidesToScroll: 1,
+        infinite: true,
+        dots: false
+      }
+    },
+    {
+      breakpoint: 600,
+      settings: {
+        slidesToShow: 2,
+        slidesToScroll:1
+      }
+    },
+    {
+      breakpoint: 480,
+      settings: {
+        slidesToShow: 1,
+        slidesToScroll: 1
+      }
+    }
+     
+  ]
+});
+  
+ 
+     
+  });
+
+</script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css">
+<script defer type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script></div>
+<div id="hs_cos_wrapper_widget_1605652157360131" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div class="v2-newsroom-container">
+  <div class="v2-newsroom">
+    <div class="v2-newsroom-description">
+      <h2 class="v2-newsroom-header">Newsroom</h2>
+      <div style="margin: .5rem 0 .5rem 1rem;">
+      <a class="v2-p2 v2-arrow-link" href="/news"><span class="v2-arrow-link__text">View all news</span><img src="https://www.vestaboard.com/hubfs/Assets/icons/arrow_small.svg" class="v2-arrow-link__arrow"></a>
+      </div>
+    </div>
+    <div class="v2-newsroom-cards-container">
+      <div class="v2-newsroom-inner asad">
+        
+        
+        
+          <a href="https://www.vestaboard.com/news/10-years-celebration" class="v2-newsroom-card">
+            <div class="v2-newsroom-card__flaptop">
+              <img class="v2-newsroom-card__image vf" src="https://www.vestaboard.com/hubfs/vb10-YT-1.jpg" loading="lazy" alt="Vestaboard-Rainbow-Detail-Mid_2to1" width="100%">
+            </div>
+            <div class="v2-newsroom-card__flap">
+              <h5>Vestaboard celebrates 10 years with new product unveiling</h5>
+              <div style="display: flex; align-items: center;">
+                <div style="height: 40px; width: 40px; border-radius: 100px; overflow: hidden; margin-right: .5rem;">
+                  <img style="object-fit: cover; min-width: 100%; min-height: 100%;" loading="lazy" src="https://www.vestaboard.com/hubfs/Screenshot%202023-11-22%20at%2011.26.41%20AM.png">
+                </div>
+                <p>Maddie Frame</p>
+              </div>
+            </div>
+          </a>
+        
+          <a href="https://www.vestaboard.com/news/bar-rescue" class="v2-newsroom-card">
+            <div class="v2-newsroom-card__flaptop">
+              <img class="v2-newsroom-card__image vf" src="https://www.vestaboard.com/hubfs/3%20(9).jpg" loading="lazy" alt="Vestaboard-Rainbow-Detail-Mid_2to1" width="100%">
+            </div>
+            <div class="v2-newsroom-card__flap">
+              <h5>Vestaboard transforms bar on hit series Bar Rescue</h5>
+              <div style="display: flex; align-items: center;">
+                <div style="height: 40px; width: 40px; border-radius: 100px; overflow: hidden; margin-right: .5rem;">
+                  <img style="object-fit: cover; min-width: 100%; min-height: 100%;" loading="lazy" src="https://www.vestaboard.com/hubfs/Screenshot%202023-11-22%20at%2011.26.41%20AM.png">
+                </div>
+                <p>Maddie Frame</p>
+              </div>
+            </div>
+          </a>
+        
+          <a href="https://www.vestaboard.com/news/introducing-the-new-app" class="v2-newsroom-card">
+            <div class="v2-newsroom-card__flaptop">
+              <img class="v2-newsroom-card__image vf" src="https://www.vestaboard.com/hubfs/rn-home.jpg" loading="lazy" alt="Vestaboard-Rainbow-Detail-Mid_2to1" width="100%">
+            </div>
+            <div class="v2-newsroom-card__flap">
+              <h5>Introducing the new mobile app</h5>
+              <div style="display: flex; align-items: center;">
+                <div style="height: 40px; width: 40px; border-radius: 100px; overflow: hidden; margin-right: .5rem;">
+                  <img style="object-fit: cover; min-width: 100%; min-height: 100%;" loading="lazy" src="https://www.vestaboard.com/hubfs/Team/mark-1.png">
+                </div>
+                <p>Mark Confroy</p>
+              </div>
+            </div>
+          </a>
+        
+      </div>
+    </div>
+  </div>
+</div></div></span>
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+    </div><!--end body -->
+</div><!--end body wrapper -->
+
+<div class="footer-container-wrapper">
+    <div class="footer-container container-fluid">
+
+<div class="row-fluid-wrapper row-depth-1 row-number-1 ">
+<div class="row-fluid ">
+<div class="span12 widget-span widget-type-custom_widget " style="" data-widget-type="custom_widget" data-x="0" data-w="12">
+<div id="hs_cos_wrapper_module_1604442068973167" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_module" style="" data-hs-cos-general-type="widget" data-hs-cos-type="module"><div class="v2-footer">
+  <div class="v2-footer-inner">
+    <div class="v2-footer-section v2-footer-upper">
+      <div class="v2-footer__navigation">
+        <div class="v2-footer__navigation__section">
+          <div class="v2-footer__nav-link--first">
+            <!--HubSpot Call-to-Action Code --><span class="hs-cta-wrapper" id="hs-cta-wrapper-4a897828-afe3-4ba0-8e54-557b1f088f1b"><span class="hs-cta-node hs-cta-4a897828-afe3-4ba0-8e54-557b1f088f1b" id="hs-cta-4a897828-afe3-4ba0-8e54-557b1f088f1b"><!--[if lte IE 8]><div id="hs-cta-ie-element"></div><![endif]--><a href="https://cta-redirect.hubspot.com/cta/redirect/1984131/4a897828-afe3-4ba0-8e54-557b1f088f1b" target="_blank"><img class="hs-cta-img" id="hs-cta-img-4a897828-afe3-4ba0-8e54-557b1f088f1b" style="border-width:0px;" src="https://no-cache.hubspot.com/cta/default/1984131/4a897828-afe3-4ba0-8e54-557b1f088f1b.png" alt="Shop Now →"></a></span><script charset="utf-8" src="https://js.hscta.net/cta/current.js"></script><script type="text/javascript"> hbspt.cta.load(1984131, '4a897828-afe3-4ba0-8e54-557b1f088f1b', {}); </script></span><!-- end HubSpot Call-to-Action Code -->
+          </div>
+          <hr class="v2-footer-navigation-divider">
+          <a class="v2-footer__nav-link" href="https://shop.vestaboard.com/products/vestaboard">Vestaboard</a>
+          <a class="v2-footer__nav-link" href="/white">Vestaboard White</a>   
+          <a class="v2-footer__nav-link" href="/product">Product Detail</a>
+          <a class="v2-footer__nav-link" href="/software">Software</a>    
+          <a class="v2-footer__nav-link" href="/customer-stories">Meet Our Customers</a>    
+          <a class="v2-footer__nav-link" href="/home">At Home</a>
+          <a class="v2-footer__nav-link" href="/work">At Work</a>
+          <a class="v2-footer__nav-link" href="/trade">A&amp;D / Trade</a>
+          <a class="v2-footer__nav-link" href="/dealers">Dealers / Resellers</a>
+          <a class="v2-footer__nav-link" href="/refurbished">Refurbished</a>
+          <a class="v2-footer__nav-link" href="/inspire-community">Inspire Community</a>
+          <a class="v2-footer__nav-link" href="/faq">FAQs</a>
+          <a class="v2-footer__nav-link" href="/developers">Developers</a>
+          <a class="v2-footer__nav-link" href="/invest">Invest</a>
+        </div>
+        <div class="v2-footer__navigation__section">
+          <div class="v2-footer__nav-link--first">
+            <a style="padding-top: 12px" href="/help">For Customers</a>
+          </div>
+          <hr class="v2-footer-navigation-divider">
+          <a class="v2-footer__nav-link" href="/help">Help Center</a>
+          <a class="v2-footer__nav-link" href="/news">Newsroom</a>
+          <a class="v2-footer__nav-link" href="/team">About Us</a>
+          <a class="v2-footer__nav-link" href="/contact">Contact</a>
+          <a class="v2-footer__nav-link" href="/press">Press Resources</a>
+          <a class="v2-footer__nav-link" href="/affiliates">Affiliates</a>
+          <a class="v2-footer__nav-link" href="/legal">Legal</a>
+        </div>
+      </div>
+      <!--[if lte IE 8]>
+      <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2-legacy.js"></script>
+      <![endif]-->
+      <div class="v2-footer__subscribe">
+        <h5 style="margin-bottom: -5px">Sign up to get the latest</h5>
+        <br>
+        <span id="hs_cos_wrapper_module_1604442068973167_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_form" style="" data-hs-cos-general-type="widget" data-hs-cos-type="form"><h3 id="hs_cos_wrapper_form_459615685_title" class="hs_cos_wrapper form-title" data-hs-cos-general-type="widget_field" data-hs-cos-type="text"></h3>
+
+<div id="hs_form_target_form_459615685"></div>
+
+
+
+
+
+
+
+
+
+</span>
+      </div>
+    </div>
+    <div class="v2-footer-section v2-footer-lower">
+        <div class="red-dot-img">
+        <a href="https://vestaboard.com/news/red-dot-award" taget="_blank">
+          <img src="https://www.vestaboard.com/hubfs/Assets/photos/reddot-logo.png" loading="lazy" alt="reddot logo">
+        </a>
+      </div>
+      <div class="v2-footer-lower__right">
+           <div class="v2-socials">
+        <!-- <a href="/"><img class="v2-socials__icon" src="https://f.hubspotusercontent30.net/hubfs/1984131/Assets/social_media_icons/linkedin-white.png" /></a> -->
+        <a href="https://twitter.com/vestaboard" target="_blank"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Vestaboard%20-%20v2%20-%20Assets/social-twitter.svg" loading="lazy"></a>
+        <a href="https://www.facebook.com/vestaboard" target="_blank"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Vestaboard%20-%20v2%20-%20Assets/social-fb.svg" loading="lazy"></a>
+        <a href="https://www.instagram.com/vestaboard/" target="_blank"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Vestaboard%20-%20v2%20-%20Assets/social-instagram.svg" loading="lazy"></a>
+        <a href="https://youtube.com/vestaboard" target="_blank"><img class="v2-socials__icon" src="https://www.vestaboard.com/hubfs/Vestaboard%20-%20v2%20-%20Assets/social-youtube.svg" loading="lazy"></a>
+      </div>
+           <div class="v2-footer__logo">
+        <span id="hs_cos_wrapper_module_1604442068973167_" class="hs_cos_wrapper hs_cos_wrapper_widget hs_cos_wrapper_type_logo" style="" data-hs-cos-general-type="widget" data-hs-cos-type="logo"><a href="https://www.vestaboard.com/" id="hs-link-module_1604442068973167_" style="border-width:0px;border:0px;"><img src="https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=683&amp;height=60&amp;name=vestaboard-logo-white-1.png" class="hs-image-widget " height="60" style="height: auto;width:683px;border-width:0px;border:0px;" width="683" alt="vestaboard.png" title="vestaboard.png" srcset="https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=342&amp;height=30&amp;name=vestaboard-logo-white-1.png 342w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=683&amp;height=60&amp;name=vestaboard-logo-white-1.png 683w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=1025&amp;height=90&amp;name=vestaboard-logo-white-1.png 1025w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=1366&amp;height=120&amp;name=vestaboard-logo-white-1.png 1366w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=1708&amp;height=150&amp;name=vestaboard-logo-white-1.png 1708w, https://www.vestaboard.com/hs-fs/hubfs/vestaboard-logo-white-1.png?width=2049&amp;height=180&amp;name=vestaboard-logo-white-1.png 2049w" sizes="(max-width: 683px) 100vw, 683px"></a></span>
+      </div>
+      <p class="v2-copyright">Copyright © 2025, Vestaboard, Inc.</p>
+      </div>
+   
+   
+    </div>
+  </div>
+</div></div>
+
+</div><!--end widget-span -->
+</div><!--end row-->
+</div><!--end row-wrapper -->
+
+    </div><!--end footer -->
+</div><!--end footer wrapper -->
+
+    
+<!-- HubSpot performance collection script -->
+<script defer src="/hs/hsstatic/content-cwv-embed/static-1.1293/embed.js"></script>
+<script src="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/38039003411/1741265304718/template_Vestaboard_-_Home.min.js"></script>
+<script src="https://www.vestaboard.com/hubfs/hub_generated/template_assets/1/38957950171/1741265304131/template_v2-vestaboard.min.js"></script>
+<script>
+var hsVars = hsVars || {}; hsVars['language'] = 'en';
+</script>
+
+<script src="/hs/hsstatic/cos-i18n/static-1.53/bundles/project.js"></script>
+<script src="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/179390286883/1747884339575/module_Vestaboard_-_Header_home_page.min.js"></script>
+<script src="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/76788113930/1741735141221/module_Vestaboard_-_New_Video_Modal.min.js"></script>
+<script src="https://www.vestaboard.com/hubfs/hub_generated/module_assets/1/76172635202/1759785991037/module_Vestaboard_-_Home_-_New_Hero.min.js"></script>
+
+    <!--[if lte IE 8]>
+    <script charset="utf-8" src="https://js.hsforms.net/forms/v2-legacy.js"></script>
+    <![endif]-->
+
+<script data-hs-allowed="true" src="/_hcms/forms/v2.js"></script>
+
+    <script data-hs-allowed="true">
+        var options = {
+            portalId: '1984131',
+            formId: 'f6b8a304-e541-459b-a56b-56f3e336eca5',
+            formInstanceId: '82',
+            
+            pageId: '76172166781',
+            
+            region: 'na1',
+            
+            
+            
+            
+            pageName: "Vestaboard - A Smart Display To Connect And Inspire",
+            
+            
+            
+            inlineMessage: "Thanks for submitting the form.",
+            
+            
+            rawInlineMessage: "Thanks for submitting the form.",
+            
+            
+            hsFormKey: "87c65e0c83cbbf187a042abaee33b752",
+            
+            
+            css: '',
+            target: '#hs_form_target_form_459615685',
+            
+            
+            
+            
+            
+            
+            
+            contentType: "standard-page",
+            
+            
+            
+            formsBaseUrl: '/_hcms/forms/',
+            
+            
+            
+            formData: {
+                cssClass: 'hs-form stacked hs-custom-form'
+            }
+        };
+
+        options.getExtraMetaDataBeforeSubmit = function() {
+            var metadata = {};
+            
+
+            if (hbspt.targetedContentMetadata) {
+                var count = hbspt.targetedContentMetadata.length;
+                var targetedContentData = [];
+                for (var i = 0; i < count; i++) {
+                    var tc = hbspt.targetedContentMetadata[i];
+                     if ( tc.length !== 3) {
+                        continue;
+                     }
+                     targetedContentData.push({
+                        definitionId: tc[0],
+                        criterionId: tc[1],
+                        smartTypeId: tc[2]
+                     });
+                }
+                metadata["targetedContentMetadata"] = JSON.stringify(targetedContentData);
+            }
+
+            return metadata;
+        };
+
+        hbspt.forms.create(options);
+    </script>
+
+
+<!-- Start of HubSpot Analytics Code -->
+<script type="text/javascript">
+var _hsq = _hsq || [];
+_hsq.push(["setContentType", "standard-page"]);
+_hsq.push(["setCanonicalUrl", "https:\/\/www.vestaboard.com"]);
+_hsq.push(["setPageId", "76172166781"]);
+_hsq.push(["setContentMetadata", {
+    "contentPageId": 76172166781,
+    "legacyPageId": "76172166781",
+    "contentFolderId": null,
+    "contentGroupId": null,
+    "abTestId": null,
+    "languageVariantId": 76172166781,
+    "languageCode": null,
+    
+    
+}]);
+</script>
+
+<script type="text/javascript">
+var hbspt = hbspt || {};
+(hbspt.targetedContentMetadata = hbspt.targetedContentMetadata || []).push(...[]);
+
+var _hsq = _hsq || [];
+_hsq.push(["setTargetedContentMetadata", hbspt.targetedContentMetadata]);
+</script>
+<script type="text/javascript" id="hs-script-loader" async defer src="/hs/scriptloader/1984131.js"></script>
+<!-- End of HubSpot Analytics Code -->
+
+
+<script type="text/javascript">
+var hsVars = {
+    render_id: "3daf0909-ca34-435a-b28a-0dae57cc78e6",
+    ticks: 1759787256758,
+    page_id: 76172166781,
+    
+    content_group_id: 0,
+    portal_id: 1984131,
+    app_hs_base_url: "https://app.hubspot.com",
+    cp_hs_base_url: "https://cp.hubspot.com",
+    language: "en",
+    analytics_page_type: "standard-page",
+    scp_content_type: "",
+    
+    analytics_page_id: "76172166781",
+    category_id: 1,
+    folder_id: 0,
+    is_hubspot_user: false
+}
+</script>
+
+
+<script defer src="/hs/hsstatic/HubspotToolsMenu/static-1.432/js/index.js"></script>
+
+<!-- Twitter universal website tag code
+<script>
+!function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+},s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='//static.ads-twitter.com/uwt.js',
+a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+// Insert Twitter Pixel ID and Standard Event data below
+twq('init','o0721');
+twq('track','PageView');
+</script>
+End Twitter universal website tag code -->
+
+<!-- Hotjar Tracking Code for https://www.vestaboard.com/
+<script>
+    (function(h,o,t,j,a,r){
+        h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+        h._hjSettings={hjid:1485272,hjsv:6};
+        a=o.getElementsByTagName('head')[0];
+        r=o.createElement('script');r.async=1;
+        r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+        a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+</script>
+-->
+
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <!-- Generated by the HubSpot Template Builder - template version 1.03 -->
+
+</body></html>
