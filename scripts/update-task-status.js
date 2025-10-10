@@ -10,16 +10,8 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-let twilioClient = null;
-// Try to load Twilio, but don't fail if it's not available
-try {
-  const twilioModule = await import('twilio');
-  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-    twilioClient = twilioModule.default(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  }
-} catch (err) {
-  console.log('⚠️  Twilio not available, SMS updates disabled');
-}
+const apiUrl = process.env.VITE_APP_URL || 'https://chi-pins.vercel.app';
+const alertPhone = process.env.ALERT_PHONE || '+17204507540';
 
 const taskId = process.argv[2];
 const status = process.argv[3];
@@ -78,7 +70,7 @@ async function updateTask() {
     console.log('📄 Updated task:', JSON.stringify(data[0], null, 2));
 
     // Send SMS update if task is completed or failed
-    if ((status === 'completed' || status === 'failed') && twilioClient) {
+    if (status === 'completed' || status === 'failed') {
       const task = data[0];
       let smsMessage = '';
 
@@ -98,16 +90,23 @@ async function updateTask() {
       }
 
       try {
-        const toNumber = process.env.ALERT_PHONE || '+17204507540';
-        const fromNumber = process.env.TWILIO_PHONE_NUMBER;
-
-        await twilioClient.messages.create({
-          body: smsMessage,
-          from: fromNumber,
-          to: toNumber
+        const response = await fetch(`${apiUrl}/api/send-sms`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: alertPhone,
+            message: smsMessage,
+          }),
         });
 
-        console.log(`📱 SMS update sent to ${toNumber}`);
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to send SMS');
+        }
+
+        console.log(`📱 SMS update sent to ${alertPhone}`);
       } catch (smsError) {
         console.error('⚠️  Failed to send SMS update:', smsError.message);
       }

@@ -3,12 +3,9 @@
 // Usage: node scripts/send-sms-update.js <message>
 
 import 'dotenv/config';
-import twilio from 'twilio';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 const toNumber = process.env.ALERT_PHONE || '+17204507540';
+const apiUrl = process.env.VITE_APP_URL || 'https://chi-pins.vercel.app';
 
 const message = process.argv.slice(2).join(' ');
 
@@ -17,23 +14,28 @@ if (!message) {
   process.exit(1);
 }
 
-if (!accountSid || !authToken || !fromNumber) {
-  console.error('❌ Twilio credentials not configured');
-  process.exit(1);
-}
-
 async function sendSMS() {
   console.log(`📱 Sending SMS to ${toNumber}...`);
 
   try {
-    const client = twilio(accountSid, authToken);
-    const result = await client.messages.create({
-      body: message,
-      from: fromNumber,
-      to: toNumber
+    const response = await fetch(`${apiUrl}/api/send-sms`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        to: toNumber,
+        message: message,
+      }),
     });
 
-    console.log(`✅ SMS sent! SID: ${result.sid}`);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || error.message || 'Failed to send SMS');
+    }
+
+    const result = await response.json();
+    console.log(`✅ SMS sent! Details:`, result);
   } catch (error) {
     console.error('❌ Failed to send SMS:', error.message);
     process.exit(1);
