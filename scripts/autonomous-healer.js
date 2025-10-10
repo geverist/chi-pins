@@ -409,11 +409,16 @@ async function processError(supabase, error) {
   log(`\n${'='.repeat(80)}`, 'cyan');
   log(`Processing CRITICAL error: ${error.message.slice(0, 100)}`, 'yellow');
 
+  // Send SMS when CRITICAL error detected
+  await sendSMS(`🚨 CRITICAL Error Detected!\n\nMessage: ${error.message.slice(0, 80)}\n\nSource: ${error.source || 'kiosk'}\nTime: ${new Date(error.timestamp).toLocaleTimeString()}\n\nAutonomous healer starting analysis...`);
+  log('  → SMS sent: Error detected', 'green');
+
   try {
     // 1. Analyze and generate fix
     const fixPlan = await analyzeAndFix(error);
     if (!fixPlan) {
       await markProcessed(supabase, error.id, false, { reason: 'AI analysis failed' });
+      await sendSMS(`❌ Auto-fix FAILED\n\nError: ${error.message.slice(0, 80)}\n\nReason: AI analysis failed\n\nManual intervention required.`);
       return;
     }
 
@@ -432,6 +437,7 @@ async function processError(supabase, error) {
     const applied = await applyFix(fixPlan);
     if (!applied) {
       await markProcessed(supabase, error.id, false, { reason: 'Failed to apply fix', fixPlan });
+      await sendSMS(`❌ Auto-fix FAILED\n\nError: ${error.message.slice(0, 80)}\n\nReason: Could not apply fix to code\n\nManual intervention required.`);
       return;
     }
 
@@ -439,6 +445,7 @@ async function processError(supabase, error) {
     const { branch, committed } = await commitAndPush(error, fixPlan);
     if (!committed) {
       await markProcessed(supabase, error.id, false, { reason: 'Failed to commit', fixPlan });
+      await sendSMS(`❌ Auto-fix FAILED\n\nError: ${error.message.slice(0, 80)}\n\nReason: Git commit/push failed\n\nManual intervention required.`);
       return;
     }
 
