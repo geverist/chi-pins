@@ -86,6 +86,22 @@ function log(message, color = 'reset') {
   console.log(`${colors[color]}[${timestamp}] ${message}${colors.reset}`);
 }
 
+// Load codebase map for AI context
+let codebaseMap = null;
+async function loadCodebaseMap() {
+  try {
+    const mapPath = path.join(process.cwd(), '.codebase-map.json');
+    const mapContent = await fs.readFile(mapPath, 'utf8');
+    codebaseMap = JSON.parse(mapContent);
+    log('✓ Loaded codebase map for AI context', 'green');
+    return true;
+  } catch (err) {
+    log(`⚠️  Could not load codebase map: ${err.message}`, 'yellow');
+    log('   AI will work without codebase context (lower accuracy)', 'yellow');
+    return false;
+  }
+}
+
 // Get unprocessed CRITICAL errors
 async function getUnprocessedErrors(supabase) {
   try {
@@ -661,8 +677,27 @@ async function getConfirmedTasks(supabase) {
 async function createImplementationPlan(task) {
   log(`Creating implementation plan for task: ${task.request_text}`, 'cyan');
 
-  const prompt = `You are an expert React/JavaScript developer implementing a new feature for a kiosk application.
+  // Build codebase context section
+  const codebaseContext = codebaseMap ? `
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 CODEBASE STRUCTURE & GUIDELINES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${JSON.stringify(codebaseMap, null, 2)}
+
+⚠️  CRITICAL RULES:
+• All components are in ${codebaseMap.key_directories?.['src/components/'] || 'src/components/'}
+• State management is in ${codebaseMap.key_directories?.['src/state/'] || 'src/state/'}
+• Use ${codebaseMap.styling_approach?.method || 'inline styles'} - ${codebaseMap.styling_approach?.note || 'NO CSS FILES'}
+• ALWAYS use relative paths from project root (e.g., src/components/HeaderBar.jsx)
+• NEVER use absolute system paths (e.g., /Users/...)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : '\n⚠️  WARNING: No codebase map available - using best guesses\n';
+
+  const prompt = `You are an expert React/JavaScript developer implementing a new feature for a kiosk application.
+${codebaseContext}
 TASK REQUEST:
 "${task.request_text}"
 
@@ -1108,9 +1143,28 @@ Task: ${task.request_text.slice(0, 80)}
 Working on it now!`);
 
   try {
+    // Build codebase context section
+    const codebaseContext = codebaseMap ? `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 CODEBASE STRUCTURE & GUIDELINES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${JSON.stringify(codebaseMap, null, 2)}
+
+⚠️  CRITICAL RULES:
+• All components are in ${codebaseMap.key_directories?.['src/components/'] || 'src/components/'}
+• State management is in ${codebaseMap.key_directories?.['src/state/'] || 'src/state/'}
+• Use ${codebaseMap.styling_approach?.method || 'inline styles'} - ${codebaseMap.styling_approach?.note || 'NO CSS FILES'}
+• ALWAYS use relative paths from project root (e.g., src/components/HeaderBar.jsx)
+• NEVER use absolute system paths (e.g., /Users/...)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : '\n⚠️  WARNING: No codebase map available - using best guesses\n';
+
     // Build enhanced prompt with user guidance
     const prompt = `You are a self-healing AI system implementing a task with user guidance.
-
+${codebaseContext}
 ORIGINAL TASK REQUEST:
 "${task.request_text}"
 
@@ -1418,9 +1472,28 @@ Analyzing failure and creating corrected plan...`);
       }
     }
 
+    // Build codebase context section
+    const codebaseContext = codebaseMap ? `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 CODEBASE STRUCTURE & GUIDELINES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${JSON.stringify(codebaseMap, null, 2)}
+
+⚠️  CRITICAL RULES:
+• All components are in ${codebaseMap.key_directories?.['src/components/'] || 'src/components/'}
+• State management is in ${codebaseMap.key_directories?.['src/state/'] || 'src/state/'}
+• Use ${codebaseMap.styling_approach?.method || 'inline styles'} - ${codebaseMap.styling_approach?.note || 'NO CSS FILES'}
+• ALWAYS use relative paths from project root (e.g., src/components/HeaderBar.jsx)
+• NEVER use absolute system paths (e.g., /Users/...)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+` : '\n⚠️  WARNING: No codebase map available - using best guesses\n';
+
     // Use AI to analyze failure and create corrected plan
     const prompt = `You are a self-healing AI system fixing a failed autonomous task implementation.
-
+${codebaseContext}
 ORIGINAL TASK REQUEST:
 "${task.request_text}"
 
@@ -1740,6 +1813,9 @@ async function main() {
 
   // Check database tables on startup
   await ensureTablesExist(supabase);
+
+  // Load codebase map to provide AI with project context
+  await loadCodebaseMap();
 
   while (true) {
     try {

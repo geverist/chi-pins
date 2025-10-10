@@ -1,0 +1,97 @@
+{
+  "project": "chi-pins",
+  "description": "Interactive kiosk map application for Chicago Mike's",
+  "architecture": "React SPA with Leaflet maps, Supabase backend, Capacitor for mobile",
+
+  "project_overview": {
+    "purpose": "Digital interactive kiosk for Chicago Mike's restaurant/bar featuring an interactive map of Chicago with local points of interest, entertainment features, and customer engagement tools",
+    "deployment": "Physical touchscreen kiosk in Chicago Mike's establishment, built with Capacitor for Android kiosk mode",
+    "target_users": "Restaurant/bar customers who walk up and interact with the kiosk while waiting for food, drinks, or entertainment",
+    "key_features": [
+      "Interactive Leaflet map of Chicago with pins for restaurants, bars, landmarks, attractions",
+      "Music jukebox integration (Spotify + HEOS) for controlling venue music",
+      "Games menu with Chicago-themed games (Deep Dish, Popcorn, Trivia, Hotdog)",
+      "Food ordering system integrated with restaurant",
+      "Photo booth with Chicago-themed backgrounds",
+      "Weather widget with hot dog recommendations",
+      "Voice AI assistant for recommendations and help",
+      "Historical 'Then and Now' photo comparisons of Chicago",
+      "Customer feedback/comments system",
+      "Idle attractor mode with voice greeting to draw customers in"
+    ],
+    "business_context": "Chicago Mike's is a Chicago-themed restaurant/bar. The kiosk serves as entertainment, brand engagement, and a functional tool for ordering and jukebox control. The app should feel fun, Chicago-focused, and easy to use for walk-up customers of all ages.",
+    "technical_context": "Runs on Android tablet in kiosk mode. Self-healing autonomous system monitors for errors and can implement features via SMS. Heavy use of admin settings for runtime configuration without deployment."
+  },
+
+  "key_directories": {
+    "src/": "Main application source code",
+    "src/components/": "React components (UI elements, modals, widgets)",
+    "src/hooks/": "Custom React hooks for state and behavior",
+    "src/state/": "Global state management hooks",
+    "src/lib/": "Utility libraries and helpers",
+    "src/utils/": "Helper functions and utilities",
+    "api/": "Serverless API endpoints (Vercel functions)",
+    "scripts/": "Build scripts and automation tools"
+  },
+
+  "state_management": {
+    "src/state/useAdminSettings.js": "All app settings and configuration (100+ settings)",
+    "src/state/useNowPlaying.jsx": "Music player state (Jukebox, HEOS)",
+    "src/hooks/useNavigationSettings.js": "Navigation menu state (games, jukebox, order, etc.)"
+  },
+
+  "core_components": {
+    "src/App.jsx": "Main app component, layout orchestration, all modals",
+    "src/components/AdminPanel.jsx": "Admin configuration panel (4000+ lines)",
+    "src/components/HeaderBar.jsx": "Top navigation bar with logo and menu",
+    "src/components/Footer.jsx": "Bottom navigation and pin editor form",
+    "src/components/MapShell.jsx": "Main Leaflet map container",
+    "src/components/MobileNavMenu.jsx": "Mobile navigation menu"
+  },
+
+  "overlays_and_widgets": {
+    "src/components/AttractorOverlay.jsx": "Tap/pinch hints overlay",
+    "src/components/WalkupAttractor.jsx": "Full-screen idle attractor with voice greeting",
+    "src/components/PopularSpotsOverlay.jsx": "Popular Chicago spots overlay",
+    "src/components/VoiceAssistant.jsx": "Voice AI assistant widget",
+    "src/components/WeatherWidget.jsx": "Weather widget with hot dog recommendations",
+    "src/components/QRCodeWidget.jsx": "QR code for mobile continuation"
+  },
+
+  "features": {
+    "src/components/Jukebox.jsx": "Music player with Spotify/HEOS integration",
+    "src/components/GamesMenu.jsx": "Games launcher (Deep Dish, Popcorn, Trivia, Hotdog)",
+    "src/components/OrderMenu.jsx": "Food ordering system",
+    "src/components/EnhancedPhotoBooth.jsx": "Photo booth with backgrounds",
+    "src/components/ThenAndNow.jsx": "Historical photo comparison",
+    "src/components/CommentsModal.jsx": "Customer feedback/comments"
+  },
+
+  "styling_approach": {
+    "method": "Inline styles (React style objects)",
+    "no_css_files": true,
+    "note": "DO NOT create .css files - modify JSX components directly with style={{ }} attributes"
+  },
+
+  "common_patterns": {
+    "settings_access": "const { settings: adminSettings } = useAdminSettings()",
+    "nav_settings_access": "const { settings: navSettings } = useNavigationSettings()",
+    "modal_state": "useState hooks in App.jsx, passed as props",
+    "admin_save": "await saveAdminSettings(updatedSettings)"
+  },
+
+  "file_path_rules": {
+    "use_relative_paths": "Always use paths relative to project root, never absolute system paths",
+    "component_paths": "src/components/ComponentName.jsx",
+    "hook_paths": "src/hooks/useHookName.js",
+    "state_paths": "src/state/useStateName.js",
+    "lib_paths": "src/lib/libraryName.js"
+  },
+
+  "frequently_modified_files": {
+    "for_ui_changes": "src/components/HeaderBar.jsx, src/components/Footer.jsx, src/App.jsx",
+    "for_settings": "src/state/useAdminSettings.js",
+    "for_navigation": "src/hooks/useNavigationSettings.js",
+    "for_overlays": "src/components/AttractorOverlay.jsx, src/components/WalkupAttractor.jsx"
+  }
+}
