@@ -4856,6 +4856,18 @@ function NumberInput({ value, min, max, onChange }) {
   )
 }
 
+function TextInput({ value, onChange, placeholder, style }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      style={{...inp.number, ...style}}
+    />
+  )
+}
+
 function ModerationTable({ rows = [], selected, onToggle }) {
   return (
     <div style={{ overflow: 'auto', maxHeight: 420, border: '1px solid #2b3037', borderRadius: 12 }}>
