@@ -1080,19 +1080,29 @@ Analyzing failure and creating corrected plan...`);
         log(`  → Found ${stdout.split('\n').length} potential files`, 'green');
 
         // Try to find and read the most likely candidate files based on the task
-        const taskKeywords = task.request_text.toLowerCase().match(/\b(logo|header|button|menu|nav|footer|sidebar|modal|form)\b/g);
+        const taskKeywords = task.request_text.toLowerCase().match(/\b(logo|header|button|menu|nav|footer|sidebar|modal|form|bar|top)\b/g);
         if (taskKeywords && taskKeywords.length > 0) {
-          const keyword = taskKeywords[0];
-          log(`  → Searching for ${keyword}-related components`, 'blue');
+          const uniqueKeywords = [...new Set(taskKeywords)]; // Remove duplicates
+          log(`  → Searching for components matching: ${uniqueKeywords.join(', ')}`, 'blue');
 
           try {
-            // Find component files that match the keyword
-            const { stdout: componentFiles } = await execAsync(
-              `find ${process.cwd()}/src/components -iname "*${keyword}*" \\( -name "*.jsx" -o -name "*.js" \\) | head -3`
-            );
+            // Search for each keyword and collect all matching files
+            let allFiles = new Set();
+            for (const keyword of uniqueKeywords) {
+              try {
+                const { stdout: componentFiles } = await execAsync(
+                  `find ${process.cwd()}/src/components -iname "*${keyword}*" \\( -name "*.jsx" -o -name "*.js" \\) 2>/dev/null || true`
+                );
+                const files = componentFiles.trim().split('\n').filter(f => f && f.length > 0);
+                files.forEach(f => allFiles.add(f));
+              } catch (err) {
+                // Ignore individual keyword search failures
+              }
+            }
 
-            const files = componentFiles.trim().split('\n').filter(f => f);
-            for (const file of files) {
+            // Read up to 3 most relevant files
+            const filesToRead = Array.from(allFiles).slice(0, 3);
+            for (const file of filesToRead) {
               try {
                 const content = await fs.readFile(file, 'utf8');
                 const relativePath = file.replace(process.cwd() + '/', '');
