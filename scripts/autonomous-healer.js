@@ -1014,6 +1014,299 @@ ${pr_url}`);
   }
 }
 
+// ==================== SELF-HEALING FOR FAILED TASKS ====================
+// Detect failed tasks and retry with corrected plans
+
+// Get failed tasks that can be retried (file-not-found errors, etc.)
+async function getFailedTasksForRetry(supabase) {
+  try {
+    const { data, error } = await supabase
+      .from('autonomous_tasks')
+      .select('*')
+      .eq('status', 'failed')
+      .is('retry_count', null) // Only tasks that haven't been retried yet
+      .order('created_at', { ascending: true})
+      .limit(1);
+
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    log(`Failed to fetch failed tasks: ${err.message}`, 'red');
+    return [];
+  }
+}
+
+// Analyze task failure and create corrected implementation plan
+async function analyzeTaskFailureAndRetry(supabase, task) {
+  log(`\n${'='.repeat(80)}`, 'cyan');
+  log(`🔄 Self-Healing: Analyzing failed task`, 'yellow');
+  log(`Original request: ${task.request_text}`, 'cyan');
+  log(`Failure reason: ${task.error_message}`, 'red');
+
+  // Update status to retrying
+  await supabase
+    .from('autonomous_tasks')
+    .update({
+      status: 'retrying',
+      retry_count: (task.retry_count || 0) + 1,
+      retry_started_at: new Date().toISOString()
+    })
+    .eq('id', task.id);
+
+  // Send SMS notification
+  await sendSMS(`🔄 Self-Healing Retry
+
+Task: ${task.request_text.slice(0, 80)}
+
+Previous error: ${task.error_message.slice(0, 100)}
+
+Analyzing failure and creating corrected plan...`);
+
+  try {
+    // Get list of files that might be relevant
+    let fileSearchResults = '';
+
+    // Extract file references from error message
+    const fileMatches = task.error_message.match(/['"`]([^'"`]+\.(js|jsx|ts|tsx|json))['"`]/g);
+    if (fileMatches) {
+      const searchedFile = fileMatches[0].replace(/['"`]/g, '');
+      log(`  → Searching for similar files to: ${searchedFile}`, 'blue');
+
+      try {
+        // Search for similar files using find command
+        const { stdout } = await execAsync(`find ${process.cwd()}/src -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | head -50`);
+        fileSearchResults = `Available files in codebase:\n${stdout}`;
+        log(`  → Found ${stdout.split('\n').length} potential files`, 'green');
+      } catch (err) {
+        log(`  → File search warning: ${err.message}`, 'yellow');
+      }
+    }
+
+    // Use AI to analyze failure and create corrected plan
+    const prompt = `You are a self-healing AI system fixing a failed autonomous task implementation.
+
+ORIGINAL TASK REQUEST:
+"${task.request_text}"
+
+ORIGINAL TASK ANALYSIS:
+Type: ${task.task_type}
+Complexity: ${task.estimated_complexity}
+
+FAILURE INFORMATION:
+Error Message: ${task.error_message}
+${task.error_details ? `Error Details: ${JSON.stringify(task.error_details)}` : ''}
+
+${fileSearchResults ? `\n${fileSearchResults}\n` : ''}
+
+SELF-HEALING TASK:
+1. Analyze why the previous implementation failed
+2. Search the actual codebase for the correct files
+3. Create a corrected implementation plan that will succeed
+4. If a file doesn't exist, you may need to use existing files or create new ones
+
+Return a JSON response with this structure:
+{
+  "failure_analysis": "Why the previous attempt failed",
+  "correction_strategy": "How you're fixing the approach",
+  "implementation_strategy": "High-level approach to implementing this feature",
+  "changes": [
+    {
+      "file_to_edit": "path/to/ACTUAL/file.js",
+      "old_code": "exact code to replace (must match file exactly)",
+      "new_code": "new implementation",
+      "change_description": "What this change does"
+    }
+  ],
+  "confidence": 0-100,
+  "test_recommendation": "How to verify this works"
+}
+
+IMPORTANT GUIDELINES:
+- Use ACTUAL file paths from the codebase, not guessed paths
+- If config file is needed, use existing settings files like src/state/useAdminSettings.js
+- Make minimal, focused changes to existing files
+- old_code must match EXACTLY (including whitespace)
+- Ensure changes will work with actual codebase structure`;
+
+    let responseText;
+
+    if (CONFIG.aiProvider === 'anthropic') {
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+      responseText = message.content[0].text;
+    } else {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+      responseText = completion.choices[0].message.content;
+    }
+
+    // Extract JSON
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('AI did not return valid JSON');
+    }
+
+    const correctedPlan = JSON.parse(jsonMatch[0]);
+
+    log(`  → Failure Analysis: ${correctedPlan.failure_analysis}`, 'cyan');
+    log(`  → Correction Strategy: ${correctedPlan.correction_strategy}`, 'cyan');
+    log(`  → New Confidence: ${correctedPlan.confidence}%`, correctedPlan.confidence >= 80 ? 'green' : 'yellow');
+
+    // Check if confidence is reasonable
+    if (correctedPlan.confidence < 70) {
+      log(`  → Confidence still too low (${correctedPlan.confidence}%), giving up`, 'yellow');
+
+      await supabase
+        .from('autonomous_tasks')
+        .update({
+          status: 'failed',
+          error_message: `Retry failed: Low confidence (${correctedPlan.confidence}%)`,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
+
+      await sendSMS(`❌ Self-Healing Failed
+
+Task: ${task.request_text.slice(0, 80)}
+
+Could not find a reliable fix after analysis.
+
+Manual intervention required.`);
+      return;
+    }
+
+    // Try to apply the corrected changes
+    const { success, appliedFiles, error } = await applyTaskChanges(correctedPlan);
+
+    if (!success) {
+      await supabase
+        .from('autonomous_tasks')
+        .update({
+          status: 'failed',
+          error_message: `Retry failed: ${error}`,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
+
+      await sendSMS(`❌ Self-Healing Failed
+
+Task: ${task.request_text.slice(0, 80)}
+
+Retry error: ${error}
+
+Manual intervention required.`);
+      return;
+    }
+
+    // Commit and push
+    const { branch, committed } = await commitTask(task, correctedPlan, appliedFiles);
+
+    if (!committed) {
+      await supabase
+        .from('autonomous_tasks')
+        .update({
+          status: 'failed',
+          error_message: 'Retry: Git operations failed',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
+
+      await sendSMS(`❌ Self-Healing Failed
+
+Task: ${task.request_text.slice(0, 80)}
+
+Git operations failed on retry.
+
+Manual intervention required.`);
+      return;
+    }
+
+    // Merge or create PR
+    const taskForPR = {
+      message: `[Self-Healed] ${task.request_text}`,
+      id: task.id,
+    };
+    const planForPR = {
+      analysis: `Self-healing retry. ${correctedPlan.failure_analysis}`,
+      fix_strategy: correctedPlan.implementation_strategy,
+      confidence: correctedPlan.confidence,
+      test_recommendation: correctedPlan.test_recommendation,
+    };
+
+    const { merged, pr_url } = await mergeOrCreatePR(branch, taskForPR, planForPR);
+
+    // Mark as completed
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: merged ? 'deployed' : 'completed',
+        success: true,
+        git_branch: branch,
+        git_commits: [branch],
+        deployment_url: pr_url || null,
+        code_changes: JSON.stringify(correctedPlan.changes),
+        completed_at: new Date().toISOString(),
+        self_healed: true, // Mark that this was self-healed
+      })
+      .eq('id', task.id);
+
+    // Send success notification
+    if (merged) {
+      await sendSMS(`✅ Self-Healing SUCCESS!
+
+Task: ${task.request_text}
+
+Fixed on retry: ${correctedPlan.correction_strategy.slice(0, 100)}
+
+Deployment in progress.`);
+      log('  → SMS sent: Self-healing successful', 'green');
+    } else if (pr_url) {
+      await sendSMS(`✅ Self-Healing SUCCESS!
+
+Task: ${task.request_text}
+
+PR created after retry:
+${pr_url}`);
+      log('  → SMS sent: Self-healing PR created', 'green');
+    }
+
+    log('✅ Self-healing completed successfully', 'green');
+
+  } catch (err) {
+    log(`❌ Self-healing failed: ${err.message}`, 'red');
+
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: 'failed',
+        error_message: `Self-healing exception: ${err.message}`,
+        error_details: { stack: err.stack },
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', task.id);
+
+    await sendSMS(`❌ Self-Healing Exception
+
+Task: ${task.request_text.slice(0, 80)}
+
+Error: ${err.message}
+
+Manual intervention required.`);
+  }
+}
+
 // Ensure autonomous_tasks table exists
 async function ensureTablesExist(supabase) {
   log('Checking database tables...', 'blue');
@@ -1113,23 +1406,37 @@ async function main() {
             .eq('id', tasks[0].id);
         }
       } else {
-        // No tasks, check for errors
-        const errors = await getUnprocessedErrors(supabase);
+        // No confirmed tasks, check for failed tasks that need retry (self-healing)
+        const failedTasks = await getFailedTasksForRetry(supabase);
 
-        if (errors.length > 0) {
-          log(`\nFound ${errors.length} unprocessed CRITICAL error(s)`, 'cyan');
+        if (failedTasks.length > 0) {
+          log(`\nFound ${failedTasks.length} failed task(s) for self-healing retry`, 'cyan');
 
           if (CONFIG.enabled || CONFIG.dryRun) {
-            await processError(supabase, errors[0]);
+            await analyzeTaskFailureAndRetry(supabase, failedTasks[0]);
             fixesThisHour++;
           } else {
-            log('Autonomous fixing disabled, skipping', 'yellow');
-            await markProcessed(supabase, errors[0].id, false, {
-              reason: 'Autonomous fixing disabled'
-            });
+            log('Autonomous development disabled, skipping self-healing', 'yellow');
           }
         } else {
-          log('No tasks or errors to process', 'green');
+          // No failed tasks, check for errors
+          const errors = await getUnprocessedErrors(supabase);
+
+          if (errors.length > 0) {
+            log(`\nFound ${errors.length} unprocessed CRITICAL error(s)`, 'cyan');
+
+            if (CONFIG.enabled || CONFIG.dryRun) {
+              await processError(supabase, errors[0]);
+              fixesThisHour++;
+            } else {
+              log('Autonomous fixing disabled, skipping', 'yellow');
+              await markProcessed(supabase, errors[0].id, false, {
+                reason: 'Autonomous fixing disabled'
+              });
+            }
+          } else {
+            log('No tasks or errors to process', 'green');
+          }
         }
       }
 
