@@ -1,5 +1,6 @@
 // src/hooks/useProximityDetection.js
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLearningSession } from './useLearningSession';
 
 /**
  * useProximityDetection - Detects when someone approaches the kiosk using front camera
@@ -21,6 +22,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  * @param {Function} options.onAmbientCleared - Callback when ambient area clears
  * @param {Function} options.onStareDetected - Callback when someone stares at screen (prolonged close presence)
  * @param {Function} options.onStareEnded - Callback when stare ends
+ * @param {boolean} options.enableLearning - Enable learning session recording (default true)
+ * @param {string} options.tenantId - Tenant ID for session recording
  */
 export function useProximityDetection({
   enabled = false,
@@ -36,6 +39,8 @@ export function useProximityDetection({
   onAmbientCleared = () => {},
   onStareDetected = () => {},
   onStareEnded = () => {},
+  enableLearning = true,
+  tenantId = 'chicago-mikes',
 } = {}) {
   const [isPersonDetected, setIsPersonDetected] = useState(false); // Walkup range
   const [isAmbientDetected, setIsAmbientDetected] = useState(false); // Ambient range
@@ -55,6 +60,15 @@ export function useProximityDetection({
   const wasStaringRef = useRef(false); // Stare detection
   const stareStartTimeRef = useRef(null); // When stare started
   const frameCountRef = useRef(0); // For periodic logging
+
+  // Learning session hook
+  const {
+    startSession,
+    endSession,
+    recordInteraction,
+    recordConversion,
+    getSessionStatus,
+  } = useLearningSession({ enabled: enableLearning, tenantId });
 
   // Initialize camera
   const initCamera = useCallback(async () => {
@@ -209,9 +223,28 @@ export function useProximityDetection({
 
         if (ambientDetected) {
           console.log('[ProximityDetection] Ambient motion detected! Proximity:', Math.round(proximity));
+
+          // Start learning session for ambient detection
+          if (enableLearning) {
+            startSession({
+              proximityLevel: Math.round(proximity),
+              intent: 'ambient',
+              confidence: Math.round(motionScore),
+              baseline: 0,
+              threshold: ambientThreshold,
+              triggeredAction: 'ambient',
+            });
+          }
+
           onAmbientDetected({ proximityLevel: Math.round(proximity) });
         } else {
           console.log('[ProximityDetection] Ambient area cleared');
+
+          // End session when they leave ambient range
+          if (enableLearning && !personDetected) {
+            endSession({ outcome: 'abandoned' });
+          }
+
           onAmbientCleared();
         }
       }
@@ -223,9 +256,28 @@ export function useProximityDetection({
 
         if (personDetected) {
           console.log('[ProximityDetection] Person approaching! Proximity:', Math.round(proximity));
+
+          // Start learning session for walkup detection
+          if (enableLearning) {
+            startSession({
+              proximityLevel: Math.round(proximity),
+              intent: 'approaching',
+              confidence: Math.round(motionScore),
+              baseline: 0,
+              threshold: proximityThreshold,
+              triggeredAction: 'walkup',
+            });
+          }
+
           onApproach({ proximityLevel: Math.round(proximity) });
         } else {
           console.log('[ProximityDetection] Person left walkup zone');
+
+          // End session when they leave walkup range
+          if (enableLearning) {
+            endSession({ outcome: 'abandoned' });
+          }
+
           onLeave();
         }
       }
@@ -247,6 +299,19 @@ export function useProximityDetection({
           wasStaringRef.current = true;
           setIsStaring(true);
           console.log('[ProximityDetection] Stare detected! Duration:', duration, 'ms');
+
+          // Start learning session for stare detection (more engaged)
+          if (enableLearning) {
+            startSession({
+              proximityLevel: Math.round(proximity),
+              intent: 'stopped',
+              confidence: Math.round(motionScore),
+              baseline: 0,
+              threshold: stareThreshold,
+              triggeredAction: 'stare',
+            });
+          }
+
           onStareDetected({ proximityLevel: Math.round(proximity), stareDuration: duration });
         }
       } else {
@@ -329,5 +394,9 @@ export function useProximityDetection({
     proximityLevel,
     cameraError,
     hasCamera: !!videoRef.current,
+    // Learning session methods (for parent components to record interactions)
+    recordInteraction,     // Call when user interacts (touches screen, makes selection)
+    recordConversion,      // Call when user completes an action (places pin, etc.)
+    getSessionStatus,      // Get current session info
   };
 }
