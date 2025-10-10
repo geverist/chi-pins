@@ -1,32 +1,42 @@
 // src/hooks/useLearningSession.js
 // Handles recording of proximity detection sessions for adaptive learning
+// Supports multiple concurrent sessions for multi-person tracking
 import { useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
 export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' } = {}) {
-  const currentSessionRef = useRef(null);
+  // Changed to Map to support multiple concurrent sessions (one per person)
+  const activeSessionsRef = useRef(new Map()); // personId -> session data
 
   /**
-   * Start a new learning session
+   * Start a new learning session for a specific person
    */
   const startSession = useCallback(async ({
+    personId = 'default', // NEW: Person ID from multi-person tracker
     proximityLevel,
     intent, // 'approaching', 'stopped', 'passing', 'ambient'
     confidence = 0,
     baseline = 0,
     threshold = 0,
     triggeredAction = null, // 'walkup', 'ambient', 'stare', null
+    // NEW: Gaze tracking fields
+    isLookingAtKiosk = null,
+    headPose = null, // {yaw, pitch, roll}
+    distanceScore = 0,
+    trajectory = [],
+    velocity = null, // {x, y}
   }) => {
     if (!enabled) return;
 
-    // End previous session if one exists
-    if (currentSessionRef.current) {
-      await endSession({ outcome: 'abandoned' });
+    // End previous session for this person if one exists
+    if (activeSessionsRef.current.has(personId)) {
+      await endSession({ personId, outcome: 'abandoned' });
     }
 
     const now = new Date();
     const session = {
       id: crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      person_id: personId,
       tenant_id: tenantId,
       proximity_level: proximityLevel,
       intent,
@@ -38,10 +48,20 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
       triggered_action: triggeredAction,
       started_at: now.toISOString(),
       session_start_time: Date.now(),
+      // Gaze tracking fields
+      is_looking_at_kiosk: isLookingAtKiosk,
+      head_pose_yaw: headPose?.yaw || null,
+      head_pose_pitch: headPose?.pitch || null,
+      head_pose_roll: headPose?.roll || null,
+      distance_score: distanceScore,
+      trajectory_data: trajectory,
+      velocity_x: velocity?.x || null,
+      velocity_y: velocity?.y || null,
     };
 
-    currentSessionRef.current = session;
-    console.log('[LearningSession] 📊 Session started:', session.id, '- Intent:', intent, '- Action:', triggeredAction);
+    activeSessionsRef.current.set(personId, session);
+    const gazeInfo = isLookingAtKiosk ? ' [LOOKING AT KIOSK]' : isLookingAtKiosk === false ? ' [looking away]' : '';
+    console.log(`[LearningSession] 📊 Session started: ${session.id} - Person: ${personId} - Intent: ${intent}${gazeInfo}`);
 
     return session;
   }, [enabled, tenantId]);
@@ -50,12 +70,18 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
    * Update session with engagement data
    */
   const updateEngagement = useCallback(({
+    personId = 'default',
     interacted = false,
     actionCompleted = false,
+    // NEW: Allow updating gaze data during session
+    isLookingAtKiosk = undefined,
+    headPose = undefined,
+    trajectory = undefined,
   }) => {
-    if (!enabled || !currentSessionRef.current) return;
+    if (!enabled) return;
 
-    const session = currentSessionRef.current;
+    const session = activeSessionsRef.current.get(personId);
+    if (!session) return;
 
     if (interacted) {
       if (!session.first_interaction_time) {
@@ -68,19 +94,35 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
       session.converted = true;
     }
 
-    console.log('[LearningSession] 📝 Engagement updated:', session.id, '- Interacted:', interacted, '- Converted:', actionCompleted);
+    // Update gaze data if provided
+    if (isLookingAtKiosk !== undefined) {
+      session.is_looking_at_kiosk = isLookingAtKiosk;
+    }
+    if (headPose !== undefined) {
+      session.head_pose_yaw = headPose.yaw;
+      session.head_pose_pitch = headPose.pitch;
+      session.head_pose_roll = headPose.roll;
+    }
+    if (trajectory !== undefined) {
+      session.trajectory_data = trajectory;
+    }
+
+    console.log(`[LearningSession] 📝 Engagement updated: ${session.id} - Person: ${personId} - Interacted: ${interacted} - Converted: ${actionCompleted}`);
   }, [enabled]);
 
   /**
    * End the current session and save to database
    */
   const endSession = useCallback(async ({
+    personId = 'default',
     outcome = 'abandoned', // 'engaged', 'abandoned', 'converted'
     feedbackWasCorrect = null,
   } = {}) => {
-    if (!enabled || !currentSessionRef.current) return;
+    if (!enabled) return;
 
-    const session = currentSessionRef.current;
+    const session = activeSessionsRef.current.get(personId);
+    if (!session) return;
+
     const now = Date.now();
     const totalDuration = now - session.session_start_time;
 
@@ -102,6 +144,7 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
 
     const sessionData = {
       id: session.id,
+      person_id: session.person_id,
       tenant_id: session.tenant_id,
       proximity_level: session.proximity_level,
       intent: session.intent,
@@ -118,9 +161,18 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
       feedback_was_correct: feedbackWasCorrect,
       started_at: session.started_at,
       created_at: new Date().toISOString(),
+      // Gaze tracking fields
+      is_looking_at_kiosk: session.is_looking_at_kiosk,
+      head_pose_yaw: session.head_pose_yaw,
+      head_pose_pitch: session.head_pose_pitch,
+      head_pose_roll: session.head_pose_roll,
+      distance_score: session.distance_score,
+      trajectory_data: session.trajectory_data,
+      velocity_x: session.velocity_x,
+      velocity_y: session.velocity_y,
     };
 
-    console.log('[LearningSession] 💾 Saving session:', session.id, '- Outcome:', outcome, '- Duration:', Math.round(totalDuration / 1000), 's');
+    console.log(`[LearningSession] 💾 Saving session: ${session.id} - Person: ${personId} - Outcome: ${outcome} - Duration: ${Math.round(totalDuration / 1000)}s`);
 
     try {
       const { error } = await supabase
@@ -136,43 +188,71 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
       console.error('[LearningSession] ❌ Error saving session:', err);
     }
 
-    currentSessionRef.current = null;
+    // Remove session from active sessions
+    activeSessionsRef.current.delete(personId);
   }, [enabled]);
 
   /**
    * Mark that user interacted (touched screen, made selection, etc.)
    */
-  const recordInteraction = useCallback(() => {
-    updateEngagement({ interacted: true });
+  const recordInteraction = useCallback((personId = 'default') => {
+    updateEngagement({ personId, interacted: true });
   }, [updateEngagement]);
 
   /**
    * Mark that user completed an action (placed pin, made purchase, etc.)
    */
-  const recordConversion = useCallback(() => {
-    updateEngagement({ interacted: true, actionCompleted: true });
+  const recordConversion = useCallback((personId = 'default') => {
+    updateEngagement({ personId, interacted: true, actionCompleted: true });
   }, [updateEngagement]);
 
   /**
    * Get current session status
+   * @param {string} personId - Optional person ID. If provided, returns status for that person only.
+   *                            If omitted, returns array of all active sessions.
    */
-  const getSessionStatus = useCallback(() => {
-    if (!currentSessionRef.current) {
-      return { active: false };
+  const getSessionStatus = useCallback((personId = null) => {
+    // Get status for specific person
+    if (personId) {
+      const session = activeSessionsRef.current.get(personId);
+      if (!session) {
+        return { active: false, personId };
+      }
+
+      const now = Date.now();
+      const duration = now - session.session_start_time;
+      const engaged = !!session.first_interaction_time;
+
+      return {
+        active: true,
+        personId,
+        sessionId: session.id,
+        duration,
+        engaged,
+        converted: session.converted || false,
+        isLookingAtKiosk: session.is_looking_at_kiosk,
+      };
     }
 
-    const session = currentSessionRef.current;
-    const now = Date.now();
-    const duration = now - session.session_start_time;
-    const engaged = !!session.first_interaction_time;
+    // Get status for all active sessions
+    const allSessions = [];
+    for (const [pid, session] of activeSessionsRef.current.entries()) {
+      const now = Date.now();
+      const duration = now - session.session_start_time;
+      const engaged = !!session.first_interaction_time;
 
-    return {
-      active: true,
-      sessionId: session.id,
-      duration,
-      engaged,
-      converted: session.converted || false,
-    };
+      allSessions.push({
+        active: true,
+        personId: pid,
+        sessionId: session.id,
+        duration,
+        engaged,
+        converted: session.converted || false,
+        isLookingAtKiosk: session.is_looking_at_kiosk,
+      });
+    }
+
+    return allSessions.length > 0 ? allSessions : [{ active: false }];
   }, []);
 
   return {
