@@ -43,6 +43,14 @@ export function useIdleAttractor({
   }, [])
 
   const bump = useCallback(() => {
+    console.log('[IdleAttractor] bump() called - resetting idle timer', {
+      draft: !!draft,
+      submapOpen,
+      exploring,
+      adminOpen,
+      timeoutMs
+    })
+
     clearTimeout(timerRef.current)
     clearTimeout(confettiTimer.current)
 
@@ -54,10 +62,16 @@ export function useIdleAttractor({
     clearAllConfetti() // Immediately remove all confetti on user interaction
 
     // While user is interacting (editor/submap/explore/admin), keep attractor hidden
-    if (draft || submapOpen || exploring || adminOpen) setShowAttractor(false)
+    if (draft || submapOpen || exploring || adminOpen) {
+      console.log('[IdleAttractor] User is interacting - hiding attractor')
+      setShowAttractor(false)
+    }
 
     // Don't start idle timer if admin panel is open
-    if (adminOpen) return
+    if (adminOpen) {
+      console.log('[IdleAttractor] Admin panel open - not starting timer')
+      return
+    }
 
     // Set timer for confetti screensaver (only if enabled)
     if (confettiScreensaverEnabled) {
@@ -72,7 +86,9 @@ export function useIdleAttractor({
     }
 
     // Set timer for full idle reset
+    console.log(`[IdleAttractor] Starting idle timer for ${timeoutMs / 1000}s`)
     timerRef.current = setTimeout(() => {
+      console.log('[IdleAttractor] 🔔 Idle timeout reached - showing attractor and resetting map')
       try {
         // Let the app close the editor, submap, etc.
         onIdle?.()
