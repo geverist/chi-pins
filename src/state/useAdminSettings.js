@@ -282,6 +282,14 @@ const DEFAULTS = {
   consoleWebhookLevels: ['log', 'error', 'warn', 'info'], // Log levels to capture
   consoleWebhookBatchDelayMs: 2000,          // Batch delay (ms)
   consoleWebhookMaxBatchSize: 50,            // Max events per batch
+
+  // Autonomous Self-Healing System
+  autonomousHealingEnabled: false,           // Enable autonomous error fixing with AI
+  autonomousHealingAutoMerge: false,         // Auto-merge fixes (true) or create PRs for review (false)
+  autonomousHealingMaxFixesPerHour: 5,       // Safety: Maximum fixes per hour
+  autonomousHealingMinConfidence: 80,        // Minimum AI confidence to apply fix (0-100)
+  autonomousHealingNotifySMS: true,          // Send SMS for every auto-fix
+  autonomousHealingPollInterval: 60,         // Seconds between checking for new errors
 }
 
 const LS_KEY = 'adminSettings_v1'

@@ -51,3 +51,4 @@ android/platform-tools/
 EOF
 .vercel
 public/chi-pins.apk
+actions-runner/
