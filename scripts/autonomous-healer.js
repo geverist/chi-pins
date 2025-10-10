@@ -3,7 +3,7 @@
 //
 // Complete self-healing loop:
 // 1. Polls database for new CRITICAL errors
-// 2. Analyzes error with AI (Anthropic Claude)
+// 2. Analyzes error with AI (Anthropic Claude or OpenAI GPT-4)
 // 3. Reads source code
 // 4. Generates fix
 // 5. Applies fix to code
@@ -14,6 +14,8 @@
 //
 // Usage:
 //   ANTHROPIC_API_KEY=xxx AUTO_FIX_ENABLED=true node scripts/autonomous-healer.js
+//   or
+//   OPENAI_API_KEY=xxx AUTO_FIX_ENABLED=true node scripts/autonomous-healer.js
 //
 // Safety:
 //   - Only fixes CRITICAL errors
@@ -23,6 +25,7 @@
 //   - SMS notifications for all actions
 
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -39,16 +42,24 @@ const CONFIG = {
   minSeverity: 'CRITICAL',
   maxFixesPerHour: 5, // Safety limit
   dryRun: process.env.DRY_RUN === 'true',
+  aiProvider: process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai', // Auto-detect
 };
 
 // Tracking
 let fixesThisHour = 0;
 let lastHourReset = Date.now();
 
-// Initialize clients
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// Initialize AI clients (only the one with API key)
+let anthropic, openai;
+if (CONFIG.aiProvider === 'anthropic') {
+  anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+} else {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
 function getSupabaseClient() {
   return createClient(
@@ -186,21 +197,36 @@ IMPORTANT:
 - Be conservative - prefer simple defensive fixes`;
 
   try {
-    const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2000,
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
-    });
+    let responseText;
 
-    const responseText = message.content[0].text;
+    if (CONFIG.aiProvider === 'anthropic') {
+      // Use Anthropic Claude
+      const message = await anthropic.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+      responseText = message.content[0].text;
+    } else {
+      // Use OpenAI GPT-4
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+      responseText = completion.choices[0].message.content;
+    }
 
     // Extract JSON from response
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error('Claude did not return valid JSON');
+      throw new Error('AI did not return valid JSON');
     }
 
     const fixPlan = JSON.parse(jsonMatch[0]);
@@ -448,6 +474,7 @@ async function processError(supabase, error) {
 async function main() {
   log('🤖 Autonomous Healer Starting', 'green');
   log(`Configuration:`, 'cyan');
+  log(`  - AI Provider: ${CONFIG.aiProvider.toUpperCase()}`, 'blue');
   log(`  - Poll interval: ${CONFIG.pollIntervalSeconds}s`, 'blue');
   log(`  - Enabled: ${CONFIG.enabled}`, 'blue');
   log(`  - Auto-merge: ${CONFIG.autoMerge}`, 'blue');
@@ -460,9 +487,9 @@ async function main() {
     log('Set AUTO_FIX_ENABLED=true to enable autonomous fixing\n', 'yellow');
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    log('\n⚠️  ANTHROPIC_API_KEY not set', 'yellow');
-    log('AI-powered fixes will not work\n', 'yellow');
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENAI_API_KEY) {
+    log('\n⚠️  No AI API key configured', 'yellow');
+    log('Set ANTHROPIC_API_KEY or OPENAI_API_KEY to enable AI fixes\n', 'yellow');
   }
 
   const supabase = getSupabaseClient();
