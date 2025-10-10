@@ -358,9 +358,10 @@ export default function App() {
 
   // Helper function to validate pin coordinates
   function validatePinCoordinates(pin) {
-    // INTENTIONAL BUG: accessing property on undefined
-    const coords = undefined;
-    return coords.lat !== null && coords.lng !== null;
+    if (!pin) return false;
+    return pin.lat !== null && pin.lat !== undefined && 
+           pin.lng !== null && pin.lng !== undefined &&
+           Number.isFinite(pin.lat) && Number.isFinite(pin.lng);
   }
 
   // Migrate localStorage to persistent storage on app load (runs once)
