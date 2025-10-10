@@ -1,6 +1,6 @@
-const CACHE_NAME = 'chi-pins-v1';
-const RUNTIME_CACHE = 'chi-pins-runtime-v1';
-const MAP_TILES_CACHE = 'chi-pins-map-tiles-v1';
+const CACHE_NAME = 'chi-pins-v2';
+const RUNTIME_CACHE = 'chi-pins-runtime-v2';
+const MAP_TILES_CACHE = 'chi-pins-map-tiles-v2';
 
 // Assets to cache immediately
 const PRECACHE_ASSETS = [

@@ -76,6 +76,7 @@ import VoiceAssistant from './components/VoiceAssistant';
 import DebugPanel from './components/DebugPanel';
 import PerformanceDiagnostics from './components/PerformanceDiagnostics';
 import FloatingExploreButton from './components/FloatingExploreButton';
+import FloatingKioskButton from './components/FloatingKioskButton';
 import { useIndustryDemoSwitcher, IndustryDemoSwitcherModal } from './hooks/useIndustryDemoSwitcher';
 import { getPersistentStorage } from './lib/persistentStorage';
 import { enableImmersiveMode, maintainImmersiveMode } from './lib/immersiveMode';
@@ -1949,6 +1950,14 @@ export default function App() {
             setShowAttractor={setShowAttractor}
             setVoiceAssistantVisible={setVoiceAssistantVisible}
             enabled={true}
+            downloadingBarVisible={downloadingBarVisible}
+            nowPlayingVisible={nowPlayingActuallyVisible}
+            footerVisible={!isMobile && (navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled)}
+          />
+          <FloatingKioskButton
+            isMobile={isMobile}
+            isFullscreen={isFullscreen}
+            onEnterKiosk={startKioskNow}
             downloadingBarVisible={downloadingBarVisible}
             nowPlayingVisible={nowPlayingActuallyVisible}
             footerVisible={!isMobile && (navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled)}

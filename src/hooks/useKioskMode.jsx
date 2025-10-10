@@ -14,8 +14,12 @@ export function useKioskMode(mainMapRef) {
     typeof document !== 'undefined' ? !!document.fullscreenElement : false
   )
 
+  // Auto-enable kiosk mode if:
+  // 1. URL parameter ?kiosk=1 is present, OR
+  // 2. Running in Capacitor native app (Capacitor global exists)
   const autoKiosk = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search).get('kiosk') === '1'
+    ? (new URLSearchParams(window.location.search).get('kiosk') === '1' ||
+       typeof window.Capacitor !== 'undefined')
     : false
 
   // Monitor fullscreen state
