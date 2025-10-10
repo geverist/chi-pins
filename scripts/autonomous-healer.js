@@ -93,7 +93,7 @@ async function getUnprocessedErrors(supabase) {
       .from('error_log')
       .select('*')
       .eq('severity', CONFIG.minSeverity)
-      .is('auto_fix_attempted', null)
+      .or('auto_fix_attempted.is.null,auto_fix_attempted.eq.false')
       .order('timestamp', { ascending: false })
       .limit(1);
 
@@ -205,7 +205,7 @@ IMPORTANT:
     if (CONFIG.aiProvider === 'anthropic') {
       // Use Anthropic Claude
       const message = await anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
         messages: [{
           role: 'user',

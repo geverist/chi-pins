@@ -1,6 +1,16 @@
 name: Deploy to Kiosk
 
 on:
+  # Auto-deploy on push to main (for autonomous healer)
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - 'android/**'
+      - 'package*.json'
+
   # Manual trigger from GitHub UI
   workflow_dispatch:
     inputs:
