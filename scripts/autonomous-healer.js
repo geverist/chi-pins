@@ -403,6 +403,39 @@ async function sendSMS(message) {
   }
 }
 
+// Deploy to kiosk via ADB
+async function deployToKiosk() {
+  log('📱 Deploying to kiosk...', 'cyan');
+
+  try {
+    // Build Android APK
+    log('  → Building Android APK...', 'blue');
+    await execAsync('npm run android:build', { timeout: 300000 }); // 5 min timeout for build
+    log('  → APK built successfully', 'green');
+
+    // Connect to kiosk via ADB
+    log('  → Connecting to kiosk (192.168.2.112:38081)...', 'blue');
+    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb connect 192.168.2.112:38081');
+    log('  → Connected to kiosk', 'green');
+
+    // Install APK
+    log('  → Installing APK on kiosk...', 'blue');
+    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:38081 install -r android/app/build/outputs/apk/debug/app-debug.apk');
+    log('  → APK installed', 'green');
+
+    // Launch app
+    log('  → Launching app...', 'blue');
+    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:38081 shell monkey -p com.chicagomikes.chipins -c android.intent.category.LAUNCHER 1');
+    log('  → App launched on kiosk', 'green');
+
+    return { success: true, error: null };
+
+  } catch (err) {
+    log(`  → Deployment failed: ${err.message}`, 'red');
+    return { success: false, error: err.message };
+  }
+}
+
 // Mark error as processed
 async function markProcessed(supabase, errorId, success, details) {
   try {
@@ -605,7 +638,27 @@ async function processError(supabase, error) {
     // 4. Merge or create PR
     const { merged, pr_url } = await mergeOrCreatePR(branch, error, fixPlan);
 
-    // 5. Mark as processed and complete
+    // 5. Deploy to kiosk if merged
+    let deploySuccess = false;
+    let deployError = null;
+
+    if (merged) {
+      log('Fix merged to main, deploying to kiosk...', 'cyan');
+      const deployment = await deployToKiosk();
+      deploySuccess = deployment.success;
+      deployError = deployment.error;
+
+      if (fixRecord) {
+        await updateFixRecord(supabase, fixRecord.id, {
+          deployment_attempted: true,
+          deployment_success: deploySuccess,
+          deployment_error: deployError,
+          deployment_timestamp: new Date().toISOString(),
+        });
+      }
+    }
+
+    // 6. Mark as processed and complete
     const finalStatus = merged || pr_url ? 'success' : 'failed';
 
     if (fixRecord) {
@@ -621,12 +674,18 @@ async function processError(supabase, error) {
       branch,
       merged,
       pr_url,
+      deployed: deploySuccess,
     });
 
-    // 6. Send notification
+    // 7. Send notification
     if (merged) {
-      await sendSMS(`🤖 Auto-fixed and deployed!\n\nError: ${error.message.slice(0, 80)}\n\nFix: ${fixPlan.fix_strategy.slice(0, 100)}\n\nDeployment starting...`);
-      log('  → SMS sent: Auto-fix deployed', 'green');
+      if (deploySuccess) {
+        await sendSMS(`✅ Auto-fixed and DEPLOYED to kiosk!\n\nError: ${error.message.slice(0, 80)}\n\nFix: ${fixPlan.fix_strategy.slice(0, 100)}\n\nKiosk app restarted successfully.`);
+        log('  → SMS sent: Auto-fix deployed to kiosk', 'green');
+      } else {
+        await sendSMS(`⚠️ Auto-fixed but deployment FAILED\n\nError: ${error.message.slice(0, 80)}\n\nFix: ${fixPlan.fix_strategy.slice(0, 100)}\n\nDeploy error: ${deployError || 'Unknown'}`);
+        log('  → SMS sent: Fix deployed but kiosk deployment failed', 'yellow');
+      }
     } else if (pr_url) {
       await sendSMS(`🤖 Auto-fix PR created\n\nError: ${error.message.slice(0, 80)}\n\nReview: ${pr_url}`);
       log('  → SMS sent: PR created', 'green');
@@ -998,30 +1057,55 @@ Manual intervention required.`);
 
     const { merged, pr_url } = await mergeOrCreatePR(branch, taskForPR, planForPR);
 
-    // 5. Update task as completed
+    // 5. Deploy to kiosk if merged
+    let deploySuccess = false;
+    let deployError = null;
+
+    if (merged) {
+      log('Feature merged to main, deploying to kiosk...', 'cyan');
+      const deployment = await deployToKiosk();
+      deploySuccess = deployment.success;
+      deployError = deployment.error;
+    }
+
+    // 6. Update task as completed
     await supabase
       .from('autonomous_tasks')
       .update({
-        status: merged ? 'deployed' : 'completed',
+        status: merged ? (deploySuccess ? 'deployed' : 'completed') : 'completed',
         success: true,
         git_branch: branch,
         git_commits: [branch], // Could track actual commit hashes
         deployment_url: pr_url || null,
         code_changes: JSON.stringify(plan.changes),
+        deployment_attempted: merged,
+        deployment_success: deploySuccess,
+        deployment_error: deployError,
         completed_at: new Date().toISOString(),
       })
       .eq('id', task.id);
 
-    // 6. Send success notification
+    // 7. Send success notification
     if (merged) {
-      await sendSMS(`✅ Feature Deployed!
+      if (deploySuccess) {
+        await sendSMS(`✅ Feature DEPLOYED to kiosk!
 
 Task: ${task.request_text}
 
 ${plan.implementation_strategy.slice(0, 100)}
 
-Deployment in progress. Check your kiosk in ~2 min.`);
-      log('  → SMS sent: Feature deployed', 'green');
+Kiosk app restarted. Feature is live!`);
+        log('  → SMS sent: Feature deployed to kiosk', 'green');
+      } else {
+        await sendSMS(`⚠️ Feature merged but deployment FAILED
+
+Task: ${task.request_text}
+
+Deploy error: ${deployError || 'Unknown'}
+
+Manual deployment needed.`);
+        log('  → SMS sent: Feature merged but kiosk deployment failed', 'yellow');
+      }
     } else if (pr_url) {
       await sendSMS(`✅ Feature Implemented
 
