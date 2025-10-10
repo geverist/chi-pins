@@ -1,0 +1,109 @@
+name: Deploy to Kiosk
+
+on:
+  # Manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      device_ip:
+        description: 'Kiosk device IP (default: 192.168.2.112:38081)'
+        required: false
+        default: '192.168.2.112:38081'
+      fresh_install:
+        description: 'Fresh install (clear data)?'
+        required: false
+        default: 'false'
+        type: boolean
+
+  # Trigger via API (repository_dispatch)
+  repository_dispatch:
+    types: [deploy-kiosk]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build Android APK
+        working-directory: ./android
+        run: ./gradlew assembleDebug --quiet
+
+      - name: Setup ADB over network
+        env:
+          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}
+        run: |
+          echo "Connecting to device: $DEVICE_IP"
+          adb connect $DEVICE_IP
+          adb devices
+
+      - name: Stop app and install APK
+        env:
+          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}
+          FRESH_INSTALL: ${{ github.event.inputs.fresh_install || github.event.client_payload.fresh_install || 'false' }}
+        run: |
+          # Stop audio and app
+          adb -s $DEVICE_IP shell "am force-stop com.spotify.music" || true
+          adb -s $DEVICE_IP shell "am force-stop com.chicagomikes.chipins" || true
+
+          # Clear data if fresh install requested
+          if [ "$FRESH_INSTALL" = "true" ]; then
+            echo "Performing fresh install (clearing data)..."
+            adb -s $DEVICE_IP shell "pm clear com.chicagomikes.chipins" || true
+          fi
+
+          # Install APK
+          adb -s $DEVICE_IP install -r android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Launch app
+        env:
+          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}
+        run: |
+          adb -s $DEVICE_IP shell "am start -n com.chicagomikes.chipins/.MainActivity"
+          echo "App launched successfully!"
+
+      - name: Send SMS notification
+        if: always()
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_PHONE: ${{ secrets.TWILIO_PHONE }}
+          ALERT_PHONE: ${{ secrets.ALERT_PHONE }}
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            MESSAGE="✅ Kiosk deployed successfully!\n\nDevice: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}\nCommit: ${GITHUB_SHA:0:7}\nTime: $(date '+%H:%M:%S')"
+          else
+            MESSAGE="❌ Kiosk deployment failed!\n\nCheck GitHub Actions logs:\nhttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+
+          curl -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/Messages.json" \
+            -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
+            -d "From=$TWILIO_PHONE" \
+            -d "To=$ALERT_PHONE" \
+            -d "Body=$MESSAGE"

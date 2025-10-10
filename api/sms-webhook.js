@@ -86,6 +86,10 @@ async function processCommand(command, from) {
     case 'deploy':
       return await getDeploymentInfo();
 
+    case 'deploy-kiosk':
+    case 'deploy-now':
+      return await triggerKioskDeployment(args);
+
     case 'yes':
     case 'approve':
       return await approveLastAction();
@@ -101,11 +105,13 @@ async function processCommand(command, from) {
     case 'info':
       return await getLastErrorDetails();
 
-    case 'help':
+    case 'commands':
+    case 'menu':
+    case 'list':
       return getHelpText();
 
     default:
-      return `❓ Unknown command: "${command}"\n\nSend "help" for available commands.`;
+      return `❓ Unknown command: "${command}"\n\nSend "commands" for available commands.`;
   }
 }
 
@@ -338,6 +344,58 @@ Last deployed: ${new Date(health.timestamp).toLocaleString()}`;
   }
 }
 
+// Trigger kiosk deployment via GitHub Actions
+async function triggerKioskDeployment(args) {
+  try {
+    // Check for required GitHub token
+    if (!process.env.GITHUB_TOKEN) {
+      return `❌ Deployment not configured\n\nGITHUB_TOKEN environment variable is required.`;
+    }
+
+    // Parse optional device IP from args
+    const deviceIp = args[0] || '192.168.2.112:38081';
+
+    // Trigger GitHub Actions workflow via repository dispatch
+    const response = await fetch(
+      'https://api.github.com/repos/geverist/chi-pins/dispatches',
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_type: 'deploy-kiosk',
+          client_payload: {
+            device_ip: deviceIp,
+            fresh_install: false,
+            triggered_by: 'sms',
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`GitHub API error: ${response.status} - ${error}`);
+    }
+
+    return `🚀 Deployment started!
+
+Device: ${deviceIp}
+Status: Building...
+
+You'll receive an SMS when deployment completes (2-3 minutes).
+
+View progress:
+github.com/geverist/chi-pins/actions`;
+  } catch (err) {
+    return `❌ Failed to trigger deployment: ${err.message}`;
+  }
+}
+
 // Approve last action
 async function approveLastAction() {
   // This would be used to approve pending fixes
@@ -439,6 +497,7 @@ Commands:
 • logs [count] - Recent logs (default 10)
 • fix - Auto-fix last error
 • deploy - Deployment info
+• deploy-kiosk - Deploy to kiosk now
 • details - Last error details
 
 Responses:
@@ -449,7 +508,8 @@ Responses:
 Examples:
 "errors 24h" - Errors from last 24h
 "logs 20" - Last 20 log entries
-"fix" - Fix most recent critical error`;
+"fix" - Fix most recent critical error
+"deploy-kiosk" - Build and deploy to kiosk`;
 }
 
 // Helper: Send TwiML response

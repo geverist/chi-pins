@@ -282,7 +282,7 @@ The phone number you're texting from doesn't match `ALERT_PHONE` environment var
 
 - Ensure message contains only the command (no extra text)
 - Commands are matched exactly, check spelling
-- Send "help" to see available commands
+- Send "commands" to see available commands
 - Check Vercel logs for errors
 
 ## Future Enhancements
