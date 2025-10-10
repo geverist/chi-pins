@@ -13,9 +13,8 @@
 // 9. SMS notification
 //
 // Usage:
-//   ANTHROPIC_API_KEY=xxx AUTO_FIX_ENABLED=true node scripts/autonomous-healer.js
-//   or
-//   OPENAI_API_KEY=xxx AUTO_FIX_ENABLED=true node scripts/autonomous-healer.js
+//   node scripts/autonomous-healer.js
+//   (reads config from .env file)
 //
 // Safety:
 //   - Only fixes CRITICAL errors
@@ -24,6 +23,7 @@
 //   - Rollback capability
 //   - SMS notifications for all actions
 
+import dotenv from 'dotenv';
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
@@ -31,6 +31,9 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+
+// Load environment variables from .env file
+dotenv.config();
 
 const execAsync = promisify(exec);
 
@@ -51,11 +54,11 @@ let lastHourReset = Date.now();
 
 // Initialize AI clients (only the one with API key)
 let anthropic, openai;
-if (CONFIG.aiProvider === 'anthropic') {
+if (CONFIG.aiProvider === 'anthropic' && process.env.ANTHROPIC_API_KEY) {
   anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
   });
-} else {
+} else if (process.env.OPENAI_API_KEY) {
   openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
