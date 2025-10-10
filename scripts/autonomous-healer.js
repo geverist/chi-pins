@@ -1036,6 +1036,291 @@ async function getFailedTasksForRetry(supabase) {
   }
 }
 
+// Get tasks awaiting user input that now have a response
+async function getTasksWithUserResponse(supabase) {
+  try {
+    const { data, error } = await supabase
+      .from('autonomous_tasks')
+      .select('*')
+      .eq('status', 'awaiting_user_input')
+      .not('user_response', 'is', null)
+      .order('created_at', { ascending: true})
+      .limit(1);
+
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    log(`Failed to fetch tasks with user response: ${err.message}`, 'red');
+    return [];
+  }
+}
+
+// Process task with user guidance after they responded
+async function processTaskWithUserGuidance(supabase, task) {
+  log(`\n${'='.repeat(80)}`, 'cyan');
+  log(`👤 Processing task with user guidance`, 'yellow');
+  log(`Original request: ${task.request_text}`, 'cyan');
+  log(`User response: ${task.user_response}`, 'green');
+
+  // Check if user wants to cancel
+  if (task.user_response.toUpperCase().includes('CANCEL')) {
+    log(`  → User cancelled task`, 'yellow');
+
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: 'cancelled',
+        error_message: 'User cancelled task',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', task.id);
+
+    await sendSMS(`✓ Task Cancelled
+
+Task: ${task.request_text.slice(0, 80)}
+
+No worries, skipping this one.`);
+    return;
+  }
+
+  // Parse saved AI analysis
+  let previousAnalysis = {};
+  try {
+    previousAnalysis = JSON.parse(task.ai_analysis || '{}');
+  } catch (err) {
+    log(`  → Could not parse previous analysis`, 'yellow');
+  }
+
+  // Update status to retrying with user guidance
+  await supabase
+    .from('autonomous_tasks')
+    .update({
+      status: 'retrying',
+      retry_count: (task.retry_count || 0) + 1,
+      retry_started_at: new Date().toISOString()
+    })
+    .eq('id', task.id);
+
+  await sendSMS(`🔄 Retrying with your guidance...
+
+Task: ${task.request_text.slice(0, 80)}
+
+Working on it now!`);
+
+  try {
+    // Build enhanced prompt with user guidance
+    const prompt = `You are a self-healing AI system implementing a task with user guidance.
+
+ORIGINAL TASK REQUEST:
+"${task.request_text}"
+
+PREVIOUS ANALYSIS:
+${previousAnalysis.failure_analysis || 'Initial attempt failed'}
+
+USER GUIDANCE:
+"${task.user_response}"
+
+${previousAnalysis.found_files ? `\nPREVIOUSLY FOUND FILES:${previousAnalysis.found_files}\n` : ''}
+
+YOUR TASK:
+1. Use the user's guidance to find the correct files
+2. Create an implementation plan incorporating their hints
+3. Be confident - the user has given you direction
+
+Return a JSON response with this structure:
+{
+  "implementation_strategy": "High-level approach incorporating user guidance",
+  "changes": [
+    {
+      "file_to_edit": "path/to/file.jsx",
+      "old_code": "exact code to replace (must match file exactly)",
+      "new_code": "new implementation",
+      "change_description": "What this change does"
+    }
+  ],
+  "confidence": 0-100,
+  "test_recommendation": "How to verify this works"
+}
+
+IMPORTANT GUIDELINES:
+- Use the user's hints to guide file selection
+- If user mentioned a specific file, use that file
+- If user mentioned inline styles, look for style={{ }} attributes
+- old_code must match EXACTLY (including whitespace)
+- Make minimal, focused changes`;
+
+    let responseText;
+
+    if (CONFIG.aiProvider === 'anthropic') {
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+      responseText = message.content[0].text;
+    } else {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+      responseText = completion.choices[0].message.content;
+    }
+
+    // Extract JSON
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('AI did not return valid JSON');
+    }
+
+    const correctedPlan = JSON.parse(jsonMatch[0]);
+
+    log(`  → Strategy: ${correctedPlan.implementation_strategy}`, 'cyan');
+    log(`  → Confidence: ${correctedPlan.confidence}%`, correctedPlan.confidence >= 70 ? 'green' : 'yellow');
+
+    // With user guidance, accept lower confidence threshold
+    if (correctedPlan.confidence < 60) {
+      log(`  → Confidence still too low (${correctedPlan.confidence}%), giving up`, 'yellow');
+
+      await supabase
+        .from('autonomous_tasks')
+        .update({
+          status: 'failed',
+          error_message: `Low confidence even with user guidance: ${correctedPlan.confidence}%`,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
+
+      await sendSMS(`❌ Still Unable to Complete
+
+Task: ${task.request_text.slice(0, 80)}
+
+Even with your guidance, I only have ${correctedPlan.confidence}% confidence.
+
+May need more specific hints or manual implementation.`);
+      return;
+    }
+
+    // Apply changes and continue like normal retry flow
+    const { success, appliedFiles, error } = await applyTaskChanges(correctedPlan);
+
+    if (!success) {
+      await supabase
+        .from('autonomous_tasks')
+        .update({
+          status: 'failed',
+          error_message: `Failed to apply changes with user guidance: ${error}`,
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
+
+      await sendSMS(`❌ Implementation Failed
+
+Task: ${task.request_text.slice(0, 80)}
+
+Error: ${error}
+
+Manual intervention needed.`);
+      return;
+    }
+
+    // Commit and push
+    const { branch, committed } = await commitTask(task, correctedPlan, appliedFiles);
+
+    if (!committed) {
+      await supabase
+        .from('autonomous_tasks')
+        .update({
+          status: 'failed',
+          error_message: 'Git operations failed',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
+
+      await sendSMS(`❌ Git Operations Failed
+
+Task: ${task.request_text.slice(0, 80)}
+
+Manual intervention needed.`);
+      return;
+    }
+
+    // Merge or create PR
+    const taskForPR = {
+      message: `[User-Guided] ${task.request_text}`,
+      id: task.id,
+    };
+    const planForPR = {
+      analysis: `Implemented with user guidance: ${task.user_response}`,
+      fix_strategy: correctedPlan.implementation_strategy,
+      confidence: correctedPlan.confidence,
+      test_recommendation: correctedPlan.test_recommendation,
+    };
+
+    const { merged, pr_url } = await mergeOrCreatePR(branch, taskForPR, planForPR);
+
+    // Mark as completed
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: merged ? 'deployed' : 'completed',
+        success: true,
+        git_branch: branch,
+        deployment_url: pr_url || null,
+        code_changes: JSON.stringify(correctedPlan.changes),
+        completed_at: new Date().toISOString(),
+        self_healed: true,
+      })
+      .eq('id', task.id);
+
+    // Send success notification
+    if (merged) {
+      await sendSMS(`✅ Success with Your Help!
+
+Task: ${task.request_text}
+
+Thanks for the guidance! Deployed successfully.`);
+      log('  → SMS sent: Task completed with user guidance', 'green');
+    } else if (pr_url) {
+      await sendSMS(`✅ Success with Your Help!
+
+Task: ${task.request_text}
+
+PR created: ${pr_url}`);
+      log('  → SMS sent: PR created with user guidance', 'green');
+    }
+
+    log('✅ Task completed with user guidance', 'green');
+
+  } catch (err) {
+    log(`❌ Failed with user guidance: ${err.message}`, 'red');
+
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: 'failed',
+        error_message: `Exception with user guidance: ${err.message}`,
+        error_details: { stack: err.stack },
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', task.id);
+
+    await sendSMS(`❌ Error Processing Task
+
+Task: ${task.request_text.slice(0, 80)}
+
+Error: ${err.message}
+
+Manual intervention needed.`);
+  }
+}
+
 // Analyze task failure and create corrected implementation plan
 async function analyzeTaskFailureAndRetry(supabase, task) {
   log(`\n${'='.repeat(80)}`, 'cyan');
@@ -1225,24 +1510,51 @@ IMPORTANT GUIDELINES:
 
     // Check if confidence is reasonable
     if (correctedPlan.confidence < 70) {
-      log(`  → Confidence still too low (${correctedPlan.confidence}%), giving up`, 'yellow');
+      log(`  → Confidence low (${correctedPlan.confidence}%), prompting user for guidance`, 'yellow');
 
+      // Determine what clarification is needed
+      let userPrompt = `🤔 Need Your Help
+
+Task: ${task.request_text}
+
+I analyzed this but only have ${correctedPlan.confidence}% confidence.
+
+${correctedPlan.failure_analysis}
+
+`;
+
+      // Add specific questions based on what we found
+      if (relevantFileContents) {
+        const foundFiles = relevantFileContents.match(/=== (.+) ===/g);
+        if (foundFiles && foundFiles.length > 0) {
+          const fileNames = foundFiles.map(f => f.replace(/=== |===/g, '').trim()).join(', ');
+          userPrompt += `I found these files: ${fileNames}\n\n`;
+          userPrompt += `Which file should I modify? Or is it somewhere else?\n\n`;
+        }
+      } else {
+        userPrompt += `I couldn't find the right file.\n\n`;
+        userPrompt += `Can you tell me which component or file to look in?\n\n`;
+      }
+
+      userPrompt += `Reply with guidance and I'll retry. Or reply CANCEL to skip this task.`;
+
+      // Mark as awaiting user input
       await supabase
         .from('autonomous_tasks')
         .update({
-          status: 'failed',
-          error_message: `Retry failed: Low confidence (${correctedPlan.confidence}%)`,
-          completed_at: new Date().toISOString(),
+          status: 'awaiting_user_input',
+          user_prompt: userPrompt,
+          ai_analysis: JSON.stringify({
+            failure_analysis: correctedPlan.failure_analysis,
+            correction_strategy: correctedPlan.correction_strategy,
+            confidence: correctedPlan.confidence,
+            found_files: relevantFileContents,
+          }),
         })
         .eq('id', task.id);
 
-      await sendSMS(`❌ Self-Healing Failed
-
-Task: ${task.request_text.slice(0, 80)}
-
-Could not find a reliable fix after analysis.
-
-Manual intervention required.`);
+      await sendSMS(userPrompt);
+      log('  → SMS sent: Requesting user guidance', 'green');
       return;
     }
 
@@ -1465,19 +1777,32 @@ async function main() {
             .eq('id', tasks[0].id);
         }
       } else {
-        // No confirmed tasks, check for failed tasks that need retry (self-healing)
-        const failedTasks = await getFailedTasksForRetry(supabase);
+        // No confirmed tasks, check for tasks awaiting user input that now have a response
+        const userResponseTasks = await getTasksWithUserResponse(supabase);
 
-        if (failedTasks.length > 0) {
-          log(`\nFound ${failedTasks.length} failed task(s) for self-healing retry`, 'cyan');
+        if (userResponseTasks.length > 0) {
+          log(`\nFound ${userResponseTasks.length} task(s) with user response`, 'cyan');
 
           if (CONFIG.enabled || CONFIG.dryRun) {
-            await analyzeTaskFailureAndRetry(supabase, failedTasks[0]);
+            await processTaskWithUserGuidance(supabase, userResponseTasks[0]);
             fixesThisHour++;
           } else {
-            log('Autonomous development disabled, skipping self-healing', 'yellow');
+            log('Autonomous development disabled, skipping user-guided task', 'yellow');
           }
         } else {
+          // No tasks with user responses, check for failed tasks that need retry (self-healing)
+          const failedTasks = await getFailedTasksForRetry(supabase);
+
+          if (failedTasks.length > 0) {
+            log(`\nFound ${failedTasks.length} failed task(s) for self-healing retry`, 'cyan');
+
+            if (CONFIG.enabled || CONFIG.dryRun) {
+              await analyzeTaskFailureAndRetry(supabase, failedTasks[0]);
+              fixesThisHour++;
+            } else {
+              log('Autonomous development disabled, skipping self-healing', 'yellow');
+            }
+          } else {
           // No failed tasks, check for errors
           const errors = await getUnprocessedErrors(supabase);
 
