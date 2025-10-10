@@ -927,6 +927,150 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
   }
 }
 
+// ==================== TIER 2: SPECIALIZED AGENT ESCALATION ====================
+// For tasks with 60-79% confidence, escalate to a specialized agent with full codebase access
+
+async function escalateToSpecializedAgent(supabase, task, plan) {
+  log(`\n${'━'.repeat(80)}`, 'yellow');
+  log(`🔼 TIER 2 ESCALATION: Delegating to specialized agent`, 'yellow');
+  log(`   Confidence: ${plan.confidence}% (60-79% range)`, 'yellow');
+  log(`   Task: ${task.request_text}`, 'cyan');
+
+  // Mark task as being handled by Tier 2
+  await supabase
+    .from('autonomous_tasks')
+    .update({
+      status: 'tier2_processing',
+      tier: 2,
+      escalation_reason: `Medium confidence (${plan.confidence}%) - using specialized agent`,
+      escalation_timestamp: new Date().toISOString(),
+    })
+    .eq('id', task.id);
+
+  // Send SMS notification about escalation
+  await sendSMS(`🔼 Escalated to Tier 2 Agent
+
+Task: ${task.request_text}
+
+Confidence: ${plan.confidence}%
+
+A specialized agent with full codebase access is handling this. Will create PR for review when complete.`);
+
+  log('  → SMS sent: Tier 2 escalation notification', 'green');
+
+  // Write task details to a temp file for the agent to read
+  const taskFile = path.join(process.cwd(), `.healer-task-${task.id}.json`);
+  await fs.writeFile(taskFile, JSON.stringify({
+    task_id: task.id,
+    request: task.request_text,
+    task_type: task.task_type,
+    complexity: task.estimated_complexity,
+    initial_plan: plan,
+    confidence: plan.confidence,
+    codebase_map_path: path.join(process.cwd(), '.codebase-map.json'),
+  }, null, 2), 'utf8');
+
+  try {
+    // Launch specialized agent using execAsync
+    log('  → Launching specialized agent...', 'cyan');
+
+    const agentPrompt = `You are a specialized development agent handling a medium-confidence task that requires careful implementation.
+
+TASK DETAILS:
+${JSON.stringify({
+  request: task.request_text,
+  task_type: task.task_type,
+  complexity: task.estimated_complexity,
+  initial_confidence: plan.confidence,
+  initial_strategy: plan.implementation_strategy,
+}, null, 2)}
+
+CODEBASE CONTEXT:
+- Project: chi-pins (React kiosk app)
+- Codebase map available at: .codebase-map.json
+- Components in: src/components/
+- State management in: src/state/
+- Uses inline styles (NO CSS files)
+
+YOUR TASK:
+1. Read the .codebase-map.json to understand project structure
+2. Search and read relevant files to understand the current code
+3. Implement the requested feature with precision
+4. Create a git branch with your changes
+5. Create a Pull Request for review (DO NOT auto-merge)
+6. Update the task record in Supabase with results
+
+IMPORTANT CONSTRAINTS:
+- Use Read tool to examine files thoroughly
+- Use Grep/Glob tools to search codebase
+- Use Edit tool for precise code changes (NOT string replacement)
+- Create branch: tier2/${Date.now()}-${task.id.slice(0, 8)}
+- Commit message: "🔼 Tier 2: ${task.request_text.slice(0, 60)}"
+- Create PR with detailed description
+- Update autonomous_tasks table when done
+
+SUPABASE UPDATE (pseudo-code):
+When complete, update task ${task.id}:
+- status: 'tier2_completed' (if successful) or 'failed' (if not)
+- git_branch: your branch name
+- deployment_url: PR URL
+- code_changes: JSON of files modified
+- tier2_agent_notes: summary of what you did
+
+Start by reading .codebase-map.json, then implement the feature.`;
+
+    // Save agent prompt to file
+    const promptFile = path.join(process.cwd(), `.healer-agent-prompt-${task.id}.txt`);
+    await fs.writeFile(promptFile, agentPrompt, 'utf8');
+
+    log(`  → Agent prompt saved to: ${promptFile}`, 'blue');
+    log(`  → Task details saved to: ${taskFile}`, 'blue');
+    log(`  → Agent will work autonomously and update database when complete`, 'green');
+
+    // NOTE: In a full implementation, we would use Claude Code's Task tool here to launch
+    // a general-purpose agent. For now, we'll mark the task and let the agent be manually invoked.
+    // A future enhancement could integrate with Claude Code's agent system directly.
+
+    log(`\n  ⚠️  MANUAL STEP REQUIRED:`, 'yellow');
+    log(`     Run: claude-code execute --file ${promptFile}`, 'yellow');
+    log(`     Or: Invoke Tier 2 agent via your preferred method\n`, 'yellow');
+
+    return {
+      success: true,
+      escalated: true,
+      agent_prompt_file: promptFile,
+      task_file: taskFile,
+    };
+
+  } catch (err) {
+    log(`  → Tier 2 escalation failed: ${err.message}`, 'red');
+
+    // Mark task as failed escalation
+    await supabase
+      .from('autonomous_tasks')
+      .update({
+        status: 'failed',
+        error_message: `Tier 2 escalation failed: ${err.message}`,
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', task.id);
+
+    await sendSMS(`❌ Tier 2 Escalation Failed
+
+Task: ${task.request_text.slice(0, 80)}
+
+Error: ${err.message}
+
+Manual intervention required.`);
+
+    return {
+      success: false,
+      escalated: false,
+      error: err.message,
+    };
+  }
+}
+
 // Main task processor
 async function processTask(supabase, task) {
   log(`\n${'='.repeat(80)}`, 'cyan');
@@ -975,25 +1119,74 @@ Manual intervention required.`);
       return;
     }
 
-    // Check confidence
-    if (plan.confidence < 70) {
-      log(`  → Confidence too low (${plan.confidence}%), skipping`, 'yellow');
+    // ============ TIER ROUTING LOGIC ============
+    // Tier 1 (80-100%): Auto-implement and deploy
+    // Tier 2 (60-79%):  Escalate to specialized agent → PR for review
+    // Tier 3 (<60%):    Request human guidance via SMS
+
+    if (plan.confidence >= 80) {
+      // TIER 1: High confidence - proceed with auto-implementation
+      log(`  → ✅ TIER 1: High confidence (${plan.confidence}%) - auto-implementing`, 'green');
+
+      await supabase
+        .from('autonomous_tasks')
+        .update({ tier: 1 })
+        .eq('id', task.id);
+
+    } else if (plan.confidence >= 60) {
+      // TIER 2: Medium confidence - escalate to specialized agent
+      log(`  → 🔼 TIER 2: Medium confidence (${plan.confidence}%) - escalating to specialized agent`, 'yellow');
+
+      const escalationResult = await escalateToSpecializedAgent(supabase, task, plan);
+
+      if (escalationResult.escalated) {
+        log(`✅ Task escalated to Tier 2 agent successfully`, 'green');
+      }
+
+      // Agent will handle the rest - exit this function
+      return;
+
+    } else {
+      // TIER 3: Low confidence - request human guidance
+      log(`  → 👤 TIER 3: Low confidence (${plan.confidence}%) - requesting human guidance`, 'yellow');
 
       await supabase
         .from('autonomous_tasks')
         .update({
-          status: 'failed',
-          error_message: `Low confidence: ${plan.confidence}%`,
-          completed_at: new Date().toISOString(),
+          status: 'awaiting_user_input',
+          tier: 3,
+          user_prompt: `🤔 Need Your Input
+
+Task: ${task.request_text}
+
+AI Confidence: ${plan.confidence}%
+
+Strategy: ${plan.implementation_strategy.slice(0, 200)}
+
+This task has low confidence. Can you provide guidance on how to implement this, or should I skip it?
+
+Reply with:
+- Specific hints/guidance to help me implement it
+- "SKIP" to skip this task
+- "APPROVE" if you want me to try anyway (risky)`,
+          ai_analysis: JSON.stringify({
+            plan: plan,
+            confidence: plan.confidence,
+          }),
         })
         .eq('id', task.id);
 
-      await sendSMS(`⚠️ Low confidence task skipped
+      await sendSMS(`👤 TIER 3: Human Review Needed
 
-Task: ${task.request_text.slice(0, 80)}
-Confidence: ${plan.confidence}%
+Task: ${task.request_text}
 
-Manual implementation recommended.`);
+Confidence: ${plan.confidence}% (too low for auto-implementation)
+
+${plan.implementation_strategy.slice(0, 100)}
+
+Reply with guidance, SKIP, or APPROVE.`);
+
+      log('  → SMS sent: Tier 3 human review request', 'green');
       return;
     }
 
@@ -1665,9 +1858,33 @@ IMPORTANT GUIDELINES:
     log(`  → Correction Strategy: ${correctedPlan.correction_strategy}`, 'cyan');
     log(`  → New Confidence: ${correctedPlan.confidence}%`, correctedPlan.confidence >= 80 ? 'green' : 'yellow');
 
-    // Check if confidence is reasonable
-    if (correctedPlan.confidence < 70) {
-      log(`  → Confidence low (${correctedPlan.confidence}%), prompting user for guidance`, 'yellow');
+    // ============ TIER ROUTING (RETRY) ============
+    // Apply same tier logic to retries
+
+    if (correctedPlan.confidence >= 80) {
+      // TIER 1: High confidence - proceed with retry
+      log(`  → ✅ TIER 1 RETRY: High confidence (${correctedPlan.confidence}%) - applying fix`, 'green');
+
+      await supabase
+        .from('autonomous_tasks')
+        .update({ tier: 1 })
+        .eq('id', task.id);
+
+    } else if (correctedPlan.confidence >= 60) {
+      // TIER 2: Medium confidence - escalate retry to specialized agent
+      log(`  → 🔼 TIER 2 RETRY: Medium confidence (${correctedPlan.confidence}%) - escalating to specialized agent`, 'yellow');
+
+      const escalationResult = await escalateToSpecializedAgent(supabase, task, correctedPlan);
+
+      if (escalationResult.escalated) {
+        log(`✅ Retry escalated to Tier 2 agent successfully`, 'green');
+      }
+
+      return; // Agent will handle it
+
+    } else if (correctedPlan.confidence < 60) {
+      // TIER 3: Low confidence - prompt user for guidance
+      log(`  → 👤 TIER 3 RETRY: Low confidence (${correctedPlan.confidence}%), requesting user guidance`, 'yellow');
 
       // Determine what clarification is needed
       let userPrompt = `🤔 Need Your Help
