@@ -85,7 +85,62 @@ export function initConsoleWebhook(url, enabled = true, options = {}) {
     };
   });
 
-  console.info('[ConsoleWebhook] ✅ Initialized - console events will be sent to webhook');
+  // Capture global runtime errors (window.onerror)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', (event) => {
+      if (webhookEnabled && webhookUrl) {
+        try {
+          const { message, filename, lineno, colno, error } = event;
+          const stack = error?.stack || 'No stack trace available';
+
+          const errorEvent = {
+            level: 'error',
+            message: message || 'Unknown error',
+            stack: stack.slice(0, maxMessageLength * 2), // Allow longer stack traces
+            location: `${filename}:${lineno}:${colno}`,
+            ...(includeTimestamps && { timestamp: new Date().toISOString() }),
+            ...(includeLocation && {
+              userAgent: navigator.userAgent,
+              url: window.location.href,
+            }),
+          };
+
+          queueEvent(errorEvent);
+          originalConsole.error('[ConsoleWebhook] Runtime error captured:', message);
+        } catch (err) {
+          originalConsole.error('[ConsoleWebhook] Error capturing runtime error:', err);
+        }
+      }
+    });
+
+    // Capture unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      if (webhookEnabled && webhookUrl) {
+        try {
+          const message = event.reason?.message || String(event.reason) || 'Unhandled promise rejection';
+          const stack = event.reason?.stack || 'No stack trace available';
+
+          const errorEvent = {
+            level: 'error',
+            message: `Unhandled Promise Rejection: ${message}`,
+            stack: stack.slice(0, maxMessageLength * 2),
+            ...(includeTimestamps && { timestamp: new Date().toISOString() }),
+            ...(includeLocation && {
+              userAgent: navigator.userAgent,
+              url: window.location.href,
+            }),
+          };
+
+          queueEvent(errorEvent);
+          originalConsole.error('[ConsoleWebhook] Unhandled rejection captured:', message);
+        } catch (err) {
+          originalConsole.error('[ConsoleWebhook] Error capturing unhandled rejection:', err);
+        }
+      }
+    });
+  }
+
+  console.info('[ConsoleWebhook] ✅ Initialized - console events and runtime errors will be sent to webhook');
 }
 
 /**
