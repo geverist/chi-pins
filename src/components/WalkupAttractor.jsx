@@ -196,6 +196,7 @@ export default function WalkupAttractor({
             height: '220px',
             borderRadius: '50%',
             border: '4px solid rgba(255, 255, 255, 0.4)',
+            transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
             animation: 'haloExpand3D 5s ease-out infinite',
             transformStyle: 'preserve-3d',
           }} />
@@ -209,6 +210,7 @@ export default function WalkupAttractor({
             height: '220px',
             borderRadius: '50%',
             border: '4px solid rgba(255, 255, 255, 0.4)',
+            transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
             animation: 'haloExpand3D 5s ease-out infinite 2.5s',
             transformStyle: 'preserve-3d',
           }} />
@@ -222,6 +224,7 @@ export default function WalkupAttractor({
             height: '220px',
             borderRadius: '50%',
             border: '3px solid rgba(255, 255, 255, 0.35)',
+            transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
             animation: 'haloExpand3D 5s ease-out infinite 1.25s',
             transformStyle: 'preserve-3d',
           }} />
@@ -235,6 +238,7 @@ export default function WalkupAttractor({
             height: '140px',
             borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%)',
+            transform: 'translate(-50%, -50%) rotateX(60deg) scale(1)',
             animation: 'pulse3D 2s ease-in-out infinite',
             transformStyle: 'preserve-3d',
           }} />

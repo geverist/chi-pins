@@ -1977,8 +1977,8 @@ export default function App() {
         />
       )}
 
-      {/* Offline Map Downloader - Disabled by default for performance */}
-      {adminSettings.showOfflineMapDownloader === true && (
+      {/* Offline Map Downloader - Downloads map tiles for offline use */}
+      {(adminSettings.showOfflineMapDownloader !== false) && (
         <OfflineMapDownloader
           autoStart={true}
           mode={mapMode}
