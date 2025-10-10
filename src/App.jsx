@@ -84,6 +84,7 @@ import LayoutEditModeOverlay from './components/LayoutEditModeOverlay';
 import { useBusinessHours } from './hooks/useBusinessHours';
 import ClosedOverlay from './components/ClosedOverlay';
 import MotionIndicator from './components/MotionIndicator';
+import CallBorderIndicator from './components/CallBorderIndicator';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
