@@ -34,7 +34,7 @@ app.post('/deploy', async (req, res) => {
     });
   }
 
-  const { device_ip = '192.168.2.112:38081' } = req.body;
+  const { device_ip = '192.168.2.112:40585' } = req.body;
 
   // Start deployment asynchronously
   deploymentInProgress = true;

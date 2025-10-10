@@ -122,7 +122,7 @@ npm run build
 
 # Deploy to kiosk
 JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
-  ./scripts/deploy-kiosk.sh 192.168.2.112:38081
+  ./scripts/deploy-kiosk.sh 192.168.2.112:40585
 ```
 
 ### 5. Start Monitoring Services
@@ -139,10 +139,10 @@ JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home \
 
 ```bash
 # On your development machine or server:
-./scripts/monitor-logs.sh 192.168.2.112:38081
+./scripts/monitor-logs.sh 192.168.2.112:40585
 
 # Or run in background:
-nohup ./scripts/monitor-logs.sh 192.168.2.112:38081 > /tmp/kiosk-monitor.log 2>&1 &
+nohup ./scripts/monitor-logs.sh 192.168.2.112:40585 > /tmp/kiosk-monitor.log 2>&1 &
 ```
 
 **Automated Smoke Tests**

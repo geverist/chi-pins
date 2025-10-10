@@ -354,7 +354,7 @@ async function triggerKioskDeployment(args) {
     }
 
     // Parse optional device IP from args
-    const deviceIp = args[0] || '192.168.2.112:38081';
+    const deviceIp = args[0] || '192.168.2.112:40585';
 
     // Trigger GitHub Actions workflow via repository dispatch
     const response = await fetch(

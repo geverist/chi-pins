@@ -75,7 +75,7 @@ Once everything is set up, test the deployment:
 ```
 🚀 Deployment started!
 
-Device: 192.168.2.112:38081
+Device: 192.168.2.112:40585
 Status: Building...
 
 You'll receive an SMS when deployment completes (2-3 minutes).
@@ -88,7 +88,7 @@ github.com/geverist/chi-pins/actions
 ```
 ✅ Kiosk deployed successfully!
 
-Device: 192.168.2.112:38081
+Device: 192.168.2.112:40585
 Commit: a1b2c3d
 Time: 14:35:42
 ```
@@ -99,7 +99,7 @@ Time: 14:35:42
 ```
 deploy-kiosk
 ```
-Deploys to default device (192.168.2.112:38081)
+Deploys to default device (192.168.2.112:40585)
 
 ### Deploy to Specific Device
 ```

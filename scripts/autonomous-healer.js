@@ -414,18 +414,18 @@ async function deployToKiosk() {
     log('  → APK built successfully', 'green');
 
     // Connect to kiosk via ADB
-    log('  → Connecting to kiosk (192.168.2.112:38081)...', 'blue');
-    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb connect 192.168.2.112:38081');
+    log('  → Connecting to kiosk (192.168.2.112:40585)...', 'blue');
+    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb connect 192.168.2.112:40585');
     log('  → Connected to kiosk', 'green');
 
     // Install APK
     log('  → Installing APK on kiosk...', 'blue');
-    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:38081 install -r android/app/build/outputs/apk/debug/app-debug.apk');
+    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:40585 install -r android/app/build/outputs/apk/debug/app-debug.apk');
     log('  → APK installed', 'green');
 
     // Launch app
     log('  → Launching app...', 'blue');
-    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:38081 shell monkey -p com.chicagomikes.chipins -c android.intent.category.LAUNCHER 1');
+    await execAsync('/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:40585 shell monkey -p com.chicagomikes.chipins -c android.intent.category.LAUNCHER 1');
     log('  → App launched on kiosk', 'green');
 
     return { success: true, error: null };

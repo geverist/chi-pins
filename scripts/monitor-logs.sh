@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/monitor-logs.sh
 # Continuously monitors kiosk logs and sends SMS alerts for critical errors
-# Run this on the kiosk device: ./scripts/monitor-logs.sh 192.168.2.112:38081
+# Run this on the kiosk device: ./scripts/monitor-logs.sh 192.168.2.112:40585
 
 set -euo pipefail
 
@@ -102,7 +102,7 @@ check_app_health() {
 main() {
   if [[ -z "$DEVICE" ]]; then
     echo "Usage: $0 <device-ip:port>"
-    echo "Example: $0 192.168.2.112:38081"
+    echo "Example: $0 192.168.2.112:40585"
     exit 1
   fi
 

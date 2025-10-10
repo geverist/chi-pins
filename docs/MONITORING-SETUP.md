@@ -77,7 +77,7 @@ Continuously monitors kiosk logs via ADB and sends SMS alerts for critical error
 
 1. **Ensure ADB connection** to kiosk device:
    ```bash
-   adb connect 192.168.2.112:38081
+   adb connect 192.168.2.112:40585
    adb devices
    ```
 
@@ -88,12 +88,12 @@ Continuously monitors kiosk logs via ADB and sends SMS alerts for critical error
 
 3. **Run the monitor**:
    ```bash
-   ./scripts/monitor-logs.sh 192.168.2.112:38081
+   ./scripts/monitor-logs.sh 192.168.2.112:40585
    ```
 
 4. **Run in background** (recommended):
    ```bash
-   nohup ./scripts/monitor-logs.sh 192.168.2.112:38081 > /tmp/kiosk-monitor.log 2>&1 &
+   nohup ./scripts/monitor-logs.sh 192.168.2.112:40585 > /tmp/kiosk-monitor.log 2>&1 &
    ```
 
 ### Configuration
@@ -270,12 +270,12 @@ All monitoring systems send alerts to:
 1. Check ADB connection:
    ```bash
    adb devices
-   # Should show: 192.168.2.112:38081	device
+   # Should show: 192.168.2.112:40585	device
    ```
 
 2. Verify logs are flowing:
    ```bash
-   adb -s 192.168.2.112:38081 logcat chromium:E *:S -t 10
+   adb -s 192.168.2.112:40585 logcat chromium:E *:S -t 10
    ```
 
 3. Check monitor script is running:

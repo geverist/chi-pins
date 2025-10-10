@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
     inputs:
       device_ip:
-        description: 'Kiosk device IP (default: 192.168.2.112:38081)'
+        description: 'Kiosk device IP (default: 192.168.2.112:40585)'
         required: false
-        default: '192.168.2.112:38081'
+        default: '192.168.2.112:40585'
       fresh_install:
         description: 'Fresh install (clear data)?'
         required: false
@@ -67,7 +67,7 @@ jobs:
 
       - name: Setup ADB over network
         env:
-          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}
+          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:40585' }}
         run: |
           echo "Connecting to device: $DEVICE_IP"
           adb connect $DEVICE_IP
@@ -75,7 +75,7 @@ jobs:
 
       - name: Stop app and install APK
         env:
-          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}
+          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:40585' }}
           FRESH_INSTALL: ${{ github.event.inputs.fresh_install || github.event.client_payload.fresh_install || 'false' }}
         run: |
           # Stop audio and app
@@ -93,7 +93,7 @@ jobs:
 
       - name: Launch app
         env:
-          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}
+          DEVICE_IP: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:40585' }}
         run: |
           adb -s $DEVICE_IP shell "am start -n com.chicagomikes.chipins/.MainActivity"
           echo "App launched successfully!"
@@ -107,7 +107,7 @@ jobs:
           ALERT_PHONE: ${{ secrets.ALERT_PHONE }}
         run: |
           if [ "${{ job.status }}" = "success" ]; then
-            MESSAGE="✅ Kiosk deployed successfully!\n\nDevice: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:38081' }}\nCommit: ${GITHUB_SHA:0:7}\nTime: $(date '+%H:%M:%S')"
+            MESSAGE="✅ Kiosk deployed successfully!\n\nDevice: ${{ github.event.inputs.device_ip || github.event.client_payload.device_ip || '192.168.2.112:40585' }}\nCommit: ${GITHUB_SHA:0:7}\nTime: $(date '+%H:%M:%S')"
           else
             MESSAGE="❌ Kiosk deployment failed!\n\nCheck GitHub Actions logs:\nhttps://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi

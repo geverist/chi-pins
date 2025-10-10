@@ -3,8 +3,8 @@
 # Usage: ./scripts/deploy-kiosk.sh [device_ip:port] [--fresh]
 #
 # Examples:
-#   ./scripts/deploy-kiosk.sh 192.168.2.112:38081          # Quick update
-#   ./scripts/deploy-kiosk.sh 192.168.2.112:38081 --fresh  # Full reinstall
+#   ./scripts/deploy-kiosk.sh 192.168.2.112:40585          # Quick update
+#   ./scripts/deploy-kiosk.sh 192.168.2.112:40585 --fresh  # Full reinstall
 
 set -e
 
@@ -16,7 +16,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Default device
-DEVICE="${1:-192.168.2.112:38081}"
+DEVICE="${1:-192.168.2.112:40585}"
 FRESH_INSTALL="${2}"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

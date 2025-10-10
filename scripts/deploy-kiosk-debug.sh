@@ -5,7 +5,7 @@
 
 set -e  # Exit on error
 
-DEVICE_IP="192.168.2.112:38081"
+DEVICE_IP="192.168.2.112:40585"
 PACKAGE_NAME="com.chipins.kiosk"
 APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
 BUILD_LOG="deployment-build.log"

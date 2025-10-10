@@ -2,7 +2,6 @@
   "project": "chi-pins",
   "description": "Interactive kiosk map application for Chicago Mike's",
   "architecture": "React SPA with Leaflet maps, Supabase backend, Capacitor for mobile",
-
   "project_overview": {
     "purpose": "Digital interactive kiosk for Chicago Mike's restaurant/bar featuring an interactive map of Chicago with local points of interest, entertainment features, and customer engagement tools",
     "deployment": "Physical touchscreen kiosk in Chicago Mike's establishment, built with Capacitor for Android kiosk mode",
@@ -22,64 +21,2884 @@
     "business_context": "Chicago Mike's is a Chicago-themed restaurant/bar. The kiosk serves as entertainment, brand engagement, and a functional tool for ordering and jukebox control. The app should feel fun, Chicago-focused, and easy to use for walk-up customers of all ages.",
     "technical_context": "Runs on Android tablet in kiosk mode. Self-healing autonomous system monitors for errors and can implement features via SMS. Heavy use of admin settings for runtime configuration without deployment."
   },
-
+  "generated_at": "2025-10-10T22:00:08.802Z",
+  "total_files": 246,
+  "total_components": 43,
+  "total_hooks": 37,
   "key_directories": {
     "src/": "Main application source code",
-    "src/components/": "React components (UI elements, modals, widgets)",
-    "src/hooks/": "Custom React hooks for state and behavior",
-    "src/state/": "Global state management hooks",
+    "src/components/": "React components (43 components)",
+    "src/hooks/": "Custom React hooks (37 hooks)",
+    "src/state/": "Global state management (0 modules)",
     "src/lib/": "Utility libraries and helpers",
     "src/utils/": "Helper functions and utilities",
-    "api/": "Serverless API endpoints (Vercel functions)",
+    "api/": "Serverless API endpoints (33 endpoints)",
     "scripts/": "Build scripts and automation tools"
   },
-
-  "state_management": {
-    "src/state/useAdminSettings.js": "All app settings and configuration (100+ settings)",
-    "src/state/useNowPlaying.jsx": "Music player state (Jukebox, HEOS)",
-    "src/hooks/useNavigationSettings.js": "Navigation menu state (games, jukebox, order, etc.)"
-  },
-
+  "state_management": {},
   "core_components": {
-    "src/App.jsx": "Main app component, layout orchestration, all modals",
-    "src/components/AdminPanel.jsx": "Admin configuration panel (4000+ lines)",
-    "src/components/HeaderBar.jsx": "Top navigation bar with logo and menu",
-    "src/components/Footer.jsx": "Bottom navigation and pin editor form",
-    "src/components/MapShell.jsx": "Main Leaflet map container",
-    "src/components/MobileNavMenu.jsx": "Mobile navigation menu"
+    "src/App.jsx": "App (19 hooks, stateful)",
+    "src/components/AdminPanel.jsx": "AdminPanel (10 hooks, stateful)",
+    "src/components/AdminRoute.jsx": "AdminRoute (2 hooks, stateful)",
+    "src/components/AnalyticsDashboard.jsx": "AnalyticsDashboard (2 hooks, stateful)",
+    "src/components/CommentsBanner.jsx": "CommentsBanner (5 hooks, stateful)",
+    "src/components/ContentManagementSystem.jsx": "ContentManagementSystem (3 hooks, stateful)",
+    "src/components/DeepDishGame.jsx": "DeepDishGame (4 hooks, stateful)",
+    "src/components/DraftMarker.jsx": "DraftMarker (3 hooks, stateless)",
+    "src/components/Editor.jsx": "Editor (2 hooks, stateful)",
+    "src/components/Footer.jsx": "footerRef (3 hooks, stateless)"
   },
-
-  "overlays_and_widgets": {
-    "src/components/AttractorOverlay.jsx": "Tap/pinch hints overlay",
-    "src/components/WalkupAttractor.jsx": "Full-screen idle attractor with voice greeting",
-    "src/components/PopularSpotsOverlay.jsx": "Popular Chicago spots overlay",
-    "src/components/VoiceAssistant.jsx": "Voice AI assistant widget",
-    "src/components/WeatherWidget.jsx": "Weather widget with hot dog recommendations",
-    "src/components/QRCodeWidget.jsx": "QR code for mobile continuation"
+  "components_by_directory": {
+    "src": [
+      {
+        "name": "App",
+        "path": "src/App.jsx",
+        "hasState": true
+      },
+      {
+        "name": "vh",
+        "path": "src/main.jsx",
+        "hasState": false
+      }
+    ],
+    "src/components": [
+      {
+        "name": "AdminPanel",
+        "path": "src/components/AdminPanel.jsx",
+        "hasState": true
+      },
+      {
+        "name": "AdminRoute",
+        "path": "src/components/AdminRoute.jsx",
+        "hasState": true
+      },
+      {
+        "name": "AnalyticsDashboard",
+        "path": "src/components/AnalyticsDashboard.jsx",
+        "hasState": true
+      },
+      {
+        "name": "CommentsBanner",
+        "path": "src/components/CommentsBanner.jsx",
+        "hasState": true
+      },
+      {
+        "name": "ContentManagementSystem",
+        "path": "src/components/ContentManagementSystem.jsx",
+        "hasState": true
+      },
+      {
+        "name": "DeepDishGame",
+        "path": "src/components/DeepDishGame.jsx",
+        "hasState": true
+      },
+      {
+        "name": "DraftMarker",
+        "path": "src/components/DraftMarker.jsx",
+        "hasState": false
+      },
+      {
+        "name": "Editor",
+        "path": "src/components/Editor.jsx",
+        "hasState": true
+      },
+      {
+        "name": "footerRef",
+        "path": "src/components/Footer.jsx",
+        "hasState": false
+      },
+      {
+        "name": "GamesMenu",
+        "path": "src/components/GamesMenu.jsx",
+        "hasState": true
+      },
+      {
+        "name": "GuestBook",
+        "path": "src/components/GuestBook.jsx",
+        "hasState": true
+      },
+      {
+        "name": "HeaderBar",
+        "path": "src/components/HeaderBar.jsx",
+        "hasState": true
+      },
+      {
+        "name": "HotdogGame",
+        "path": "src/components/HotdogGame.jsx",
+        "hasState": true
+      },
+      {
+        "name": "KioskVoiceTab",
+        "path": "src/components/KioskVoiceTab.jsx",
+        "hasState": true
+      },
+      {
+        "name": "LayoutEditor",
+        "path": "src/components/LayoutEditor.jsx",
+        "hasState": true
+      },
+      {
+        "name": "LearningDataModal",
+        "path": "src/components/LearningDataModal.jsx",
+        "hasState": false
+      },
+      {
+        "name": "MapShell",
+        "path": "src/components/MapShell.jsx",
+        "hasState": true
+      },
+      {
+        "name": "MarketplaceAdmin",
+        "path": "src/components/MarketplaceAdmin.jsx",
+        "hasState": true
+      },
+      {
+        "name": "NowPlayingBanner",
+        "path": "src/components/NowPlayingBanner.jsx",
+        "hasState": false
+      },
+      {
+        "name": "OrderMenu",
+        "path": "src/components/OrderMenu.jsx",
+        "hasState": true
+      },
+      {
+        "name": "PaymentSetup",
+        "path": "src/components/PaymentSetup.jsx",
+        "hasState": true
+      },
+      {
+        "name": "PinBubbles",
+        "path": "src/components/PinBubbles.jsx",
+        "hasState": true
+      },
+      {
+        "name": "PopularSpotsOverlay",
+        "path": "src/components/PopularSpotsOverlay.jsx",
+        "hasState": true
+      },
+      {
+        "name": "PreviewBanner",
+        "path": "src/components/PreviewBanner.jsx",
+        "hasState": false
+      },
+      {
+        "name": "ProgressiveVisualization",
+        "path": "src/components/ProgressiveVisualization.jsx",
+        "hasState": true
+      },
+      {
+        "name": "QRCodeWidget",
+        "path": "src/components/QRCodeWidget.jsx",
+        "hasState": true
+      },
+      {
+        "name": "SavedPins",
+        "path": "src/components/SavedPins.jsx",
+        "hasState": true
+      },
+      {
+        "name": "SubMapModal",
+        "path": "src/components/SubMapModal.jsx",
+        "hasState": true
+      },
+      {
+        "name": "TriviaGame",
+        "path": "src/components/TriviaGame.jsx",
+        "hasState": true
+      },
+      {
+        "name": "VestaboardTab",
+        "path": "src/components/VestaboardTab.jsx",
+        "hasState": true
+      },
+      {
+        "name": "VoiceAgentTab",
+        "path": "src/components/VoiceAgentTab.jsx",
+        "hasState": true
+      },
+      {
+        "name": "synthRef",
+        "path": "src/components/VoiceAssistant.jsx",
+        "hasState": true
+      },
+      {
+        "name": "WeatherWidget",
+        "path": "src/components/WeatherWidget.jsx",
+        "hasState": true
+      },
+      {
+        "name": "WindGame",
+        "path": "src/components/WindGame.jsx",
+        "hasState": true
+      }
+    ],
+    "src/hooks": [
+      {
+        "name": "modelsLoadedRef",
+        "path": "src/hooks/useFaceRecognition.js",
+        "hasState": true
+      },
+      {
+        "name": "clear",
+        "path": "src/hooks/useHighlightPin.js",
+        "hasState": false
+      },
+      {
+        "name": "updateHeight",
+        "path": "src/hooks/useLayoutStack.jsx",
+        "hasState": true
+      }
+    ],
+    "src/lib": [
+      {
+        "name": "audioUrl",
+        "path": "src/lib/elevenlabs.js",
+        "hasState": false
+      },
+      {
+        "name": "intents",
+        "path": "src/lib/engagementModel.js",
+        "hasState": false
+      }
+    ],
+    "src/routes": [
+      {
+        "name": "TableMode",
+        "path": "src/routes/TableMode.jsx",
+        "hasState": true
+      }
+    ],
+    "src/state": [
+      {
+        "name": "isOnlineRef",
+        "path": "src/state/useNowPlaying.jsx",
+        "hasState": true
+      }
+    ]
   },
-
-  "features": {
-    "src/components/Jukebox.jsx": "Music player with Spotify/HEOS integration",
-    "src/components/GamesMenu.jsx": "Games launcher (Deep Dish, Popcorn, Trivia, Hotdog)",
-    "src/components/OrderMenu.jsx": "Food ordering system",
-    "src/components/EnhancedPhotoBooth.jsx": "Photo booth with backgrounds",
-    "src/components/ThenAndNow.jsx": "Historical photo comparison",
-    "src/components/CommentsModal.jsx": "Customer feedback/comments"
+  "custom_hooks": [
+    {
+      "name": "modelRef",
+      "path": "src/hooks/useAdaptiveLearning.js",
+      "exports": [
+        "useAdaptiveLearning"
+      ]
+    },
+    {
+      "name": "getSessionId",
+      "path": "src/hooks/useAnalytics.js",
+      "exports": [
+        "useAnalytics"
+      ]
+    },
+    {
+      "name": "loadAnalytics",
+      "path": "src/hooks/useAnalyticsData.js",
+      "exports": [
+        "useAnalyticsData"
+      ]
+    },
+    {
+      "name": "refresh",
+      "path": "src/hooks/useAppSettings.js",
+      "exports": [
+        "useAppSettings"
+      ]
+    },
+    {
+      "name": "loadBackgrounds",
+      "path": "src/hooks/useBackgroundImages.js",
+      "exports": [
+        "useBackgroundImages"
+      ]
+    },
+    {
+      "name": "checkBusinessHours",
+      "path": "src/hooks/useBusinessHours.js",
+      "exports": [
+        "useBusinessHours"
+      ]
+    },
+    {
+      "name": "lastProcessTimeRef",
+      "path": "src/hooks/useEyeTracking.js",
+      "exports": [
+        "useEyeTracking",
+        "getGazeEngagementBoost"
+      ]
+    },
+    {
+      "name": "resetTimeout",
+      "path": "src/hooks/useFeatureIdleTimeout.js",
+      "exports": [
+        "useFeatureIdleTimeout"
+      ]
+    },
+    {
+      "name": "cancelled",
+      "path": "src/hooks/useFunFacts.js",
+      "exports": [
+        "useFunFacts",
+        "getRandomFact"
+      ]
+    },
+    {
+      "name": "startConfettiScreensaver",
+      "path": "src/hooks/useIdleAttractor.js",
+      "exports": [
+        "useIdleAttractor"
+      ]
+    },
+    {
+      "name": "now",
+      "path": "src/hooks/useIndustryDemoSwitcher.jsx",
+      "exports": [
+        "useIndustryDemoSwitcher",
+        "IndustryDemoSwitcherModal"
+      ]
+    },
+    {
+      "name": "getLocationId",
+      "path": "src/hooks/useKioskCluster.js",
+      "exports": [
+        "useKioskCluster"
+      ]
+    },
+    {
+      "name": "off",
+      "path": "src/hooks/useKioskMode.jsx",
+      "exports": [
+        "useKioskMode",
+        "KioskStartOverlay"
+      ]
+    },
+    {
+      "name": "savePosition",
+      "path": "src/hooks/useLayoutEditMode.js",
+      "exports": [
+        "useLayoutEditMode"
+      ]
+    },
+    {
+      "name": "handlePositionChange",
+      "path": "src/hooks/useLayoutEditor.js",
+      "exports": [
+        "useLayoutEditor"
+      ]
+    },
+    {
+      "name": "getWidgetsInCell",
+      "path": "src/hooks/useLayoutManager.js",
+      "exports": [
+        "useLayoutManager"
+      ]
+    },
+    {
+      "name": "useLearningSession",
+      "path": "src/hooks/useLearningSession.js",
+      "exports": [
+        "useLearningSession"
+      ]
+    },
+    {
+      "name": "syncComments",
+      "path": "src/hooks/useLocalComments.js",
+      "exports": [
+        "useLocalComments"
+      ]
+    },
+    {
+      "name": "fetchLogo",
+      "path": "src/hooks/useLogo.js",
+      "exports": [
+        "useLogo"
+      ]
+    },
+    {
+      "name": "loadMediaFiles",
+      "path": "src/hooks/useMediaFiles.js",
+      "exports": [
+        "useMediaFiles"
+      ]
+    },
+    {
+      "name": "closeAllModals",
+      "path": "src/hooks/useModalManager.js",
+      "exports": [
+        "useModalManager"
+      ]
+    },
+    {
+      "name": "matched",
+      "path": "src/hooks/useMultiPersonTracking.js",
+      "exports": [
+        "useMultiPersonTracking"
+      ]
+    },
+    {
+      "name": "handleUpdate",
+      "path": "src/hooks/useNavigationSettings.js",
+      "exports": [
+        "useNavigationSettings"
+      ]
+    },
+    {
+      "name": "syncIntervalRef",
+      "path": "src/hooks/useOfflineSync.js",
+      "exports": [
+        "useOfflineSync",
+        "useOfflinePinCache",
+        "useOfflinePins"
+      ]
+    },
+    {
+      "name": "addToCart",
+      "path": "src/hooks/useOrderCart.js",
+      "exports": [
+        "useOrderCart"
+      ]
+    },
+    {
+      "name": "countMap",
+      "path": "src/hooks/usePinStyleCounts.js",
+      "exports": [
+        "usePinStyleCounts"
+      ]
+    },
+    {
+      "name": "keyFor",
+      "path": "src/hooks/usePins.js",
+      "exports": [
+        "usePins"
+      ]
+    },
+    {
+      "name": "initCamera",
+      "path": "src/hooks/useProximityDetection.js",
+      "exports": [
+        "useProximityDetection"
+      ]
+    },
+    {
+      "name": "checkQuadrants",
+      "path": "src/hooks/useQuadrantTouch.js",
+      "exports": [
+        "useQuadrantTouch"
+      ]
+    },
+    {
+      "name": "cancelled",
+      "path": "src/hooks/useSlugKeywords.js",
+      "exports": [
+        "useSlugKeywords"
+      ]
+    },
+    {
+      "name": "processTrackedPeople",
+      "path": "src/hooks/useSmartProximityDetection.js",
+      "exports": [
+        "useSmartProximityDetection"
+      ]
+    },
+    {
+      "name": "getAccessToken",
+      "path": "src/hooks/useSpotify.js",
+      "exports": [
+        "useSpotify"
+      ]
+    },
+    {
+      "name": "loadComparisons",
+      "path": "src/hooks/useThenAndNow.js",
+      "exports": [
+        "useThenAndNow"
+      ]
+    },
+    {
+      "name": "timerRef",
+      "path": "src/hooks/useTouchSequence.js",
+      "exports": [
+        "useTouchSequence"
+      ]
+    },
+    {
+      "name": "gestureStartTime",
+      "path": "src/hooks/useZPatternGesture.js",
+      "exports": [
+        "useZPatternGesture"
+      ]
+    },
+    {
+      "name": "loadSettings",
+      "path": "src/state/useAdminSettings.js",
+      "exports": [
+        "useAdminSettings"
+      ]
+    },
+    {
+      "name": "loadCache",
+      "path": "src/state/useThenAndNow.js",
+      "exports": [
+        "useThenAndNow"
+      ]
+    }
+  ],
+  "dependency_graph": {
+    "src/App.jsx": {
+      "component": "App",
+      "type": "component",
+      "dependencies": 87,
+      "has_state": true,
+      "uses_hooks": [
+        "useRef",
+        "useState",
+        "useMemo",
+        "useIndustryDemoSwitcher",
+        "usePins",
+        "useAdminSettings",
+        "useNavigationSettings",
+        "useNowPlaying",
+        "useAdaptiveLearning",
+        "useLayoutEditMode",
+        "useBusinessHours",
+        "useCallback",
+        "useSmartProximityDetection",
+        "useEffect",
+        "useFunFacts",
+        "useModalManager",
+        "useHighlightPin",
+        "useTouchSequence",
+        "useIdleAttractor"
+      ]
+    },
+    "src/components/AchievementNotification.jsx": {
+      "component": "AchievementNotification",
+      "type": "utility",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/AdminLogin.jsx": {
+      "component": "AdminLogin",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/AdminPanel.jsx": {
+      "component": "AdminPanel",
+      "type": "component",
+      "dependencies": 23,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect",
+        "useAdminSettings",
+        "useBackgroundImages",
+        "useMediaFiles",
+        "useThenAndNow",
+        "useNowPlaying",
+        "useNavigationSettings",
+        "useLogo",
+        "useCallback"
+      ]
+    },
+    "src/components/AdminRoute.jsx": {
+      "component": "AdminRoute",
+      "type": "component",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/AnalyticsDashboard.jsx": {
+      "component": "AnalyticsDashboard",
+      "type": "component",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useAnalyticsData"
+      ]
+    },
+    "src/components/AnonymousMessageModal.jsx": {
+      "component": "AnonymousMessageModal",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/AppointmentCheckIn.jsx": {
+      "component": "AppointmentCheckIn",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/AttractorOverlay.jsx": {
+      "component": "AttractorOverlay",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": [
+        "useLayoutStack"
+      ]
+    },
+    "src/components/BillingDashboard.jsx": {
+      "component": "BillingDashboard",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/CallBorderIndicator.jsx": {
+      "component": "CallBorderIndicator",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/CameraDiagnostics.jsx": {
+      "component": "addLog",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/CheckoutModal.jsx": {
+      "component": "CheckoutModal",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/ClosedOverlay.jsx": {
+      "component": "ClosedOverlay",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/CommentsBanner.jsx": {
+      "component": "CommentsBanner",
+      "type": "component",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useLayoutStack",
+        "useRef",
+        "useState",
+        "useLocalComments",
+        "useEffect"
+      ]
+    },
+    "src/components/CommentsModal.jsx": {
+      "component": "CommentsModal",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/ContentLayoutTab.jsx": {
+      "component": "ContentLayoutTab",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useNavigationSettings",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/ContentManagementSystem.jsx": {
+      "component": "ContentManagementSystem",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect",
+        "useTemplate"
+      ]
+    },
+    "src/components/DebugPanel.jsx": {
+      "component": "DebugPanel",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/DeepDishGame.jsx": {
+      "component": "DeepDishGame",
+      "type": "component",
+      "dependencies": 5,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/DemoModeSwitcher.jsx": {
+      "component": "DemoModeSwitcher",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/DemoWatermark.jsx": {
+      "component": "DemoWatermark",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/DraftMarker.jsx": {
+      "component": "DraftMarker",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": [
+        "useMap",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/DragTip.jsx": {
+      "component": "DragTip",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useMap",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/DraggableEditWrapper.jsx": {
+      "component": "DraggableEditWrapper",
+      "type": "utility",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useRef",
+        "useState",
+        "useLayoutStack",
+        "useAdminSettings",
+        "useLayoutManager",
+        "useEffect"
+      ]
+    },
+    "src/components/DraggableElement.jsx": {
+      "component": "DraggableElement",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/Editor.jsx": {
+      "component": "Editor",
+      "type": "component",
+      "dependencies": 4,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "usePinStyleCounts"
+      ]
+    },
+    "src/components/EmployeeCheckIn.jsx": {
+      "component": "EmployeeCheckIn",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/EmployeeCheckinModal.jsx": {
+      "component": "EmployeeCheckinModal",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/EmployeeRegistration.jsx": {
+      "component": "EmployeeRegistration",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useFaceRecognition",
+        "useEffect"
+      ]
+    },
+    "src/components/EnhancedPhotoBooth.jsx": {
+      "component": "EnhancedPhotoBooth",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useRef",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/ErrorBoundary.jsx": {
+      "component": "ErrorBoundary",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/FeatureGate.jsx": {
+      "component": "FeatureGate",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect",
+        "useFeatureAccess"
+      ]
+    },
+    "src/components/FloatingExploreButton.jsx": {
+      "component": "handleToggle",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/Footer.jsx": {
+      "component": "footerRef",
+      "type": "component",
+      "dependencies": 3,
+      "has_state": false,
+      "uses_hooks": [
+        "useLayoutStack",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/GameLeaderboard.jsx": {
+      "component": "GameLeaderboard",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/GamesMenu.jsx": {
+      "component": "GamesMenu",
+      "type": "component",
+      "dependencies": 6,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useAdminSettings",
+        "useFeatureIdleTimeout"
+      ]
+    },
+    "src/components/GlobalAudioPlayer.jsx": {
+      "component": "GlobalAudioPlayer",
+      "type": "utility",
+      "dependencies": 3,
+      "has_state": false,
+      "uses_hooks": [
+        "useRef",
+        "useNowPlaying",
+        "useAdminSettings",
+        "useEffect"
+      ]
+    },
+    "src/components/GlobalCounters.jsx": {
+      "component": "GlobalCounters",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/GuestBook.jsx": {
+      "component": "GuestBook",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/HeaderBar.jsx": {
+      "component": "HeaderBar",
+      "type": "component",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useRef",
+        "useLayoutStack",
+        "useLogo",
+        "useEffect",
+        "useState"
+      ]
+    },
+    "src/components/HolidayTheme.jsx": {
+      "component": "HolidayTheme",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/HotdogGame.jsx": {
+      "component": "HotdogGame",
+      "type": "component",
+      "dependencies": 5,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/Jukebox.jsx": {
+      "component": "Jukebox",
+      "type": "utility",
+      "dependencies": 5,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useAdminSettings",
+        "useMediaFiles",
+        "useNowPlaying",
+        "useSpotify",
+        "useRef",
+        "useFeatureIdleTimeout",
+        "useEffect"
+      ]
+    },
+    "src/components/KioskStartOverlay.jsx": {
+      "component": "KioskStartOverlay",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/KioskVoiceTab.jsx": {
+      "component": "KioskVoiceTab",
+      "type": "component",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useAdminSettings",
+        "useEffect"
+      ]
+    },
+    "src/components/LayoutEditModeIndicator.jsx": {
+      "component": "LayoutEditModeIndicator",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/LayoutEditModeOverlay.jsx": {
+      "component": "LayoutEditModeOverlay",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": [
+        "useAdminSettings"
+      ]
+    },
+    "src/components/LayoutEditor.jsx": {
+      "component": "LayoutEditor",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useCallback"
+      ]
+    },
+    "src/components/LearningDataModal.jsx": {
+      "component": "LearningDataModal",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useMemo"
+      ]
+    },
+    "src/components/LearningModeTimer.jsx": {
+      "component": "LearningModeTimer",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/LocalRecommendations.jsx": {
+      "component": "LocalRecommendations",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/LocationSwitcher.jsx": {
+      "component": "LocationSwitcher",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useKioskCluster",
+        "useState"
+      ]
+    },
+    "src/components/MapShell.jsx": {
+      "component": "MapShell",
+      "type": "component",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useLayoutStack",
+        "useRef",
+        "useState",
+        "useMemo",
+        "useEffect",
+        "useMapEvent"
+      ]
+    },
+    "src/components/MarketplaceAdmin.jsx": {
+      "component": "MarketplaceAdmin",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/MarketplaceTab.jsx": {
+      "component": "MarketplaceTab",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useMemo"
+      ]
+    },
+    "src/components/MobileNavMenu.jsx": {
+      "component": "MobileNavMenu",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/MobilePinsList.jsx": {
+      "component": "MobilePinsList",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/MobilePinsTable.jsx": {
+      "component": "MobilePinsTable",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/MotionIndicator.jsx": {
+      "component": "MotionIndicator",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/NewsTicker.jsx": {
+      "component": "NewsTicker",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/NowPlaying.jsx": {
+      "component": "NowPlaying",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/NowPlayingBanner.jsx": {
+      "component": "NowPlayingBanner",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": [
+        "useLayoutStack"
+      ]
+    },
+    "src/components/OfflineIndicator.jsx": {
+      "component": "OfflineIndicator",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/OfflineMapDownloader.jsx": {
+      "component": "OfflineMapDownloader",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useLayoutStack",
+        "useEffect"
+      ]
+    },
+    "src/components/OfflineTileLayer.jsx": {
+      "component": "OfflineTileLayer",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": [
+        "useMap",
+        "useEffect"
+      ]
+    },
+    "src/components/OrderConfirmation.jsx": {
+      "component": "OrderConfirmation",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/OrderMenu.jsx": {
+      "component": "OrderMenu",
+      "type": "component",
+      "dependencies": 5,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useAdminSettings",
+        "useOrderCart",
+        "useFeatureIdleTimeout",
+        "useEffect"
+      ]
+    },
+    "src/components/PWAInstallPrompt.jsx": {
+      "component": "PWAInstallPrompt",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/PaymentSetup.jsx": {
+      "component": "PaymentSetup",
+      "type": "component",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useStripe",
+        "useElements",
+        "useState"
+      ]
+    },
+    "src/components/PerformanceDiagnostics.jsx": {
+      "component": "PerformanceDiagnostics",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/PerformanceTab.jsx": {
+      "component": "PerformanceTab",
+      "type": "utility",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/PhoneNumberSetup.jsx": {
+      "component": "PhoneNumberSetup",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/PhotoBooth.jsx": {
+      "component": "PhotoBooth",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useRef",
+        "useState",
+        "useBackgroundImages",
+        "useEffect"
+      ]
+    },
+    "src/components/PhotoCaptureModal.jsx": {
+      "component": "PhotoCaptureModal",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useBackgroundImages",
+        "useEffect"
+      ]
+    },
+    "src/components/PinBubbles.jsx": {
+      "component": "PinBubbles",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useRef",
+        "useState",
+        "useMemo",
+        "useEffect"
+      ]
+    },
+    "src/components/PinCodeModal.jsx": {
+      "component": "PinCodeModal",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/PinHeatmap.jsx": {
+      "component": "PinHeatmap",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useMap",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/PinPlacementEffect.jsx": {
+      "component": "PinPlacementEffect",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/PinShareModal.jsx": {
+      "component": "PinShareModal",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useAdminSettings",
+        "useEffect"
+      ]
+    },
+    "src/components/PlanSelector.jsx": {
+      "component": "PlanSelector",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/PopularSpotModal.jsx": {
+      "component": "PopularSpotModal",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useEffect"
+      ]
+    },
+    "src/components/PopularSpotsOverlay.jsx": {
+      "component": "PopularSpotsOverlay",
+      "type": "component",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useState",
+        "useEffect",
+        "useMemo"
+      ]
+    },
+    "src/components/PreviewBanner.jsx": {
+      "component": "PreviewBanner",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/ProgressiveVisualization.jsx": {
+      "component": "ProgressiveVisualization",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useRef",
+        "useState",
+        "useMemo",
+        "useEffect"
+      ]
+    },
+    "src/components/ProximityFeedbackModal.jsx": {
+      "component": "ProximityFeedbackModal",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/ProximityMonitor.jsx": {
+      "component": "eventLogRef",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/QRCodeWidget.jsx": {
+      "component": "QRCodeWidget",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useLayoutStack"
+      ]
+    },
+    "src/components/ROICalculator.jsx": {
+      "component": "ROICalculator",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useMemo"
+      ]
+    },
+    "src/components/RecentPinsTable.jsx": {
+      "component": "RecentPinsTable",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useMemo"
+      ]
+    },
+    "src/components/ReservationCheckIn.jsx": {
+      "component": "ReservationCheckIn",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/SavedPins.jsx": {
+      "component": "SavedPins",
+      "type": "component",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useState",
+        "useRef",
+        "useEffect",
+        "useMemo"
+      ]
+    },
+    "src/components/SetupWizard.jsx": {
+      "component": "SetupWizard",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/ShareConfirmModal.jsx": {
+      "component": "ShareConfirmModal",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState"
+      ]
+    },
+    "src/components/SubMapModal.jsx": {
+      "component": "SubMapModal",
+      "type": "component",
+      "dependencies": 3,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useRef",
+        "useEffect",
+        "useState"
+      ]
+    },
+    "src/components/TeamCount.jsx": {
+      "component": "TeamCount",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/ThenAndNow.jsx": {
+      "component": "ThenAndNow",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useThenAndNow"
+      ]
+    },
+    "src/components/Toast.jsx": {
+      "component": "Toast",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/TouchSequenceIndicator.jsx": {
+      "component": "TouchSequenceIndicator",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/TriviaGame.jsx": {
+      "component": "TriviaGame",
+      "type": "component",
+      "dependencies": 6,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/VestaboardTab.jsx": {
+      "component": "VestaboardTab",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/VoiceAgentTab.jsx": {
+      "component": "VoiceAgentTab",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/VoiceAssistant.jsx": {
+      "component": "synthRef",
+      "type": "component",
+      "dependencies": 6,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/VoiceInput.jsx": {
+      "component": "VoiceInput",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/WalkupAttractor.jsx": {
+      "component": "WalkupAttractor",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useAdminSettings",
+        "useEffect"
+      ]
+    },
+    "src/components/WeatherWidget.jsx": {
+      "component": "WeatherWidget",
+      "type": "component",
+      "dependencies": 5,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useLayoutStack",
+        "useLayoutEditor",
+        "useRef",
+        "useState",
+        "useEffect",
+        "useCallback"
+      ]
+    },
+    "src/components/WindGame.jsx": {
+      "component": "WindGame",
+      "type": "component",
+      "dependencies": 5,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/components/WordCloud.jsx": {
+      "component": "WordCloud",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useMemo"
+      ]
+    },
+    "src/components/ZoomGate.jsx": {
+      "component": "ZoomGate",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useMap",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/components/admin/FieldRow.jsx": {
+      "component": "FieldRow",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/admin/InfoMessage.jsx": {
+      "component": "InfoMessage",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/admin/SaveButton.jsx": {
+      "component": "SaveButton",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/admin/SectionHeader.jsx": {
+      "component": "SectionHeader",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/components/admin/TabButton.jsx": {
+      "component": "TabButton",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/config/constants.js": {
+      "component": "constants",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/config/customVoicePrompts.js": {
+      "component": "prompts",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/config/industryConfigs.js": {
+      "component": "industryConfigs",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/config/moderation.js": {
+      "component": "lowerText",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/config/pinStyles.js": {
+      "component": "pinStyles",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/config/verticalModes.js": {
+      "component": "getCurrentMode",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/config/voicePrompts.js": {
+      "component": "voicePrompts",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/data/chicagoFunFacts.js": {
+      "component": "chicagoFunFacts",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/data/chicagoTrivia.js": {
+      "component": "indices",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/data/marketplaceFeatures.js": {
+      "component": "MARKETPLACE_FEATURES",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/hooks/useAdaptiveLearning.js": {
+      "component": "modelRef",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdaptiveLearning",
+        "useState",
+        "useRef",
+        "useEffect",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useAnalytics.js": {
+      "component": "getSessionId",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": false,
+      "uses_hooks": [
+        "useAnalytics",
+        "useKioskCluster",
+        "useRef",
+        "useEffect",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useAnalyticsData.js": {
+      "component": "loadAnalytics",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useAnalyticsData",
+        "useState",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useAppSettings.js": {
+      "component": "refresh",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useAppSettings",
+        "useState",
+        "useCallback",
+        "useEffect",
+        "useMemo"
+      ]
+    },
+    "src/hooks/useBackgroundImages.js": {
+      "component": "loadBackgrounds",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useBackgroundImages",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useBusinessHours.js": {
+      "component": "checkBusinessHours",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useBusinessHours",
+        "useAdminSettings",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useEyeTracking.js": {
+      "component": "lastProcessTimeRef",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useEyeTracking",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useFaceRecognition.js": {
+      "component": "modelsLoadedRef",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useFaceRecognition",
+        "useState",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useFeatureIdleTimeout.js": {
+      "component": "resetTimeout",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useFeatureIdleTimeout",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useFunFacts.js": {
+      "component": "cancelled",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useFunFacts",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useHighlightPin.js": {
+      "component": "clear",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useHighlightPin",
+        "useRef"
+      ]
+    },
+    "src/hooks/useIdleAttractor.js": {
+      "component": "startConfettiScreensaver",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useIdleAttractor",
+        "useState",
+        "useRef",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useIndustryDemoSwitcher.jsx": {
+      "component": "now",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useIndustryDemoSwitcher",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useKioskCluster.js": {
+      "component": "getLocationId",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useKioskCluster",
+        "useState",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useKioskMode.jsx": {
+      "component": "off",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useKioskMode",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useLayoutEditMode.js": {
+      "component": "savePosition",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useLayoutEditMode",
+        "useState",
+        "useAdminSettings",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useLayoutEditor.js": {
+      "component": "handlePositionChange",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": [
+        "useLayoutEditor",
+        "useAdminSettings",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useLayoutManager.js": {
+      "component": "getWidgetsInCell",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": [
+        "useLayoutManager",
+        "useAdminSettings",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useLayoutStack.jsx": {
+      "component": "updateHeight",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useCallback",
+        "useMemo",
+        "useLayoutStack",
+        "useContext"
+      ]
+    },
+    "src/hooks/useLearningSession.js": {
+      "component": "useLearningSession",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": false,
+      "uses_hooks": [
+        "useLearningSession",
+        "useRef",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useLocalComments.js": {
+      "component": "syncComments",
+      "type": "hook",
+      "dependencies": 4,
+      "has_state": true,
+      "uses_hooks": [
+        "useLocalComments",
+        "useState",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useLogo.js": {
+      "component": "fetchLogo",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useLogo",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useMediaFiles.js": {
+      "component": "loadMediaFiles",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useMediaFiles",
+        "useState",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useModalManager.js": {
+      "component": "closeAllModals",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useModalManager",
+        "useState",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useMultiPersonTracking.js": {
+      "component": "matched",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useMultiPersonTracking",
+        "useState",
+        "useRef",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useNavigationSettings.js": {
+      "component": "handleUpdate",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useNavigationSettings",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useOfflineSync.js": {
+      "component": "syncIntervalRef",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useOfflineSync",
+        "useState",
+        "useRef",
+        "useEffect",
+        "useCallback",
+        "useOfflinePinCache",
+        "useOfflinePins"
+      ]
+    },
+    "src/hooks/useOrderCart.js": {
+      "component": "addToCart",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useOrderCart",
+        "useState"
+      ]
+    },
+    "src/hooks/usePinStyleCounts.js": {
+      "component": "countMap",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "usePinStyleCounts",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/usePins.js": {
+      "component": "keyFor",
+      "type": "hook",
+      "dependencies": 5,
+      "has_state": true,
+      "uses_hooks": [
+        "usePins",
+        "useAdminSettings",
+        "useState",
+        "useRef",
+        "useEffect",
+        "useMemo"
+      ]
+    },
+    "src/hooks/useProximityDetection.js": {
+      "component": "initCamera",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useProximityDetection",
+        "useState",
+        "useRef",
+        "useLearningSession",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useQuadrantTouch.js": {
+      "component": "checkQuadrants",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useQuadrantTouch",
+        "useRef",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useSlugKeywords.js": {
+      "component": "cancelled",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useSlugKeywords",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useSmartProximityDetection.js": {
+      "component": "processTrackedPeople",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useSmartProximityDetection",
+        "useState",
+        "useRef",
+        "useMultiPersonTracking",
+        "useLearningSession",
+        "useCallback",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useSpotify.js": {
+      "component": "getAccessToken",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": true,
+      "uses_hooks": [
+        "useSpotify",
+        "useState",
+        "useEffect",
+        "useCallback"
+      ]
+    },
+    "src/hooks/useThenAndNow.js": {
+      "component": "loadComparisons",
+      "type": "hook",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useThenAndNow",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useTouchSequence.js": {
+      "component": "timerRef",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useTouchSequence",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/hooks/useZPatternGesture.js": {
+      "component": "gestureStartTime",
+      "type": "hook",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": [
+        "useZPatternGesture",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/lib/anonymousMessage.js": {
+      "component": "errorData",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/consoleWebhook.js": {
+      "component": "message",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/databaseAudit.js": {
+      "component": "localIds",
+      "type": "utility",
+      "dependencies": 2,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/demoMode.js": {
+      "component": "isDemoMode",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/effects.js": {
+      "component": "activeConfettiPieces",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/elevenlabs.js": {
+      "component": "audioUrl",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/engagementModel.js": {
+      "component": "intents",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/facebookShare.js": {
+      "component": "facebookShare",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/featureGate.js": {
+      "component": "hasAddon",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/format.js": {
+      "component": "format",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/geo.js": {
+      "component": "geo",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/heosClient.js": {
+      "component": "results",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/immersiveMode.js": {
+      "component": "reEnable",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/kiosk.js": {
+      "component": "handler",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/localDatabase.js": {
+      "component": "chunk",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/logger.js": {
+      "component": "logger",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/mapActions.js": {
+      "component": "mapActions",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/mapUtils.js": {
+      "component": "iconFor",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/microphonePermissions.js": {
+      "component": "stream",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/notifications.js": {
+      "component": "recipients",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/offlineStorage.js": {
+      "component": "db",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/offlineTileStorage.js": {
+      "component": "key",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/performanceMonitor.js": {
+      "component": "calcStats",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/persistentStorage.js": {
+      "component": "persistentStorage",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/phoneUtils.js": {
+      "component": "phoneUtils",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/pinShare.js": {
+      "component": "pinShare",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/pinsUtils.js": {
+      "component": "WORDS_B",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/posIntegration.js": {
+      "component": "order",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/sanitize.js": {
+      "component": "sanitize",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/sonosClient.js": {
+      "component": "results",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/spotifyClient.js": {
+      "component": "data",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/stripe.js": {
+      "component": "getStripe",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/styles.js": {
+      "component": "btn3d",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/supabase.js": {
+      "component": "tableRows",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/syncService.js": {
+      "component": "syncService",
+      "type": "utility",
+      "dependencies": 3,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/tenancy.js": {
+      "component": "getCurrentTenant",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/tilePrefetch.js": {
+      "component": "processBatch",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/token.js": {
+      "component": "token",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/vestaboard.js": {
+      "component": "waitTime",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/lib/wordBank.js": {
+      "component": "wordBank",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/main.jsx": {
+      "component": "vh",
+      "type": "component",
+      "dependencies": 9,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/registerServiceWorker.js": {
+      "component": "newWorker",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/routes/Admin.jsx": {
+      "component": "Admin",
+      "type": "utility",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useMemo",
+        "useCallback",
+        "useRef",
+        "useEffect"
+      ]
+    },
+    "src/routes/TableMode.jsx": {
+      "component": "TableMode",
+      "type": "component",
+      "dependencies": 4,
+      "has_state": true,
+      "uses_hooks": [
+        "useMapEvents",
+        "useState",
+        "useSearchParams",
+        "useParams",
+        "useRef"
+      ]
+    },
+    "src/state/useAdminSettings.js": {
+      "component": "loadSettings",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useAdminSettings",
+        "useState",
+        "useEffect",
+        "useCallback",
+        "useMemo"
+      ]
+    },
+    "src/state/useNowPlaying.jsx": {
+      "component": "isOnlineRef",
+      "type": "component",
+      "dependencies": 1,
+      "has_state": true,
+      "uses_hooks": [
+        "useState",
+        "useRef",
+        "useEffect",
+        "useCallback",
+        "useNowPlaying",
+        "useContext"
+      ]
+    },
+    "src/state/useThenAndNow.js": {
+      "component": "loadCache",
+      "type": "hook",
+      "dependencies": 2,
+      "has_state": true,
+      "uses_hooks": [
+        "useThenAndNow",
+        "useState",
+        "useEffect"
+      ]
+    },
+    "src/utils/achievements.js": {
+      "component": "achievement",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/utils/particleEffects.js": {
+      "component": "createParticleEffect",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/utils/remoteLogger.js": {
+      "component": "logEntry",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "src/utils/soundEffects.js": {
+      "component": "gainNode",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/create-subscription.js": {
+      "component": "volumeDiscount",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/create-tables.js": {
+      "component": "create-tables",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/debug-log.js": {
+      "component": "debug-log",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/discord-webhook.js": {
+      "component": "embeds",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/elevenlabs-tts.js": {
+      "component": "elevenlabs-tts",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/game-leaderboard.js": {
+      "component": "game-leaderboard",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/generate-pin-image.js": {
+      "component": "generate-pin-image",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/get-logs.js": {
+      "component": "get-logs",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/health.js": {
+      "component": "missingVars",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/jukebox-library.js": {
+      "component": "tracks",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/navigation-settings.js": {
+      "component": "navigation-settings",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/rss-feed.js": {
+      "component": "isAllowed",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/send-anonymous-message.js": {
+      "component": "errorData",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/send-email.js": {
+      "component": "allFailed",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/send-sms.js": {
+      "component": "results",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/sms-webhook.js": {
+      "component": "failures",
+      "type": "component",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/sonos-control.js": {
+      "component": "errorData",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/sonos-status.js": {
+      "component": "sonos-status",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/spotify-token.js": {
+      "component": "errorData",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/square-create-order.js": {
+      "component": "orderData",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/square-create-payment.js": {
+      "component": "square-create-payment",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/square-loyalty-add-points.js": {
+      "component": "square-loyalty-add-points",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/square-menu.js": {
+      "component": "menu",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/stripe-webhook.js": {
+      "component": "config",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/submit-comment.js": {
+      "component": "smsResponse",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/submit-lead.js": {
+      "component": "submit-lead",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/test-feedback-sms.js": {
+      "component": "smsResponse",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/test-twilio.js": {
+      "component": "twilioConfig",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/twilio-call-status.js": {
+      "component": "twilio-call-status",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/twilio-voice-webhook.js": {
+      "component": "shouldEnd",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/update-hardware-status.js": {
+      "component": "update-hardware-status",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/voice-assistant.js": {
+      "component": "voice-assistant",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    },
+    "api/webhook-processor.js": {
+      "component": "recentErrors",
+      "type": "utility",
+      "dependencies": 0,
+      "has_state": false,
+      "uses_hooks": []
+    }
   },
-
+  "frequently_modified": {
+    "src/App.jsx": "Modified 218 times in last 30 days",
+    "src/components/MapShell.jsx": "Modified 118 times in last 30 days",
+    "src/components/AdminPanel.jsx": "Modified 81 times in last 30 days",
+    "src/components/VoiceAssistant.jsx": "Modified 41 times in last 30 days",
+    "src/state/useAdminSettings.js": "Modified 40 times in last 30 days",
+    "src/components/Editor.jsx": "Modified 30 times in last 30 days",
+    "src/components/HeaderBar.jsx": "Modified 29 times in last 30 days",
+    "src/components/SubMapModal.jsx": "Modified 28 times in last 30 days",
+    "src/lib/mapUtils.js": "Modified 20 times in last 30 days",
+    "src/components/NowPlayingBanner.jsx": "Modified 20 times in last 30 days",
+    "src/hooks/useNavigationSettings.js": "Modified 17 times in last 30 days",
+    "src/components/Footer.jsx": "Modified 16 times in last 30 days",
+    "scripts/autonomous-healer.js": "Modified 16 times in last 30 days",
+    "src/components/Jukebox.jsx": "Modified 15 times in last 30 days",
+    "src/components/HotdogGame.jsx": "Modified 14 times in last 30 days"
+  },
   "styling_approach": {
     "method": "Inline styles (React style objects)",
     "no_css_files": true,
     "note": "DO NOT create .css files - modify JSX components directly with style={{ }} attributes"
   },
-
   "common_patterns": {
     "settings_access": "const { settings: adminSettings } = useAdminSettings()",
-    "nav_settings_access": "const { settings: navSettings } = useNavigationSettings()",
+    "settings_files": 27,
     "modal_state": "useState hooks in App.jsx, passed as props",
+    "modal_files": 2,
     "admin_save": "await saveAdminSettings(updatedSettings)"
   },
-
   "file_path_rules": {
     "use_relative_paths": "Always use paths relative to project root, never absolute system paths",
     "component_paths": "src/components/ComponentName.jsx",
@@ -87,11 +2906,21 @@
     "state_paths": "src/state/useStateName.js",
     "lib_paths": "src/lib/libraryName.js"
   },
-
-  "frequently_modified_files": {
-    "for_ui_changes": "src/components/HeaderBar.jsx, src/components/Footer.jsx, src/App.jsx",
-    "for_settings": "src/state/useAdminSettings.js",
-    "for_navigation": "src/hooks/useNavigationSettings.js",
-    "for_overlays": "src/components/AttractorOverlay.jsx, src/components/WalkupAttractor.jsx"
+  "statistics": {
+    "total_lines": 73596,
+    "avg_component_size": 597,
+    "components_with_state": 34,
+    "most_used_hooks": {
+      "useState": 119,
+      "useEffect": 101,
+      "useRef": 54,
+      "useAdminSettings": 27,
+      "useCallback": 27,
+      "useMemo": 16,
+      "useMap": 12,
+      "useLayoutStack": 11,
+      "useNowPlaying": 5,
+      "useNavigationSettings": 4
+    }
   }
 }

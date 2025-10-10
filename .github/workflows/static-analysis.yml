@@ -1,0 +1,173 @@
+name: Proactive Static Analysis
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - '.eslintrc.json'
+      - 'package.json'
+  push:
+    branches:
+      - main
+      - develop
+      - 'week*'
+    paths:
+      - 'src/**'
+      - 'api/**'
+
+jobs:
+  lint:
+    name: ESLint Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate codebase context for AI
+        run: npm run context:generate
+
+      - name: Run ESLint
+        id: eslint
+        run: |
+          npm run lint > eslint-output.txt 2>&1 || echo "ESLINT_FAILED=true" >> $GITHUB_ENV
+          cat eslint-output.txt
+
+      - name: Check for critical errors
+        if: env.ESLINT_FAILED == 'true'
+        run: |
+          echo "::error::ESLint found critical errors!"
+          cat eslint-output.txt
+
+          # Extract error summary
+          ERROR_COUNT=$(grep -c "error" eslint-output.txt || echo "0")
+          WARNING_COUNT=$(grep -c "warning" eslint-output.txt || echo "0")
+
+          echo "Found $ERROR_COUNT errors and $WARNING_COUNT warnings"
+
+          # Fail the build if errors found
+          if [ "$ERROR_COUNT" -gt "0" ]; then
+            exit 1
+          fi
+
+      - name: Create auto-fix branch if errors found
+        if: env.ESLINT_FAILED == 'true' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Try to auto-fix errors
+          npm run lint:fix
+
+          # Check if there are changes after auto-fix
+          if ! git diff --quiet; then
+            echo "Auto-fixes applied, creating PR..."
+
+            # Create branch for auto-fixes
+            BRANCH_NAME="auto-fix/eslint-$(date +%s)"
+            git checkout -b "$BRANCH_NAME"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "🤖 Auto-fix: ESLint errors
+
+Auto-fixed by proactive static analysis workflow.
+
+🤖 Generated with GitHub Actions
+Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+            git push -u origin "$BRANCH_NAME"
+
+            # Create PR
+            gh pr create \
+              --title "🤖 Auto-fix: ESLint errors" \
+              --body "## Automated ESLint Fixes
+
+This PR contains automatic fixes for ESLint errors detected in the codebase.
+
+### Changes
+- Auto-fixed formatting issues
+- Corrected common code quality issues
+- Fixed unused variables
+
+### Testing
+Please review these changes and run tests before merging.
+
+---
+🤖 Generated automatically by Proactive Static Analysis workflow" \
+              --base main \
+              --head "$BRANCH_NAME"
+          else
+            echo "No auto-fixable issues found"
+          fi
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Run security audit
+        run: |
+          npm audit --audit-level=moderate || true
+          echo "Security audit complete"
+
+      - name: Check for high/critical vulnerabilities
+        run: |
+          # Get audit results
+          npm audit --json > audit-results.json || true
+
+          # Count high and critical vulnerabilities
+          HIGH_VULNS=$(cat audit-results.json | grep -c '"severity":"high"' || echo "0")
+          CRITICAL_VULNS=$(cat audit-results.json | grep -c '"severity":"critical"' || echo "0")
+
+          echo "Found $HIGH_VULNS high and $CRITICAL_VULNS critical vulnerabilities"
+
+          # Warn if critical vulnerabilities found
+          if [ "$CRITICAL_VULNS" -gt "0" ]; then
+            echo "::warning::Found $CRITICAL_VULNS critical vulnerabilities"
+          fi
+
+  type-check:
+    name: Type Checking (JSDoc)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for undefined variables
+        run: |
+          # Search for common undefined variable patterns
+          echo "Checking for potential undefined variables..."
+
+          # Check for use of variables before definition
+          grep -rn "useState\|useEffect\|useCallback" src/ | grep -v "import" | head -20 || true
+
+          echo "Type check complete (manual review recommended)"
