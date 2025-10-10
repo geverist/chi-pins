@@ -20,7 +20,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted  # Changed from ubuntu-latest to use your Mac
     timeout-minutes: 15
 
     steps:
