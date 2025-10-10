@@ -1823,6 +1823,7 @@ async function main() {
           }
         }
       }
+      }
 
     } catch (err) {
       log(`Error in main loop: ${err.message}`, 'red');
