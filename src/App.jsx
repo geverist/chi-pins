@@ -327,9 +327,13 @@ export default function App() {
   // Employee checkin modal state
   const [employeeCheckinOpen, setEmployeeCheckinOpen] = useState(false);
   const [staringPerson, setStaringPerson] = useState(null);
+  const [stareDuration, setStareDuration] = useState(0);
 
   const handleStareDetected = useCallback(({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose }) => {
     console.log('[App] 🔍 Stare detected! Person:', personId, 'Proximity:', proximityLevel, 'Duration:', Math.round(stareDuration / 1000), 's', 'Looking:', isLookingAtKiosk);
+
+    // Update stare duration state
+    setStareDuration(stareDuration);
 
     // Open employee checkin modal
     setStaringPerson({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose });
@@ -338,6 +342,8 @@ export default function App() {
 
   const handleStareEnded = useCallback(({ personId, stareDuration }) => {
     console.log('[App] Stare ended. Person:', personId, 'Duration:', Math.round(stareDuration / 1000), 's');
+    // Clear stare duration
+    setStareDuration(0);
     // Keep modal open even if they look away briefly
   }, []);
 
