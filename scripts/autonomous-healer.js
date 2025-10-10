@@ -1081,24 +1081,37 @@ Analyzing failure and creating corrected plan...`);
 
         // Try to find and read the most likely candidate files based on the task
         const taskKeywords = task.request_text.toLowerCase().match(/\b(logo|header|button|menu|nav|footer|sidebar|modal|form|bar|top)\b/g);
-        if (taskKeywords && taskKeywords.length > 0) {
-          const uniqueKeywords = [...new Set(taskKeywords)]; // Remove duplicates
-          log(`  → Searching for components matching: ${uniqueKeywords.join(', ')}`, 'blue');
+        let searchKeywords = [];
 
-          try {
-            // Search for each keyword and collect all matching files
-            let allFiles = new Set();
-            for (const keyword of uniqueKeywords) {
-              try {
-                const { stdout: componentFiles } = await execAsync(
-                  `find ${process.cwd()}/src/components -iname "*${keyword}*" \\( -name "*.jsx" -o -name "*.js" \\) 2>/dev/null || true`
-                );
-                const files = componentFiles.trim().split('\n').filter(f => f && f.length > 0);
-                files.forEach(f => allFiles.add(f));
-              } catch (err) {
-                // Ignore individual keyword search failures
-              }
+        if (taskKeywords && taskKeywords.length > 0) {
+          searchKeywords = [...new Set(taskKeywords)]; // Remove duplicates
+
+          // If looking for logo, also search header/nav/bar since logos are typically there
+          if (searchKeywords.includes('logo')) {
+            searchKeywords.push('header', 'nav', 'bar');
+            searchKeywords = [...new Set(searchKeywords)];
+          }
+        } else {
+          // No keywords found, search common layout components
+          searchKeywords = ['header', 'nav', 'layout', 'app'];
+        }
+
+        log(`  → Searching for components matching: ${searchKeywords.join(', ')}`, 'blue');
+
+        try {
+          // Search for each keyword and collect all matching files
+          let allFiles = new Set();
+          for (const keyword of searchKeywords) {
+            try {
+              const { stdout: componentFiles } = await execAsync(
+                `find ${process.cwd()}/src/components -iname "*${keyword}*" \\( -name "*.jsx" -o -name "*.js" \\) 2>/dev/null || true`
+              );
+              const files = componentFiles.trim().split('\n').filter(f => f && f.length > 0);
+              files.forEach(f => allFiles.add(f));
+            } catch (err) {
+              // Ignore individual keyword search failures
             }
+          }
 
             // Read up to 3 most relevant files
             const filesToRead = Array.from(allFiles).slice(0, 3);
