@@ -79,7 +79,7 @@ class SyncService {
   }
 
   /**
-   * Sync all tables from Supabase to SQLite
+   * Sync all tables: Upload local changes and download remote updates
    */
   async syncAll() {
     if (this.isSyncing) {
@@ -95,11 +95,22 @@ class SyncService {
       jukebox: 0,
       settings: 0,
       learningSessions: 0,
+      learningSessionsUploaded: 0,
       errors: [],
     };
 
     try {
-      console.log('[SyncService] Starting sync...');
+      console.log('[SyncService] Starting bidirectional sync...');
+
+      // PHASE 1: Upload local changes to Supabase (write-first)
+      try {
+        stats.learningSessionsUploaded = await this.uploadLearningSessions();
+      } catch (error) {
+        console.error('[SyncService] Failed to upload learning sessions:', error);
+        stats.errors.push({ table: 'learning_sessions_upload', error: error.message });
+      }
+
+      // PHASE 2: Download remote data to local cache (read-only)
 
       // Sync pins
       try {
@@ -272,10 +283,59 @@ class SyncService {
   }
 
   /**
-   * Sync proximity learning sessions from Supabase to SQLite (for analytics)
+   * Upload local learning sessions to Supabase (LOCAL → CLOUD)
+   * This is the key method for local-first architecture
+   */
+  async uploadLearningSessions() {
+    console.log('[SyncService] Uploading local learning sessions to Supabase...');
+
+    // Get all local sessions (we don't track sync status yet, so upload all recent)
+    const sessions = await this.db.getLearningSessions(1000);
+
+    if (!sessions || sessions.length === 0) {
+      console.log('[SyncService] No local sessions to upload');
+      return 0;
+    }
+
+    let uploadedCount = 0;
+    let errorCount = 0;
+
+    // Upload in batches of 50 to avoid overwhelming Supabase
+    const batchSize = 50;
+    for (let i = 0; i < sessions.length; i += batchSize) {
+      const batch = sessions.slice(i, i + batchSize);
+
+      try {
+        // Use upsert to avoid duplicate key errors
+        const { error } = await supabase
+          .from('proximity_learning_sessions')
+          .upsert(batch, { onConflict: 'id', ignoreDuplicates: true });
+
+        if (error) {
+          console.error(`[SyncService] Failed to upload batch ${Math.floor(i / batchSize) + 1}:`, error);
+          errorCount += batch.length;
+        } else {
+          uploadedCount += batch.length;
+          console.log(`[SyncService] Uploaded batch ${Math.floor(i / batchSize) + 1} (${batch.length} sessions)`);
+        }
+      } catch (err) {
+        console.error(`[SyncService] Error uploading batch:`, err);
+        errorCount += batch.length;
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    console.log(`[SyncService] Upload complete: ${uploadedCount} succeeded, ${errorCount} failed`);
+    return uploadedCount;
+  }
+
+  /**
+   * Sync proximity learning sessions from Supabase to SQLite (CLOUD → LOCAL, for analytics)
    */
   async syncLearningSessions() {
-    console.log('[SyncService] Syncing learning sessions...');
+    console.log('[SyncService] Syncing learning sessions from Supabase...');
 
     // Only sync recent sessions (last 24 hours) to keep local DB small
     const yesterday = new Date();
@@ -300,7 +360,7 @@ class SyncService {
 
     await this.db.updateSyncMetadata('proximity_learning_sessions');
 
-    console.log(`[SyncService] Synced ${sessions?.length || 0} learning sessions`);
+    console.log(`[SyncService] Synced ${sessions?.length || 0} learning sessions from Supabase`);
     return sessions?.length || 0;
   }
 

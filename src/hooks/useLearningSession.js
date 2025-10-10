@@ -3,6 +3,7 @@
 // Supports multiple concurrent sessions for multi-person tracking
 import { useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { getLocalDatabase } from '../lib/localDatabase';
 
 export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' } = {}) {
   // Changed to Map to support multiple concurrent sessions (one per person)
@@ -175,17 +176,45 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
     console.log(`[LearningSession] 💾 Saving session: ${session.id} - Person: ${personId} - Outcome: ${outcome} - Duration: ${Math.round(totalDuration / 1000)}s`);
 
     try {
-      const { error } = await supabase
-        .from('proximity_learning_sessions')
-        .insert(sessionData);
+      // LOCAL-FIRST: Write to SQLite immediately (fast, offline-capable)
+      const db = await getLocalDatabase();
 
-      if (error) {
-        console.error('[LearningSession] ❌ Failed to save session:', error);
+      if (db.isAvailable()) {
+        // Write to local database first (instant, <10ms)
+        await db.upsertLearningSession(sessionData);
+        console.log('[LearningSession] ✅ Session saved to local database');
+
+        // Background sync will upload to Supabase later (handled by syncService)
       } else {
-        console.log('[LearningSession] ✅ Session saved successfully');
+        // Fallback: If local DB not available (web browser), write directly to Supabase
+        console.log('[LearningSession] ⚠️ Local DB not available, writing directly to Supabase');
+        const { error } = await supabase
+          .from('proximity_learning_sessions')
+          .insert(sessionData);
+
+        if (error) {
+          console.error('[LearningSession] ❌ Failed to save session to Supabase:', error);
+        } else {
+          console.log('[LearningSession] ✅ Session saved to Supabase');
+        }
       }
     } catch (err) {
       console.error('[LearningSession] ❌ Error saving session:', err);
+
+      // Last resort: try Supabase as fallback
+      try {
+        const { error } = await supabase
+          .from('proximity_learning_sessions')
+          .insert(sessionData);
+
+        if (error) {
+          console.error('[LearningSession] ❌ Fallback to Supabase also failed:', error);
+        } else {
+          console.log('[LearningSession] ✅ Session saved to Supabase (fallback)');
+        }
+      } catch (fallbackErr) {
+        console.error('[LearningSession] ❌ All save attempts failed:', fallbackErr);
+      }
     }
 
     // Remove session from active sessions

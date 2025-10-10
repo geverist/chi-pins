@@ -10,7 +10,7 @@ import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
 import { useTouchSequence } from './hooks/useTouchSequence';
-import { useProximityDetection } from './hooks/useProximityDetection';
+import { useSmartProximityDetection } from './hooks/useSmartProximityDetection';
 import { useAdaptiveLearning } from './hooks/useAdaptiveLearning';
 import { initConsoleWebhook, updateWebhookUrl, sendTestEvent, getWebhookStatus } from './lib/consoleWebhook';
 import { getSyncService } from './lib/syncService';
@@ -66,6 +66,7 @@ import OfflineIndicator from './components/OfflineIndicator';
 import TouchSequenceIndicator from './components/TouchSequenceIndicator';
 import AnonymousMessageModal from './components/AnonymousMessageModal';
 import CommentsModal from './components/CommentsModal';
+import EmployeeCheckinModal from './components/EmployeeCheckinModal';
 import LocationSwitcher from './components/LocationSwitcher';
 import HolidayTheme from './components/HolidayTheme';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -323,31 +324,63 @@ export default function App() {
     }
   }, [adminSettings.ambientMusicEnabled, ambientMusicPlaying, stopAmbientMusic]);
 
-  const handleStareDetected = useCallback(({ proximityLevel, stareDuration }) => {
-    console.log('[App] Stare detected! Proximity:', proximityLevel, 'Duration:', stareDuration, 'ms');
-    // Future: Trigger employee clock-in UI or other stare-based features
+  // Employee checkin modal state
+  const [employeeCheckinOpen, setEmployeeCheckinOpen] = useState(false);
+  const [staringPerson, setStaringPerson] = useState(null);
+
+  const handleStareDetected = useCallback(({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose }) => {
+    console.log('[App] 🔍 Stare detected! Person:', personId, 'Proximity:', proximityLevel, 'Duration:', Math.round(stareDuration / 1000), 's', 'Looking:', isLookingAtKiosk);
+
+    // Open employee checkin modal
+    setStaringPerson({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose });
+    setEmployeeCheckinOpen(true);
   }, []);
 
-  const handleStareEnded = useCallback(({ stareDuration }) => {
-    console.log('[App] Stare ended. Duration was:', stareDuration, 'ms');
+  const handleStareEnded = useCallback(({ personId, stareDuration }) => {
+    console.log('[App] Stare ended. Person:', personId, 'Duration:', Math.round(stareDuration / 1000), 's');
+    // Keep modal open even if they look away briefly
   }, []);
 
-  // Proximity detection - camera-based approach detection (FORCED ON FOR TESTING)
-  const { isPersonDetected, isAmbientDetected, isStaring, stareDuration, proximityLevel, cameraError } = useProximityDetection({
-    enabled: adminSettings.proximityDetectionEnabled, // REMOVED business hours gate for testing
-    sensitivityThreshold: adminSettings.proximitySensitivity || 15, // Higher = less sensitive to small movements
-    proximityThreshold: adminSettings.proximityThreshold || 60, // HIGH = very close (~2 feet) for walkup/voice prompt
-    ambientThreshold: adminSettings.ambientMusicThreshold || 95, // MAXIMUM = need to be within arm's reach (~2 feet or less) for ambient music
-    stareThreshold: adminSettings.stareThreshold || 50, // Keep stare detection close
-    stareDurationMs: adminSettings.stareDurationMs || 3000,
+  // Add disengagement handler
+  const handleDisengagement = useCallback(({ personId, reason }) => {
+    console.log('[App] Patron disengaged. Person:', personId, 'Reason:', reason);
+    // Return to main attractor screen if no one else is engaged
+  }, []);
+
+  // Smart Proximity Detection - Multi-person tracking with gaze validation
+  const {
+    isAmbientDetected,
+    isWalkupDetected,
+    isStaring,
+    trackedPeople,
+    activePeopleCount,
+    maxProximityLevel,
+    isInitialized,
+    trackingError,
+    recordInteraction,
+    recordConversion,
+  } = useSmartProximityDetection({
+    enabled: adminSettings.proximityDetectionEnabled,
+    ambientThreshold: adminSettings.ambientMusicThreshold || 30,
+    walkupThreshold: adminSettings.proximityThreshold || 60,
+    stareThreshold: adminSettings.stareThreshold || 60,
+    stareDurationMs: adminSettings.stareDurationMs || 15000,
     detectionInterval: adminSettings.proximityDetectionInterval || 500,
-    onApproach: handleProximityApproach,
-    onLeave: handleProximityLeave,
     onAmbientDetected: handleAmbientDetected,
     onAmbientCleared: handleAmbientCleared,
+    onWalkupDetected: handleProximityApproach,
+    onWalkupEnded: handleProximityLeave,
     onStareDetected: handleStareDetected,
     onStareEnded: handleStareEnded,
+    onDisengagement: handleDisengagement,
+    enableLearning: adminSettings.proximityLearningEnabled !== false,
+    tenantId: adminSettings.tenantId || 'chicago-mikes',
   });
+
+  // Compatibility: map new variables to old names for components that haven't been updated yet
+  const isPersonDetected = isWalkupDetected;
+  const proximityLevel = maxProximityLevel;
+  const cameraError = trackingError;
 
   // Debug logging for Now Playing state
   useEffect(() => {
@@ -1747,6 +1780,17 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Employee Checkin Modal - Triggered by prolonged stare detection */}
+      <EmployeeCheckinModal
+        open={employeeCheckinOpen}
+        onClose={() => {
+          setEmployeeCheckinOpen(false);
+          setStaringPerson(null);
+        }}
+        person={staringPerson}
+        tenantId={adminSettings.tenantId || 'chicago-mikes'}
+      />
 
       {adminOpen && (
         <AdminPanel
