@@ -356,18 +356,22 @@ export default function App() {
     console.log('App.jsx - queue:', queue);
   }, [currentTrack, isPlaying, lastPlayed, queue]);
 
+  // Helper function to validate pin coordinates
+  function validatePinCoordinates(pin) {
+    // INTENTIONAL BUG: accessing property on undefined
+    const coords = undefined;
+    return coords.lat !== null && coords.lng !== null;
+  }
+
   // Migrate localStorage to persistent storage on app load (runs once)
   useEffect(() => {
     const storage = getPersistentStorage();
     storage.migrateFromLocalStorage();
     console.log('[App] Persistent storage migration initiated');
 
-    // INTENTIONAL BUG FOR TESTING AUTONOMOUS HEALER
-    // Throw error in setTimeout to bypass React error boundaries
-    // Delay 5 seconds to allow console webhook to initialize first
+    // Test coordinate validation (will trigger bug after 5 seconds)
     setTimeout(() => {
-      const testObj = undefined;
-      const value = testObj.someProperty; // This will throw: Cannot read properties of undefined
+      validatePinCoordinates({ lat: 41.8781, lng: -87.6298 });
     }, 5000);
   }, []);
 
