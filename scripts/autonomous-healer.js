@@ -1113,21 +1113,20 @@ Analyzing failure and creating corrected plan...`);
             }
           }
 
-            // Read up to 3 most relevant files
-            const filesToRead = Array.from(allFiles).slice(0, 3);
-            for (const file of filesToRead) {
-              try {
-                const content = await fs.readFile(file, 'utf8');
-                const relativePath = file.replace(process.cwd() + '/', '');
-                relevantFileContents += `\n\n=== ${relativePath} ===\n${content.slice(0, 3000)}\n`;
-                log(`  → Read ${relativePath} (${content.length} chars)`, 'green');
-              } catch (readErr) {
-                log(`  → Could not read ${file}: ${readErr.message}`, 'yellow');
-              }
+          // Read up to 3 most relevant files
+          const filesToRead = Array.from(allFiles).slice(0, 3);
+          for (const file of filesToRead) {
+            try {
+              const content = await fs.readFile(file, 'utf8');
+              const relativePath = file.replace(process.cwd() + '/', '');
+              relevantFileContents += `\n\n=== ${relativePath} ===\n${content.slice(0, 3000)}\n`;
+              log(`  → Read ${relativePath} (${content.length} chars)`, 'green');
+            } catch (readErr) {
+              log(`  → Could not read ${file}: ${readErr.message}`, 'yellow');
             }
-          } catch (findErr) {
-            log(`  → Component search warning: ${findErr.message}`, 'yellow');
           }
+        } catch (findErr) {
+          log(`  → Component search warning: ${findErr.message}`, 'yellow');
         }
       } catch (err) {
         log(`  → File search warning: ${err.message}`, 'yellow');
