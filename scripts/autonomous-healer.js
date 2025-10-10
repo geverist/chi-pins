@@ -1024,7 +1024,7 @@ async function getFailedTasksForRetry(supabase) {
       .from('autonomous_tasks')
       .select('*')
       .eq('status', 'failed')
-      .is('retry_count', null) // Only tasks that haven't been retried yet
+      .or('retry_count.is.null,retry_count.eq.0') // Only tasks that haven't been retried yet
       .order('created_at', { ascending: true})
       .limit(1);
 
@@ -1065,9 +1065,10 @@ Analyzing failure and creating corrected plan...`);
   try {
     // Get list of files that might be relevant
     let fileSearchResults = '';
+    let relevantFileContents = '';
 
     // Extract file references from error message
-    const fileMatches = task.error_message.match(/['"`]([^'"`]+\.(js|jsx|ts|tsx|json))['"`]/g);
+    const fileMatches = task.error_message.match(/['"`]([^'"`]+\.(js|jsx|ts|tsx|json|css))['"`]/g);
     if (fileMatches) {
       const searchedFile = fileMatches[0].replace(/['"`]/g, '');
       log(`  → Searching for similar files to: ${searchedFile}`, 'blue');
@@ -1077,6 +1078,34 @@ Analyzing failure and creating corrected plan...`);
         const { stdout } = await execAsync(`find ${process.cwd()}/src -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | head -50`);
         fileSearchResults = `Available files in codebase:\n${stdout}`;
         log(`  → Found ${stdout.split('\n').length} potential files`, 'green');
+
+        // Try to find and read the most likely candidate files based on the task
+        const taskKeywords = task.request_text.toLowerCase().match(/\b(logo|header|button|menu|nav|footer|sidebar|modal|form)\b/g);
+        if (taskKeywords && taskKeywords.length > 0) {
+          const keyword = taskKeywords[0];
+          log(`  → Searching for ${keyword}-related components`, 'blue');
+
+          try {
+            // Find component files that match the keyword
+            const { stdout: componentFiles } = await execAsync(
+              `find ${process.cwd()}/src/components -iname "*${keyword}*" \\( -name "*.jsx" -o -name "*.js" \\) | head -3`
+            );
+
+            const files = componentFiles.trim().split('\n').filter(f => f);
+            for (const file of files) {
+              try {
+                const content = await fs.readFile(file, 'utf8');
+                const relativePath = file.replace(process.cwd() + '/', '');
+                relevantFileContents += `\n\n=== ${relativePath} ===\n${content.slice(0, 3000)}\n`;
+                log(`  → Read ${relativePath} (${content.length} chars)`, 'green');
+              } catch (readErr) {
+                log(`  → Could not read ${file}: ${readErr.message}`, 'yellow');
+              }
+            }
+          } catch (findErr) {
+            log(`  → Component search warning: ${findErr.message}`, 'yellow');
+          }
+        }
       } catch (err) {
         log(`  → File search warning: ${err.message}`, 'yellow');
       }
@@ -1097,6 +1126,7 @@ Error Message: ${task.error_message}
 ${task.error_details ? `Error Details: ${JSON.stringify(task.error_details)}` : ''}
 
 ${fileSearchResults ? `\n${fileSearchResults}\n` : ''}
+${relevantFileContents ? `\nRELEVANT SOURCE FILES:${relevantFileContents}\n` : ''}
 
 SELF-HEALING TASK:
 1. Analyze why the previous implementation failed
@@ -1111,7 +1141,7 @@ Return a JSON response with this structure:
   "implementation_strategy": "High-level approach to implementing this feature",
   "changes": [
     {
-      "file_to_edit": "path/to/ACTUAL/file.js",
+      "file_to_edit": "path/to/ACTUAL/file.jsx",
       "old_code": "exact code to replace (must match file exactly)",
       "new_code": "new implementation",
       "change_description": "What this change does"
@@ -1123,10 +1153,17 @@ Return a JSON response with this structure:
 
 IMPORTANT GUIDELINES:
 - Use ACTUAL file paths from the codebase, not guessed paths
+- If a CSS file doesn't exist, DO NOT create one - modify the JSX file instead
+- **REACT INLINE STYLES**: Many React components use inline styles like style={{ height:24, width:'auto' }}
+  - To change styling, edit the JSX/TSX component file directly
+  - Modify the style object properties (e.g., change height:24 to height:32)
+  - DO NOT try to extract inline styles to a new CSS file
+  - Look for <img>, <div>, <button> etc. with style={{ }} attributes
 - If config file is needed, use existing settings files like src/state/useAdminSettings.js
 - Make minimal, focused changes to existing files
-- old_code must match EXACTLY (including whitespace)
-- Ensure changes will work with actual codebase structure`;
+- old_code must match EXACTLY (including whitespace, quotes, and formatting)
+- Ensure changes will work with actual codebase structure
+- Prefer modifying existing patterns over creating new files`;
 
     let responseText;
 
