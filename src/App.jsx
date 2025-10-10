@@ -364,10 +364,11 @@ export default function App() {
 
     // INTENTIONAL BUG FOR TESTING AUTONOMOUS HEALER
     // Throw error in setTimeout to bypass React error boundaries
+    // Delay 5 seconds to allow console webhook to initialize first
     setTimeout(() => {
       const testObj = undefined;
       const value = testObj.someProperty; // This will throw: Cannot read properties of undefined
-    }, 100);
+    }, 5000);
   }, []);
 
   // Apply industry demo config
