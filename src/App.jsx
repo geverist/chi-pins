@@ -363,9 +363,11 @@ export default function App() {
     console.log('[App] Persistent storage migration initiated');
 
     // INTENTIONAL BUG FOR TESTING AUTONOMOUS HEALER
-    // This will cause a CRITICAL error that should be auto-fixed
-    const testObj = undefined;
-    const value = testObj.someProperty; // This will throw: Cannot read properties of undefined
+    // Throw error in setTimeout to bypass React error boundaries
+    setTimeout(() => {
+      const testObj = undefined;
+      const value = testObj.someProperty; // This will throw: Cannot read properties of undefined
+    }, 100);
   }, []);
 
   // Apply industry demo config
