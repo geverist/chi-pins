@@ -11,6 +11,8 @@ import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
 import { useTouchSequence } from './hooks/useTouchSequence';
 import { useProximityDetection } from './hooks/useProximityDetection';
+import { useAdaptiveLearning } from './hooks/useAdaptiveLearning';
+import { initConsoleWebhook, updateWebhookUrl, sendTestEvent, getWebhookStatus } from './lib/consoleWebhook';
 import { getSyncService } from './lib/syncService';
 import { LayoutStackProvider } from './hooks/useLayoutStack';
 
@@ -135,11 +137,35 @@ export default function App() {
   const { settings: navSettings, enabledCount } = useNavigationSettings();
   const { currentTrack, isPlaying, lastPlayed, queue } = useNowPlaying();
 
+  // Adaptive Learning - ML-powered proximity threshold optimization
+  const adaptiveLearning = useAdaptiveLearning({
+    tenantId: adminSettings.tenantId || 'chicago-mikes',
+    enabled: adminSettings.proximityLearningEnabled !== false,
+    learningAggressiveness: adminSettings.learningAggressiveness || 50,
+    passiveLearningMode: adminSettings.passiveLearningMode || false,
+    passiveLearningDays: adminSettings.passiveLearningDays || 7,
+    onThresholdAdjusted: ({ newThresholds, reason }) => {
+      console.log('[App] Threshold adjustment recommended:', reason, newThresholds);
+      setToast({
+        title: '🎯 Thresholds Adjusted',
+        text: reason,
+      });
+      setTimeout(() => setToast(null), 5000);
+    },
+    onModelTrained: ({ accuracy, sessionsUsed }) => {
+      console.log(`[App] Model trained! Accuracy: ${(accuracy * 100).toFixed(1)}% (${sessionsUsed} sessions)`);
+    },
+  });
+
   // Layout edit mode (4-corner tap sequence for dragging widgets)
   const { isEditMode, setIsEditMode, savePosition, getPosition, getAllPositions } = useLayoutEditMode();
 
   // Business hours management
   const { isOpen: isBusinessHoursOpen, nextChange, businessHoursEnabled, openTime } = useBusinessHours();
+
+  // Adaptive learning session tracking refs
+  const currentLearningSessionRef = useRef(null);
+  const sessionEngagementStartRef = useRef(null);
 
   // Ambient music player ref for proximity-triggered playback
   const ambientMusicPlayerRef = useRef(null);
@@ -211,6 +237,20 @@ export default function App() {
   const handleProximityApproach = useCallback(({ proximityLevel }) => {
     console.log('[App] Person detected approaching! Proximity:', proximityLevel);
 
+    // Start learning session
+    const session = adaptiveLearning.startSession({
+      proximityLevel,
+      intent: 'approaching',
+      confidence: 85,
+      baseline: 50,
+      threshold: adminSettings.proximityThreshold || 60,
+    });
+
+    if (session) {
+      currentLearningSessionRef.current = session;
+      sessionEngagementStartRef.current = Date.now();
+    }
+
     // Stop ambient music when person approaches for voice greeting
     if (ambientMusicPlaying) {
       console.log('[App] Stopping ambient music for voice greeting');
@@ -229,7 +269,7 @@ export default function App() {
     setShowAttractor(true);
     // Voice greeting will be triggered by WalkupAttractor component
     // if adminSettings.proximityTriggerVoice && adminSettings.walkupAttractorVoiceEnabled
-  }, [ambientMusicPlaying, stopAmbientMusic]);
+  }, [ambientMusicPlaying, stopAmbientMusic, adaptiveLearning, adminSettings.proximityThreshold]);
 
   const handleProximityLeave = useCallback(() => {
     console.log('[App] Person left walkup zone');
@@ -237,6 +277,21 @@ export default function App() {
 
   const handleAmbientDetected = useCallback(({ proximityLevel }) => {
     console.log('[App] Ambient motion detected! Proximity:', proximityLevel);
+
+    // Start learning session for ambient
+    const session = adaptiveLearning.startSession({
+      proximityLevel,
+      intent: 'ambient',
+      confidence: 70,
+      baseline: 50,
+      threshold: adminSettings.ambientMusicThreshold || 95,
+    });
+
+    if (session) {
+      currentLearningSessionRef.current = session;
+      sessionEngagementStartRef.current = Date.now();
+    }
+
     // DEMO: Force play ambient music (hardcoded for demo) - plays only once
     if (!ambientMusicPlaying) {
       // Hardcoded demo track
@@ -256,7 +311,7 @@ export default function App() {
         console.log('[App] DEMO - Ambient music started (will play once)');
       }
     }
-  }, [ambientMusicPlaying]);
+  }, [ambientMusicPlaying, adaptiveLearning, adminSettings.ambientMusicThreshold]);
 
   const handleAmbientCleared = useCallback(() => {
     console.log('[App] Ambient area cleared');
@@ -485,6 +540,17 @@ export default function App() {
     // Initialize remote logger for debugging
     initRemoteLogger();
 
+    // Initialize console webhook for remote monitoring
+    if (adminSettings.consoleWebhookEnabled && adminSettings.consoleWebhookUrl) {
+      initConsoleWebhook(adminSettings.consoleWebhookUrl, adminSettings.consoleWebhookEnabled, {
+        includeTimestamps: true,
+        includeLocation: true,
+        maxMessageLength: 1000,
+        levels: adminSettings.consoleWebhookLevels || ['log', 'error', 'warn', 'info'],
+      });
+      console.log('[App] Console webhook initialized:', adminSettings.consoleWebhookUrl);
+    }
+
     // Start background sync service for SQLite cache
     const syncService = getSyncService();
     syncService.start(adminSettings.databaseSyncMinutes).catch(err => {
@@ -503,7 +569,7 @@ export default function App() {
       setExploring(false);
       console.log('App: Desktop mode - exploring disabled');
     }
-  }, [isMobile]);
+  }, [isMobile, adminSettings.consoleWebhookEnabled, adminSettings.consoleWebhookUrl, adminSettings.consoleWebhookLevels]);
 
   // Update sync interval when admin setting changes
   useEffect(() => {
@@ -769,6 +835,18 @@ export default function App() {
     timeoutMs: 60 * 1000,
     confettiScreensaverEnabled: adminSettings.confettiScreensaverEnabled,
     onIdle: () => {
+      // Record abandonment if there's an active learning session
+      if (currentLearningSessionRef.current) {
+        adaptiveLearning.endSession({
+          outcome: 'abandoned',
+          engagedDurationMs: 0,
+          converted: false,
+        });
+
+        currentLearningSessionRef.current = null;
+        sessionEngagementStartRef.current = null;
+      }
+
       // Close all modals and reset to main map
       cancelEditing();
       setClearSearchToken((t) => t + 1);
@@ -1028,6 +1106,22 @@ export default function App() {
 
     try {
       const inserted = await setPins(rec);
+
+      // Record successful pin placement as conversion in learning session
+      if (currentLearningSessionRef.current) {
+        const engagementDuration = sessionEngagementStartRef.current
+          ? Date.now() - sessionEngagementStartRef.current
+          : 0;
+
+        adaptiveLearning.endSession({
+          outcome: 'converted',
+          engagedDurationMs: engagementDuration,
+          converted: true,
+        });
+
+        currentLearningSessionRef.current = null;
+        sessionEngagementStartRef.current = null;
+      }
 
       // Facebook share with pin card image
       if (shareToFb && rec.note) {
@@ -1855,6 +1949,9 @@ export default function App() {
         stareDuration={stareDuration}
         proximityLevel={proximityLevel}
       />
+
+      {/* Twilio Call Border - Animated border shown when voice bot is on an active call */}
+      <CallBorderIndicator enabled={true} />
     </div>
     </LayoutStackProvider>
   );

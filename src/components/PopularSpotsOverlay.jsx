@@ -67,7 +67,7 @@ function makeBizIcon(kind = 'hotdog', isClickable = false) {
           ${isClickable ? 'transition: transform 0.2s;' : ''}"
           class="biz-pin-icon">${emoji}</div>
         <svg width="50" height="60" viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;left:0;top:0;z-index:0;">
-          <ellipse cx="25" cy="54" rx="12" ry="4" fill="rgba(0,0,0,0.25)"/>
+          <circle cx="25" cy="54" r="12" fill="rgba(0,0,0,0.25)"/>
           <line x1="25" y1="32" x2="25" y2="50" stroke="#8c99a6" stroke-width="3" stroke-linecap="round"/>
           <path d="M 23 50 L 27 50 L 25 58 Z" fill="#c7ccd3"/>
         </svg>

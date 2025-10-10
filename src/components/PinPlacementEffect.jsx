@@ -16,37 +16,48 @@ export default function PinPlacementEffect({ lat, lng, trigger }) {
 
     setIsAnimating(true);
 
-    // Create ripple circles at the pin location
-    const createRipple = (delay = 0, scale = 1) => {
+    // Create ripple circles at the pin location (water-like physics)
+    const createRipple = (delay = 0, scale = 1, rippleIndex = 0) => {
       setTimeout(() => {
         // Create a circle marker for the ripple effect
         const ripple = L.circle([lat, lng], {
           color: '#10b981',
           fillColor: '#10b981',
-          fillOpacity: 0.3,
-          weight: 3,
-          radius: 10 * scale, // Start small
+          fillOpacity: 0.35,
+          weight: 2,
+          radius: 5 * scale, // Start smaller for more natural expansion
         }).addTo(map);
 
-        // Animate the ripple expanding and fading
-        let radius = 10 * scale;
-        let opacity = 0.5;
-        const maxRadius = 100 * scale;
-        const animationSteps = 30;
-        const stepDuration = 20; // ms
+        // Animate the ripple expanding and fading with realistic water physics
+        let radius = 5 * scale;
+        let opacity = 0.6;
+        const maxRadius = 150 * scale; // Larger max radius for bigger ripples
+        let currentStep = 0;
+        const totalSteps = 50; // More steps for smoother animation
 
+        // Water physics: ripples start fast and slow down exponentially
         const animate = () => {
-          radius += (maxRadius - 10 * scale) / animationSteps;
-          opacity -= 0.5 / animationSteps;
+          currentStep++;
+          const progress = currentStep / totalSteps;
+
+          // Exponential slowdown (water ripple physics)
+          // Early ripples move faster, later ripples slow down dramatically
+          const speed = Math.pow(1 - progress, 2); // Quadratic deceleration
+          const stepSize = ((maxRadius - 5 * scale) / totalSteps) * (speed * 2 + 0.5);
+
+          radius += stepSize;
+          opacity -= (0.6 / totalSteps) * (1.2 - progress * 0.5); // Fade slower at the end
 
           ripple.setRadius(radius);
           ripple.setStyle({
-            fillOpacity: Math.max(0, opacity * 0.6),
-            opacity: Math.max(0, opacity),
+            fillOpacity: Math.max(0, opacity * 0.5),
+            opacity: Math.max(0, opacity * 0.8),
           });
 
-          if (opacity > 0 && radius < maxRadius) {
-            setTimeout(animate, stepDuration);
+          if (opacity > 0 && radius < maxRadius && currentStep < totalSteps) {
+            // Variable timing: start fast (5ms), slow down to (25ms)
+            const nextDelay = 5 + (progress * 20);
+            setTimeout(animate, nextDelay);
           } else {
             // Remove ripple when animation complete
             ripple.remove();
@@ -57,10 +68,15 @@ export default function PinPlacementEffect({ lat, lng, trigger }) {
       }, delay);
     };
 
-    // Create multiple ripples with staggered timing for dramatic effect
-    createRipple(0, 1);
-    createRipple(200, 1.3);
-    createRipple(400, 1.6);
+    // Create more ripples with natural water-like spacing (7 ripples for realistic wave propagation)
+    // Each ripple is larger and appears in sequence like real water ripples
+    const rippleCount = 7;
+    for (let i = 0; i < rippleCount; i++) {
+      // Exponential spacing: ripples appear faster at first, then slow down
+      const delay = Math.pow(i, 1.4) * 80; // Non-linear spacing (0, 80, 180, 310, 470, 655, 865 ms)
+      const scale = 1 + (i * 0.25); // Each ripple slightly larger (1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5)
+      createRipple(delay, scale, i);
+    }
 
     // Create confetti-like markers that float up
     const createFloatingMarker = (delay = 0) => {

@@ -57,7 +57,8 @@
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./android/gradlew -p ./android clean assembleDebug --quiet)",
       "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home npm run android:build)",
       "Bash(PGPASSWORD=PixieDust33! psql -h aws-0-us-east-1.pooler.supabase.com -p 6543 -U postgres.aqvzccezxjgxjvrgтел -d postgres -c \"UPDATE admin_settings SET proximity_detection_enabled = true WHERE tenant_id = ''chicago-mikes''; SELECT proximity_detection_enabled FROM admin_settings WHERE tenant_id = ''chicago-mikes'';\")",
-      "Bash(PGPASSWORD='PixieDust33!' psql -h aws-0-us-east-1.pooler.supabase.com -p 6543 -U postgres.aqvzccezxjgxjvrgrел -d postgres -c \"SELECT proximity_detection_enabled, ambient_music_enabled, ambient_music_playlist FROM admin_settings WHERE tenant_id = ''''chicago-mikes'''';\")"
+      "Bash(PGPASSWORD='PixieDust33!' psql -h aws-0-us-east-1.pooler.supabase.com -p 6543 -U postgres.aqvzccezxjgxjvrgrел -d postgres -c \"SELECT proximity_detection_enabled, ambient_music_enabled, ambient_music_playlist FROM admin_settings WHERE tenant_id = ''''chicago-mikes'''';\")",
+      "Bash(JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./scripts/deploy-kiosk.sh)"
     ],
     "deny": [],
     "ask": []

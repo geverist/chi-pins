@@ -47,33 +47,67 @@ export default function WalkupAttractor({
     const voiceText = currentPrompt?.voiceText || "Welcome to Chicago Mike's"
 
     const speakGreeting = async () => {
+      console.log('[WalkupAttractor] 🎤 Starting voice greeting:', voiceText)
+
       // Try ElevenLabs first if configured
       if (shouldUseElevenLabs(adminSettings)) {
+        console.log('[WalkupAttractor] ✅ ElevenLabs configured, attempting TTS...')
         try {
           const options = getElevenLabsOptions(adminSettings)
+          console.log('[WalkupAttractor] ElevenLabs options:', {
+            apiKey: options.apiKey ? `${options.apiKey.substring(0, 10)}...` : 'MISSING',
+            voiceId: options.voiceId || 'MISSING',
+            model: options.model
+          })
           await elevenLabsSpeak(voiceText, options)
-          console.log('[DEMO] ElevenLabs voice greeting spoken:', voiceText)
+          console.log('[WalkupAttractor] ✅ ElevenLabs voice greeting completed successfully!')
           return
         } catch (error) {
-          console.error('[DEMO] ElevenLabs failed, falling back to Web Speech:', error)
+          console.error('[WalkupAttractor] ❌ ElevenLabs failed:', error)
+          console.error('[WalkupAttractor] Error details:', {
+            message: error.message,
+            stack: error.stack
+          })
         }
+      } else {
+        console.log('[WalkupAttractor] ⚠️  ElevenLabs not configured:', {
+          ttsProvider: adminSettings.ttsProvider,
+          hasApiKey: !!adminSettings.elevenlabsApiKey,
+          hasVoiceId: !!adminSettings.elevenlabsVoiceId
+        })
       }
 
       // Fallback to Web Speech API
+      console.log('[WalkupAttractor] Attempting Web Speech API fallback...')
       if (typeof window !== 'undefined' && window.speechSynthesis && typeof SpeechSynthesisUtterance !== 'undefined') {
         try {
           const utterance = new SpeechSynthesisUtterance(voiceText)
           utterance.rate = 0.9
           utterance.pitch = 1.0
-          utterance.volume = 0.8
+          utterance.volume = 1.0 // Max volume for kiosk
+
+          utterance.onstart = () => {
+            console.log('[WalkupAttractor] ✅ Web Speech started')
+          }
+          utterance.onend = () => {
+            console.log('[WalkupAttractor] ✅ Web Speech completed')
+          }
+          utterance.onerror = (err) => {
+            console.error('[WalkupAttractor] ❌ Web Speech error:', err)
+          }
+
           window.speechSynthesis.cancel()
           window.speechSynthesis.speak(utterance)
-          console.log('[DEMO] Web Speech voice greeting spoken:', voiceText)
+          console.log('[WalkupAttractor] ✅ Web Speech initiated')
         } catch (error) {
-          console.error('[DEMO] Web Speech error:', error)
+          console.error('[WalkupAttractor] ❌ Web Speech error:', error)
         }
       } else {
-        console.log('[DEMO] No TTS available in this environment')
+        console.error('[WalkupAttractor] ❌ Web Speech API not available:', {
+          hasWindow: typeof window !== 'undefined',
+          hasSpeechSynthesis: typeof window !== 'undefined' && !!window.speechSynthesis,
+          hasSpeechSynthesisUtterance: typeof SpeechSynthesisUtterance !== 'undefined'
+        })
       }
     }
 
@@ -220,8 +254,8 @@ export default function WalkupAttractor({
           {/* Shadow below pin */}
           <div style={{
             width: '120px',
-            height: '20px',
-            background: 'radial-gradient(ellipse, rgba(0,0,0,0.3) 0%, transparent 70%)',
+            height: '120px',
+            background: 'radial-gradient(circle, rgba(0,0,0,0.3) 0%, transparent 70%)',
             margin: '10px auto 0',
             borderRadius: '50%',
             animation: 'shadowPulse 2s ease-in-out infinite',

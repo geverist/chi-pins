@@ -275,7 +275,7 @@ export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = n
           <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="black" flood-opacity="0.35"/>
         </filter>
       </defs>
-      <ellipse cx="${AX}" cy="${AY + 3}" rx="9" ry="3" fill="rgba(0,0,0,0.25)"/>
+      <circle cx="${AX}" cy="${AY + 3}" r="9" fill="rgba(0,0,0,0.25)"/>
       <line x1="${hx}" y1="${hy}" x2="${sx}" y2="${sy}" stroke="#8c99a6" stroke-width="${stemW}" stroke-linecap="round" filter="url(#stemShadow)"/>
       <path d="M ${b1x} ${b1y} L ${b2x} ${b2y} L ${AX} ${AY} Z" fill="#c7ccd3"/>
       <g transform="translate(${headShiftX},0)">

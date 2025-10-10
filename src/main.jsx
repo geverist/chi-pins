@@ -5,6 +5,7 @@ import App from './App.jsx'
 import TableMode from './routes/TableMode.jsx'
 import Admin from './routes/Admin.jsx'
 import { NowPlayingProvider } from './state/useNowPlaying.jsx'
+import { Capacitor } from '@capacitor/core'
 import { registerServiceWorker } from './registerServiceWorker.js'
 import { startBackgroundPrefetch } from './lib/tilePrefetch.js'
 import { perfMonitor } from './lib/performanceMonitor.js'
@@ -32,8 +33,13 @@ const router = createBrowserRouter(
   { future: { v7_startTransition: true } }
 );
 
-// Register PWA service worker
-registerServiceWorker();
+// Register PWA service worker (only for web, not for native Android)
+if (!Capacitor.isNativePlatform()) {
+  console.log('[PWA] Registering service worker for web platform');
+  registerServiceWorker();
+} else {
+  console.log('[PWA] Skipping service worker registration for native platform');
+}
 
 // Start prefetching Chicago map tiles in background (after 5 second delay)
 startBackgroundPrefetch({

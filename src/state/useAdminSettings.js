@@ -144,7 +144,7 @@ const DEFAULTS = {
   walkupAttractorEnabled: true,    // Enable walkup greeting screen after idle timeout
   walkupAttractorVoiceEnabled: true, // Enable voice prompts (requires voiceAssistantEnabled)
   walkupAttractorPrompts: [
-    { emoji: '👋', text: 'Welcome!', subtext: 'How can I help you?', voiceText: 'Hi, how can I help you?' }
+    { emoji: '📍', text: 'Drop a Pin on Chicago', subtext: 'Tap to place your pin on the map', voiceText: 'Drop a pin on Chicago' }
   ],      // Custom prompts (falls back to default context-aware prompts)
   walkupAttractorRotationSeconds: 4, // Seconds between prompt rotation
   simulationMode: false,           // Enable simulation mode for browser demos (forces attractor to show)
@@ -275,6 +275,13 @@ const DEFAULTS = {
   elevenlabsModel: 'eleven_turbo_v2_5',       // Fast, high-quality model
   elevenlabsStability: 0.5,                   // Voice stability (0-1)
   elevenlabsSimilarity: 0.75,                 // Similarity boost (0-1)
+
+  // Console Webhook - Remote Monitoring
+  consoleWebhookUrl: 'https://webhook.site/243517d3-3f78-4e4b-9188-9504cb7b5b55', // Webhook URL for remote console monitoring
+  consoleWebhookEnabled: false,              // Enable/disable webhook
+  consoleWebhookLevels: ['log', 'error', 'warn', 'info'], // Log levels to capture
+  consoleWebhookBatchDelayMs: 2000,          // Batch delay (ms)
+  consoleWebhookMaxBatchSize: 50,            // Max events per batch
 }
 
 const LS_KEY = 'adminSettings_v1'

@@ -22,11 +22,13 @@ import { ProximityMonitor } from './ProximityMonitor'
 import { auditDatabase, autoFixDatabase, syncMissingData } from '../lib/databaseAudit'
 import { getOfflineTileStorage } from '../lib/offlineTileStorage'
 import { getSpotifyClient } from '../lib/spotifyClient'
+import { sendTestEvent, getWebhookStatus } from '../lib/consoleWebhook'
 
 export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutEditMode, proximityDetection }) {
   const [authenticated, setAuthenticated] = useState(true) // Skip PIN for now - keyboard dismissal issue
   const [tab, setTab] = useState('kiosk') // Default to new 'kiosk' tab
   const [systemSubtab, setSystemSubtab] = useState('database') // Subtabs for System tab
+  const [toast, setToast] = useState(null) // Toast for webhook test feedback
 
   // Reset authentication and initial states when panel closes
   useEffect(() => {
@@ -915,6 +917,22 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
               }}
             >
               🏢 Multi-Location
+            </button>
+            <button
+              onClick={() => setSystemSubtab('webhook')}
+              style={{
+                padding: '6px 16px',
+                borderRadius: 6,
+                background: systemSubtab === 'webhook' ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
+                border: systemSubtab === 'webhook' ? '1px solid rgba(59, 130, 246, 0.5)' : '1px solid #2a2f37',
+                color: systemSubtab === 'webhook' ? '#60a5fa' : '#9ca3af',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              📡 Webhook
             </button>
           </div>
         )}
@@ -3747,6 +3765,103 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
             </div>
           )}
 
+          {tab === 'system' && systemSubtab === 'webhook' && (
+            <div>
+              <SectionGrid>
+                <Card title="📡 Console Webhook - Remote Monitoring">
+                  <p style={{...s.muted, marginBottom: 16}}>
+                    Send all console events (log, error, warn, info) to a webhook endpoint for remote monitoring.
+                    Perfect for watching kiosk activity from anywhere!
+                  </p>
+
+                  <FieldRow label="Enable Webhook">
+                    <Toggle
+                      checked={settings.consoleWebhookEnabled || false}
+                      onChange={(v) => setSettings(s => ({ ...s, consoleWebhookEnabled: v }))}
+                    />
+                  </FieldRow>
+
+                  <FieldRow label="Webhook URL">
+                    <TextInput
+                      value={settings.consoleWebhookUrl || ''}
+                      onChange={(v) => setSettings(s => ({ ...s, consoleWebhookUrl: v }))}
+                      placeholder="https://webhook.site/your-unique-url"
+                      style={{fontFamily: 'monospace', fontSize: 12}}
+                    />
+                  </FieldRow>
+
+                  <div style={{marginTop: 20, display: 'flex', gap: 12}}>
+                    <button
+                      style={{...btn.primary, flex: 1}}
+                      onClick={() => {
+                        const sent = sendTestEvent();
+                        if (sent) {
+                          setToast({ title: '✅ Test Sent', text: 'Check your webhook endpoint for the test event!' });
+                          setTimeout(() => setToast(null), 3000);
+                        } else {
+                          setToast({ title: '❌ No Webhook URL', text: 'Please set a webhook URL first' });
+                          setTimeout(() => setToast(null), 3000);
+                        }
+                      }}
+                      disabled={!settings.consoleWebhookUrl}
+                    >
+                      🧪 Send Test Event
+                    </button>
+                    <button
+                      style={{...btn.secondary, flex: 1}}
+                      onClick={() => {
+                        const status = getWebhookStatus();
+                        setToast({
+                          title: status.enabled ? '✅ Webhook Active' : '❌ Webhook Disabled',
+                          text: `Queue: ${status.queueSize} events • URL: ${status.url ? status.url.substring(0, 30) + '...' : 'Not set'}`
+                        });
+                        setTimeout(() => setToast(null), 5000);
+                      }}
+                    >
+                      📊 Check Status
+                    </button>
+                  </div>
+
+                  <div style={{marginTop: 20, padding: 16, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 8}}>
+                    <div style={{fontSize: 14, fontWeight: 600, marginBottom: 8}}>
+                      📦 What Gets Monitored:
+                    </div>
+                    <ul style={{margin: 0, paddingLeft: 20, fontSize: 13, color: '#9ca3af'}}>
+                      <li>Proximity detection events (approaching, ambient, stare)</li>
+                      <li>Adaptive learning sessions (started, ended, outcomes)</li>
+                      <li>Model training events (accuracy, session counts)</li>
+                      <li>Threshold adjustments (auto-tuning)</li>
+                      <li>Pin placements, errors, validations</li>
+                      <li>Jukebox activity, voice commands</li>
+                      <li>All console.log, console.error, console.warn, console.info</li>
+                    </ul>
+                  </div>
+
+                  <div style={{marginTop: 16, padding: 16, background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 8}}>
+                    <div style={{fontSize: 14, fontWeight: 600, marginBottom: 8, color: '#10b981'}}>
+                      💡 Quick Setup with Webhook.site:
+                    </div>
+                    <ol style={{margin: 0, paddingLeft: 20, fontSize: 13, color: '#9ca3af'}}>
+                      <li>Go to <a href="https://webhook.site" target="_blank" rel="noopener noreferrer" style={{color: '#60a5fa'}}>webhook.site</a></li>
+                      <li>Copy your unique URL</li>
+                      <li>Paste it above and enable the webhook</li>
+                      <li>Click "Send Test Event" to verify</li>
+                      <li>Watch live events stream in!</li>
+                    </ol>
+                  </div>
+
+                  {settings.consoleWebhookUrl && settings.consoleWebhookUrl.includes('webhook.site') && (
+                    <div style={{marginTop: 16, padding: 16, background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: 8}}>
+                      <div style={{fontSize: 13, color: '#f59e0b'}}>
+                        ⚠️ <strong>Remember:</strong> webhook.site URLs are temporary! For production, use a permanent webhook like Zapier, Discord, Slack, or your own server.
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </SectionGrid>
+            </div>
+          )}
+
           {tab === 'analytics' && (
             <>
               <div style={{ padding: '0 4px' }}>
@@ -4637,6 +4752,26 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
         </div>
       </div>
     </div>
+      )}
+
+      {/* Toast notification for webhook testing */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          zIndex: 10000,
+          background: 'rgba(17, 24, 39, 0.95)',
+          border: '1px solid rgba(59, 130, 246, 0.5)',
+          borderRadius: 12,
+          padding: '16px 20px',
+          maxWidth: 400,
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5)',
+          animation: 'slideInRight 0.3s ease-out',
+        }}>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{toast.title}</div>
+          <div style={{ fontSize: 14, color: '#9ca3af' }}>{toast.text}</div>
+        </div>
       )}
     </>
   )

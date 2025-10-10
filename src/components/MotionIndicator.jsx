@@ -1,7 +1,13 @@
 // Motion detection visual indicator
 // Shows green tint for ambient, yellow for walk-up, red for stare (very close)
+// ⚠️ DEBUG ONLY - Disabled by default (enable with ?debug=motion in URL)
 
 export default function MotionIndicator({ isAmbientDetected, isPersonDetected, isStaring, stareDuration, proximityLevel }) {
+  // Only show in debug mode (URL parameter: ?debug=motion)
+  const isDebugMode = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('debug') === 'motion';
+
+  if (!isDebugMode) return null;
   if (!isAmbientDetected && !isPersonDetected && !isStaring) return null;
 
   // Determine color and intensity based on detection tier
