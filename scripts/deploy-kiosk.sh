@@ -28,7 +28,7 @@ echo -e "${YELLOW}Install Type:${NC} $([ "$FRESH_INSTALL" = "--fresh" ] && echo 
 echo ""
 
 # Step 1: Check device connection
-echo -e "${BLUE}[1/7]${NC} Checking device connection..."
+echo -e "${BLUE}[1/8]${NC} Checking device connection..."
 if ! adb -s "$DEVICE" shell "echo connected" > /dev/null 2>&1; then
     echo -e "${RED}✗ Device $DEVICE not connected!${NC}"
     echo ""
@@ -42,33 +42,33 @@ echo -e "${GREEN}✓ Device connected${NC}"
 echo ""
 
 # Step 2: Build web assets
-echo -e "${BLUE}[2/7]${NC} Building web assets..."
+echo -e "${BLUE}[2/8]${NC} Building web assets..."
 npm run build
 echo -e "${GREEN}✓ Web build complete${NC}"
 echo ""
 
 # Step 3: Sync Capacitor
-echo -e "${BLUE}[3/7]${NC} Syncing Capacitor..."
+echo -e "${BLUE}[3/8]${NC} Syncing Capacitor..."
 npx cap sync android
 npx cap copy android
 echo -e "${GREEN}✓ Capacitor sync complete${NC}"
 echo ""
 
 # Step 4: Build Android APK
-echo -e "${BLUE}[4/7]${NC} Building Android APK..."
+echo -e "${BLUE}[4/8]${NC} Building Android APK..."
 JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./android/gradlew -p ./android assembleDebug --quiet
 echo -e "${GREEN}✓ APK build complete${NC}"
 echo ""
 
 # Step 5: Stop any running audio
-echo -e "${BLUE}[5/7]${NC} Stopping audio and app..."
+echo -e "${BLUE}[5/8]${NC} Stopping audio and app..."
 adb -s "$DEVICE" shell "input keyevent 85" 2>/dev/null || true
 adb -s "$DEVICE" shell "am force-stop com.chicagomikes.chipins" 2>/dev/null || true
 echo -e "${GREEN}✓ App stopped${NC}"
 echo ""
 
 # Step 6: Install APK
-echo -e "${BLUE}[6/7]${NC} Installing APK..."
+echo -e "${BLUE}[6/8]${NC} Installing APK..."
 if [ "$FRESH_INSTALL" = "--fresh" ]; then
     echo "  • Uninstalling old version..."
     adb -s "$DEVICE" uninstall com.chicagomikes.chipins 2>/dev/null || true
@@ -82,7 +82,7 @@ echo -e "${GREEN}✓ Installation complete${NC}"
 echo ""
 
 # Step 7: Launch app
-echo -e "${BLUE}[7/7]${NC} Launching app..."
+echo -e "${BLUE}[7/8]${NC} Launching app..."
 adb -s "$DEVICE" shell "am start -n com.chicagomikes.chipins/.MainActivity"
 echo -e "${GREEN}✓ App launched${NC}"
 echo ""
@@ -91,6 +91,25 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo -e "${GREEN}  Deployment complete!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
+
+# Step 8: Send SMS notification
+echo -e "${BLUE}[8/8]${NC} Sending deployment notification..."
+NOTIFICATION_PHONE="+17204507540"
+API_URL="${DEPLOY_API_URL:-https://chi-pins.vercel.app}"
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+SMS_RESPONSE=$(curl -s -X POST "$API_URL/api/send-sms" \
+  -H "Content-Type: application/json" \
+  -d "{\"to\":\"$NOTIFICATION_PHONE\",\"message\":\"✅ Kiosk deployment complete! Device: $DEVICE | Time: $TIMESTAMP\"}" \
+  2>/dev/null)
+
+if echo "$SMS_RESPONSE" | grep -q '"success":true'; then
+  echo -e "${GREEN}✓ SMS notification sent${NC}"
+else
+  echo -e "${YELLOW}⚠ SMS notification failed (check Twilio credentials)${NC}"
+fi
+echo ""
+
 echo "To monitor logs:"
 echo "  adb -s $DEVICE logcat | grep -i 'proximity\\|ambient\\|beep\\|console'"
 echo ""
