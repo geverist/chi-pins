@@ -1,48 +1,44 @@
 #!/usr/bin/env node
-import { createClient } from '@supabase/supabase-js'
-import { readFileSync } from 'fs'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+// Run SQL migration using pg directly
+import 'dotenv/config';
+import pg from 'pg';
+import fs from 'fs';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const { Client } = pg;
 
-const supabaseUrl = 'https://xxwqmakcrchgefgzrulf.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4d3FtYWtjcmNoZ2VmZ3pydWxmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk5MTIwOSwiZXhwIjoyMDc0NTY3MjA5fQ.wqX0mzF091JUkWh8Yh9rJOBQWMpXXsfS-FeIFxUrolQ'
+async function runMigration(sqlFile) {
+  // Extract project ref from Supabase URL
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const projectRef = supabaseUrl?.match(/https:\/\/(.+)\.supabase\.co/)?.[1];
+  
+  if (!projectRef) {
+    console.error('❌ Could not extract project ref from VITE_SUPABASE_URL');
+    process.exit(1);
+  }
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+  const connectionString = `postgresql://postgres:${process.env.SUPABASE_DB_PASSWORD || '[your-db-password]'}@db.${projectRef}.supabase.co:5432/postgres`;
 
-async function runMigration() {
+  const client = new Client({ connectionString });
+
   try {
-    const migrationPath = join(__dirname, '..', 'sql-migrations', 'create-settings-updates-table.sql')
-    const sql = readFileSync(migrationPath, 'utf8')
+    console.log(`📋 Running migration: ${sqlFile}\n`);
 
-    console.log('Running migration: create-settings-updates-table.sql')
+    await client.connect();
+    console.log('✅ Connected to database');
 
-    const { data, error } = await supabase.rpc('exec_sql', { sql_query: sql })
+    const sql = fs.readFileSync(sqlFile, 'utf8');
 
-    if (error) {
-      // If exec_sql doesn't exist, try using the REST API to create table
-      console.log('exec_sql not available, using alternative method...')
+    await client.query(sql);
+    console.log('✅ Migration executed successfully!\n');
 
-      // Check if table exists
-      const { data: tableExists } = await supabase
-        .from('settings_updates')
-        .select('id')
-        .limit(1)
-
-      if (tableExists !== null) {
-        console.log('✅ Table settings_updates already exists or was created successfully')
-      } else {
-        console.error('❌ Migration failed:', error)
-      }
-    } else {
-      console.log('✅ Migration completed successfully')
-    }
   } catch (err) {
-    console.error('❌ Migration error:', err)
-    process.exit(1)
+    console.error('❌ Migration failed:', err.message);
+    console.error('Full error:', err);
+    process.exit(1);
+  } finally {
+    await client.end();
   }
 }
 
-runMigration()
+const sqlFile = process.argv[2] || 'sql-migrations/create-autonomous-tasks-table.sql';
+await runMigration(sqlFile);
