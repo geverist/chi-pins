@@ -277,9 +277,9 @@ const DEFAULTS = {
   elevenlabsSimilarity: 0.75,                 // Similarity boost (0-1)
 
   // Console Webhook - Remote Monitoring
-  consoleWebhookUrl: '',                     // Webhook URL for remote console monitoring (must be configured in admin panel)
-  consoleWebhookEnabled: false,              // Enable/disable webhook
-  consoleWebhookLevels: ['log', 'error', 'warn', 'info'], // Log levels to capture
+  consoleWebhookUrl: 'https://chi-pins.vercel.app/api/webhook-processor', // Webhook URL for remote console monitoring
+  consoleWebhookEnabled: true,               // Enable/disable webhook - ENABLED by default for autonomous healing
+  consoleWebhookLevels: ['error', 'warn'],   // Log levels to capture (error and warn only for autonomous healing)
   consoleWebhookBatchDelayMs: 2000,          // Batch delay (ms)
   consoleWebhookMaxBatchSize: 50,            // Max events per batch
 
