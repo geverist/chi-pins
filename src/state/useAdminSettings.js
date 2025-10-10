@@ -150,15 +150,15 @@ const DEFAULTS = {
   simulationMode: false,           // Enable simulation mode for browser demos (forces attractor to show)
 
   // Proximity Detection (Camera-based approach detection)
-  proximityDetectionEnabled: true, // Enable camera-based proximity detection
-  proximitySensitivity: 15,        // Motion sensitivity threshold (0-100, lower = more sensitive)
-  proximityThreshold: 30,          // Distance threshold to trigger walkup greeting (0-100, higher = closer)
+  proximityDetectionEnabled: false, // Disable by default - enable in admin panel after testing
+  proximitySensitivity: 40,        // Motion sensitivity threshold (0-100, lower = more sensitive) - 40 ignores minor movements
+  proximityThreshold: 80,          // Distance threshold to trigger walkup greeting (0-100, higher = closer) - 80 is very close (~2 feet)
   proximityDetectionInterval: 500, // How often to check for motion (ms)
   proximityTriggerVoice: true,     // Trigger voice greeting when person approaches
 
   // Ambient Music Auto-Play (triggered at longer range than walkup greeting)
-  ambientMusicEnabled: true,      // Enable ambient music when people detected in area
-  ambientMusicThreshold: 25,       // Distance threshold for ambient music (lower = farther range, should be < proximityThreshold)
+  ambientMusicEnabled: false,      // Disable by default - enable in admin panel
+  ambientMusicThreshold: 98,       // Distance threshold for ambient music (0-100, higher = closer, must be >= proximityThreshold) - 98 requires arm's reach
   ambientMusicPlaylist: [
     { name: 'Sample', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' }
   ],        // Array of {name, url} for ambient playlist
@@ -277,7 +277,7 @@ const DEFAULTS = {
   elevenlabsSimilarity: 0.75,                 // Similarity boost (0-1)
 
   // Console Webhook - Remote Monitoring
-  consoleWebhookUrl: 'https://webhook.site/243517d3-3f78-4e4b-9188-9504cb7b5b55', // Webhook URL for remote console monitoring
+  consoleWebhookUrl: '',                     // Webhook URL for remote console monitoring (must be configured in admin panel)
   consoleWebhookEnabled: false,              // Enable/disable webhook
   consoleWebhookLevels: ['log', 'error', 'warn', 'info'], // Log levels to capture
   consoleWebhookBatchDelayMs: 2000,          // Batch delay (ms)

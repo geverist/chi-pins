@@ -3793,14 +3793,29 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
                   <div style={{marginTop: 20, display: 'flex', gap: 12}}>
                     <button
                       style={{...btn.primary, flex: 1}}
-                      onClick={() => {
-                        const sent = sendTestEvent();
-                        if (sent) {
-                          setToast({ title: '✅ Test Sent', text: 'Check your webhook endpoint for the test event!' });
-                          setTimeout(() => setToast(null), 3000);
-                        } else {
+                      onClick={async () => {
+                        if (!settings.consoleWebhookUrl) {
                           setToast({ title: '❌ No Webhook URL', text: 'Please set a webhook URL first' });
                           setTimeout(() => setToast(null), 3000);
+                          return;
+                        }
+
+                        // Show sending toast
+                        setToast({ title: '⏳ Sending...', text: 'Sending test event to webhook...' });
+
+                        try {
+                          const success = await sendTestEvent();
+                          if (success) {
+                            setToast({ title: '✅ Test Sent Successfully!', text: 'Check your webhook endpoint for the test event. Open browser console (F12) for details.' });
+                            setTimeout(() => setToast(null), 5000);
+                          } else {
+                            setToast({ title: '❌ Test Failed', text: 'Check browser console (F12) for error details. The webhook URL might be unreachable.' });
+                            setTimeout(() => setToast(null), 5000);
+                          }
+                        } catch (err) {
+                          console.error('[AdminPanel] Test event error:', err);
+                          setToast({ title: '❌ Test Failed', text: `Error: ${err.message}. Check console (F12) for details.` });
+                          setTimeout(() => setToast(null), 5000);
                         }
                       }}
                       disabled={!settings.consoleWebhookUrl}

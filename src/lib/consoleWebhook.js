@@ -178,12 +178,15 @@ export function updateWebhookUrl(url) {
 
 /**
  * Send a test event to verify webhook is working
+ * @returns {Promise<boolean>} Promise that resolves to true if successful
  */
-export function sendTestEvent() {
+export async function sendTestEvent() {
   if (!webhookUrl) {
     originalConsole.error('[ConsoleWebhook] No webhook URL configured');
     return false;
   }
+
+  originalConsole.log('[ConsoleWebhook] Sending test event to:', webhookUrl);
 
   const testEvent = {
     level: 'info',
@@ -194,27 +197,41 @@ export function sendTestEvent() {
     test: true,
   };
 
-  fetch(webhookUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      source: 'chi-pins-kiosk',
-      tenantId: getTenantId(),
-      events: [testEvent],
-      batchTimestamp: new Date().toISOString(),
-      test: true,
-    }),
-  })
-    .then(() => {
-      originalConsole.info('[ConsoleWebhook] ✅ Test event sent successfully');
-    })
-    .catch(err => {
-      originalConsole.error('[ConsoleWebhook] ❌ Test event failed:', err);
+  const payload = {
+    source: 'chi-pins-kiosk',
+    tenantId: getTenantId(),
+    events: [testEvent],
+    batchTimestamp: new Date().toISOString(),
+    test: true,
+  };
+
+  originalConsole.log('[ConsoleWebhook] Sending payload:', payload);
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      mode: 'cors', // Explicitly set CORS mode
     });
 
-  return true;
+    originalConsole.log('[ConsoleWebhook] Response status:', response.status);
+    originalConsole.log('[ConsoleWebhook] Response ok:', response.ok);
+
+    if (response.ok) {
+      originalConsole.info('[ConsoleWebhook] ✅ Test event sent successfully');
+      return true;
+    } else {
+      originalConsole.error('[ConsoleWebhook] ❌ Test event failed with status:', response.status);
+      return false;
+    }
+  } catch (err) {
+    originalConsole.error('[ConsoleWebhook] ❌ Test event failed:', err);
+    originalConsole.error('[ConsoleWebhook] Error details:', err.message, err.stack);
+    return false;
+  }
 }
 
 /**

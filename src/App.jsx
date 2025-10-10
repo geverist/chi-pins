@@ -538,19 +538,8 @@ export default function App() {
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
-    // Initialize remote logger for debugging
+    // Initialize remote logger for debugging (once on mount)
     initRemoteLogger();
-
-    // Initialize console webhook for remote monitoring
-    if (adminSettings.consoleWebhookEnabled && adminSettings.consoleWebhookUrl) {
-      initConsoleWebhook(adminSettings.consoleWebhookUrl, adminSettings.consoleWebhookEnabled, {
-        includeTimestamps: true,
-        includeLocation: true,
-        maxMessageLength: 1000,
-        levels: adminSettings.consoleWebhookLevels || ['log', 'error', 'warn', 'info'],
-      });
-      console.log('[App] Console webhook initialized:', adminSettings.consoleWebhookUrl);
-    }
 
     // Start background sync service for SQLite cache
     const syncService = getSyncService();
@@ -570,7 +559,29 @@ export default function App() {
       setExploring(false);
       console.log('App: Desktop mode - exploring disabled');
     }
-  }, [isMobile, adminSettings.consoleWebhookEnabled, adminSettings.consoleWebhookUrl, adminSettings.consoleWebhookLevels]);
+  }, [isMobile]);
+
+  // Separate useEffect for console webhook initialization that re-runs when settings change
+  useEffect(() => {
+    console.log('[App] Webhook settings changed:', {
+      enabled: adminSettings.consoleWebhookEnabled,
+      url: adminSettings.consoleWebhookUrl,
+      levels: adminSettings.consoleWebhookLevels
+    });
+
+    // Initialize or re-initialize console webhook when settings change
+    if (adminSettings.consoleWebhookEnabled && adminSettings.consoleWebhookUrl) {
+      initConsoleWebhook(adminSettings.consoleWebhookUrl, adminSettings.consoleWebhookEnabled, {
+        includeTimestamps: true,
+        includeLocation: true,
+        maxMessageLength: 1000,
+        levels: adminSettings.consoleWebhookLevels || ['log', 'error', 'warn', 'info'],
+      });
+      console.log('[App] ✅ Console webhook initialized:', adminSettings.consoleWebhookUrl);
+    } else {
+      console.log('[App] Console webhook disabled or no URL configured');
+    }
+  }, [adminSettings.consoleWebhookEnabled, adminSettings.consoleWebhookUrl, adminSettings.consoleWebhookLevels]);
 
   // Update sync interval when admin setting changes
   useEffect(() => {

@@ -20,18 +20,19 @@ export default function PinPlacementEffect({ lat, lng, trigger }) {
     const createRipple = (delay = 0, scale = 1, rippleIndex = 0) => {
       setTimeout(() => {
         // Create a circle marker for the ripple effect
-        const ripple = L.circle([lat, lng], {
+        // Use L.circleMarker (pixel-based) instead of L.circle (meter-based) to ensure perfect circles
+        const ripple = L.circleMarker([lat, lng], {
           color: '#10b981',
           fillColor: '#10b981',
           fillOpacity: 0.35,
           weight: 2,
-          radius: 5 * scale, // Start smaller for more natural expansion
+          radius: 5 * scale, // Start smaller for more natural expansion (in pixels)
         }).addTo(map);
 
         // Animate the ripple expanding and fading with realistic water physics
         let radius = 5 * scale;
         let opacity = 0.6;
-        const maxRadius = 150 * scale; // Larger max radius for bigger ripples
+        const maxRadius = 60 * scale; // Max radius in pixels (60px for visible ripple effect)
         let currentStep = 0;
         const totalSteps = 50; // More steps for smoother animation
 
