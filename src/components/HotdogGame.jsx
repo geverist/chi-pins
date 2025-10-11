@@ -497,7 +497,7 @@ export default function HotdogGame({ onClose, onGameComplete }) {
           onDrop={handleDrop}
           style={{
             minHeight: 400,
-            maxHeight: '70vh', // Prevent overflow
+            maxHeight: '70vh',
             width: '100%',
             maxWidth: 400,
             background: 'rgba(255,255,255,0.03)',
@@ -507,8 +507,9 @@ export default function HotdogGame({ onClose, onGameComplete }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
-            gap: 8,
-            overflowY: 'auto', // Enable scrolling if needed
+            alignItems: 'center',
+            position: 'relative',
+            overflowY: 'auto',
             overflowX: 'hidden',
           }}
         >
@@ -521,31 +522,108 @@ export default function HotdogGame({ onClose, onGameComplete }) {
                 fontSize: 14,
               }}
             >
-              Tap ingredients to build
+              Tap ingredients to build your hot dog
             </div>
           ) : (
-            assembledItems.map((item, idx) => (
-              <div
-                key={`${item.id}-${idx}`}
-                onClick={() => removeItem(item)}
-                style={{
-                  padding: '12px 16px',
-                  background: item.color + '22',
-                  borderRadius: 10,
-                  border: `2px solid ${item.color}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 12,
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s',
-                  flexShrink: 0, // Prevent items from shrinking
-                }}
-              >
-                <span style={{ fontSize: 32 }}>{item.emoji}</span>
-                {/* Removed red X - tap to remove is obvious from cursor */}
-              </div>
-            ))
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: 280,
+                display: 'flex',
+                flexDirection: 'column-reverse',
+                alignItems: 'center',
+                gap: 0,
+              }}
+            >
+              {/* Build from bottom to top */}
+              {assembledItems.map((item, idx) => {
+                // Calculate height based on ingredient type for realistic stacking
+                const getIngredientHeight = (ingredientId) => {
+                  switch (ingredientId) {
+                    case 'bun': return 80; // Bun is tall
+                    case 'hotdog': return 70; // Frank is thick
+                    case 'mustard':
+                    case 'relish':
+                    case 'ketchup': return 15; // Sauces are thin
+                    case 'onion':
+                    case 'tomato':
+                    case 'pickle':
+                    case 'sport-pepper': return 35; // Veggies are medium
+                    case 'celery-salt': return 10; // Salt is very thin
+                    default: return 30;
+                  }
+                };
+
+                const height = getIngredientHeight(item.id);
+
+                return (
+                  <div
+                    key={`${item.id}-${idx}`}
+                    onClick={() => removeItem(item)}
+                    style={{
+                      width: '100%',
+                      height: `${height}px`,
+                      background: `linear-gradient(180deg, ${item.color}dd 0%, ${item.color}aa 100%)`,
+                      borderRadius: item.id === 'bun' ? '60px 60px 8px 8px' : '8px',
+                      border: `2px solid ${item.color}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                      flexShrink: 0,
+                      position: 'relative',
+                      zIndex: assembledItems.length - idx,
+                      boxShadow: `0 2px 8px ${item.color}66, inset 0 -2px 6px rgba(0,0,0,0.2)`,
+                      marginTop: idx === 0 ? 0 : '-8px', // Overlap ingredients slightly for stacking effect
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.boxShadow = `0 4px 16px ${item.color}99, inset 0 -2px 6px rgba(0,0,0,0.2)`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = `0 2px 8px ${item.color}66, inset 0 -2px 6px rgba(0,0,0,0.2)`;
+                    }}
+                  >
+                    <span style={{
+                      fontSize: item.id === 'bun' || item.id === 'hotdog' ? 48 : 32,
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                    }}>
+                      {item.emoji}
+                    </span>
+                    {/* Show subtle label on hover */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 2,
+                      right: 4,
+                      fontSize: 9,
+                      color: 'rgba(255,255,255,0.5)',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      pointerEvents: 'none',
+                    }}>
+                      {!item.isCorrect && '❌'}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Optional: Add a plate at the bottom */}
+              {assembledItems.length > 0 && (
+                <div style={{
+                  width: '120%',
+                  height: '20px',
+                  background: 'linear-gradient(180deg, #e5e7eb 0%, #d1d5db 100%)',
+                  borderRadius: '50%',
+                  marginTop: '10px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  border: '2px solid #9ca3af',
+                }}></div>
+              )}
+            </div>
           )}
         </div>
       </div>
