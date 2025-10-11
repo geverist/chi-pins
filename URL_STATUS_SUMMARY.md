@@ -20,7 +20,7 @@ All industry demos are publicly accessible:
 ### Admin Panel Access
 **Primary URL (Working):** https://chi-pins.vercel.app/?admin=true
 - Status: ✅ 200 OK
-- Test PIN: `1111`
+- Default PIN: See `src/state/useAdminSettings.js` (changed from `1111` for security)
 - No authentication required
 
 **Custom Domain URLs (Need Protection Fix):**
@@ -52,7 +52,7 @@ All industry demos are publicly accessible:
 ### 3. Admin Panel Access
 - ✅ **Working URL:** `chi-pins.vercel.app/?admin=true`
 - ⏳ **Pending URL:** `app.agentiosk.com/?admin=true` (after protection disabled)
-- ✅ Test credentials: PIN `1111`
+- ✅ Default PIN: See `src/state/useAdminSettings.js` for current defaults
 
 ### 4. Documentation Created
 - ✅ `ADMIN_ACCESS_GUIDE.md` - Complete admin panel documentation
@@ -118,7 +118,7 @@ curl -I https://chi-pins.vercel.app/?admin=true
 
 # In browser, go to:
 https://chi-pins.vercel.app/?admin=true
-# Enter PIN: 1111
+# Enter default PIN (see src/state/useAdminSettings.js)
 ```
 
 ### Admin Access (Pending fix):
@@ -148,7 +148,7 @@ curl -I https://app.agentiosk.com/?admin=true
 
 ### 3. View Admin Panel (Optional):
 - Go to: https://chi-pins.vercel.app/?admin=true
-- Enter PIN: `1111`
+- Enter default PIN (check `src/state/useAdminSettings.js`)
 - Explore analytics, menu management, integrations
 
 ---
@@ -161,15 +161,17 @@ curl -I https://app.agentiosk.com/?admin=true
 
 ### Admin Security:
 - ✅ Admin panel requires 4-digit PIN
-- ✅ Default test PIN: `1111` (change for production)
+- ✅ Default PINs: Secure random values (see `src/state/useAdminSettings.js`)
+- ⚠️ **CRITICAL:** Change default PINs immediately for production deployments
 - ✅ Session timeout: 30 minutes
 - ✅ Rate limiting: 5 attempts before lockout
 
 ### Production Recommendations:
-1. Set custom PIN via `VITE_ADMIN_PIN` env variable
-2. Use strong 4-digit PIN (not `1111`)
+1. **Change default PINs immediately** in admin panel settings
+2. Use strong, unique 4-digit PINs for each installation
 3. Enable IP whitelisting for Enterprise plans
 4. Rotate PINs quarterly
+5. Never use common patterns (1234, 0000, 1111, etc.)
 
 ---
 

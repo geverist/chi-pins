@@ -84,7 +84,7 @@ As of now:
 
 If you can't access Vercel settings, use the primary URL:
 
-**Admin Panel:** https://chi-pins.vercel.app/?admin=true (PIN: `1111`)
+**Admin Panel:** https://chi-pins.vercel.app/?admin=true (PIN: see `src/state/useAdminSettings.js`)
 
 This works immediately without any configuration changes.
 

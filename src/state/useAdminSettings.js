@@ -52,8 +52,11 @@ const DEFAULTS = {
   hotdogRepositionSpeed: 5,    // Seconds between ingredient repositioning
 
   // Security PINs
-  adminPanelPin: '1111',      // 4-digit PIN for admin panel access
-  kioskExitPin: '1111',       // 4-digit PIN for exiting kiosk mode
+  // ⚠️ SECURITY: Change these default PINs immediately in production!
+  // These are secure defaults for NEW installations only.
+  // Existing installations will keep their current PINs from localStorage/Supabase.
+  adminPanelPin: '7391',      // 4-digit PIN for admin panel access (CHANGE THIS!)
+  kioskExitPin: '6284',       // 4-digit PIN for exiting kiosk mode (CHANGE THIS!)
   adminPanelIdleTimeout: 60,  // Seconds before admin panel auto-closes due to inactivity
 
   // Map display
@@ -159,6 +162,7 @@ const DEFAULTS = {
   proximityDetectionInterval: 500, // How often to check for motion (ms)
   proximityTriggerVoice: true,     // Trigger voice greeting when person approaches
   proximityDebugModeEnabled: false, // Show debug panel with detection details (configurable from admin panel)
+  proximityLearningModeEnabled: false, // Passive learning mode: detect and log events without triggering actions (for calibration)
 
   // Ambient Music Auto-Play (triggered at longer range than walkup greeting)
   ambientMusicEnabled: false,      // Disable by default - enable in admin panel
