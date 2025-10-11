@@ -840,11 +840,11 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
             {!isPreviewMode && (
               <button
                 style={{ ...btn.primary, opacity: hasUnsavedChanges ? 1 : 0.5 }}
-                onClick={saveAndClose}
+                onClick={saveSupabase}
                 disabled={!hasUnsavedChanges}
-                title={hasUnsavedChanges ? "Save changes and close" : "No changes to save"}
+                title={hasUnsavedChanges ? "Save changes" : "No changes to save"}
               >
-                {hasUnsavedChanges ? '💾 Save & Close' : '✓ Saved'}
+                {hasUnsavedChanges ? '💾 Save' : '✓ Saved'}
               </button>
             )}
             <button style={btn.ghost} onClick={onClose} aria-label="Close">✕</button>

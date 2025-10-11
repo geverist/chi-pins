@@ -5,6 +5,16 @@ import { useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { getLocalDatabase } from '../lib/localDatabase';
 
+/**
+ * Classify lighting level (0-255) into condition categories
+ */
+function classifyLighting(level) {
+  if (level > 200) return 'bright';
+  if (level > 140) return 'normal';
+  if (level > 80) return 'dim';
+  return 'dark';
+}
+
 export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' } = {}) {
   // Changed to Map to support multiple concurrent sessions (one per person)
   const activeSessionsRef = useRef(new Map()); // personId -> session data
@@ -26,6 +36,13 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
     distanceScore = 0,
     trajectory = [],
     velocity = null, // {x, y}
+    // NEW: Environmental context fields
+    lightingLevel = null, // 0-255 brightness from camera
+    lightingCondition = null, // 'bright', 'normal', 'dim', 'dark'
+    weatherCondition = null, // 'sunny', 'cloudy', 'stormy', null
+    latitude = null,
+    longitude = null,
+    entityType = 'human', // 'human', 'dog', 'cat', 'unknown'
   }) => {
     if (!enabled) return;
 
@@ -35,6 +52,22 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
     }
 
     const now = new Date();
+
+    // Get geolocation if available
+    let currentLat = latitude;
+    let currentLng = longitude;
+    if (navigator.geolocation && (latitude === null || longitude === null)) {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+        currentLat = position.coords.latitude;
+        currentLng = position.coords.longitude;
+      } catch (err) {
+        console.warn('[LearningSession] Could not get geolocation:', err.message);
+      }
+    }
+
     const session = {
       id: crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       person_id: personId,
@@ -58,6 +91,13 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
       trajectory_data: trajectory,
       velocity_x: velocity?.x || null,
       velocity_y: velocity?.y || null,
+      // Environmental context fields
+      lighting_level: lightingLevel,
+      lighting_condition: lightingCondition || (lightingLevel ? classifyLighting(lightingLevel) : null),
+      weather_condition: weatherCondition,
+      latitude: currentLat,
+      longitude: currentLng,
+      entity_type: entityType,
     };
 
     activeSessionsRef.current.set(personId, session);
@@ -171,6 +211,13 @@ export function useLearningSession({ enabled = true, tenantId = 'chicago-mikes' 
       trajectory_data: session.trajectory_data,
       velocity_x: session.velocity_x,
       velocity_y: session.velocity_y,
+      // Environmental context fields
+      lighting_level: session.lighting_level,
+      lighting_condition: session.lighting_condition,
+      weather_condition: session.weather_condition,
+      latitude: session.latitude,
+      longitude: session.longitude,
+      entity_type: session.entity_type,
     };
 
     console.log(`[LearningSession] 💾 Saving session: ${session.id} - Person: ${personId} - Outcome: ${outcome} - Duration: ${Math.round(totalDuration / 1000)}s`);

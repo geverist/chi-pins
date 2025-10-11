@@ -233,6 +233,7 @@ export function useProximityDetection({
               baseline: 0,
               threshold: ambientThreshold,
               triggeredAction: 'ambient',
+              lightingLevel: Math.round(avgBrightness),
             });
           }
 
@@ -266,6 +267,7 @@ export function useProximityDetection({
               baseline: 0,
               threshold: proximityThreshold,
               triggeredAction: 'walkup',
+              lightingLevel: Math.round(avgBrightness),
             });
           }
 
@@ -309,6 +311,7 @@ export function useProximityDetection({
               baseline: 0,
               threshold: stareThreshold,
               triggeredAction: 'stare',
+              lightingLevel: Math.round(avgBrightness),
             });
           }
 
