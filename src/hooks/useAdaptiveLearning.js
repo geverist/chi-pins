@@ -103,13 +103,122 @@ export function useAdaptiveLearning({
     init();
   }, [enabled, tenantId, learningAggressiveness]);
 
-  // Load recent session statistics
+  // Analyze movement vectors from session data
+  const analyzeMovementVectors = (sessions) => {
+    const approachingSessions = sessions.filter(s => s.intent === 'approaching');
+    const stoppedSessions = sessions.filter(s => s.intent === 'stopped');
+
+    if (approachingSessions.length === 0) {
+      return {
+        avgApproachSpeed: 0,
+        fastApproaches: 0,
+        slowApproaches: 0,
+        directApproaches: 0,
+        wanderingApproaches: 0,
+      };
+    }
+
+    // Calculate approach speeds and trajectory quality
+    let totalSpeed = 0;
+    let fastCount = 0;
+    let slowCount = 0;
+    let directCount = 0;
+    let wanderingCount = 0;
+
+    approachingSessions.forEach(session => {
+      if (session.velocity && typeof session.velocity === 'object') {
+        const speed = Math.sqrt((session.velocity.x || 0) ** 2 + (session.velocity.y || 0) ** 2);
+        totalSpeed += speed;
+
+        // Classify speed: fast (>0.3), medium (0.1-0.3), slow (<0.1)
+        if (speed > 0.3) fastCount++;
+        else if (speed < 0.1) slowCount++;
+
+        // Analyze trajectory quality if available
+        if (session.trajectory && Array.isArray(session.trajectory) && session.trajectory.length > 3) {
+          const traj = session.trajectory;
+          // Calculate path straightness (direct = distance ratio close to 1)
+          const startPoint = traj[0];
+          const endPoint = traj[traj.length - 1];
+          const directDistance = Math.sqrt(
+            (endPoint.x - startPoint.x) ** 2 + (endPoint.y - startPoint.y) ** 2
+          );
+
+          // Calculate actual path length
+          let pathLength = 0;
+          for (let i = 1; i < traj.length; i++) {
+            pathLength += Math.sqrt(
+              (traj[i].x - traj[i-1].x) ** 2 + (traj[i].y - traj[i-1].y) ** 2
+            );
+          }
+
+          const straightness = pathLength > 0 ? directDistance / pathLength : 0;
+
+          // Direct approach: straightness > 0.7
+          if (straightness > 0.7) directCount++;
+          else wanderingCount++;
+        }
+      }
+    });
+
+    return {
+      avgApproachSpeed: approachingSessions.length > 0 ? totalSpeed / approachingSessions.length : 0,
+      fastApproaches: (fastCount / approachingSessions.length) * 100,
+      slowApproaches: (slowCount / approachingSessions.length) * 100,
+      directApproaches: directCount,
+      wanderingApproaches: wanderingCount,
+      stoppedCount: stoppedSessions.length,
+    };
+  };
+
+  // Analyze gaze patterns from session data
+  const analyzeGazePatterns = (sessions) => {
+    const sessionsWithGaze = sessions.filter(s => s.gaze_duration_ms != null && s.gaze_confidence != null);
+
+    if (sessionsWithGaze.length === 0) {
+      return {
+        avgGazeDuration: 0,
+        quickGazeConversions: 0,
+        noGazeAbandoned: 0,
+        gazeConfidence: 0,
+      };
+    }
+
+    let totalGazeDuration = 0;
+    let quickGazeConverted = 0;
+    let noGazeAbandoned = 0;
+    let totalConfidence = 0;
+
+    sessionsWithGaze.forEach(session => {
+      totalGazeDuration += session.gaze_duration_ms || 0;
+      totalConfidence += session.gaze_confidence || 0;
+
+      // Quick gaze + conversion: gaze < 2s and outcome = converted
+      if (session.gaze_duration_ms < 2000 && session.outcome === 'converted') {
+        quickGazeConverted++;
+      }
+
+      // No gaze + abandoned: gaze < 500ms and outcome = abandoned
+      if (session.gaze_duration_ms < 500 && session.outcome === 'abandoned') {
+        noGazeAbandoned++;
+      }
+    });
+
+    return {
+      avgGazeDuration: totalGazeDuration / sessionsWithGaze.length,
+      quickGazeConversions: (quickGazeConverted / sessionsWithGaze.length) * 100,
+      noGazeAbandoned: (noGazeAbandoned / sessionsWithGaze.length) * 100,
+      gazeConfidence: totalConfidence / sessionsWithGaze.length,
+    };
+  };
+
+  // Load recent session statistics with vector and gaze analysis
   const loadRecentStats = useCallback(async () => {
     try {
-      // Get last 100 sessions for statistics
+      // Get last 100 sessions for statistics with full metadata
       const { data: recentSessions, error } = await supabase
         .from('proximity_learning_sessions')
-        .select('outcome, engaged_duration_ms')
+        .select('outcome, engaged_duration_ms, velocity, trajectory, gaze_duration_ms, gaze_confidence, intent, proximity_level')
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
         .limit(100);
@@ -121,7 +230,7 @@ export function useAdaptiveLearning({
         return;
       }
 
-      // Calculate abandonment rate (abandoned / total)
+      // Calculate basic abandonment rate (abandoned / total)
       const abandonedCount = recentSessions.filter(s => s.outcome === 'abandoned').length;
       const engagedCount = recentSessions.filter(s => s.outcome === 'engaged').length;
       const abandonment = (abandonedCount / recentSessions.length) * 100;
@@ -130,34 +239,91 @@ export function useAdaptiveLearning({
       setAbandonmentRate(abandonment);
       setEngagementRate(engagement);
 
-      console.log(`[AdaptiveLearning] Stats: ${abandonment.toFixed(1)}% abandoned, ${engagement.toFixed(1)}% engaged`);
+      console.log(`[AdaptiveLearning] Basic stats: ${abandonment.toFixed(1)}% abandoned, ${engagement.toFixed(1)}% engaged`);
 
-      // Auto-adjust thresholds if abandonment is too high or too low
+      // Analyze movement vectors and gaze patterns
+      const vectorAnalysis = analyzeMovementVectors(recentSessions);
+      const gazeAnalysis = analyzeGazePatterns(recentSessions);
+
+      console.log('[AdaptiveLearning] Vector analysis:', vectorAnalysis);
+      console.log('[AdaptiveLearning] Gaze analysis:', gazeAnalysis);
+
+      // Auto-adjust thresholds using ALL available intelligence
       if (!passiveLearningMode) {
-        await autoAdjustThresholds(abandonment, engagement);
+        await autoAdjustThresholds(abandonment, engagement, vectorAnalysis, gazeAnalysis, recentSessions);
       }
     } catch (error) {
       console.error('[AdaptiveLearning] Error loading stats:', error);
     }
   }, [tenantId, passiveLearningMode]);
 
-  // Automatic threshold adjustment based on abandonment rates
-  const autoAdjustThresholds = useCallback(async (abandonment, engagement) => {
+  // Automatic threshold adjustment using vector analysis, gaze patterns, and abandonment rates
+  const autoAdjustThresholds = useCallback(async (abandonment, engagement, vectorAnalysis = {}, gazeAnalysis = {}, sessions = []) => {
     try {
-      // If abandonment rate is too high (>30%), we're triggering too early - increase thresholds
-      // If abandonment rate is too low (<15%), we're triggering too late - decrease thresholds
+      // INTELLIGENT THRESHOLD ADJUSTMENT using multiple signals
       let adjustmentFactor = 0;
       let adjustmentReason = '';
+      let intelligenceUsed = [];
 
+      // Signal 1: Basic abandonment rate (legacy logic)
+      let baseAdjustment = 0;
       if (abandonment > 30) {
-        // Too many false positives - increase thresholds by 10%
-        adjustmentFactor = 1.1;
-        adjustmentReason = `High abandonment rate (${abandonment.toFixed(1)}%) - increasing thresholds by 10%`;
+        baseAdjustment = 0.1; // Increase by 10%
+        intelligenceUsed.push(`High abandonment (${abandonment.toFixed(1)}%)`);
       } else if (abandonment < 15 && engagement > 40) {
-        // Good engagement, low abandonment - can be more aggressive, decrease thresholds by 10%
-        adjustmentFactor = 0.9;
-        adjustmentReason = `Low abandonment (${abandonment.toFixed(1)}%), high engagement (${engagement.toFixed(1)}%) - decreasing thresholds by 10%`;
+        baseAdjustment = -0.1; // Decrease by 10%
+        intelligenceUsed.push(`Low abandonment + high engagement`);
       }
+
+      // Signal 2: Movement vector analysis
+      let vectorAdjustment = 0;
+      if (vectorAnalysis.fastApproaches > 60) {
+        // Most approaches are fast and direct - can be more aggressive
+        vectorAdjustment -= 0.05; // Decrease thresholds by 5%
+        intelligenceUsed.push(`Fast approaches (${vectorAnalysis.fastApproaches.toFixed(0)}%)`);
+      } else if (vectorAnalysis.slowApproaches > 60 || vectorAnalysis.wanderingApproaches > vectorAnalysis.directApproaches) {
+        // Slow or wandering approaches - need higher threshold to avoid false positives
+        vectorAdjustment += 0.05; // Increase by 5%
+        intelligenceUsed.push(`Slow/wandering movement detected`);
+      }
+
+      // Signal 3: Gaze pattern analysis
+      let gazeAdjustment = 0;
+      if (gazeAnalysis.quickGazeConversions > 40) {
+        // Quick gaze leading to conversions - users are very engaged, be more aggressive
+        gazeAdjustment -= 0.08; // Decrease by 8%
+        intelligenceUsed.push(`Quick gaze conversions (${gazeAnalysis.quickGazeConversions.toFixed(0)}%)`);
+      } else if (gazeAnalysis.noGazeAbandoned > 50) {
+        // No gaze leading to abandonment - too many false positives
+        gazeAdjustment += 0.08; // Increase by 8%
+        intelligenceUsed.push(`No-gaze abandonments (${gazeAnalysis.noGazeAbandoned.toFixed(0)}%)`);
+      }
+
+      // Combine all intelligence signals
+      const totalAdjustment = baseAdjustment + vectorAdjustment + gazeAdjustment;
+
+      // Only adjust if combined signal is significant (>3% change)
+      if (Math.abs(totalAdjustment) < 0.03) {
+        console.log('[AdaptiveLearning] Adjustments too small, skipping:', {
+          base: baseAdjustment,
+          vector: vectorAdjustment,
+          gaze: gazeAdjustment,
+          total: totalAdjustment,
+        });
+        return;
+      }
+
+      adjustmentFactor = 1 + totalAdjustment;
+      adjustmentReason = `AI-optimized: ${intelligenceUsed.join(', ')} → ${totalAdjustment > 0 ? 'increase' : 'decrease'} ${Math.abs(totalAdjustment * 100).toFixed(1)}%`;
+
+      console.log('[AdaptiveLearning] 🧠 Intelligent adjustment:', {
+        baseAdjustment,
+        vectorAdjustment,
+        gazeAdjustment,
+        totalAdjustment,
+        adjustmentFactor,
+        reason: adjustmentReason,
+      });
 
       if (adjustmentFactor !== 0) {
         console.log(`[AdaptiveLearning] ${adjustmentReason}`);
