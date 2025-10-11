@@ -776,7 +776,7 @@ function TapToPlace({ onPick, onMapClick, disabled = false, mapReady }) {
   return null;
 }
 
-// Disable map dragging during pin placement when fully zoomed in
+// Disable map dragging during pin placement when zoomed in far enough
 function PinPlacementLock({ editing, mapMode }) {
   const map = useMap();
 
@@ -786,17 +786,19 @@ function PinPlacementLock({ editing, mapMode }) {
     const checkAndLock = () => {
       const currentZoom = map.getZoom();
       const maxZoom = mapMode === 'global' ? GLOBAL_MAX_ZOOM : CHI_MAX_ZOOM;
-      const isMaxZoom = currentZoom >= maxZoom;
+      // Lock when zoomed in sufficiently (2 levels below max) for precise pin placement
+      const lockThreshold = maxZoom - 2;
+      const isZoomedIn = currentZoom >= lockThreshold;
 
-      // Lock dragging when editing AND at max zoom
-      if (editing && isMaxZoom) {
-        console.log('[PinPlacementLock] Locking map dragging - editing mode at max zoom');
+      // Lock dragging when editing AND zoomed in far enough
+      if (editing && isZoomedIn) {
+        console.log('[PinPlacementLock] Locking map dragging - editing mode at zoom', currentZoom, '(threshold:', lockThreshold, ')');
         map.dragging?.disable();
         map.touchZoom?.disable();
         map.scrollWheelZoom?.disable();
         map.doubleClickZoom?.disable();
       } else {
-        console.log('[PinPlacementLock] Unlocking map dragging');
+        console.log('[PinPlacementLock] Unlocking map dragging - zoom:', currentZoom);
         map.dragging?.enable();
         map.touchZoom?.enable();
         map.scrollWheelZoom?.enable();

@@ -451,6 +451,53 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
     }
   }
 
+  const save = async () => {
+    console.log('[AdminPanel] ========== SAVE CLICKED ==========')
+
+    // Validate PINs before saving
+    const adminPin = String(settings.adminPanelPin || '1111').replace(/\D/g, '').slice(0, 4)
+    const kioskPin = String(settings.kioskExitPin || '1111').replace(/\D/g, '').slice(0, 4)
+
+    console.log('[AdminPanel] Validating PINs...', { adminPin, kioskPin })
+
+    if (adminPin.length !== 4 || kioskPin.length !== 4) {
+      console.error('[AdminPanel] PIN validation failed')
+      alert('PINs must be exactly 4 digits')
+      return
+    }
+
+    // Ensure PINs are saved as 4-digit strings
+    const validatedSettings = {
+      ...settings,
+      adminPanelPin: adminPin.padStart(4, '0'),
+      kioskExitPin: kioskPin.padStart(4, '0'),
+    }
+
+    console.log('[AdminPanel] PINs validated, updating settings state...')
+    setSettings(validatedSettings)
+
+    console.log('[AdminPanel] Calling saveSupabase()...')
+    const saved = await saveSupabase()
+    console.log('[AdminPanel] saveSupabase() returned:', saved)
+
+    if (saved) {
+      console.log('[AdminPanel] Save successful, updating state...')
+      setInitialSettings(validatedSettings)
+      setInitialPopularSpots(popularSpots)
+      setInitialNavSettings(navSettings)
+      setHasUnsavedChanges(false)
+
+      // Trigger push notification to kiosks
+      console.log('[AdminPanel] Triggering push to kiosk...')
+      await pushToKiosk()
+
+      alert('Settings saved successfully! Changes will take effect on next app reload.')
+    } else {
+      console.error('[AdminPanel] Save failed!')
+      alert('Failed to save settings. Please check the console for details.')
+    }
+  }
+
   const saveAndClose = async () => {
     console.log('[AdminPanel] ========== SAVE AND CLOSE CLICKED ==========')
 
@@ -840,7 +887,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
             {!isPreviewMode && (
               <button
                 style={{ ...btn.primary, opacity: hasUnsavedChanges ? 1 : 0.5 }}
-                onClick={saveSupabase}
+                onClick={save}
                 disabled={!hasUnsavedChanges}
                 title={hasUnsavedChanges ? "Save changes" : "No changes to save"}
               >

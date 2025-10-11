@@ -98,8 +98,8 @@ export default function MarketplaceTab({ settings, onSave }) {
         ))}
       </div>
 
-      {/* Feature Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Feature Grid - Enhanced Tile-Based Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredFeatures.map(feature => {
           const isInstalled = installedFeatures.includes(feature.id);
           const isExpanded = expandedFeature === feature.id;
@@ -107,10 +107,10 @@ export default function MarketplaceTab({ settings, onSave }) {
           return (
             <div
               key={feature.id}
-              className={`border rounded-lg p-4 transition-all ${
+              className={`border-2 rounded-2xl p-6 transition-all duration-200 transform hover:scale-105 shadow-lg ${
                 isInstalled
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-200 bg-white hover:border-blue-400'
+                  ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 shadow-green-200'
+                  : 'border-gray-300 bg-gradient-to-br from-white to-gray-50 hover:border-blue-500 hover:shadow-blue-200'
               }`}
             >
               {/* Feature Header */}
