@@ -87,6 +87,7 @@ import { useBusinessHours } from './hooks/useBusinessHours';
 import ClosedOverlay from './components/ClosedOverlay';
 import MotionIndicator from './components/MotionIndicator';
 import CallBorderIndicator from './components/CallBorderIndicator';
+import { DetectionStateIndicator } from './components/DetectionStateIndicator';
 
 // clustering helpers
 import PinBubbles from './components/PinBubbles';
@@ -2036,6 +2037,16 @@ export default function App() {
         isStaring={isStaring}
         stareDuration={stareDuration}
         proximityLevel={proximityLevel}
+      />
+
+      {/* Detection State Visual Indicator - Colored border and debug info (press 'd' to toggle debug) */}
+      <DetectionStateIndicator
+        isAmbientDetected={isAmbientDetected}
+        isWalkupDetected={isWalkupDetected}
+        isStaring={isStaring}
+        activePeopleCount={activePeopleCount}
+        maxProximityLevel={maxProximityLevel}
+        trackedPeople={trackedPeople}
       />
 
       {/* Twilio Call Border - Animated border shown when voice bot is on an active call */}
