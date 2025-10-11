@@ -749,14 +749,65 @@ export function useMultiPersonTracking({
     init();
 
     return () => {
-      // Cleanup
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
+      console.log('[MultiPersonTracking] Cleanup: disposing all resources');
+
+      // Stop detection interval first
       if (detectionIntervalRef.current) {
         clearInterval(detectionIntervalRef.current);
+        detectionIntervalRef.current = null;
       }
+
+      // Stop and dispose camera stream
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+        streamRef.current = null;
+      }
+
+      // Dispose MediaPipe detectors (important for GPU resource cleanup)
+      if (poseLandmarkerRef.current) {
+        try {
+          poseLandmarkerRef.current.close();
+        } catch (e) {
+          console.warn('[MultiPersonTracking] Pose landmarker close error:', e);
+        }
+        poseLandmarkerRef.current = null;
+      }
+
+      if (faceLandmarkerRef.current) {
+        try {
+          faceLandmarkerRef.current.close();
+        } catch (e) {
+          console.warn('[MultiPersonTracking] Face landmarker close error:', e);
+        }
+        faceLandmarkerRef.current = null;
+      }
+
+      // Clean up video element
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+        videoRef.current = null;
+      }
+
+      // Clean up canvas
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+        canvasRef.current = null;
+      }
+
+      // Clear tracker
       trackerRef.current.clear();
+
+      // Reset state
+      setIsInitialized(false);
+      setTrackedPeople([]);
+      previousPeopleRef.current.clear();
     };
   }, [enabled, initializePoseLandmarker, initializeCamera]);
 

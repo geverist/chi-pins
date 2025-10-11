@@ -602,14 +602,42 @@ function GeocoderTopCenter({
     return () => {
       try {
         console.log('[GeocoderTopCenter] Cleanup: removing all search elements');
-        clearBtn?.remove();
-        micBtn?.remove();
+
+        // Clean up speech recognition completely
         if (recognition) {
-          recognition.abort();
+          try {
+            recognition.stop();
+            recognition.abort();
+            recognition.onstart = null;
+            recognition.onend = null;
+            recognition.onresult = null;
+            recognition.onerror = null;
+          } catch (e) {
+            console.warn('[GeocoderTopCenter] Speech recognition cleanup error:', e);
+          }
+          recognition = null;
         }
+
+        // Remove event listeners from buttons before removing them
+        if (clearBtn) {
+          clearBtn.replaceWith(clearBtn.cloneNode(true)); // Remove all event listeners
+          clearBtn.remove();
+        }
+        if (micBtn) {
+          micBtn.replaceWith(micBtn.cloneNode(true)); // Remove all event listeners
+          micBtn.remove();
+        }
+
+        // Remove geocoder control
         if (geocoderRef.current) {
-          geocoderRef.current.remove();
+          try {
+            geocoderRef.current.remove();
+          } catch (e) {
+            console.warn('[GeocoderTopCenter] Geocoder removal error:', e);
+          }
         }
+
+        // Remove DOM elements
         if (shellRef.current) {
           shellRef.current.remove();
         }
@@ -619,6 +647,8 @@ function GeocoderTopCenter({
       } catch (e) {
         console.warn('[GeocoderTopCenter] Cleanup error:', e);
       }
+
+      // Clear all refs
       geocoderRef.current = null;
       inputRef.current = null;
       clearBtnRef.current = null;

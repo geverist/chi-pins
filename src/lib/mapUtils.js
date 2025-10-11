@@ -266,6 +266,7 @@ export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = n
 
   return `
   <div style="position:relative;width:${ICON_W}px;height:${ICON_H}px;pointer-events:auto;">
+    ${includeHalo ? '<div class="pin-halo"></div>' : ''}
     <svg width="${ICON_W}" height="${ICON_H}" viewBox="0 0 ${ICON_W} ${ICON_H}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="stemShadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -282,65 +283,6 @@ export function pushpinHTMLFor(team = 'other', includeHalo = false, pinStyle = n
         ${headContent}
       </g>
     </svg>
-    ${includeHalo ? `
-      <!-- Ripple halo at the bottom tip of the pin where it touches the map -->
-      <div style="
-             position:absolute;
-             left:50%;
-             top:100%;
-             width:80px;
-             height:80px;
-             transform:translate(-50%, -50%);
-             pointer-events:none;
-             z-index:-1;
-           ">
-        <!-- Outer ripple -->
-        <div style="
-          position:absolute;
-          top:50%; left:50%;
-          width:100%; height:100%;
-          border-radius:50%;
-          border:3px solid ${color};
-          opacity:0.6;
-          transform:translate(-50%, -50%);
-          animation:ripple 2s ease-out infinite;
-        "></div>
-        <!-- Middle ripple -->
-        <div style="
-          position:absolute;
-          top:50%; left:50%;
-          width:100%; height:100%;
-          border-radius:50%;
-          border:2px solid ${color};
-          opacity:0.5;
-          transform:translate(-50%, -50%);
-          animation:ripple 2s ease-out infinite 0.6s;
-        "></div>
-        <!-- Inner ripple -->
-        <div style="
-          position:absolute;
-          top:50%; left:50%;
-          width:100%; height:100%;
-          border-radius:50%;
-          border:2px solid ${color};
-          opacity:0.4;
-          transform:translate(-50%, -50%);
-          animation:ripple 2s ease-out infinite 1.2s;
-        "></div>
-        <style>
-          @keyframes ripple {
-            0% {
-              transform:translate(-50%, -50%) scale(0.3);
-              opacity:0.8;
-            }
-            100% {
-              transform:translate(-50%, -50%) scale(2.5);
-              opacity:0;
-            }
-          }
-        </style>
-      </div>
-    ` : ''}
   </div>`;
 }
 

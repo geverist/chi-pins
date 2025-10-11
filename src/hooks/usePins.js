@@ -90,6 +90,7 @@ export function usePins(mainMapRef) {
   // Initial load + realtime
   useEffect(() => {
     let cancelled = false;
+    const abortController = new AbortController();
 
     // Only clear on first mount to prevent React Strict Mode double-mount issues
     const isFirstMount = mountCount.current === 0;
@@ -107,11 +108,15 @@ export function usePins(mainMapRef) {
       try {
         // Try loading from local SQLite cache first (faster)
         const db = await getLocalDatabase();
+        if (cancelled || abortController.signal.aborted) return;
+
         if (db.isAvailable()) {
           console.log('[usePins] Loading from SQLite cache...');
           const cachedPins = await db.getPins();
 
-          if (cachedPins.length > 0 && !cancelled) {
+          if (cancelled || abortController.signal.aborted) return;
+
+          if (cachedPins.length > 0) {
             console.log(`[usePins] Loaded ${cachedPins.length} pins from cache`);
             bumpNewest(cachedPins);
             setPins((p) => mergeRows(p, cachedPins));
@@ -120,6 +125,8 @@ export function usePins(mainMapRef) {
             return;
           }
         }
+
+        if (cancelled || abortController.signal.aborted) return;
 
         console.log('[usePins] Loading from Supabase...');
 
@@ -135,7 +142,7 @@ export function usePins(mainMapRef) {
           ? (() => { const d = new Date(); d.setMonth(d.getMonth() - monthsBack); return d.toISOString(); })()
           : null;
 
-        while (hasMore && !cancelled) {
+        while (hasMore && !cancelled && !abortController.signal.aborted) {
           let query = supabase
             .from('pins')
             .select('*', { count: 'exact', head: false })
@@ -147,6 +154,8 @@ export function usePins(mainMapRef) {
           }
 
           const { data, error, count } = await query;
+
+          if (cancelled || abortController.signal.aborted) return;
 
           if (error) {
             console.error('usePins: Error loading pins:', error);
@@ -163,29 +172,32 @@ export function usePins(mainMapRef) {
           }
         }
 
-        if (!cancelled) {
-          console.log(`usePins: Loaded ${allData.length} total pins from Supabase`);
-          console.log(`usePins: seen.current.size = ${seen.current.size}`);
-          const seeded = [];
-          for (const r of allData) {
-            const k = keyFor(r);
-            if (k && !seen.current.has(k)) {
-              seen.current.add(k);
-              seeded.push(r);
-            }
-          }
-          console.log(`usePins: After dedup, ${seeded.length} new pins added, seen.current.size = ${seen.current.size}`);
-          bumpNewest(allData);
-          setPins((prev) => mergeRows(prev, seeded));
+        if (cancelled || abortController.signal.aborted) return;
 
-          // Cache pins to IndexedDB for offline use
-          if (allData.length > 0) {
-            cachePins(allData).catch(err =>
-              console.warn('Failed to cache pins to IndexedDB:', err)
-            );
+        console.log(`usePins: Loaded ${allData.length} total pins from Supabase`);
+        console.log(`usePins: seen.current.size = ${seen.current.size}`);
+        const seeded = [];
+        for (const r of allData) {
+          const k = keyFor(r);
+          if (k && !seen.current.has(k)) {
+            seen.current.add(k);
+            seeded.push(r);
           }
         }
-      } catch {
+        console.log(`usePins: After dedup, ${seeded.length} new pins added, seen.current.size = ${seen.current.size}`);
+        bumpNewest(allData);
+        setPins((prev) => mergeRows(prev, seeded));
+
+        // Cache pins to IndexedDB for offline use (don't await - run in background)
+        if (allData.length > 0 && !cancelled && !abortController.signal.aborted) {
+          cachePins(allData).catch(err =>
+            console.warn('Failed to cache pins to IndexedDB:', err)
+          );
+        }
+      } catch (err) {
+        if (!cancelled && !abortController.signal.aborted) {
+          console.warn('usePins: Load error:', err);
+        }
         // ignore; polling will retry
       }
 
@@ -242,27 +254,35 @@ export function usePins(mainMapRef) {
     load();
     return () => {
       cancelled = true;
-      if (channelRef.current) supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
+      abortController.abort();
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [mainMapRef, settings?.showPinsSinceMonths]);
+  }, [settings?.showPinsSinceMonths]);
 
   // Poll for new rows
   useEffect(() => {
     let timer;
     let stopped = false;
+    let polling = false; // Guard against concurrent polls
 
     const schedule = (ms) => {
-      timer = setTimeout(poll, ms);
+      if (!stopped) {
+        timer = setTimeout(poll, ms);
+      }
     };
 
     async function poll() {
-      if (stopped) return schedule(5000);
+      if (stopped) return;
+      if (polling) return schedule(1000); // Skip if already polling, retry soon
       if (document.hidden) return schedule(15000);
       if (typeof navigator !== 'undefined' && navigator && navigator.onLine === false) {
         return schedule(8000);
       }
 
+      polling = true;
       try {
         let q = supabase
           .from('pins')
@@ -280,14 +300,23 @@ export function usePins(mainMapRef) {
         }
 
         const { data, error } = await q;
+
+        if (stopped) return; // Check cancellation after async operation
+
         if (!error && Array.isArray(data) && data.length) {
           bumpNewest(data);
           setPins((prev) => mergeRows(prev, data));
         }
-      } catch {
+      } catch (err) {
+        if (!stopped) {
+          console.warn('usePins: Poll error:', err);
+        }
         // network hiccup
       } finally {
-        schedule(document.hidden ? 15000 : 3000);
+        polling = false;
+        if (!stopped) {
+          schedule(document.hidden ? 15000 : 3000);
+        }
       }
     }
 
@@ -318,7 +347,7 @@ export function usePins(mainMapRef) {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     };
-  }, [mainMapRef]);
+  }, [settings?.showPinsSinceMonths]);
 
   // Offline queuing for pin saves with IndexedDB
   const addPin = async (pin) => {

@@ -153,6 +153,8 @@ const DEFAULTS = {
   proximityDetectionEnabled: false, // Disable by default - enable in admin panel after testing
   proximitySensitivity: 40,        // Motion sensitivity threshold (0-100, lower = more sensitive) - 40 ignores minor movements
   proximityThreshold: 80,          // Distance threshold to trigger walkup greeting (0-100, higher = closer) - 80 is very close (~2 feet)
+  stareThreshold: 90,              // Proximity level for employee check-in (0-100, higher = closer) - 90 requires very close presence
+  stareDurationMs: 30000,          // How long to stare before triggering employee check-in (30 seconds) - prevents accidental triggers
   proximityDetectionInterval: 500, // How often to check for motion (ms)
   proximityTriggerVoice: true,     // Trigger voice greeting when person approaches
   proximityDebugModeEnabled: false, // Show debug panel with detection details (configurable from admin panel)
@@ -270,7 +272,7 @@ const DEFAULTS = {
 
   // ElevenLabs TTS Settings
   ttsProvider: 'elevenlabs',                  // 'browser' | 'elevenlabs'
-  elevenlabsApiKey: '3dc920776d9f94425a7ac398c897e0ad1156e4683579c3fcd2625e8e95be3c61',
+  elevenlabsApiKey: import.meta.env.VITE_ELEVENLABS_API_KEY || '',
   elevenlabsVoiceId: 'pNInz6obpgDQGcFmaJgB',  // Adam - deep, natural male voice
   elevenlabsPhoneVoiceId: 'pNInz6obpgDQGcFmaJgB', // Same voice for phone calls
   elevenlabsModel: 'eleven_turbo_v2_5',       // Fast, high-quality model
@@ -411,19 +413,34 @@ export function useAdminSettings() {
     setError(null)
     const merged = { ...settings, ...next }
     setSettings(merged)
-    // Always save to persistent storage as well
-    try { await storage.set(LS_KEY, merged) } catch {}
 
-    // Try Supabase upsert
+    // Save to persistent storage first (critical)
+    try {
+      await storage.set(LS_KEY, merged)
+      console.log('[useAdminSettings] ✓ Saved to local storage')
+    } catch (localErr) {
+      const errMsg = localErr?.message || 'Failed to save to local storage'
+      console.error('[useAdminSettings] Local storage error:', localErr)
+      setError(errMsg)
+      setSaving(false)
+      return false // Critical failure
+    }
+
+    // Try Supabase upsert (non-critical, can fail gracefully)
     try {
       const { error } = await supabase
         .from('settings')
         .upsert({ key: 'app', value: merged }, { onConflict: 'key' })
       if (error) throw error
-    } catch (e) {
-      setError(e?.message || 'Failed to save settings (using persistent fallback).')
-    } finally {
+      console.log('[useAdminSettings] ✓ Synced to Supabase')
       setSaving(false)
+      return true
+    } catch (e) {
+      const errMsg = e?.message || 'Failed to sync to Supabase (saved locally)'
+      console.warn('[useAdminSettings] Supabase sync error:', e)
+      setError(errMsg)
+      setSaving(false)
+      return true // Still success - local save worked
     }
   }, [settings])
 

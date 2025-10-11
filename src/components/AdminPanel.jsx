@@ -362,7 +362,11 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
       console.log('[AdminPanel] Step 1: Saving to LOCAL storage (priority)...')
 
       // Save admin settings to local storage via hook (which saves to Capacitor Preferences)
-      await saveAdminSettings(settings)
+      const adminSettingsSaved = await saveAdminSettings(settings)
+      if (!adminSettingsSaved) {
+        console.error('[AdminPanel] ✗ Admin settings save failed')
+        return false
+      }
       console.log('[AdminPanel] ✓ Admin settings saved to local storage')
 
       // Save popular spots to localStorage

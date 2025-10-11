@@ -96,6 +96,10 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
         if (!/^\d{4}$/.test(value)) return
 
         if (value === correctPin) {
+          // Dismiss virtual keyboard on success
+          if (inputRef.current) {
+            inputRef.current.blur()
+          }
           setAttempts(0)
           onSuccess?.()
         } else {

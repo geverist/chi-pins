@@ -311,13 +311,17 @@ small.muted { color: var(--muted); }
 .pin.pin-cubs  .pin-head { background:#2a6ae0; }
 .pin.pin-whitesox .pin-head { background:#f2f2f2; }
 .pin.pin-other .pin-head { background:#333; }
-.pin-placing { position: relative; }
+.pin-placing { position: relative; animation: pinBounce 1.6s ease-in-out infinite; }
 .pin-placing .pin-halo {
   position: absolute; left: 50%; bottom: 0; width: 36px; height: 36px; transform: translate(-50%, 50%);
   border-radius: 50%; box-shadow: 0 0 0 0 rgba(255,255,255,0.6); animation: halo 1.6s ease-out infinite; pointer-events: none;
 }
 .leaflet-marker-icon .pushpin { animation: pinPop 220ms cubic-bezier(.2,.9,.3,1.4); }
 @keyframes pinPop { from { transform: translateZ(0) scale(.85); } to { transform: translateZ(0) scale(1); } }
+@keyframes pinBounce {
+  0%, 100% { transform: translateY(-8px); }
+  50% { transform: translateY(0); }
+}
 
 /* --- Business / popular spots labels (semi-transparent) --- */
 .leaflet-tooltip.biz-label {

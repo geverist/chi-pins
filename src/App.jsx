@@ -43,7 +43,6 @@ import HeaderBar from './components/HeaderBar';
 import TeamCount from './components/TeamCount';
 import MapShell from './components/MapShell';
 import SavedPins from './components/SavedPins';
-import PinPlacementEffect from './components/PinPlacementEffect';
 import DraftMarker from './components/DraftMarker';
 import SubMapModal from './components/SubMapModal';
 import ShareConfirmModal from './components/ShareConfirmModal';
@@ -258,8 +257,8 @@ export default function App() {
       sessionEngagementStartRef.current = Date.now();
     }
 
-    // Stop ambient music when person approaches for voice greeting
-    if (ambientMusicPlaying) {
+    // Stop ambient music when person approaches for voice greeting (check ref instead of state)
+    if (ambientMusicPlayerRef.current) {
       console.log('[App] Stopping ambient music for voice greeting');
       stopAmbientMusic();
     }
@@ -276,7 +275,7 @@ export default function App() {
     setShowAttractor(true);
     // Voice greeting will be triggered by WalkupAttractor component
     // if adminSettings.proximityTriggerVoice && adminSettings.walkupAttractorVoiceEnabled
-  }, [ambientMusicPlaying, stopAmbientMusic, adaptiveLearning, adminSettings.proximityThreshold]);
+  }, [stopAmbientMusic, adaptiveLearning, adminSettings.proximityThreshold]);
 
   const handleProximityLeave = useCallback(() => {
     console.log('[App] Person left walkup zone');
@@ -299,34 +298,31 @@ export default function App() {
       sessionEngagementStartRef.current = Date.now();
     }
 
-    // DEMO: Force play ambient music (hardcoded for demo) - plays only once
-    if (!ambientMusicPlaying) {
-      // Hardcoded demo track
-      if (!ambientMusicPlayerRef.current) {
-        const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
-        audio.volume = 0.5;
-        audio.loop = false; // Play only once, not continuously
-        audio.play();
-        // Auto-cleanup when song ends
-        audio.addEventListener('ended', () => {
-          ambientMusicPlayerRef.current = null;
-          setAmbientMusicPlaying(false);
-          console.log('[App] Ambient music ended');
-        });
-        ambientMusicPlayerRef.current = audio;
-        setAmbientMusicPlaying(true);
-        console.log('[App] DEMO - Ambient music started (will play once)');
-      }
+    // DEMO: Force play ambient music (hardcoded for demo) - plays only once (check ref instead of state)
+    if (!ambientMusicPlayerRef.current) {
+      const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+      audio.volume = 0.5;
+      audio.loop = false; // Play only once, not continuously
+      audio.play();
+      // Auto-cleanup when song ends
+      audio.addEventListener('ended', () => {
+        ambientMusicPlayerRef.current = null;
+        setAmbientMusicPlaying(false);
+        console.log('[App] Ambient music ended');
+      });
+      ambientMusicPlayerRef.current = audio;
+      setAmbientMusicPlaying(true);
+      console.log('[App] DEMO - Ambient music started (will play once)');
     }
-  }, [ambientMusicPlaying, adaptiveLearning, adminSettings.ambientMusicThreshold]);
+  }, [adaptiveLearning, adminSettings.ambientMusicThreshold]);
 
   const handleAmbientCleared = useCallback(() => {
     console.log('[App] Ambient area cleared');
-    // Fade out or stop ambient music after idle timeout
-    if (adminSettings.ambientMusicEnabled && ambientMusicPlaying) {
+    // Fade out or stop ambient music after idle timeout (check ref instead of state)
+    if (adminSettings.ambientMusicEnabled && ambientMusicPlayerRef.current) {
       stopAmbientMusic();
     }
-  }, [adminSettings.ambientMusicEnabled, ambientMusicPlaying, stopAmbientMusic]);
+  }, [adminSettings.ambientMusicEnabled, stopAmbientMusic]);
 
   // Employee checkin modal state
   const [employeeCheckinOpen, setEmployeeCheckinOpen] = useState(false);
@@ -373,8 +369,8 @@ export default function App() {
     enabled: adminSettings.proximityDetectionEnabled,
     ambientThreshold: adminSettings.ambientMusicThreshold || 30,
     walkupThreshold: adminSettings.proximityThreshold || 60,
-    stareThreshold: adminSettings.stareThreshold || 60,
-    stareDurationMs: adminSettings.stareDurationMs || 15000,
+    stareThreshold: adminSettings.stareThreshold || 90,  // Match DEFAULTS.stareThreshold
+    stareDurationMs: adminSettings.stareDurationMs || 30000,  // Match DEFAULTS.stareDurationMs (30 seconds)
     detectionInterval: adminSettings.proximityDetectionInterval || 500,
     onAmbientDetected: handleAmbientDetected,
     onAmbientCleared: handleAmbientCleared,
@@ -392,32 +388,19 @@ export default function App() {
   const proximityLevel = maxProximityLevel;
   const cameraError = trackingError;
 
-  // Debug logging for Now Playing state
-  useEffect(() => {
-    console.log('App.jsx - currentTrack changed:', currentTrack);
-    console.log('App.jsx - isPlaying:', isPlaying);
-    console.log('App.jsx - lastPlayed:', lastPlayed);
-    console.log('App.jsx - queue:', queue);
-  }, [currentTrack, isPlaying, lastPlayed, queue]);
-
-  // Helper function to validate pin coordinates
-  function validatePinCoordinates(pin) {
-    if (!pin) return false;
-    return pin.lat !== null && pin.lat !== undefined && 
-           pin.lng !== null && pin.lng !== undefined &&
-           Number.isFinite(pin.lat) && Number.isFinite(pin.lng);
-  }
+  // Debug logging for Now Playing state (disabled for performance - enable for debugging)
+  // useEffect(() => {
+  //   console.log('App.jsx - currentTrack changed:', currentTrack);
+  //   console.log('App.jsx - isPlaying:', isPlaying);
+  //   console.log('App.jsx - lastPlayed:', lastPlayed);
+  //   console.log('App.jsx - queue:', queue);
+  // }, [currentTrack, isPlaying, lastPlayed, queue]);
 
   // Migrate localStorage to persistent storage on app load (runs once)
   useEffect(() => {
     const storage = getPersistentStorage();
     storage.migrateFromLocalStorage();
     console.log('[App] Persistent storage migration initiated');
-
-    // Test coordinate validation (will trigger bug after 5 seconds)
-    setTimeout(() => {
-      validatePinCoordinates({ lat: 41.8781, lng: -87.6298 });
-    }, 5000);
   }, []);
 
   // Apply industry demo config
@@ -452,10 +435,7 @@ export default function App() {
   const [exploring, setExploring] = useState(false);
   const [selectedTeamFilter, setSelectedTeamFilter] = useState(null);
 
-  // Log team filter changes
-  useEffect(() => {
-    console.log('[App] Team filter changed to:', selectedTeamFilter);
-  }, [selectedTeamFilter]);
+  // Team filter changes (logging disabled for performance)
 
   // Modal management - centralized in useModalManager hook
   const {
@@ -509,9 +489,6 @@ export default function App() {
   const [highlightSlug, setHighlightSlug] = useState(null);
   const { trigger: triggerHighlight, clear: clearHighlight } = useHighlightPin(setHighlightSlug);
 
-  // Pin placement effect trigger
-  const [pinPlacementEffect, setPinPlacementEffect] = useState({ lat: null, lng: null, trigger: 0 });
-
   // Handle shared pin URLs (e.g., ?pin=deep-dish-delight)
   useEffect(() => {
     const sharedSlug = getPinSlugFromUrl();
@@ -530,7 +507,7 @@ export default function App() {
         }, 300);
       }
     }
-  }, [pins, mapReady]);
+  }, [pins, mapReady, triggerHighlight]);
 
   // editor form
   const [form, setForm] = useState({
@@ -585,12 +562,6 @@ export default function App() {
   // Calculate if Now Playing banner is actually showing (matches NowPlayingBanner.jsx logic)
   // Must be after isMobile is defined
   const nowPlayingActuallyVisible = !isMobile && (currentTrack || queue[0]);
-  console.log('[App] nowPlayingActuallyVisible:', JSON.stringify({
-    nowPlayingActuallyVisible,
-    isMobile,
-    hasCurrentTrack: !!currentTrack,
-    hasQueueItem: !!queue[0]
-  }));
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -733,14 +704,12 @@ export default function App() {
     // Global touch event handlers for pinch-to-zoom detection
     const handleTouchStart = (e) => {
       if (e.touches && e.touches.length >= 2) {
-        console.log('[App] Pinch detected (touchstart) - dismissing overlays');
         dismissOverlays();
       }
     };
 
     const handleTouchMove = (e) => {
       if (e.touches && e.touches.length >= 2) {
-        console.log('[App] Pinch detected (touchmove) - dismissing overlays');
         dismissOverlays();
       }
     };
@@ -778,7 +747,6 @@ export default function App() {
     const handleFocusIn = (e) => {
       // Check if the focused element is an input or textarea
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        console.log('[App] Input focused - dismissing overlays');
         setShowAttractor(false);
         setVoiceAssistantVisible(false);
       }
@@ -866,25 +834,7 @@ export default function App() {
 
     // Apply team filter in Chicago mode
     if (mapMode === 'chicago' && selectedTeamFilter) {
-      console.log('=== TEAM FILTER ACTIVE ===');
-      console.log('Selected team filter:', selectedTeamFilter);
-      console.log('Before filter:', filtered.length, 'pins');
-
-      // Log all team values to see what's in the data
-      const teamCounts = {};
-      filtered.forEach(p => {
-        const team = p.team || 'null';
-        teamCounts[team] = (teamCounts[team] || 0) + 1;
-      });
-      console.log('Team distribution:', teamCounts);
-
-      filtered = filtered.filter(p => {
-        const matches = p.team === selectedTeamFilter;
-        if (matches) console.log('✓ Match:', p.slug, 'team:', p.team);
-        return matches;
-      });
-      console.log('After filter:', filtered.length, 'pins');
-      console.log('======================');
+      filtered = filtered.filter(p => p.team === selectedTeamFilter);
     }
 
     return filtered;
@@ -970,24 +920,19 @@ export default function App() {
     if (!adminSettings.funFactsEnabled) return;
 
     try {
-      console.log('Fetching fun fact for:', lat, lng);
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
       const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
       const json = await res.json();
       const addr = json?.address || {};
       const candidate = addr.city || addr.town || addr.village || addr.suburb || addr.locality || 'Chicago';
       const key = String(candidate).toLowerCase();
-      console.log('Location key:', key, 'Available facts:', funFacts[key]);
       const fact = getRandomFact(funFacts, key);
 
       // Only show toast if we have an actual fun fact (don't show fallback messages)
       if (fact) {
-        console.log('Showing toast with fact:', fact);
         setToast({ title: candidate, text: fact });
         const duration = (adminSettings.funFactDurationSeconds || 15) * 1000;
         setTimeout(() => setToast(null), duration);
-      } else {
-        console.log('No fun fact available for:', candidate);
       }
     } catch (err) {
       console.error('Failed to fetch fun fact:', err);
@@ -1568,20 +1513,16 @@ export default function App() {
           nowPlayingVisible={nowPlayingActuallyVisible}
           walkupAttractorActive={walkupAttractorActive}
         >
-          {(() => {
-            const shouldShow = !walkupAttractorActive && !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots);
-            console.log('PopularSpots check:', { walkupAttractorActive, isMobile, showPopularSpots, mapMode, hasDraft: !!draft, isDemoMode, popularSpotsEnabled: !isDemoMode || industryConfig.enabledFeatures.popularSpots, shouldShow });
-            return shouldShow ? (
-              <PopularSpotsOverlay
-                labelsAbove
-                showHotDog
-                showItalianBeef
-                labelStyle="pill"
-                exploring={exploring}
-                onSpotClick={setSelectedPopularSpot}
-              />
-            ) : null;
-          })()}
+          {!walkupAttractorActive && !isMobile && showPopularSpots && mapMode === 'chicago' && !draft && (!isDemoMode || industryConfig.enabledFeatures.popularSpots) && (
+            <PopularSpotsOverlay
+              labelsAbove
+              showHotDog
+              showItalianBeef
+              labelStyle="pill"
+              exploring={exploring}
+              onSpotClick={setSelectedPopularSpot}
+            />
+          )}
           {showCommunityPins && !draft && (
             <>
               {adminSettings?.lowZoomVisualization === 'heatmap' ? (
@@ -1630,19 +1571,9 @@ export default function App() {
           )}
         </MapShell>
 
-        {(() => {
-          const shouldShowOverlay = !walkupAttractorActive && adminSettings.attractorHintEnabled && showAttractor && !draft && !submapCenter && !exploring;
-          console.log('[App] AttractorOverlay conditions:', {
-            walkupAttractorActive,
-            attractorHintEnabled: adminSettings.attractorHintEnabled,
-            showAttractor,
-            hasDraft: !!draft,
-            hasSubmapCenter: !!submapCenter,
-            exploring,
-            shouldShowOverlay
-          });
-          return shouldShowOverlay ? <AttractorOverlay onDismiss={() => setShowAttractor(false)} /> : null;
-        })()}
+        {!walkupAttractorActive && adminSettings.attractorHintEnabled && showAttractor && !draft && !submapCenter && !exploring && (
+          <AttractorOverlay onDismiss={() => setShowAttractor(false)} />
+        )}
 
         {/* Walkup Attractor - AI voice greeting when idle */}
         <WalkupAttractor
@@ -1803,21 +1734,23 @@ export default function App() {
       />
 
       {adminOpen && (
-        <AdminPanel
-          open={adminOpen}
-          onClose={() => setAdminOpen(false)}
-          isLayoutEditMode={isEditMode}
-          setLayoutEditMode={setIsEditMode}
-          proximityDetection={{
-            enabled: adminSettings.proximityDetectionEnabled,
-            proximityLevel,
-            isAmbientDetected,
-            isPersonDetected,
-            isStaring,
-            stareDuration,
-            cameraError,
-          }}
-        />
+        <ErrorBoundary name="Admin Panel">
+          <AdminPanel
+            open={adminOpen}
+            onClose={() => setAdminOpen(false)}
+            isLayoutEditMode={isEditMode}
+            setLayoutEditMode={setIsEditMode}
+            proximityDetection={{
+              enabled: adminSettings.proximityDetectionEnabled,
+              proximityLevel,
+              isAmbientDetected,
+              isPersonDetected,
+              isStaring,
+              stareDuration,
+              cameraError,
+            }}
+          />
+        </ErrorBoundary>
       )}
 
       <PinCodeModal
@@ -1858,10 +1791,7 @@ export default function App() {
 
       {jukeboxOpen && (!isDemoMode || industryConfig.enabledFeatures.jukebox) && (
         <Suspense fallback={<div style={{position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#fff'}}>Loading...</div>}>
-          <Jukebox onClose={() => {
-            console.log('App.jsx - Jukebox onClose called, closing modal...');
-            setJukeboxOpen(false);
-          }} />
+          <Jukebox onClose={() => setJukeboxOpen(false)} />
         </Suspense>
       )}
 
@@ -1916,22 +1846,18 @@ export default function App() {
         </DraggableEditWrapper>
       )}
 
-      {(() => {
-        const shouldShow = isMobile && adminSettings.showNavMenuOnMobile;
-        console.log('[App] MobileNavMenu render check:', { isMobile, showNavMenuOnMobile: adminSettings.showNavMenuOnMobile, shouldShow });
-        return shouldShow ? (
-          <MobileNavMenu
-            navSettings={navSettings}
-            setGamesOpen={setGamesOpen}
-            setJukeboxOpen={setJukeboxOpen}
-            setOrderMenuOpen={setOrderMenuOpen}
-            setPhotoBoothOpen={setPhotoBoothOpen}
-            setThenAndNowOpen={setThenAndNowOpen}
-            setCommentsOpen={setCommentsOpen}
-            setVoiceAssistantVisible={setVoiceAssistantVisible}
-          />
-        ) : null;
-      })()}
+      {isMobile && adminSettings.showNavMenuOnMobile && (
+        <MobileNavMenu
+          navSettings={navSettings}
+          setGamesOpen={setGamesOpen}
+          setJukeboxOpen={setJukeboxOpen}
+          setOrderMenuOpen={setOrderMenuOpen}
+          setPhotoBoothOpen={setPhotoBoothOpen}
+          setThenAndNowOpen={setThenAndNowOpen}
+          setCommentsOpen={setCommentsOpen}
+          setVoiceAssistantVisible={setVoiceAssistantVisible}
+        />
+      )}
 
       <OfflineIndicator />
       <TouchSequenceIndicator />

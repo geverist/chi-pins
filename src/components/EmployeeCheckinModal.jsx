@@ -100,6 +100,11 @@ export default function EmployeeCheckinModal({ open, onClose, capturedPhoto }) {
         setEmployeeName(employee.name);
         console.log(`[EmployeeCheckin] ${action} for ${employee.name} at ${new Date().toISOString()}`);
 
+        // Dismiss virtual keyboard
+        if (inputRef.current) {
+          inputRef.current.blur();
+        }
+
         setStep('success');
 
         setTimeout(() => {
