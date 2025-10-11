@@ -111,18 +111,33 @@ export default function AlertNotification() {
     alert => alert.active && !dismissedAlerts.has(alert.id)
   );
 
+  // Separate alerts by display style
+  const overlayAlerts = activeAlerts.filter(alert => alert.display_style !== 'scrollbar');
+  const scrollbarAlerts = activeAlerts.filter(alert => alert.display_style === 'scrollbar');
+
   if (activeAlerts.length === 0) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 99999,
-      pointerEvents: 'none',
-    }}>
-      {activeAlerts.map((alert, index) => {
+    <>
+      {/* Scrollbar/Ticker alerts - bottom of screen */}
+      {scrollbarAlerts.length > 0 && (
+        <ScrollbarAlerts
+          alerts={scrollbarAlerts}
+          dismissAlert={dismissAlert}
+        />
+      )}
+
+      {/* Overlay alerts - top of screen */}
+      {overlayAlerts.length > 0 && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 99999,
+          pointerEvents: 'none',
+        }}>
+          {overlayAlerts.map((alert, index) => {
         const priorityStyles = {
           low: {
             background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(37, 99, 235, 0.95) 100%)',
@@ -140,11 +155,23 @@ export default function AlertNotification() {
             background: 'linear-gradient(135deg, rgba(153, 27, 27, 0.98) 0%, rgba(127, 29, 29, 0.98) 100%)',
             border: '3px solid rgba(239, 68, 68, 0.8)',
             boxShadow: '0 8px 32px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.3)',
-            animation: 'pulse 2s infinite',
           },
         };
 
         const style = priorityStyles[alert.priority] || priorityStyles.medium;
+
+        // Get animation effect
+        const getEffectAnimation = (effect) => {
+          switch (effect) {
+            case 'slide': return 'slideInDown 0.5s ease-out';
+            case 'fade': return 'fadeIn 0.8s ease-out';
+            case 'bounce': return 'bounceIn 0.6s ease-out';
+            case 'shake': return 'shake 0.5s ease-out, pulse 2s infinite 0.5s';
+            case 'glow': return 'fadeIn 0.5s ease-out, glow 2s ease-in-out infinite';
+            case 'none': return 'none';
+            default: return 'slideInDown 0.5s ease-out';
+          }
+        };
 
         return (
           <div
@@ -166,6 +193,7 @@ export default function AlertNotification() {
               WebkitBackdropFilter: 'blur(10px)',
               pointerEvents: 'auto',
               transition: 'all 0.3s ease',
+              animation: getEffectAnimation(alert.effect || 'slide'),
             }}
           >
             {/* Icon based on type */}
@@ -252,18 +280,214 @@ export default function AlertNotification() {
             )}
           </div>
         );
+          })}
+
+          {/* Alert animations */}
+          <style>{`
+            @keyframes pulse {
+              0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+              }
+              50% {
+                opacity: 0.95;
+                transform: scale(1.01);
+              }
+            }
+
+            @keyframes slideInDown {
+              0% {
+                transform: translateY(-100%);
+                opacity: 0;
+              }
+              100% {
+                transform: translateY(0);
+                opacity: 1;
+              }
+            }
+
+            @keyframes fadeIn {
+              0% {
+                opacity: 0;
+              }
+              100% {
+                opacity: 1;
+              }
+            }
+
+            @keyframes bounceIn {
+              0% {
+                transform: scale(0.3) translateY(-100%);
+                opacity: 0;
+              }
+              50% {
+                transform: scale(1.05) translateY(10px);
+                opacity: 1;
+              }
+              70% {
+                transform: scale(0.9) translateY(-5px);
+              }
+              100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+              }
+            }
+
+            @keyframes shake {
+              0%, 100% {
+                transform: translateX(0);
+              }
+              10%, 30%, 50%, 70%, 90% {
+                transform: translateX(-10px);
+              }
+              20%, 40%, 60%, 80% {
+                transform: translateX(10px);
+              }
+            }
+
+            @keyframes glow {
+              0%, 100% {
+                box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 20px currentColor;
+              }
+              50% {
+                box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 40px currentColor;
+              }
+            }
+          `}</style>
+        </div>
+      )}
+    </>
+  );
+}
+
+// Scrollbar/Ticker alerts component
+function ScrollbarAlerts({ alerts, dismissAlert }) {
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'low': return '#3b82f6';
+      case 'medium': return '#f59e0b';
+      case 'high': return '#ef4444';
+      case 'urgent': return '#991b1b';
+      default: return '#f59e0b';
+    }
+  };
+
+  const getIcon = (type) => {
+    switch (type) {
+      case 'employee': return '👤';
+      case 'system': return '⚙️';
+      case 'maintenance': return '🔧';
+      case 'emergency': return '🚨';
+      case 'info': return 'ℹ️';
+      default: return '📢';
+    }
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 99998,
+      overflow: 'hidden',
+      pointerEvents: 'none',
+    }}>
+      {alerts.map((alert, index) => {
+        const color = getPriorityColor(alert.priority);
+        const icon = getIcon(alert.type);
+        const fullText = alert.title ? `${icon} ${alert.title} - ${alert.message}` : `${icon} ${alert.message}`;
+
+        return (
+          <div
+            key={alert.id}
+            style={{
+              background: `linear-gradient(90deg, ${color}dd 0%, ${color}aa 100%)`,
+              borderTop: `3px solid ${color}`,
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 600,
+              padding: '12px 0',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              position: 'relative',
+              marginTop: index > 0 ? '2px' : '0',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-block',
+                paddingLeft: '100%',
+                animation: 'scroll-left 20s linear infinite',
+              }}
+            >
+              {fullText}
+            </div>
+
+            {/* Dismiss button */}
+            {alert.dismissible !== false && (
+              <button
+                onClick={() => dismissAlert(alert.id)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.5)',
+                  background: 'rgba(0,0,0,0.3)',
+                  color: 'white',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'auto',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(0,0,0,0.5)';
+                  e.target.style.transform = 'translateY(-50%) scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'rgba(0,0,0,0.3)';
+                  e.target.style.transform = 'translateY(-50%) scale(1)';
+                }}
+                aria-label="Dismiss alert"
+              >
+                ×
+              </button>
+            )}
+
+            {/* Auto-dismiss timer */}
+            {alert.expires_at && (
+              <div style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'auto',
+              }}>
+                <AutoDismissTimer
+                  expiresAt={alert.expires_at}
+                  onExpire={() => dismissAlert(alert.id)}
+                />
+              </div>
+            )}
+          </div>
+        );
       })}
 
-      {/* Pulse animation for urgent alerts */}
+      {/* Scrolling animation */}
       <style>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-            transform: scale(1);
+        @keyframes scroll-left {
+          0% {
+            transform: translateX(0%);
           }
-          50% {
-            opacity: 0.95;
-            transform: scale(1.01);
+          100% {
+            transform: translateX(-100%);
           }
         }
       `}</style>
