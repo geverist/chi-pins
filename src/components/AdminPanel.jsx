@@ -1,7 +1,7 @@
 // src/components/AdminPanel.jsx
 // Refactored admin panel - delegates to modular tab components
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { AdminProvider, useAdminContext } from './admin/hooks/useAdminContext'
 import PinCodeModal from './PinCodeModal'
@@ -25,7 +25,7 @@ import PerformanceTab from './PerformanceTab'
 import VestaboardTab from './VestaboardTab'
 
 // Shared components
-import { s, tabStyles, TabBtn } from './admin/SharedComponents'
+import { s, TabBtn } from './admin/SharedComponents'
 
 // Utilities
 import { auditDatabase, autoFixDatabase, syncMissingData } from '../lib/databaseAudit'
@@ -99,7 +99,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
     try {
       const raw = localStorage.getItem('adminPopularSpots')
       return raw ? JSON.parse(raw) : []
-    } catch { return [] }
+    } catch (e) { console.warn('Failed to parse popular spots:', e); return [] }
   })
 
   const updateSpot = (i, patch) => {
@@ -134,7 +134,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
         .order('created_at', { ascending: false })
         .limit(100)
       if (!error) setModRows(data || [])
-    } catch {}
+    } catch (e) { console.warn('Failed to refresh moderation:', e) }
     setModLoading(false)
   }
 
@@ -153,7 +153,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
       await supabase.from('pins').delete().in('id', Array.from(pendingDeletes))
       await refreshModeration()
       setPendingDeletes(new Set())
-    } catch {}
+    } catch (e) { console.warn('Failed to delete pins:', e) }
   }
 
   const ModerationTable = ({ rows, selected, onToggle }) => (
