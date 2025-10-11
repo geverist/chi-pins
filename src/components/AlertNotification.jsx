@@ -1,6 +1,6 @@
 // src/components/AlertNotification.jsx
 // Prominent alert notification system for admin-to-kiosk messaging
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { speak, shouldUseElevenLabs, getElevenLabsOptions } from '../lib/elevenlabs';
 import { useAdminSettings } from '../state/useAdminSettings';
@@ -273,30 +273,38 @@ export default function AlertNotification() {
 
 // Auto-dismiss timer component
 function AutoDismissTimer({ expiresAt, onExpire }) {
-  const [timeLeft, setTimeLeft] = useState(null);
+  const calculateTimeLeft = useCallback(() => {
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const diff = expires - now;
+
+    if (diff <= 0) {
+      return 0;
+    }
+
+    return Math.floor(diff / 1000); // seconds
+  }, [expiresAt]);
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft);
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const expires = new Date(expiresAt);
-      const diff = expires - now;
-
-      if (diff <= 0) {
-        onExpire();
-        return 0;
-      }
-
-      return Math.floor(diff / 1000); // seconds
-    };
-
-    setTimeLeft(calculateTimeLeft());
+    // Check if already expired
+    if (timeLeft <= 0) {
+      onExpire();
+      return;
+    }
 
     const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+
+      if (newTimeLeft <= 0) {
+        onExpire();
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [expiresAt, onExpire]);
+  }, [calculateTimeLeft, onExpire, timeLeft]);
 
   if (timeLeft === null || timeLeft <= 0) return null;
 
