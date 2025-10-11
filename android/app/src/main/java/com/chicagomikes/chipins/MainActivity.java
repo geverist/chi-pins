@@ -64,8 +64,6 @@ public class MainActivity extends BridgeActivity {
 
             // Enable aggressive caching for better offline performance
             settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-            settings.setAppCacheEnabled(true);
-            settings.setAppCachePath(getCacheDir().getAbsolutePath());
 
             // Enable geolocation
             settings.setGeolocationEnabled(true);
