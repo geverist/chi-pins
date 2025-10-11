@@ -188,6 +188,16 @@ export default function App() {
   // kiosk exit PIN modal (must be before useTouchSequence)
   const [showKioskExitPin, setShowKioskExitPin] = useState(false);
 
+  // Dismiss all underlying overlays when attractor shows
+  useEffect(() => {
+    if (showAttractor && !draft && !submapCenter && !exploring) {
+      // Dismiss all other overlays to give attractor full attention
+      setVoiceAssistantVisible(false);
+      setShowPopularSpots(false);
+      setToast(null);
+    }
+  }, [showAttractor, draft, submapCenter, exploring]);
+
   // Proximity detection with learning and employee checkin (refactored into hook)
   const {
     isAmbientDetected,

@@ -188,25 +188,36 @@ export const inp = {
 export const toggle = {
   base: {
     position: 'relative',
-    width: 54, height: 30,
+    width: 56,
+    height: 32,
     borderRadius: 999,
-    border: '1px solid rgba(255,255,255,0.12)',
-    background: 'rgba(255,255,255,0.07)',
-    cursor: 'pointer'
+    border: '2px solid rgba(255,255,255,0.15)',
+    background: 'linear-gradient(180deg, rgba(30,35,42,0.9), rgba(20,23,28,0.95))',
+    cursor: 'pointer',
+    transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
   },
   on: {
-    background: 'rgba(56,189,248,0.25)',
-    borderColor: 'rgba(56,189,248,0.7)'
+    background: 'linear-gradient(135deg, rgba(56,189,248,0.35), rgba(14,165,233,0.35))',
+    borderColor: 'rgba(56,189,248,0.8)',
+    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2), 0 0 16px rgba(56,189,248,0.2)',
   },
   off: {},
   knob: (checked) => ({
     position: 'absolute',
-    top: 3, left: checked ? 28 : 3,
-    width: 24, height: 24,
+    top: 3,
+    left: checked ? 27 : 3,
+    width: 24,
+    height: 24,
     borderRadius: '50%',
-    background: 'linear-gradient(180deg, #ffffff, #dbeafe)',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.35)',
-    transition: 'left 160ms ease'
+    background: checked
+      ? 'linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%)'
+      : 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)',
+    boxShadow: checked
+      ? '0 3px 8px rgba(56,189,248,0.4), 0 1px 3px rgba(0,0,0,0.3)'
+      : '0 2px 6px rgba(0,0,0,0.35)',
+    transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+    border: '1px solid rgba(255,255,255,0.4)',
   })
 };
 
