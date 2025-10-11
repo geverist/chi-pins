@@ -101,17 +101,6 @@ public class MainActivity extends BridgeActivity {
 
             // ========== NEW CRITICAL OPTIMIZATIONS ==========
 
-            // MEMORY OPTIMIZATION: Set AppCache for offline performance
-            // Especially important for map tiles (50MB cache)
-            String appCachePath = getApplicationContext().getCacheDir().getAbsolutePath();
-            settings.setAppCachePath(appCachePath);
-            settings.setAppCacheEnabled(true);
-            settings.setAppCacheMaxSize(50 * 1024 * 1024); // 50MB for map tiles
-
-            // RENDERING OPTIMIZATION: Force enable offscreen pre-raster
-            // Improves scrolling and animation smoothness by 30-40%
-            webView.setOffscreenPreRaster(true);
-
             // NETWORK OPTIMIZATION: Enable modern network protocols
             settings.setBlockNetworkImage(false); // Allow images
             settings.setLoadsImagesAutomatically(true); // Load images immediately
