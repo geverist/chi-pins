@@ -1,11 +1,13 @@
 // src/components/GamesMenu.jsx
-import { useState } from 'react';
-import HotdogGame from './HotdogGame';
-import TriviaGame from './TriviaGame';
-import DeepDishGame from './DeepDishGame';
-import WindGame from './WindGame';
+import { useState, lazy, Suspense } from 'react';
 import { useFeatureIdleTimeout } from '../hooks/useFeatureIdleTimeout';
 import { useAdminSettings } from '../state/useAdminSettings';
+
+// Lazy load individual games (they're only loaded when selected)
+const HotdogGame = lazy(() => import('./HotdogGame'));
+const TriviaGame = lazy(() => import('./TriviaGame'));
+const DeepDishGame = lazy(() => import('./DeepDishGame'));
+const WindGame = lazy(() => import('./WindGame'));
 
 const GAMES = [
   {
@@ -55,37 +57,45 @@ export default function GamesMenu({ onClose }) {
 
   if (selectedGame === 'hotdog-assembly') {
     return (
-      <HotdogGame
-        onClose={() => setSelectedGame(null)}
-        onGameComplete={() => {
-          // Could track stats or achievements here
-        }}
-      />
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'grid', placeItems: 'center', color: 'white', fontSize: 24 }}>Loading game...</div>}>
+        <HotdogGame
+          onClose={() => setSelectedGame(null)}
+          onGameComplete={() => {
+            // Could track stats or achievements here
+          }}
+        />
+      </Suspense>
     );
   }
 
   if (selectedGame === 'chicago-trivia') {
     return (
-      <TriviaGame
-        onClose={() => setSelectedGame(null)}
-      />
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'grid', placeItems: 'center', color: 'white', fontSize: 24 }}>Loading game...</div>}>
+        <TriviaGame
+          onClose={() => setSelectedGame(null)}
+        />
+      </Suspense>
     );
   }
 
   if (selectedGame === 'deep-dish-toss') {
     return (
-      <DeepDishGame
-        onClose={() => setSelectedGame(null)}
-      />
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'grid', placeItems: 'center', color: 'white', fontSize: 24 }}>Loading game...</div>}>
+        <DeepDishGame
+          onClose={() => setSelectedGame(null)}
+        />
+      </Suspense>
     );
   }
 
   if (selectedGame === 'chicago-wind') {
     return (
-      <WindGame
-        open={true}
-        onClose={() => setSelectedGame(null)}
-      />
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'grid', placeItems: 'center', color: 'white', fontSize: 24 }}>Loading game...</div>}>
+        <WindGame
+          open={true}
+          onClose={() => setSelectedGame(null)}
+        />
+      </Suspense>
     );
   }
 
