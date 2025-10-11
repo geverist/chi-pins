@@ -165,11 +165,20 @@ export function useAdaptiveLearning({
         // Load current thresholds from admin settings
         const { data: settings, error } = await supabase
           .from('admin_settings')
-          .select('proximity_threshold, ambient_music_threshold, proximity_sensitivity')
+          .select('proximity_threshold, ambient_music_threshold, proximity_sensitivity, last_threshold_adjustment')
           .eq('tenant_id', tenantId)
           .single();
 
         if (error) throw error;
+
+        // Rate limiting: Don't adjust more than once per hour
+        const lastAdjustment = settings.last_threshold_adjustment ? new Date(settings.last_threshold_adjustment) : null;
+        const hoursSinceLastAdjustment = lastAdjustment ? (Date.now() - lastAdjustment.getTime()) / (1000 * 60 * 60) : Infinity;
+
+        if (hoursSinceLastAdjustment < 1) {
+          console.log(`[AdaptiveLearning] Rate limit: Last adjustment was ${hoursSinceLastAdjustment.toFixed(1)}h ago, waiting...`);
+          return;
+        }
 
         const newThresholds = {
           proximityThreshold: Math.round(settings.proximity_threshold * adjustmentFactor),
@@ -182,17 +191,43 @@ export function useAdaptiveLearning({
         newThresholds.ambientMusicThreshold = Math.max(50, Math.min(99, newThresholds.ambientMusicThreshold));
         newThresholds.proximitySensitivity = Math.max(5, Math.min(30, newThresholds.proximitySensitivity));
 
+        // AUTOMATICALLY APPLY THRESHOLDS TO DATABASE
+        console.log('[AdaptiveLearning] 🤖 Automatically applying threshold adjustments...');
+        console.log('[AdaptiveLearning] Old:', {
+          proximity: settings.proximity_threshold,
+          ambient: settings.ambient_music_threshold,
+          sensitivity: settings.proximity_sensitivity,
+        });
+        console.log('[AdaptiveLearning] New:', newThresholds);
+
+        const { error: updateError } = await supabase
+          .from('admin_settings')
+          .update({
+            proximity_threshold: newThresholds.proximityThreshold,
+            ambient_music_threshold: newThresholds.ambientMusicThreshold,
+            proximity_sensitivity: newThresholds.proximitySensitivity,
+            last_threshold_adjustment: new Date().toISOString(),
+          })
+          .eq('tenant_id', tenantId);
+
+        if (updateError) {
+          console.error('[AdaptiveLearning] ❌ Failed to update thresholds:', updateError);
+          throw updateError;
+        }
+
+        console.log('[AdaptiveLearning] ✅ Thresholds updated successfully in database');
+
         setRecommendedThresholds(newThresholds);
 
-        console.log('[AdaptiveLearning] Recommended thresholds:', newThresholds);
-
-        // Notify callback
+        // Notify callback that thresholds were automatically adjusted
         onThresholdAdjusted({
           reason: adjustmentReason,
           oldThresholds: settings,
           newThresholds,
           abandonmentRate: abandonment,
           engagementRate: engagement,
+          autoApplied: true,
+          timestamp: new Date().toISOString(),
         });
       }
     } catch (error) {

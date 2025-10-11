@@ -148,13 +148,15 @@ export default function App() {
     learningAggressiveness: adminSettings.learningAggressiveness || 50,
     passiveLearningMode: adminSettings.passiveLearningMode || false,
     passiveLearningDays: adminSettings.passiveLearningDays || 7,
-    onThresholdAdjusted: ({ newThresholds, reason }) => {
-      console.log('[App] Threshold adjustment recommended:', reason, newThresholds);
+    onThresholdAdjusted: ({ newThresholds, reason, autoApplied, timestamp }) => {
+      console.log('[App] Threshold adjustment:', { reason, newThresholds, autoApplied, timestamp });
       setToast({
-        title: '🎯 Thresholds Adjusted',
-        text: reason,
+        title: autoApplied ? '🤖 Thresholds Auto-Updated' : '🎯 Thresholds Recommended',
+        text: autoApplied
+          ? `${reason}\n\nProximity: ${newThresholds.proximityThreshold}, Ambient: ${newThresholds.ambientMusicThreshold}`
+          : reason,
       });
-      setTimeout(() => setToast(null), 5000);
+      setTimeout(() => setToast(null), autoApplied ? 8000 : 5000); // Longer duration for auto-applied
     },
     onModelTrained: ({ accuracy, sessionsUsed }) => {
       console.log(`[App] Model trained! Accuracy: ${(accuracy * 100).toFixed(1)}% (${sessionsUsed} sessions)`);
