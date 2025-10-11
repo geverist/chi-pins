@@ -60,6 +60,32 @@ jobs:
             exit 1
           fi
 
+      - name: Report failure to autonomous healer
+        if: failure() && github.event_name == 'push'
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          # Create error record in Supabase for autonomous healer to pick up
+          curl -X POST "$SUPABASE_URL/rest/v1/error_log" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{
+              \"message\": \"GitHub Actions: Static analysis workflow failed\",
+              \"severity\": \"ERROR\",
+              \"source\": \"github-actions-static-analysis\",
+              \"stack\": \"Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+              \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+              \"metadata\": {
+                \"workflow\": \"static-analysis\",
+                \"run_id\": \"${{ github.run_id }}\",
+                \"commit\": \"${{ github.sha }}\",
+                \"branch\": \"${{ github.ref_name }}\"
+              }
+            }" || echo "Failed to report to autonomous healer (non-critical)"
+
       - name: Create auto-fix branch if errors found
         if: env.ESLINT_FAILED == 'true' && github.event_name == 'push'
         env:

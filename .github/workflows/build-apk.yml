@@ -107,3 +107,29 @@ jobs:
           Download and install on your Android device.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Report build failure to autonomous healer
+      if: failure()
+      env:
+        SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      run: |
+        # Create error record in Supabase for autonomous healer to pick up
+        curl -X POST "$SUPABASE_URL/rest/v1/error_log" \
+          -H "apikey: $SUPABASE_KEY" \
+          -H "Authorization: Bearer $SUPABASE_KEY" \
+          -H "Content-Type: application/json" \
+          -H "Prefer: return=minimal" \
+          -d "{
+            \"message\": \"GitHub Actions: Android APK build workflow failed\",
+            \"severity\": \"ERROR\",
+            \"source\": \"github-actions-build-apk\",
+            \"stack\": \"Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"metadata\": {
+              \"workflow\": \"build-apk\",
+              \"run_id\": \"${{ github.run_id }}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"branch\": \"${{ github.ref_name }}\"
+            }
+          }" || echo "Failed to report to autonomous healer (non-critical)"

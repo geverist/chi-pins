@@ -37,15 +37,16 @@ dotenv.config();
 
 const execAsync = promisify(exec);
 
-// Configuration
+// Configuration - AGGRESSIVE MODE
 const CONFIG = {
-  pollIntervalSeconds: parseInt(process.env.POLL_INTERVAL || '60'),
+  pollIntervalSeconds: parseInt(process.env.POLL_INTERVAL || '30'), // Faster polling: 30s
   enabled: process.env.AUTO_FIX_ENABLED === 'true',
   autoMerge: process.env.AUTO_MERGE === 'true', // If false, creates PR for review
-  minSeverity: 'CRITICAL',
-  maxFixesPerHour: 5, // Safety limit
+  minSeverity: process.env.MIN_SEVERITY || 'ERROR', // Lower threshold: ERROR instead of CRITICAL
+  maxFixesPerHour: parseInt(process.env.MAX_FIXES_PER_HOUR || '10'), // More fixes: 10/hour
   dryRun: process.env.DRY_RUN === 'true',
   aiProvider: process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai', // Auto-detect
+  aggressiveMode: process.env.AGGRESSIVE_MODE === 'true', // New aggressive flag
 };
 
 // Tracking
@@ -2052,6 +2053,142 @@ Manual intervention required.`);
   }
 }
 
+// ==================== PROACTIVE MONITORING ====================
+// Check for common issues even when no CRITICAL errors exist (AGGRESSIVE MODE)
+
+async function proactiveMonitoring(supabase) {
+  if (!CONFIG.aggressiveMode) return null;
+
+  log('\n🔍 Proactive monitoring scan...', 'cyan');
+
+  try {
+    // 1. Check for recent lower-severity errors (WARNING, INFO)
+    const { data: recentErrors, error: errorsError } = await supabase
+      .from('error_log')
+      .select('*')
+      .in('severity', ['WARNING', 'INFO'])
+      .or('auto_fix_attempted.is.null,auto_fix_attempted.eq.false')
+      .gte('timestamp', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Last 5 minutes
+      .order('timestamp', { ascending: false })
+      .limit(1);
+
+    if (recentErrors && recentErrors.length > 0) {
+      log(`  → Found ${recentErrors.length} recent WARNING/INFO errors`, 'yellow');
+      return { type: 'lower_severity_error', error: recentErrors[0] };
+    }
+
+    // 2. Check for repeated errors (same message in last hour)
+    const { data: repeatedErrors, error: repeatedError } = await supabase
+      .from('error_log')
+      .select('message, count')
+      .gte('timestamp', new Date(Date.now() - 60 * 60 * 1000).toISOString())
+      .order('count', { ascending: false })
+      .limit(1);
+
+    if (repeatedErrors && repeatedErrors.length > 0 && repeatedErrors[0].count > 3) {
+      log(`  → Found repeated error (${repeatedErrors[0].count} times): ${repeatedErrors[0].message}`, 'yellow');
+
+      // Fetch the actual error record to process
+      const { data: errorRecord, error: fetchError } = await supabase
+        .from('error_log')
+        .select('*')
+        .eq('message', repeatedErrors[0].message)
+        .or('auto_fix_attempted.is.null,auto_fix_attempted.eq.false')
+        .order('timestamp', { ascending: false })
+        .limit(1);
+
+      if (errorRecord && errorRecord.length > 0) {
+        return { type: 'repeated_error', error: errorRecord[0] };
+      }
+    }
+
+    // 3. Check GitHub Actions status
+    try {
+      const { stdout: actionsStatus } = await execAsync('gh run list --limit 1 --json status,conclusion,name');
+      const runs = JSON.parse(stdout);
+
+      if (runs && runs.length > 0) {
+        const latestRun = runs[0];
+        if (latestRun.status === 'completed' && latestRun.conclusion === 'failure') {
+          log(`  → GitHub Actions failure detected: ${latestRun.name}`, 'yellow');
+
+          // Create a synthetic error for the build failure
+          const syntheticError = {
+            id: `github-actions-${Date.now()}`,
+            message: `GitHub Actions workflow failed: ${latestRun.name}`,
+            severity: 'ERROR',
+            source: 'github-actions',
+            stack: 'Workflow failure detected by proactive monitoring',
+            timestamp: new Date().toISOString(),
+          };
+
+          return { type: 'github_actions_failure', error: syntheticError };
+        }
+      }
+    } catch (ghError) {
+      // GitHub CLI not available or not configured - skip this check
+      log(`  → GitHub Actions check skipped: ${ghError.message}`, 'blue');
+    }
+
+    // 4. Run ESLint on recently changed files
+    try {
+      // Get list of recently changed files (last commit)
+      const { stdout: changedFiles } = await execAsync('git diff --name-only HEAD~1 HEAD -- "*.js" "*.jsx" 2>/dev/null || echo ""');
+
+      if (changedFiles.trim()) {
+        const files = changedFiles.trim().split('\n').filter(f => f.length > 0);
+        if (files.length > 0) {
+          log(`  → Checking ${files.length} recently changed files with ESLint...`, 'blue');
+
+          try {
+            await execAsync(`npx eslint ${files.join(' ')} --format json`, { timeout: 30000 });
+          } catch (eslintError) {
+            // ESLint returns non-zero exit code when it finds errors
+            if (eslintError.stdout) {
+              try {
+                const eslintResults = JSON.parse(eslintError.stdout);
+                const filesWithErrors = eslintResults.filter(r => r.errorCount > 0);
+
+                if (filesWithErrors.length > 0) {
+                  const totalErrors = filesWithErrors.reduce((sum, r) => sum + r.errorCount, 0);
+                  log(`  → Found ${totalErrors} ESLint errors in ${filesWithErrors.length} files`, 'yellow');
+
+                  // Create synthetic error for first ESLint issue
+                  const firstFile = filesWithErrors[0];
+                  const firstError = firstFile.messages[0];
+
+                  const syntheticError = {
+                    id: `eslint-${Date.now()}`,
+                    message: `ESLint: ${firstError.message}`,
+                    severity: 'ERROR',
+                    source: 'eslint-proactive',
+                    stack: `${firstFile.filePath}:${firstError.line}:${firstError.column}`,
+                    timestamp: new Date().toISOString(),
+                  };
+
+                  return { type: 'eslint_error', error: syntheticError };
+                }
+              } catch (parseError) {
+                log(`  → ESLint output parse error: ${parseError.message}`, 'yellow');
+              }
+            }
+          }
+        }
+      }
+    } catch (gitError) {
+      // Git diff failed - skip this check
+      log(`  → ESLint check skipped: ${gitError.message}`, 'blue');
+    }
+
+    log('  → No proactive issues found', 'green');
+    return null;
+
+  } catch (err) {
+    log(`  → Proactive monitoring error: ${err.message}`, 'yellow');
+    return null;
+  }
+}
+
 // Ensure autonomous_tasks table exists
 async function ensureTablesExist(supabase) {
   log('Checking database tables...', 'blue');
@@ -2196,7 +2333,21 @@ async function main() {
               });
             }
           } else {
-            log('No tasks or errors to process', 'green');
+            // No critical errors, run proactive monitoring (AGGRESSIVE MODE)
+            const proactiveIssue = await proactiveMonitoring(supabase);
+
+            if (proactiveIssue) {
+              log(`\nProactive monitoring detected issue: ${proactiveIssue.type}`, 'yellow');
+
+              if (CONFIG.enabled || CONFIG.dryRun) {
+                await processError(supabase, proactiveIssue.error);
+                fixesThisHour++;
+              } else {
+                log('Autonomous fixing disabled, skipping proactive issue', 'yellow');
+              }
+            } else {
+              log('No tasks or errors to process', 'green');
+            }
           }
         }
       }
