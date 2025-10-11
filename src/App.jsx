@@ -1,12 +1,11 @@
 // src/App.jsx
-import { useMemo, useRef, useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useMemo, useRef, useState, useEffect, lazy, Suspense } from 'react';
 import logoUrl from './assets/logo.png';
 import { getIndustryConfig, isIndustryDemo } from './config/industryConfigs';
 
 // hooks
 import { usePins } from './hooks/usePins';
 import { useIdleAttractor } from './hooks/useIdleAttractor';
-import { useIdleReset } from './hooks/useIdleReset';
 import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
@@ -14,7 +13,7 @@ import { useTouchSequence } from './hooks/useTouchSequence';
 import { useAdaptiveLearning } from './hooks/useAdaptiveLearning';
 import { useAmbientMusic } from './hooks/useAmbientMusic';
 import { useProximityHandlers } from './hooks/useProximityHandlers';
-import { initConsoleWebhook, updateWebhookUrl, sendTestEvent, getWebhookStatus } from './lib/consoleWebhook';
+import { initConsoleWebhook } from './lib/consoleWebhook';
 import { getSyncService } from './lib/syncService';
 import { LayoutStackProvider } from './hooks/useLayoutStack';
 
@@ -109,7 +108,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { useAdminSettings } from './state/useAdminSettings';
 import { useNowPlaying } from './state/useNowPlaying.jsx';
 import { useNavigationSettings } from './hooks/useNavigationSettings';
-import { useKioskMode, KioskStartOverlay } from './hooks/useKioskMode.jsx';
+import { KioskStartOverlay } from './hooks/useKioskMode.jsx';
 import { enterFullscreen, exitFullscreenAndWake, ensureWakeLock, onFullscreenChange } from './lib/kiosk';
 import { btn3d } from './lib/styles';
 import { CHICAGO_FUN_FACTS } from './data/chicagoFunFacts';
@@ -173,9 +172,7 @@ export default function App() {
 
   // Ambient music player for proximity-triggered playback (refactored into hook)
   const {
-    play: playAmbientMusic,
     stop: stopAmbientMusic,
-    isPlaying: ambientMusicPlaying,
     audioRef: ambientMusicPlayerRef,
   } = useAmbientMusic({
     playlist: adminSettings.ambientMusicPlaylist || [],
@@ -188,6 +185,9 @@ export default function App() {
   // Attractor visibility state (used by both useIdleAttractor and useProximityHandlers)
   const [showAttractor, setShowAttractor] = useState(false);
 
+  // kiosk exit PIN modal (must be before useTouchSequence)
+  const [showKioskExitPin, setShowKioskExitPin] = useState(false);
+
   // Proximity detection with learning and employee checkin (refactored into hook)
   const {
     isAmbientDetected,
@@ -196,8 +196,6 @@ export default function App() {
     trackedPeople,
     activePeopleCount,
     maxProximityLevel,
-    isInitialized,
-    trackingError,
     isPersonDetected,
     proximityLevel,
     cameraError,
@@ -208,8 +206,6 @@ export default function App() {
     stareDuration,
     recordLearningConversion,
     recordLearningAbandonment,
-    recordInteraction,
-    recordConversion,
   } = useProximityHandlers({
     adminSettings,
     adaptiveLearning,
@@ -263,7 +259,7 @@ export default function App() {
   // UI state
   const [toast, setToast] = useState(null);
   const [exploring, setExploring] = useState(false);
-  const [selectedTeamFilter, setSelectedTeamFilter] = useState(null);
+  const [selectedTeamFilter] = useState(null);
 
   // Team filter changes (logging disabled for performance)
 
@@ -351,7 +347,7 @@ export default function App() {
   });
 
   // mobile mode detection - detect mobile device once and stick with it
-  const [isMobile, setIsMobile] = useState(() => {
+  const [isMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
 
     // For kiosk tablets (like Fully Kiosk Browser on Android tablets),
@@ -933,7 +929,9 @@ export default function App() {
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       try {
         mainMapRef.current?.panTo([lat, lng], { animate: false });
-      } catch {}
+      } catch (err) {
+        // Silently ignore map pan errors
+      }
     }
   }, [draft?.lat, draft?.lng, submapCenter, mapReady]);
 
@@ -1186,9 +1184,6 @@ export default function App() {
   }, [setAdminOpen]);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef(null);
-
-  // kiosk exit PIN modal
-  const [showKioskExitPin, setShowKioskExitPin] = useState(false);
 
   const shouldCountTap = (e) => {
     const target = e.target;
@@ -1465,7 +1460,9 @@ export default function App() {
               const cz = map.getZoom() ?? 10;
               const nz = Math.min(cz + 0.5, 19);
               map.setView([ll.lat, ll.lng], nz, { animate: true });
-            } catch {}
+            } catch (err) {
+              // Silently ignore map view errors
+            }
             closeSubmap();
             setTipToken((t) => t + 1);
           }}
