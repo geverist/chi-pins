@@ -17,6 +17,7 @@ import MarketplaceTab from './MarketplaceTab'
 import ContentLayoutTab from './ContentLayoutTab'
 import PerformanceTab from './PerformanceTab'
 import VestaboardTab from './VestaboardTab'
+import AlertsTab from './AlertsTab'
 import PreviewBanner from './PreviewBanner'
 import { ProximityMonitor } from './ProximityMonitor'
 import { auditDatabase, autoFixDatabase, syncMissingData } from '../lib/databaseAudit'
@@ -906,6 +907,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
           <TabBtn active={tab === 'marketplace'} onClick={() => setTab('marketplace')}>🏪 Marketplace</TabBtn>
           <TabBtn active={tab === 'features'} onClick={() => setTab('features')}>🎮 Features</TabBtn>
           <TabBtn active={tab === 'media'} onClick={() => setTab('media')}>🔊 Media</TabBtn>
+          <TabBtn active={tab === 'alerts'} onClick={() => setTab('alerts')}>📢 Alerts</TabBtn>
           <TabBtn active={tab === 'system'} onClick={() => setTab('system')}>🔧 System</TabBtn>
           <TabBtn active={tab === 'analytics'} onClick={() => setTab('analytics')}>📊 Analytics</TabBtn>
         </div>
@@ -3983,6 +3985,10 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
                 </Card>
               </SectionGrid>
             </div>
+          )}
+
+          {tab === 'alerts' && (
+            <AlertsTab />
           )}
 
           {tab === 'analytics' && (
