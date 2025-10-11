@@ -184,9 +184,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
 
   // Preview mode state
   const [isPreviewMode, setIsPreviewMode] = useState(false)
-  const [previewSettings, setPreviewSettings] = useState(null)
-  const [previewPopularSpots, setPreviewPopularSpots] = useState(null)
-  const [previewNavSettings, setPreviewNavSettings] = useState(null)
+  // Preview state removed - was unused and causing ESLint errors
 
   // Moderation – selected IDs for deletion
   const [pendingDeletes, setPendingDeletes] = useState(new Set())
@@ -374,19 +372,23 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
       console.log('[AdminPanel] ✓ Popular spots saved to localStorage')
 
       // Save navigation settings locally
-      const completeNavSettings = {
-        games_enabled: Boolean(navSettings.games_enabled),
-        jukebox_enabled: Boolean(navSettings.jukebox_enabled),
-        order_enabled: Boolean(navSettings.order_enabled),
-        explore_enabled: Boolean(navSettings.explore_enabled),
-        photobooth_enabled: Boolean(navSettings.photobooth_enabled),
-        thenandnow_enabled: Boolean(navSettings.thenandnow_enabled),
-        comments_enabled: Boolean(navSettings.comments_enabled),
-        recommendations_enabled: Boolean(navSettings.recommendations_enabled || false),
-        default_navigation_app: navSettings.default_navigation_app || 'map',
+      if (updateNavSettingsAPI && navSettings) {
+        const completeNavSettings = {
+          games_enabled: Boolean(navSettings.games_enabled),
+          jukebox_enabled: Boolean(navSettings.jukebox_enabled),
+          order_enabled: Boolean(navSettings.order_enabled),
+          explore_enabled: Boolean(navSettings.explore_enabled),
+          photobooth_enabled: Boolean(navSettings.photobooth_enabled),
+          thenandnow_enabled: Boolean(navSettings.thenandnow_enabled),
+          comments_enabled: Boolean(navSettings.comments_enabled),
+          recommendations_enabled: Boolean(navSettings.recommendations_enabled || false),
+          default_navigation_app: navSettings.default_navigation_app || 'map',
+        }
+        await updateNavSettingsAPI(completeNavSettings)
+        console.log('[AdminPanel] ✓ Navigation settings saved to local storage')
+      } else {
+        console.warn('[AdminPanel] ⚠️ Skipping navigation settings save - updateNavSettingsAPI not available')
       }
-      await updateNavSettingsAPI(completeNavSettings)
-      console.log('[AdminPanel] ✓ Navigation settings saved to local storage')
 
     } catch (localErr) {
       console.error('[AdminPanel] ✗ LOCAL SAVE FAILED (critical):', localErr)
@@ -550,47 +552,7 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
     }
   }
 
-  // Preview mode handlers
-  const handlePreviewChanges = () => {
-    console.log('[AdminPanel] Entering preview mode')
-
-    // Store current state as preview
-    setPreviewSettings({ ...settings })
-    setPreviewPopularSpots([...popularSpots])
-    setPreviewNavSettings({ ...navSettings })
-
-    // Enter preview mode
-    setIsPreviewMode(true)
-  }
-
-  const handleCommitChanges = async () => {
-    console.log('[AdminPanel] Committing preview changes')
-
-    // Exit preview mode and save
-    setIsPreviewMode(false)
-    setPreviewSettings(null)
-    setPreviewPopularSpots(null)
-    setPreviewNavSettings(null)
-
-    // Save changes permanently
-    await saveAndClose()
-  }
-
-  const handleDiscardChanges = () => {
-    console.log('[AdminPanel] Discarding preview changes')
-
-    // Restore to saved state
-    if (initialSettings) setSettings(initialSettings)
-    if (initialPopularSpots) setPopularSpots(initialPopularSpots)
-    if (initialNavSettings) setNavSettings(initialNavSettings)
-
-    // Exit preview mode
-    setIsPreviewMode(false)
-    setPreviewSettings(null)
-    setPreviewPopularSpots(null)
-    setPreviewNavSettings(null)
-    setHasUnsavedChanges(false)
-  }
+  // Preview mode handlers (removed - feature not currently used)
 
   // Popular spots CRUD
   const addSpot = () => setPopularSpots((s) => [...s, { label: '', category: 'hotdog', description: '' }])

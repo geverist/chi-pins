@@ -173,8 +173,9 @@ export function useProximityDetection({
       let significantPixels = 0;
       const pixelCount = currentPixels.length / 4;
 
-      // Calculate pixel differences (check every 4th pixel for performance)
-      for (let i = 0; i < currentPixels.length; i += 16) {
+      // Calculate pixel differences (check every 32nd pixel for better performance)
+      // This reduces processing by 8x while still detecting motion reliably
+      for (let i = 0; i < currentPixels.length; i += 128) {
         const rDiff = Math.abs(currentPixels[i] - prevPixels[i]);
         const gDiff = Math.abs(currentPixels[i + 1] - prevPixels[i + 1]);
         const bDiff = Math.abs(currentPixels[i + 2] - prevPixels[i + 2]);
@@ -187,15 +188,17 @@ export function useProximityDetection({
       }
 
       // Calculate motion score (0-100)
-      const motionScore = Math.min(100, (significantPixels / (pixelCount / 4)) * 100);
+      // Adjusted for new sampling rate (every 128th pixel = pixelCount/32)
+      const motionScore = Math.min(100, (significantPixels / (pixelCount / 32)) * 100);
 
       // Calculate brightness (to detect if someone is close/blocking light)
+      // Sample less frequently for better performance
       let totalBrightness = 0;
-      for (let i = 0; i < currentPixels.length; i += 16) {
+      for (let i = 0; i < currentPixels.length; i += 128) {
         const brightness = (currentPixels[i] + currentPixels[i + 1] + currentPixels[i + 2]) / 3;
         totalBrightness += brightness;
       }
-      const avgBrightness = totalBrightness / (currentPixels.length / 4);
+      const avgBrightness = totalBrightness / (currentPixels.length / 128);
 
       // Proximity level based on motion + brightness change
       const brightnessChange = Math.abs(avgBrightness - 128);
