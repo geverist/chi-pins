@@ -13,6 +13,7 @@ import { useHighlightPin } from './hooks/useHighlightPin';
 import { useTouchSequence } from './hooks/useTouchSequence';
 import { useSmartProximityDetection } from './hooks/useSmartProximityDetection';
 import { useAdaptiveLearning } from './hooks/useAdaptiveLearning';
+import { useAmbientMusic } from './hooks/useAmbientMusic';
 import { initConsoleWebhook, updateWebhookUrl, sendTestEvent, getWebhookStatus } from './lib/consoleWebhook';
 import { getSyncService } from './lib/syncService';
 import { LayoutStackProvider } from './hooks/useLayoutStack';
@@ -174,75 +175,29 @@ export default function App() {
   const currentLearningSessionRef = useRef(null);
   const sessionEngagementStartRef = useRef(null);
 
-  // Ambient music player ref for proximity-triggered playback
-  const ambientMusicPlayerRef = useRef(null);
-  const [ambientMusicPlaying, setAmbientMusicPlaying] = useState(false);
-
-  // Ambient music playback functions (wrapped in useCallback to prevent infinite re-renders)
-  const playAmbientMusic = useCallback(() => {
-    if (!ambientMusicPlayerRef.current && adminSettings.ambientMusicPlaylist?.length > 0) {
-      const playlist = adminSettings.ambientMusicPlaylist;
-      const randomTrack = playlist[Math.floor(Math.random() * playlist.length)];
-
-      const audio = new Audio(randomTrack.url);
-      audio.volume = adminSettings.ambientMusicVolume || 0.5;
-      audio.loop = true;
-
-      if (adminSettings.ambientMusicFadeIn) {
-        audio.volume = 0;
-        audio.play();
-        let vol = 0;
-        const fadeInterval = setInterval(() => {
-          vol += 0.05;
-          if (vol >= (adminSettings.ambientMusicVolume || 0.5)) {
-            audio.volume = adminSettings.ambientMusicVolume || 0.5;
-            clearInterval(fadeInterval);
-          } else {
-            audio.volume = vol;
-          }
-        }, 100);
-      } else {
-        audio.play();
-      }
-
-      ambientMusicPlayerRef.current = audio;
-      setAmbientMusicPlaying(true);
-      console.log('[App] Ambient music started:', randomTrack.name);
-    }
-  }, [adminSettings.ambientMusicPlaylist, adminSettings.ambientMusicVolume, adminSettings.ambientMusicFadeIn]);
-
-  const stopAmbientMusic = useCallback(() => {
-    if (ambientMusicPlayerRef.current) {
-      const audio = ambientMusicPlayerRef.current;
-
-      if (adminSettings.ambientMusicFadeOut) {
-        let vol = audio.volume;
-        const fadeInterval = setInterval(() => {
-          vol -= 0.05;
-          if (vol <= 0) {
-            audio.pause();
-            audio.src = '';
-            ambientMusicPlayerRef.current = null;
-            setAmbientMusicPlaying(false);
-            clearInterval(fadeInterval);
-          } else {
-            audio.volume = vol;
-          }
-        }, 100);
-      } else {
-        audio.pause();
-        audio.src = '';
-        ambientMusicPlayerRef.current = null;
-        setAmbientMusicPlaying(false);
-      }
-
-      console.log('[App] Ambient music stopped');
-    }
-  }, [adminSettings.ambientMusicFadeOut]);
+  // Ambient music player for proximity-triggered playback (refactored into hook)
+  const {
+    play: playAmbientMusic,
+    stop: stopAmbientMusic,
+    isPlaying: ambientMusicPlaying,
+    audioRef: ambientMusicPlayerRef,
+  } = useAmbientMusic({
+    playlist: adminSettings.ambientMusicPlaylist || [],
+    volume: adminSettings.ambientMusicVolume || 0.5,
+    fadeIn: adminSettings.ambientMusicFadeIn,
+    fadeOut: adminSettings.ambientMusicFadeOut,
+    enabled: adminSettings.ambientMusicEnabled,
+  });
 
   // Proximity detection callbacks (wrapped in useCallback to prevent infinite re-renders)
   const handleProximityApproach = useCallback(({ proximityLevel }) => {
     console.log('[App] Person detected approaching! Proximity:', proximityLevel);
+
+    // Passive learning mode: log events without triggering actions
+    if (adminSettings.proximityLearningModeEnabled) {
+      console.log('[App] 🎓 Learning mode: Walkup detected but not triggering actions. Proximity:', proximityLevel);
+      return;
+    }
 
     // Start learning session
     const session = adaptiveLearning.startSession({
@@ -276,7 +231,7 @@ export default function App() {
     setShowAttractor(true);
     // Voice greeting will be triggered by WalkupAttractor component
     // if adminSettings.proximityTriggerVoice && adminSettings.walkupAttractorVoiceEnabled
-  }, [stopAmbientMusic, adaptiveLearning, adminSettings.proximityThreshold]);
+  }, [stopAmbientMusic, adaptiveLearning, adminSettings.proximityThreshold, adminSettings.proximityLearningModeEnabled]);
 
   const handleProximityLeave = useCallback(() => {
     console.log('[App] Person left walkup zone');
@@ -284,6 +239,12 @@ export default function App() {
 
   const handleAmbientDetected = useCallback(({ proximityLevel }) => {
     console.log('[App] Ambient motion detected! Proximity:', proximityLevel);
+
+    // Passive learning mode: log events without triggering actions
+    if (adminSettings.proximityLearningModeEnabled) {
+      console.log('[App] 🎓 Learning mode: Ambient detected but not triggering actions. Proximity:', proximityLevel);
+      return;
+    }
 
     // Start learning session for ambient
     const session = adaptiveLearning.startSession({
@@ -315,7 +276,7 @@ export default function App() {
       setAmbientMusicPlaying(true);
       console.log('[App] DEMO - Ambient music started (will play once)');
     }
-  }, [adaptiveLearning, adminSettings.ambientMusicThreshold]);
+  }, [adaptiveLearning, adminSettings.ambientMusicThreshold, adminSettings.proximityLearningModeEnabled]);
 
   const handleAmbientCleared = useCallback(() => {
     console.log('[App] Ambient area cleared');
@@ -336,6 +297,12 @@ export default function App() {
     // Update stare duration state
     setStareDuration(stareDuration);
 
+    // Passive learning mode: log events without triggering actions
+    if (adminSettings.proximityLearningModeEnabled) {
+      console.log('[App] 🎓 Learning mode: Stare detected but not triggering actions. Duration:', Math.round(stareDuration / 1000), 's');
+      return;
+    }
+
     // Only open employee checkin modal if enabled in admin settings
     if (adminSettings.employeeCheckinEnabled) {
       setStaringPerson({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose });
@@ -343,7 +310,7 @@ export default function App() {
     } else {
       console.log('[App] Employee checkin disabled in admin settings - ignoring stare detection');
     }
-  }, [adminSettings.employeeCheckinEnabled]);
+  }, [adminSettings.employeeCheckinEnabled, adminSettings.proximityLearningModeEnabled]);
 
   const handleStareEnded = useCallback(({ personId, stareDuration }) => {
     console.log('[App] Stare ended. Person:', personId, 'Duration:', Math.round(stareDuration / 1000), 's');
