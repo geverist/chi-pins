@@ -284,9 +284,14 @@ small.muted { color: var(--muted); }
 
 /* Prevent drag-ghosts and errant selections while interacting */
 .submap-overlay .leaflet-tile,
-.submap-overlay img {
+.submap-overlay .leaflet-tile-pane img {
   -webkit-user-drag: none;
   pointer-events: none;
+}
+/* But allow pointer events on marker images so they can be dragged */
+.submap-overlay .leaflet-marker-pane img {
+  -webkit-user-drag: none;
+  pointer-events: auto;
 }
 .submap-card, .submap-overlay, .leaflet-container, .leaflet-marker-icon {
   -webkit-user-select: none; user-select: none;

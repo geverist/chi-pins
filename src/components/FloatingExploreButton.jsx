@@ -15,6 +15,7 @@ function FloatingExploreButton({
   downloadingBarVisible = false,
   nowPlayingVisible = false,
   footerVisible = false,
+  editorVisible = false,
 }) {
   if (!enabled) return null;
 
@@ -33,8 +34,13 @@ function FloatingExploreButton({
   // Footer/Navigation bar varies by content, typically 70-90px
   // Downloading bar is ~56px (measured from OfflineMapDownloader)
   // Now Playing bar is ~48px
+  // Editor form is ~240px (measured approximate when visible)
   let bottomOffset = 24; // Base offset
-  if (footerVisible) bottomOffset += 90; // Increased to account for taller footer
+  if (editorVisible) {
+    bottomOffset += 260; // Editor form height (includes padding and form elements)
+  } else if (footerVisible) {
+    bottomOffset += 90; // Increased to account for taller footer
+  }
   if (downloadingBarVisible) bottomOffset += 60; // Match actual downloading bar height
   if (nowPlayingVisible) bottomOffset += 52; // Match actual now playing height
 

@@ -6,6 +6,7 @@ import { getIndustryConfig, isIndustryDemo } from './config/industryConfigs';
 // hooks
 import { usePins } from './hooks/usePins';
 import { useIdleAttractor } from './hooks/useIdleAttractor';
+import { useIdleReset } from './hooks/useIdleReset';
 import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
@@ -1912,6 +1913,7 @@ export default function App() {
             downloadingBarVisible={downloadingBarVisible}
             nowPlayingVisible={nowPlayingActuallyVisible}
             footerVisible={!isMobile && (navSettings.games_enabled || navSettings.jukebox_enabled || navSettings.order_enabled || navSettings.photobooth_enabled || navSettings.thenandnow_enabled || navSettings.comments_enabled || navSettings.recommendations_enabled)}
+            editorVisible={!!draft}
           />
           <FloatingKioskButton
             isMobile={isMobile}
