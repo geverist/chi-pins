@@ -116,28 +116,6 @@ function WalkupAttractor({
         animation: 'fadeIn 0.5s ease-in',
       }}
     >
-      {/* Pulsing circles animation */}
-      <div
-        style={{
-          position: 'absolute',
-          width: '300px',
-          height: '300px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          animation: 'pulse 3s ease-in-out infinite',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          width: '400px',
-          height: '400px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.05)',
-          animation: 'pulse 3s ease-in-out infinite 1s',
-        }}
-      />
-
       {/* Main content */}
       <div
         style={{

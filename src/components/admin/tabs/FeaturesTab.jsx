@@ -472,6 +472,17 @@ export default function FeaturesTab({
 
         {settings.proximityDetectionEnabled && (
           <>
+            <FieldRow label="Enable Employee Check-In">
+              <Toggle
+                checked={settings.employeeCheckinEnabled ?? false}
+                onChange={(v) => updateSetting('employeeCheckinEnabled', v)}
+              />
+            </FieldRow>
+
+            <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+              When enabled, employees can check in by staring at the kiosk for {Math.round((settings.stareDurationMs || 30000) / 1000)} seconds from very close range. Disable to skip employee check-in feature.
+            </p>
+
             <FieldRow label="Motion Sensitivity">
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
                 <input

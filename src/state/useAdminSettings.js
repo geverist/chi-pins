@@ -153,6 +153,7 @@ const DEFAULTS = {
   proximityDetectionEnabled: false, // Disable by default - enable in admin panel after testing
   proximitySensitivity: 40,        // Motion sensitivity threshold (0-100, lower = more sensitive) - 40 ignores minor movements
   proximityThreshold: 80,          // Distance threshold to trigger walkup greeting (0-100, higher = closer) - 80 is very close (~2 feet)
+  employeeCheckinEnabled: false,   // Enable employee check-in modal on stare detection (off by default)
   stareThreshold: 90,              // Proximity level for employee check-in (0-100, higher = closer) - 90 requires very close presence
   stareDurationMs: 30000,          // How long to stare before triggering employee check-in (30 seconds) - prevents accidental triggers
   proximityDetectionInterval: 500, // How often to check for motion (ms)

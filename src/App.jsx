@@ -336,10 +336,14 @@ export default function App() {
     // Update stare duration state
     setStareDuration(stareDuration);
 
-    // Open employee checkin modal
-    setStaringPerson({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose });
-    setEmployeeCheckinOpen(true);
-  }, []);
+    // Only open employee checkin modal if enabled in admin settings
+    if (adminSettings.employeeCheckinEnabled) {
+      setStaringPerson({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose });
+      setEmployeeCheckinOpen(true);
+    } else {
+      console.log('[App] Employee checkin disabled in admin settings - ignoring stare detection');
+    }
+  }, [adminSettings.employeeCheckinEnabled]);
 
   const handleStareEnded = useCallback(({ personId, stareDuration }) => {
     console.log('[App] Stare ended. Person:', personId, 'Duration:', Math.round(stareDuration / 1000), 's');
