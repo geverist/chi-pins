@@ -8,6 +8,10 @@ html, body, #root {
   background: var(--bg);
   color: var(--fg);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 16px; /* Kiosk-optimized minimum font size (up from 14px) */
+  line-height: 1.5; /* Better readability */
+  -webkit-font-smoothing: antialiased; /* Smoother text rendering */
+  -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -134,14 +138,27 @@ footer .hint { color: var(--muted); }
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
-/* Buttons */
+/* Buttons - Kiosk-optimized for touch */
 button {
-  padding: 14px 16px; border-radius: 12px; border: 1px solid #2a2f37;
-  background: #20232a; color: var(--fg); font-size: 16px; line-height: 1; cursor: pointer;
+  padding: 16px 20px; /* Increased from 14px 16px */
+  min-height: 56px; /* Ensure minimum touch target height (WCAG + kiosk) */
+  border-radius: 12px;
+  border: 1px solid #2a2f37;
+  background: #20232a;
+  color: var(--fg);
+  font-size: 16px;
+  font-weight: 600; /* Bolder for better visibility */
+  line-height: 1.4; /* Increased for readability */
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease; /* Add tactile feedback */
+}
+button:active {
+  transform: translateY(1px); /* Subtle press feedback */
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 button.on { outline: 3px solid #3a7cf4; outline-offset: 1px; }
 button.cancel { background:#15171c; }
-button:disabled { opacity: 0.6; cursor: not-allowed; }
+button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 button:focus-visible, .form input:focus-visible, .form textarea:focus-visible {
   outline: 3px solid #3a7cf4; outline-offset: 2px;
 }

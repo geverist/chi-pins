@@ -154,11 +154,12 @@ function HeaderBar({
   const isMobile = typeof isMobileProp === 'boolean' ? isMobileProp : isMobileDetected
 
   const switchBtnStyle = (pressed) => ({
-    padding:'10px 14px', borderRadius:12,
+    padding:'16px 24px', borderRadius:12, // Increased from 10px 14px for kiosk touch
+    minHeight: 56, // Ensure minimum touch target height
     border:'1px solid #2a2f37',
     background: pressed ? 'linear-gradient(#242a33, #1a1f26)' : 'linear-gradient(#1f242b, #171b20)',
     color:'#f4f6f8',
-    fontSize: '14px',
+    fontSize: '16px', // Increased from 14px for better readability
     fontWeight: 500,
     whiteSpace: 'nowrap',
     cursor: 'pointer',
@@ -217,7 +218,9 @@ function HeaderBar({
               display:'inline-flex',
               alignItems:'center',
               justifyContent:'center',
-              padding:'6px 12px',
+              padding:'12px 16px', // Increased from 6px 12px for kiosk touch
+              minHeight: 56, // Ensure minimum touch target height
+              minWidth: 56,
               borderRadius:8,
               border:'1px solid #2a2f37',
               background: showTableView
@@ -225,7 +228,7 @@ function HeaderBar({
                 : 'linear-gradient(#1f242b, #171b20)',
               color:'#f4f6f8',
               cursor:'pointer',
-              fontSize:18,
+              fontSize:24, // Increased from 18 for better visibility
               boxShadow: showTableView
                 ? 'inset 0 2px 6px rgba(0,0,0,0.5)'
                 : '0 2px 8px rgba(0,0,0,0.2)',
@@ -294,9 +297,10 @@ function HeaderBar({
           style={{
             display:'inline-flex',
             alignItems:'center',
-            gap:6,
+            gap:8, // Increased from 6
             marginLeft:10,
-            padding:'4px 8px',
+            padding:'12px 16px', // Increased from 4px 8px for kiosk touch
+            minHeight: 48, // Ensure minimum touch target height
             borderRadius:8,
             background:'transparent',
             border:'none',
@@ -306,8 +310,8 @@ function HeaderBar({
           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
         >
-          <span>📍</span>
-          <strong style={{ fontWeight:700 }}>{totalCount}</strong>
+          <span style={{ fontSize: 24 }}>📍</span>
+          <strong style={{ fontWeight:700, fontSize: 18 }}>{totalCount}</strong>
         </button>
       </div>
 
