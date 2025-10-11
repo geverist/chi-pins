@@ -6,8 +6,6 @@ function WalkupAttractor({
   active,
   onDismiss,
   voiceEnabled,
-  enabledFeatures = [],
-  businessName = "Chicago Mike's",
   rotationSeconds = 4,
   customPrompts = [] // Array of {emoji, text, subtext, voiceText}
 }) {
@@ -506,10 +504,8 @@ export default memo(WalkupAttractor, (prevProps, nextProps) => {
   return (
     prevProps.active === nextProps.active &&
     prevProps.voiceEnabled === nextProps.voiceEnabled &&
-    prevProps.businessName === nextProps.businessName &&
     prevProps.rotationSeconds === nextProps.rotationSeconds &&
     prevProps.onDismiss === nextProps.onDismiss &&
-    prevProps.enabledFeatures === nextProps.enabledFeatures &&
     promptsEqual
   )
 })

@@ -98,7 +98,7 @@ function Boot({ pos, setPos, pageTile, handoff, onPointerUpCommit }) {
       }
     };
 
-    const onPointerUp = (e) => {
+    const onPointerUp = () => {
       if (!isDraggingRef.current) return;
 
       isDraggingRef.current = false;
