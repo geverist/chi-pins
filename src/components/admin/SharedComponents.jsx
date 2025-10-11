@@ -75,12 +75,18 @@ export const s = {
 
 export const tabStyles = {
   base: {
-    padding: '8px 10px',
+    padding: '10px 14px',
     borderRadius: 10,
     border: '1px solid rgba(255,255,255,0.08)',
     background: 'rgba(255,255,255,0.03)',
     color: '#dfe7ee',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    fontSize: 14,
+    fontWeight: 500,
+    whiteSpace: 'nowrap',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
   },
   active: {
     background: 'rgba(56,189,248,0.14)',

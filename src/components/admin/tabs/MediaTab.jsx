@@ -261,7 +261,7 @@ export default function MediaTab({ getSpotifyClient }) {
                 onClick={async () => {
                   // Discover Sonos devices on network
                   try {
-                    const { getSonosClient } = await import('../lib/sonosClient');
+                    const { getSonosClient } = await import('../../../lib/sonosClient');
                     const client = getSonosClient();
                     const devices = await client.discover();
                     if (devices.length > 0) {

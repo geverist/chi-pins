@@ -136,6 +136,7 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
     >
       <div
         style={{
+          position: 'relative',
           background: '#11141a',
           borderRadius: 12,
           padding: 32,
@@ -148,6 +149,30 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
         onTouchStart={(e) => e.stopPropagation()}
         onTouchEnd={(e) => e.stopPropagation()}
       >
+        {/* Close button */}
+        <button
+          onClick={onCancel}
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            border: '1px solid #2a2f37',
+            background: 'rgba(255, 255, 255, 0.05)',
+            color: '#f3f5f7',
+            fontSize: 20,
+            lineHeight: 1,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          ×
+        </button>
+
         <h2 style={{ margin: '0 0 24px', color: '#f3f5f7', fontSize: 24 }}>{title}</h2>
 
         <form onSubmit={handleSubmit}>
@@ -199,53 +224,12 @@ export default function PinCodeModal({ open, onSuccess, onCancel, title = 'Enter
 
           <div
             style={{
-              marginTop: 24,
+              marginTop: 16,
               fontSize: 13,
               color: '#a7b0b8',
             }}
           >
-            Enter 4-digit PIN code
-          </div>
-
-          <div
-            style={{
-              marginTop: 20,
-              display: 'flex',
-              gap: 10,
-              justifyContent: 'center',
-            }}
-          >
-            <button
-              type="button"
-              onClick={onCancel}
-              style={{
-                padding: '10px 24px',
-                background: '#1a1e25',
-                border: '1px solid #2a2f37',
-                borderRadius: 8,
-                color: '#f3f5f7',
-                fontSize: 14,
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={code.length !== 4}
-              style={{
-                padding: '10px 24px',
-                background: code.length === 4 ? '#3b82f6' : '#2a2f37',
-                border: 'none',
-                borderRadius: 8,
-                color: '#fff',
-                fontSize: 14,
-                cursor: code.length === 4 ? 'pointer' : 'not-allowed',
-                opacity: code.length === 4 ? 1 : 0.5,
-              }}
-            >
-              Submit
-            </button>
+            Code will auto-submit when 4 digits entered
           </div>
         </form>
       </div>

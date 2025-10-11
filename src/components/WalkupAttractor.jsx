@@ -187,62 +187,6 @@ export default function WalkupAttractor({
             perspectiveOrigin: '50% 50%',
           }}
         >
-          {/* Outer Halo Ring 1 - 3D tilted - Positioned at bottom of pin stem */}
-          <div style={{
-            position: 'absolute',
-            top: '85%',
-            left: '50%',
-            width: '220px',
-            height: '220px',
-            borderRadius: '50%',
-            border: '4px solid rgba(255, 255, 255, 0.4)',
-            transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
-            animation: 'haloExpand3D 5s ease-out infinite',
-            transformStyle: 'preserve-3d',
-          }} />
-
-          {/* Outer Halo Ring 2 - 3D tilted - Positioned at bottom of pin stem */}
-          <div style={{
-            position: 'absolute',
-            top: '85%',
-            left: '50%',
-            width: '220px',
-            height: '220px',
-            borderRadius: '50%',
-            border: '4px solid rgba(255, 255, 255, 0.4)',
-            transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
-            animation: 'haloExpand3D 5s ease-out infinite 2.5s',
-            transformStyle: 'preserve-3d',
-          }} />
-
-          {/* Middle Halo Ring - 3D tilted - Positioned at bottom of pin stem */}
-          <div style={{
-            position: 'absolute',
-            top: '85%',
-            left: '50%',
-            width: '220px',
-            height: '220px',
-            borderRadius: '50%',
-            border: '3px solid rgba(255, 255, 255, 0.35)',
-            transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
-            animation: 'haloExpand3D 5s ease-out infinite 1.25s',
-            transformStyle: 'preserve-3d',
-          }} />
-
-          {/* Inner Glow Circle - 3D tilted - Positioned at bottom of pin stem */}
-          <div style={{
-            position: 'absolute',
-            top: '85%',
-            left: '50%',
-            width: '140px',
-            height: '140px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%)',
-            transform: 'translate(-50%, -50%) rotateX(60deg) scale(1)',
-            animation: 'pulse3D 2s ease-in-out infinite',
-            transformStyle: 'preserve-3d',
-          }} />
-
           {/* Giant Pin */}
           <div style={{
             position: 'relative',
@@ -255,15 +199,82 @@ export default function WalkupAttractor({
             📍
           </div>
 
-          {/* Shadow below pin */}
+          {/* Shadow and Ripples Container - stays at ground level */}
           <div style={{
+            position: 'relative',
             width: '120px',
-            height: '120px',
-            background: 'radial-gradient(circle, rgba(0,0,0,0.3) 0%, transparent 70%)',
             margin: '10px auto 0',
-            borderRadius: '50%',
-            animation: 'shadowPulse 2s ease-in-out infinite',
-          }} />
+            height: '120px',
+          }}>
+            {/* Outer Halo Ring 1 - 3D tilted - Positioned at shadow level */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '220px',
+              height: '220px',
+              borderRadius: '50%',
+              border: '4px solid rgba(255, 255, 255, 0.4)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
+              animation: 'haloExpand3D 5s ease-out infinite',
+              transformStyle: 'preserve-3d',
+            }} />
+
+            {/* Outer Halo Ring 2 - 3D tilted - Positioned at shadow level */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '220px',
+              height: '220px',
+              borderRadius: '50%',
+              border: '4px solid rgba(255, 255, 255, 0.4)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
+              animation: 'haloExpand3D 5s ease-out infinite 2.5s',
+              transformStyle: 'preserve-3d',
+            }} />
+
+            {/* Middle Halo Ring - 3D tilted - Positioned at shadow level */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '220px',
+              height: '220px',
+              borderRadius: '50%',
+              border: '3px solid rgba(255, 255, 255, 0.35)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
+              animation: 'haloExpand3D 5s ease-out infinite 1.25s',
+              transformStyle: 'preserve-3d',
+            }} />
+
+            {/* Inner Glow Circle - 3D tilted - Positioned at shadow level */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '140px',
+              height: '140px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(1)',
+              animation: 'pulse3D 2s ease-in-out infinite',
+              transformStyle: 'preserve-3d',
+            }} />
+
+            {/* Shadow below pin */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '120px',
+              height: '120px',
+              background: 'radial-gradient(circle, rgba(0,0,0,0.3) 0%, transparent 70%)',
+              transform: 'translate(-50%, -50%)',
+              borderRadius: '50%',
+              animation: 'shadowPulse 2s ease-in-out infinite',
+            }} />
+          </div>
         </div>
 
         {/* Main text */}
@@ -281,7 +292,7 @@ export default function WalkupAttractor({
             letterSpacing: '0.02em',
           }}
         >
-          {currentPrompt?.text || 'Welcome!'}
+          {currentPrompt?.text || 'Welcome! (TEST BUILD)'}
         </h1>
 
         {/* Subtext */}

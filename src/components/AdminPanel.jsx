@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { AdminProvider } from './admin/hooks/useAdminContext'
+import { AdminProvider, useAdminContext } from './admin/hooks/useAdminContext'
 import PinCodeModal from './PinCodeModal'
 import PreviewBanner from './PreviewBanner'
 
@@ -333,14 +333,148 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
 
       {authenticated && (
         <AdminProvider>
-          <PreviewBanner />
-          <div style={s.overlay}>
-            <div style={s.panel}>
-              {/* Header */}
-              <header style={s.header}>
-                <h2 style={s.h2}>Admin Panel</h2>
-                <button onClick={onClose} style={s.closeBtn}>×</button>
-              </header>
+          <AdminPanelContent
+            tab={tab}
+            setTab={setTab}
+            onClose={onClose}
+            isLayoutEditMode={isLayoutEditMode}
+            setLayoutEditMode={setLayoutEditMode}
+            proximityDetection={proximityDetection}
+            popularSpots={popularSpots}
+            updateSpot={updateSpot}
+            removeSpot={removeSpot}
+            addSpot={addSpot}
+            pendingDeletes={pendingDeletes}
+            modLoading={modLoading}
+            modRows={modRows}
+            search={search}
+            setSearch={setSearch}
+            togglePendingDelete={togglePendingDelete}
+            deleteSelected={deleteSelected}
+            refreshModeration={refreshModeration}
+            ModerationTable={ModerationTable}
+            navSettings={navSettings}
+            setNavSettings={setNavSettings}
+            updateNavSettingsAPI={updateNavSettingsAPI}
+            adminSettingsFromHook={adminSettingsFromHook}
+            saveAdminSettings={saveAdminSettings}
+            kioskClusters={kioskClusters}
+            kioskClustersLoading={kioskClustersLoading}
+            dbAudit={dbAudit}
+            dbAuditLoading={dbAuditLoading}
+            dbAutoFixing={dbAutoFixing}
+            dbAutoFixResult={dbAutoFixResult}
+            runDatabaseAudit={runDatabaseAudit}
+            runAutoFix={runAutoFix}
+            syncTableData={syncTableData}
+            tileStats={tileStats}
+            tileStatsLoading={tileStatsLoading}
+            loadTileStats={loadTileStats}
+            clearTileCache={clearTileCache}
+            downloadChicagoTiles={downloadChicagoTiles}
+            downloadGlobalTiles={downloadGlobalTiles}
+            downloadMetroTiles={downloadMetroTiles}
+            chicagoDownloading={chicagoDownloading}
+            globalDownloading={globalDownloading}
+            metroDownloading={metroDownloading}
+            chicagoDownloadProgress={chicagoDownloadProgress}
+            globalDownloadProgress={globalDownloadProgress}
+            metroDownloadProgress={metroDownloadProgress}
+            sendTestEvent={sendTestEvent}
+            getWebhookStatus={getWebhookStatus}
+            toast={toast}
+            setToast={setToast}
+          />
+        </AdminProvider>
+      )}
+    </>
+  )
+}
+
+// Separate component to access AdminContext
+function AdminPanelContent({
+  tab,
+  setTab,
+  onClose,
+  isLayoutEditMode,
+  setLayoutEditMode,
+  proximityDetection,
+  popularSpots,
+  updateSpot,
+  removeSpot,
+  addSpot,
+  pendingDeletes,
+  modLoading,
+  modRows,
+  search,
+  setSearch,
+  togglePendingDelete,
+  deleteSelected,
+  refreshModeration,
+  ModerationTable,
+  navSettings,
+  setNavSettings,
+  updateNavSettingsAPI,
+  adminSettingsFromHook,
+  saveAdminSettings,
+  kioskClusters,
+  kioskClustersLoading,
+  dbAudit,
+  dbAuditLoading,
+  dbAutoFixing,
+  dbAutoFixResult,
+  runDatabaseAudit,
+  runAutoFix,
+  syncTableData,
+  tileStats,
+  tileStatsLoading,
+  loadTileStats,
+  clearTileCache,
+  downloadChicagoTiles,
+  downloadGlobalTiles,
+  downloadMetroTiles,
+  chicagoDownloading,
+  globalDownloading,
+  metroDownloading,
+  chicagoDownloadProgress,
+  globalDownloadProgress,
+  metroDownloadProgress,
+  sendTestEvent,
+  getWebhookStatus,
+  toast,
+  setToast,
+}) {
+  const { hasUnsavedChanges, saveAllSettings } = useAdminContext()
+
+  return (
+    <>
+      <PreviewBanner />
+      <div style={s.overlay}>
+        <div style={s.panel}>
+          {/* Header */}
+          <header style={s.header}>
+            <h2 style={s.h2}>Admin Panel</h2>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {hasUnsavedChanges && (
+                <button
+                  onClick={saveAllSettings}
+                  style={{
+                    padding: '8px 16px',
+                    background: 'linear-gradient(180deg, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.18))',
+                    border: '1px solid rgba(34, 197, 94, 0.6)',
+                    borderRadius: 10,
+                    color: '#d1fae5',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  💾 Save Changes
+                </button>
+              )}
+              <button onClick={onClose} style={s.closeBtn}>×</button>
+            </div>
+          </header>
 
               {/* Tabs Navigation */}
               <nav style={s.tabs}>
@@ -524,24 +658,22 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
             </div>
           </div>
 
-          {/* Toast */}
-          {toast && (
-            <div style={{
-              position: 'fixed',
-              bottom: 24,
-              right: 24,
-              background: 'rgba(0,0,0,0.9)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: 12,
-              padding: 16,
-              maxWidth: 400,
-              zIndex: 10001,
-            }}>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{toast.title}</div>
-              <div style={{ fontSize: 13, color: '#9ca3af' }}>{toast.text}</div>
-            </div>
-          )}
-        </AdminProvider>
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          background: 'rgba(0,0,0,0.9)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: 12,
+          padding: 16,
+          maxWidth: 400,
+          zIndex: 10001,
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{toast.title}</div>
+          <div style={{ fontSize: 13, color: '#9ca3af' }}>{toast.text}</div>
+        </div>
       )}
     </>
   )
