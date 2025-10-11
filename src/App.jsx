@@ -2039,7 +2039,7 @@ export default function App() {
         proximityLevel={proximityLevel}
       />
 
-      {/* Detection State Visual Indicator - Colored border and debug info (press 'd' to toggle debug) */}
+      {/* Detection State Visual Indicator - Colored border and debug panel (configured in admin) */}
       <DetectionStateIndicator
         isAmbientDetected={isAmbientDetected}
         isWalkupDetected={isWalkupDetected}
@@ -2047,6 +2047,7 @@ export default function App() {
         activePeopleCount={activePeopleCount}
         maxProximityLevel={maxProximityLevel}
         trackedPeople={trackedPeople}
+        debugModeEnabled={adminSettings?.proximityDebugModeEnabled ?? false}
       />
 
       {/* Twilio Call Border - Animated border shown when voice bot is on an active call */}

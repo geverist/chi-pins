@@ -155,6 +155,7 @@ const DEFAULTS = {
   proximityThreshold: 80,          // Distance threshold to trigger walkup greeting (0-100, higher = closer) - 80 is very close (~2 feet)
   proximityDetectionInterval: 500, // How often to check for motion (ms)
   proximityTriggerVoice: true,     // Trigger voice greeting when person approaches
+  proximityDebugModeEnabled: false, // Show debug panel with detection details (configurable from admin panel)
 
   // Ambient Music Auto-Play (triggered at longer range than walkup greeting)
   ambientMusicEnabled: false,      // Disable by default - enable in admin panel

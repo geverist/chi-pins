@@ -2498,6 +2498,16 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
                   />
                 </FieldRow>
 
+                <FieldRow label="Show Debug Panel">
+                  <Toggle
+                    checked={settings.proximityDebugModeEnabled ?? false}
+                    onChange={(v) => setSettings(s => ({ ...s, proximityDebugModeEnabled: v }))}
+                  />
+                  <span style={{ ...s.muted, fontSize: 11, marginLeft: 8 }}>
+                    Display real-time tracking data overlay
+                  </span>
+                </FieldRow>
+
                 {settings.proximityDetectionEnabled && (
                   <>
                     <FieldRow label="Motion Sensitivity">

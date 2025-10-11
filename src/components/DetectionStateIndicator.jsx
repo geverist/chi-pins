@@ -18,6 +18,7 @@ import { useState, useEffect } from 'react';
  * @param {number} activePeopleCount - Number of tracked people
  * @param {number} maxProximityLevel - Highest proximity level detected
  * @param {Array} trackedPeople - Array of tracked people with detailed data
+ * @param {boolean} debugModeEnabled - Show debug panel (controlled from admin panel)
  */
 export function DetectionStateIndicator({
   isAmbientDetected = false,
@@ -26,11 +27,11 @@ export function DetectionStateIndicator({
   activePeopleCount = 0,
   maxProximityLevel = 0,
   trackedPeople = [],
+  debugModeEnabled = false,
 }) {
   const [detectionState, setDetectionState] = useState('none');
   const [borderColor, setBorderColor] = useState('transparent');
   const [labelText, setLabelText] = useState('');
-  const [showDebugInfo, setShowDebugInfo] = useState(false);
 
   // Determine current detection state (priority: stare > walkup > ambient > none)
   useEffect(() => {
@@ -57,20 +58,8 @@ export function DetectionStateIndicator({
     setLabelText(label);
   }, [isAmbientDetected, isWalkupDetected, isStaring]);
 
-  // Keyboard shortcut to toggle debug info (press 'd' key)
-  useEffect(() => {
-    const handleKeyPress = (e) => {
-      if (e.key === 'd' || e.key === 'D') {
-        setShowDebugInfo(prev => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
-  // Don't render anything if no detection
-  if (detectionState === 'none' && !showDebugInfo) {
+  // Don't render anything if no detection and debug mode is off
+  if (detectionState === 'none' && !debugModeEnabled) {
     return null;
   }
 
@@ -120,10 +109,9 @@ export function DetectionStateIndicator({
         </div>
       )}
 
-      {/* Debug info panel (press 'd' to toggle) */}
-      {showDebugInfo && (
+      {/* Debug info panel (enabled from admin panel) */}
+      {debugModeEnabled && (
         <div
-          onClick={() => setShowDebugInfo(false)}
           style={{
             position: 'fixed',
             bottom: '20px',
@@ -143,7 +131,7 @@ export function DetectionStateIndicator({
           }}
         >
           <div style={{ marginBottom: '12px', fontWeight: 'bold', color: '#fff', fontSize: '14px' }}>
-            🎯 Detection Debug Info (click to close)
+            🎯 Detection Debug Info
           </div>
           <div style={{ lineHeight: '1.6' }}>
             <div><strong>State:</strong> {detectionState.toUpperCase()}</div>
@@ -184,7 +172,7 @@ export function DetectionStateIndicator({
             )}
           </div>
           <div style={{ marginTop: '12px', fontSize: '10px', color: '#888', fontStyle: 'italic' }}>
-            Press 'd' to toggle • Click panel to close
+            Configure in Admin Panel → Kiosk → Proximity Detection
           </div>
         </div>
       )}
