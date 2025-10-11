@@ -2,12 +2,12 @@
 // High-performance scrolling banner using react-fast-marquee
 // Uses hardware acceleration and requestAnimationFrame for smooth 60fps scrolling
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import Marquee from 'react-fast-marquee';
 import { useLayoutStack } from '../hooks/useLayoutStack';
 import { useLocalComments } from '../hooks/useLocalComments';
 
-export default function CommentsBanner({
+function CommentsBanner({
   customKeywords = [],
   scrollSpeed = 60, // seconds for full scroll
   maxComments = 20,
@@ -157,3 +157,19 @@ const styles = {
     marginTop: '2px',
   },
 };
+
+// Memoize CommentsBanner to prevent re-renders when props haven't changed
+export default memo(CommentsBanner, (prevProps, nextProps) => {
+  // Deep compare customKeywords array
+  const keywordsEqual =
+    prevProps.customKeywords.length === nextProps.customKeywords.length &&
+    prevProps.customKeywords.every((kw, i) => kw === nextProps.customKeywords[i])
+
+  return (
+    prevProps.scrollSpeed === nextProps.scrollSpeed &&
+    prevProps.maxComments === nextProps.maxComments &&
+    prevProps.refreshInterval === nextProps.refreshInterval &&
+    prevProps.enabled === nextProps.enabled &&
+    keywordsEqual
+  )
+})

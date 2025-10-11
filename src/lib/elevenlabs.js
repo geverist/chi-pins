@@ -111,35 +111,8 @@ export async function textToSpeechBase64(text, options = {}) {
   return base64;
 }
 
-/**
- * Generate speech audio and save to public URL (for Twilio <Play> verb)
- * This requires a backend endpoint to save the file
- * @param {string} text - Text to convert to speech
- * @param {Object} options - Same as textToSpeech options
- * @returns {Promise<string>} Public URL to audio file
- */
-export async function textToSpeechUrl(text, options = {}) {
-  const audioData = await textToSpeech(text, options);
-
-  // Send audio to backend to save and return public URL
-  const response = await fetch('/api/elevenlabs/save-audio', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      audio: Array.from(new Uint8Array(audioData)),
-      text: text.substring(0, 50), // First 50 chars for filename
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to save audio file');
-  }
-
-  const { url } = await response.json();
-  return url;
-}
+// textToSpeechUrl removed - not used and required missing /api/elevenlabs/save-audio endpoint
+// If needed for Twilio integration, use api/elevenlabs-tts.js directly
 
 /**
  * Get available voices from ElevenLabs

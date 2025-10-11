@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { speak as elevenLabsSpeak, shouldUseElevenLabs, getElevenLabsOptions } from '../lib/elevenlabs'
 import { useAdminSettings } from '../state/useAdminSettings'
 
-export default function WalkupAttractor({
+function WalkupAttractor({
   active,
   onDismiss,
   voiceEnabled,
@@ -77,38 +77,9 @@ export default function WalkupAttractor({
         })
       }
 
-      // Fallback to Web Speech API
-      console.log('[WalkupAttractor] Attempting Web Speech API fallback...')
-      if (typeof window !== 'undefined' && window.speechSynthesis && typeof SpeechSynthesisUtterance !== 'undefined') {
-        try {
-          const utterance = new SpeechSynthesisUtterance(voiceText)
-          utterance.rate = 0.9
-          utterance.pitch = 1.0
-          utterance.volume = 1.0 // Max volume for kiosk
-
-          utterance.onstart = () => {
-            console.log('[WalkupAttractor] ✅ Web Speech started')
-          }
-          utterance.onend = () => {
-            console.log('[WalkupAttractor] ✅ Web Speech completed')
-          }
-          utterance.onerror = (err) => {
-            console.error('[WalkupAttractor] ❌ Web Speech error:', err)
-          }
-
-          window.speechSynthesis.cancel()
-          window.speechSynthesis.speak(utterance)
-          console.log('[WalkupAttractor] ✅ Web Speech initiated')
-        } catch (error) {
-          console.error('[WalkupAttractor] ❌ Web Speech error:', error)
-        }
-      } else {
-        console.error('[WalkupAttractor] ❌ Web Speech API not available:', {
-          hasWindow: typeof window !== 'undefined',
-          hasSpeechSynthesis: typeof window !== 'undefined' && !!window.speechSynthesis,
-          hasSpeechSynthesisUtterance: typeof SpeechSynthesisUtterance !== 'undefined'
-        })
-      }
+      // Web Speech API is not available in Android WebView
+      // Silently skip voice greeting on Android
+      console.log('[WalkupAttractor] Voice greeting unavailable (Android WebView)')
     }
 
     // Wait 1 second before speaking to avoid overlap
@@ -190,6 +161,7 @@ export default function WalkupAttractor({
           {/* Giant Pin */}
           <div style={{
             position: 'relative',
+            zIndex: 10,
             fontSize: '120px',
             lineHeight: '1',
             textAlign: 'center',
@@ -203,70 +175,105 @@ export default function WalkupAttractor({
           <div style={{
             position: 'relative',
             width: '120px',
-            margin: '10px auto 0',
+            margin: '-90px auto 0',
             height: '120px',
           }}>
-            {/* Outer Halo Ring 1 - 3D tilted - Positioned at shadow level */}
+            {/* Water Ripple 1 - Fast, starts on impact */}
             <div style={{
               position: 'absolute',
-              top: '50%',
+              top: '75%',
               left: '50%',
-              width: '220px',
-              height: '220px',
+              zIndex: 0,
+              width: '80px',
+              height: '80px',
               borderRadius: '50%',
-              border: '4px solid rgba(255, 255, 255, 0.4)',
-              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
-              animation: 'haloExpand3D 5s ease-out infinite',
+              border: '3px solid rgba(255, 255, 255, 0.6)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
+              animation: 'waterRipple 2s ease-out infinite',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Outer Halo Ring 2 - 3D tilted - Positioned at shadow level */}
+            {/* Water Ripple 2 - Medium speed */}
             <div style={{
               position: 'absolute',
-              top: '50%',
+              top: '75%',
               left: '50%',
-              width: '220px',
-              height: '220px',
+              zIndex: 0,
+              width: '80px',
+              height: '80px',
               borderRadius: '50%',
-              border: '4px solid rgba(255, 255, 255, 0.4)',
-              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
-              animation: 'haloExpand3D 5s ease-out infinite 2.5s',
+              border: '3px solid rgba(255, 255, 255, 0.5)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
+              animation: 'waterRipple 2s ease-out infinite 0.15s',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Middle Halo Ring - 3D tilted - Positioned at shadow level */}
+            {/* Water Ripple 3 - Slower */}
             <div style={{
               position: 'absolute',
-              top: '50%',
+              top: '75%',
               left: '50%',
-              width: '220px',
-              height: '220px',
+              zIndex: 0,
+              width: '80px',
+              height: '80px',
               borderRadius: '50%',
-              border: '3px solid rgba(255, 255, 255, 0.35)',
-              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.5)',
-              animation: 'haloExpand3D 5s ease-out infinite 1.25s',
+              border: '2px solid rgba(255, 255, 255, 0.4)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
+              animation: 'waterRipple 2s ease-out infinite 0.3s',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Inner Glow Circle - 3D tilted - Positioned at shadow level */}
+            {/* Water Ripple 4 - Slower still */}
             <div style={{
               position: 'absolute',
-              top: '50%',
+              top: '75%',
               left: '50%',
-              width: '140px',
-              height: '140px',
+              zIndex: 0,
+              width: '80px',
+              height: '80px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%)',
-              transform: 'translate(-50%, -50%) rotateX(60deg) scale(1)',
-              animation: 'pulse3D 2s ease-in-out infinite',
+              border: '2px solid rgba(255, 255, 255, 0.35)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
+              animation: 'waterRipple 2s ease-out infinite 0.45s',
+              transformStyle: 'preserve-3d',
+            }} />
+
+            {/* Water Ripple 5 - Slowest, largest */}
+            <div style={{
+              position: 'absolute',
+              top: '75%',
+              left: '50%',
+              zIndex: 0,
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
+              animation: 'waterRipple 2s ease-out infinite 0.6s',
+              transformStyle: 'preserve-3d',
+            }} />
+
+            {/* Center glow on impact */}
+            <div style={{
+              position: 'absolute',
+              top: '75%',
+              left: '50%',
+              zIndex: 0,
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%)',
+              transform: 'translate(-50%, -50%) rotateX(60deg)',
+              animation: 'impactGlow 2s ease-out infinite',
               transformStyle: 'preserve-3d',
             }} />
 
             {/* Shadow below pin */}
             <div style={{
               position: 'absolute',
-              top: '50%',
+              top: '75%',
               left: '50%',
+              zIndex: 0,
               width: '120px',
               height: '120px',
               background: 'radial-gradient(circle, rgba(0,0,0,0.3) 0%, transparent 70%)',
@@ -292,7 +299,7 @@ export default function WalkupAttractor({
             letterSpacing: '0.02em',
           }}
         >
-          {currentPrompt?.text || 'Welcome! (TEST BUILD)'}
+          {currentPrompt?.text || 'Welcome!'}
         </h1>
 
         {/* Subtext */}
@@ -415,25 +422,29 @@ export default function WalkupAttractor({
           }
         }
 
-        @keyframes haloExpand3D {
+        @keyframes waterRipple {
           0% {
-            transform: translate(-50%, -50%) rotateX(60deg) scale(0.5);
-            opacity: 0.9;
+            transform: translate(-50%, -50%) rotateX(60deg) scale(0.3);
+            opacity: 1;
           }
           100% {
-            transform: translate(-50%, -50%) rotateX(60deg) scale(1.8);
+            transform: translate(-50%, -50%) rotateX(60deg) scale(2.5);
             opacity: 0;
           }
         }
 
-        @keyframes pulse3D {
-          0%, 100% {
+        @keyframes impactGlow {
+          0%, 10% {
             transform: translate(-50%, -50%) rotateX(60deg) scale(1);
-            opacity: 0.6;
+            opacity: 0.8;
           }
-          50% {
-            transform: translate(-50%, -50%) rotateX(60deg) scale(1.15);
-            opacity: 0.9;
+          40% {
+            transform: translate(-50%, -50%) rotateX(60deg) scale(1.3);
+            opacity: 0;
+          }
+          100% {
+            transform: translate(-50%, -50%) rotateX(60deg) scale(1);
+            opacity: 0;
           }
         }
 
@@ -492,3 +503,28 @@ export default function WalkupAttractor({
     </div>
   )
 }
+
+// Memoize WalkupAttractor to prevent re-renders when props haven't changed
+// This is particularly important due to the heavy animations and voice synthesis
+export default memo(WalkupAttractor, (prevProps, nextProps) => {
+  // Deep compare customPrompts array
+  const promptsEqual =
+    prevProps.customPrompts.length === nextProps.customPrompts.length &&
+    prevProps.customPrompts.every((p, i) => {
+      const np = nextProps.customPrompts[i]
+      return p?.emoji === np?.emoji &&
+             p?.text === np?.text &&
+             p?.subtext === np?.subtext &&
+             p?.voiceText === np?.voiceText
+    })
+
+  return (
+    prevProps.active === nextProps.active &&
+    prevProps.voiceEnabled === nextProps.voiceEnabled &&
+    prevProps.businessName === nextProps.businessName &&
+    prevProps.rotationSeconds === nextProps.rotationSeconds &&
+    prevProps.onDismiss === nextProps.onDismiss &&
+    prevProps.enabledFeatures === nextProps.enabledFeatures &&
+    promptsEqual
+  )
+})

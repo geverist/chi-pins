@@ -1,8 +1,8 @@
 // src/components/OfflineIndicator.jsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { getPendingPins } from '../lib/offlineStorage';
 
-export default function OfflineIndicator() {
+function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -82,3 +82,7 @@ export default function OfflineIndicator() {
     </div>
   );
 }
+
+// Memoize OfflineIndicator - has no props, but prevents unnecessary re-renders
+// when parent components update
+export default memo(OfflineIndicator)

@@ -22,7 +22,16 @@
       "Bash(tree:*)",
       "Bash(awk:*)",
       "Bash(npm install:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb:*)",
+      "Bash(npm run build)",
+      "Bash(npm run android:build:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(find:*)",
+      "Bash(tee:*)",
+      "Bash(npm outdated)",
+      "Bash(npm update:*)",
+      "Bash(npm audit:*)"
     ],
     "deny": [],
     "ask": []

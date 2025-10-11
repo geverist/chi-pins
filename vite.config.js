@@ -22,11 +22,40 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split large vendor libraries for better caching
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'map-vendor': ['leaflet', 'react-leaflet'],
-          'ai-vendor': ['@mediapipe/tasks-vision', '@tensorflow/tfjs'],
+        manualChunks(id) {
+          // Core vendors - always loaded
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
+            return 'react-vendor';
+          }
+
+          // Map libraries - loaded on main map view
+          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
+            return 'map-vendor';
+          }
+
+          // Split AI libraries separately - these are HUGE
+          if (id.includes('@mediapipe/tasks-vision')) {
+            return 'mediapipe-vendor';
+          }
+
+          if (id.includes('@tensorflow/tfjs')) {
+            return 'tensorflow-vendor';
+          }
+
+          // Supabase - used everywhere but can be separate
+          if (id.includes('node_modules/@supabase')) {
+            return 'supabase-vendor';
+          }
+
+          // OpenAI - only used in voice/AI features
+          if (id.includes('node_modules/openai')) {
+            return 'openai-vendor';
+          }
+
+          // Other large vendors
+          if (id.includes('node_modules/')) {
+            return 'vendor';
+          }
         }
       }
     }

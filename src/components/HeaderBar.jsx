@@ -1,5 +1,5 @@
 // src/components/HeaderBar.jsx
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, memo } from 'react'
 import { useLogo } from '../hooks/useLogo'
 import { useLayoutStack } from '../hooks/useLayoutStack'
 import defaultLogoUrl from '../assets/logo.png'
@@ -72,7 +72,7 @@ function InlineCount({ color, label, count, onClick }) {
   );
 }
 
-export default function HeaderBar({
+function HeaderBar({
   mapMode,
   totalCount = 0,
   onGlobal,
@@ -352,3 +352,26 @@ export default function HeaderBar({
     </header>
   )
 }
+
+// Memoize HeaderBar to prevent re-renders when props haven't changed
+export default memo(HeaderBar, (prevProps, nextProps) => {
+  // Deep compare continentCounts object
+  const continentCountsEqual =
+    JSON.stringify(prevProps.continentCounts) === JSON.stringify(nextProps.continentCounts)
+
+  return (
+    prevProps.mapMode === nextProps.mapMode &&
+    prevProps.totalCount === nextProps.totalCount &&
+    prevProps.logoSrc === nextProps.logoSrc &&
+    prevProps.isMobile === nextProps.isMobile &&
+    prevProps.showTableView === nextProps.showTableView &&
+    prevProps.onGlobal === nextProps.onGlobal &&
+    prevProps.onChicago === nextProps.onChicago &&
+    prevProps.onLogoClick === nextProps.onLogoClick &&
+    prevProps.onContinentClick === nextProps.onContinentClick &&
+    prevProps.onToggleView === nextProps.onToggleView &&
+    prevProps.onAdminOpen === nextProps.onAdminOpen &&
+    prevProps.children === nextProps.children &&
+    continentCountsEqual
+  )
+})

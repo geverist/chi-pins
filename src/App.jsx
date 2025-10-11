@@ -651,16 +651,27 @@ export default function App() {
     return () => off?.();
   }, [autoKiosk]);
 
-  // Handle resize and orientation for Safari
+  // Handle resize and orientation for Safari (with debouncing)
   useEffect(() => {
+    let resizeTimer = null;
+
     const handleResize = () => {
-      if (mainMapRef.current) {
-        setTimeout(() => mainMapRef.current.invalidateSize(), 300);
-      }
+      // Debounce resize to avoid excessive invalidateSize calls
+      if (resizeTimer) clearTimeout(resizeTimer);
+
+      resizeTimer = setTimeout(() => {
+        if (mainMapRef.current) {
+          mainMapRef.current.invalidateSize();
+        }
+      }, 300);
     };
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+
+    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('orientationchange', handleResize, { passive: true });
+
     return () => {
+      // CRITICAL: Clean up timer and listeners
+      if (resizeTimer) clearTimeout(resizeTimer);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
     };
@@ -669,36 +680,51 @@ export default function App() {
   // Note: mapReady is set by MapShell's SetMapRef component when map initializes
   // No need for a separate effect here as it would have stale ref dependency
 
-  // Mobile mode zoom and mode switching
+  // Mobile mode zoom and mode switching (with proper cleanup)
   useEffect(() => {
     if (!mainMapRef.current || !isMobile) return;
 
     const map = mainMapRef.current;
 
+    // Debounce mode switching to avoid excessive state updates
+    let switchModeTimer = null;
     const switchMode = () => {
-      const currentZoom = map.getZoom();
-      const currentBounds = map.getBounds();
-      if (mapMode === 'chicago' && currentZoom < CHI_MIN_ZOOM) {
-        setMapMode('global');
-      } else if (mapMode === 'global' && currentZoom >= CHI_MIN_ZOOM && currentBounds.intersects(CHI_BOUNDS)) {
-        setMapMode('chicago');
-      }
+      if (switchModeTimer) clearTimeout(switchModeTimer);
+
+      switchModeTimer = setTimeout(() => {
+        const currentZoom = map.getZoom();
+        const currentBounds = map.getBounds();
+        if (mapMode === 'chicago' && currentZoom < CHI_MIN_ZOOM) {
+          setMapMode('global');
+        } else if (mapMode === 'global' && currentZoom >= CHI_MIN_ZOOM && currentBounds.intersects(CHI_BOUNDS)) {
+          setMapMode('chicago');
+        }
+      }, 150); // 150ms debounce
     };
 
     map.on('zoomend', switchMode);
     map.on('moveend', switchMode);
 
     return () => {
+      // CRITICAL: Clean up timer and listeners
+      if (switchModeTimer) clearTimeout(switchModeTimer);
       map.off('zoomend', switchMode);
       map.off('moveend', switchMode);
     };
-  }, [isMobile, mapMode, mainMapRef]);
+  }, [isMobile, mapMode]);
 
-  // Dismiss overlays on map zoom/pan and pinch-to-zoom
+  // Dismiss overlays on map zoom/pan and pinch-to-zoom (with debouncing)
   useEffect(() => {
+    let dismissTimer = null;
+
+    // Debounce dismissal to avoid excessive state updates during continuous gestures
     const dismissOverlays = () => {
-      setShowAttractor(false);
-      setVoiceAssistantVisible(false);
+      if (dismissTimer) clearTimeout(dismissTimer);
+
+      dismissTimer = setTimeout(() => {
+        setShowAttractor(false);
+        setVoiceAssistantVisible(false);
+      }, 50); // 50ms debounce
     };
 
     // Global touch event handlers for pinch-to-zoom detection
@@ -721,26 +747,30 @@ export default function App() {
     // Also listen to map events if available
     if (mainMapRef.current) {
       const map = mainMapRef.current;
+
+      // Use debounced version for smooth animations
       map.on('zoomstart', dismissOverlays);
       map.on('movestart', dismissOverlays);
-      map.on('zoom', dismissOverlays);
-      map.on('move', dismissOverlays);
+      // Don't listen to 'zoom' and 'move' - too frequent, causes jank
+      // zoomstart and movestart are enough
 
       return () => {
+        // CRITICAL: Clean up timer and ALL listeners
+        if (dismissTimer) clearTimeout(dismissTimer);
         map.off('zoomstart', dismissOverlays);
         map.off('movestart', dismissOverlays);
-        map.off('zoom', dismissOverlays);
-        map.off('move', dismissOverlays);
         document.removeEventListener('touchstart', handleTouchStart);
         document.removeEventListener('touchmove', handleTouchMove);
       };
     }
 
     return () => {
+      // CRITICAL: Clean up timer and document listeners
+      if (dismissTimer) clearTimeout(dismissTimer);
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [mainMapRef]);
+  }, []);
 
   // Dismiss overlays when keyboard appears (input/textarea focused)
   useEffect(() => {

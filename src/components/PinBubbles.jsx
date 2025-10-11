@@ -1,5 +1,5 @@
 // src/components/PinBubbles.jsx
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, memo } from 'react'
 import { LayerGroup, Marker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import Supercluster from 'supercluster'
@@ -37,7 +37,7 @@ function bubbleIcon(count) {
  * PinBubbles renders cluster bubbles when zoomed out.
  * It does NOT render individual pins; SavedPins will handle those when zoomed in.
  */
-export default function PinBubbles({
+function PinBubbles({
   pins = [],
   enabled = true,
   minZoomForPins = 13,     // when zoom < this => show bubbles
@@ -158,3 +158,14 @@ export default function PinBubbles({
     </LayerGroup>
   )
 }
+
+// Memoize PinBubbles to prevent expensive re-clustering when props haven't changed
+export default memo(PinBubbles, (prevProps, nextProps) => {
+  // Only re-render if these props change
+  return (
+    prevProps.pins === nextProps.pins &&
+    prevProps.enabled === nextProps.enabled &&
+    prevProps.minZoomForPins === nextProps.minZoomForPins &&
+    prevProps.maxZoom === nextProps.maxZoom
+  )
+})

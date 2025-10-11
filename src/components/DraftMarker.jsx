@@ -1,5 +1,5 @@
 // src/components/DraftMarker.jsx
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, memo } from 'react'
 import { Marker, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { placingIconFor } from '../lib/mapUtils'
@@ -10,7 +10,7 @@ import { placingIconFor } from '../lib/mapUtils'
  * - If map zoom < max (18), opens SubMapModal for fine-tuning.
  * - If map zoom >= max (18), enables direct dragging on main map.
  */
-export default function DraftMarker({
+function DraftMarker({
   lat,
   lng,
   team = 'other',
@@ -227,3 +227,16 @@ export default function DraftMarker({
     </Marker>
   )
 }
+
+// Memoize DraftMarker to prevent unnecessary re-renders during pin placement
+export default memo(DraftMarker, (prevProps, nextProps) => {
+  return (
+    prevProps.lat === nextProps.lat &&
+    prevProps.lng === nextProps.lng &&
+    prevProps.team === nextProps.team &&
+    prevProps.tipToken === nextProps.tipToken &&
+    prevProps.modalOpen === nextProps.modalOpen &&
+    prevProps.onOpenModal === nextProps.onOpenModal &&
+    prevProps.setDraft === nextProps.setDraft
+  )
+})

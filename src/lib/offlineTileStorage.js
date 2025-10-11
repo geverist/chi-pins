@@ -253,7 +253,7 @@ class NativeTileStorage {
       // Convert blob to base64
       const base64 = await this.blobToBase64(blob);
 
-      // Save to filesystem
+      // Save to filesystem (recursive: true creates directories)
       await Filesystem.writeFile({
         path: `${path}/${fileName}`,
         data: base64,
@@ -261,7 +261,11 @@ class NativeTileStorage {
         recursive: true,
       });
     } catch (err) {
-      console.warn('[NativeTileStorage] Failed to save tile:', err);
+      // Silently fail - tile will be fetched from network next time
+      // Only log actual errors, not expected failures
+      if (err.code !== 'OS-PLUG-FILE-0011') {
+        console.warn('[NativeTileStorage] Failed to save tile:', err.message);
+      }
       throw err;
     }
   }
@@ -278,7 +282,8 @@ class NativeTileStorage {
       // Convert base64 back to blob
       return this.base64ToBlob(result.data, 'image/png');
     } catch (err) {
-      // File doesn't exist
+      // File doesn't exist - this is expected, don't log
+      // Tiles will be downloaded on-demand or in background
       return null;
     }
   }
@@ -341,7 +346,12 @@ class NativeTileStorage {
 class OfflineTileStorage {
   constructor() {
     this.storage = isNative ? new NativeTileStorage() : new IndexedDBTileStorage();
-    console.log(`[OfflineTileStorage] Using ${isNative ? 'Native Filesystem' : 'IndexedDB'} storage`);
+    this.pendingBatch = [];
+    this.batchTimer = null;
+    this.batchSize = 10; // Save 10 tiles at a time
+    this.batchDelay = 1000; // Wait 1 second to collect more tiles
+
+    console.log(`[OfflineTileStorage] Using ${isNative ? 'Native Filesystem' : 'IndexedDB'} storage with batching`);
   }
 
   async init() {
@@ -350,8 +360,60 @@ class OfflineTileStorage {
     }
   }
 
+  /**
+   * Save a single tile (non-batched)
+   */
   async saveTile(z, x, y, blob) {
     return this.storage.saveTile(z, x, y, blob);
+  }
+
+  /**
+   * Queue tile for batch saving (performance optimization for Android)
+   * @param {number} z
+   * @param {number} x
+   * @param {number} y
+   * @param {Blob} blob
+   */
+  queueTileSave(z, x, y, blob) {
+    this.pendingBatch.push({ z, x, y, blob });
+
+    // Flush immediately if batch is full
+    if (this.pendingBatch.length >= this.batchSize) {
+      this.flushBatch();
+      return;
+    }
+
+    // Otherwise, debounce the flush
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer);
+    }
+
+    this.batchTimer = setTimeout(() => {
+      this.flushBatch();
+    }, this.batchDelay);
+  }
+
+  /**
+   * Save all queued tiles in parallel batches
+   */
+  async flushBatch() {
+    if (this.pendingBatch.length === 0) return;
+
+    const batch = [...this.pendingBatch];
+    this.pendingBatch = [];
+    this.batchTimer = null;
+
+    console.log(`[OfflineTileStorage] Flushing batch of ${batch.length} tiles`);
+
+    // Save in parallel batches to avoid blocking
+    const promises = batch.map(({ z, x, y, blob }) =>
+      this.storage.saveTile(z, x, y, blob).catch(err => {
+        // Silently fail individual tiles - don't block the batch
+        console.warn(`[OfflineTileStorage] Failed to save tile ${z}/${x}/${y}:`, err.message);
+      })
+    );
+
+    await Promise.all(promises);
   }
 
   async getTile(z, x, y) {
@@ -359,6 +421,13 @@ class OfflineTileStorage {
   }
 
   async clearAll() {
+    // Clear pending batch
+    this.pendingBatch = [];
+    if (this.batchTimer) {
+      clearTimeout(this.batchTimer);
+      this.batchTimer = null;
+    }
+
     return this.storage.clearAll();
   }
 

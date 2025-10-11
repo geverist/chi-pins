@@ -9,8 +9,36 @@ import { Capacitor } from '@capacitor/core'
 import { registerServiceWorker } from './registerServiceWorker.js'
 import { startBackgroundPrefetch } from './lib/tilePrefetch.js'
 import { perfMonitor } from './lib/performanceMonitor.js'
+import performanceDiagnostics from './lib/performanceDiagnostics.js'
 import './styles.css'
 import './styles/transitions.css'
+
+// Initialize performance diagnostics (available at window.performanceDiagnostics)
+console.log('[Diagnostics] Performance diagnostics available at window.performanceDiagnostics')
+
+// Performance: Disable verbose console logging in production
+// Keep errors and warnings for critical debugging
+if (import.meta.env.PROD) {
+  const noop = () => {};
+  console.log = noop;
+  console.info = noop;
+  console.debug = noop;
+
+  // Also reduce console.warn spam in production (only show critical warnings)
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    // Filter out non-critical warnings
+    const message = args[0]?.toString() || '';
+    if (
+      message.includes('mainMapRef.current is null') ||
+      message.includes('Geocoder removal error') ||
+      message.includes('Speech recognition cleanup')
+    ) {
+      return; // Silently ignore these expected warnings
+    }
+    originalWarn.apply(console, args);
+  };
+}
 
 // Set CSS custom property for actual viewport height (fixes Safari)
 function setViewportHeight() {

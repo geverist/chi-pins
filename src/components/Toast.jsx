@@ -1,5 +1,7 @@
 // src/components/Toast.jsx
-export default function Toast({ title, text, onClose }) {
+import { memo } from 'react'
+
+function Toast({ title, text, onClose }) {
   return (
     <div
       style={{
@@ -44,3 +46,12 @@ export default function Toast({ title, text, onClose }) {
     </div>
   )
 }
+
+// Memoize Toast to prevent re-renders when props haven't changed
+export default memo(Toast, (prevProps, nextProps) => {
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.text === nextProps.text &&
+    prevProps.onClose === nextProps.onClose
+  )
+})

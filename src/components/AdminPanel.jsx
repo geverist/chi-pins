@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { AdminProvider, useAdminContext } from './admin/hooks/useAdminContext'
 import PinCodeModal from './PinCodeModal'
-import PreviewBanner from './PreviewBanner'
 
 // Extracted tab components
 import KioskTab from './admin/tabs/KioskTab'
@@ -448,7 +447,6 @@ function AdminPanelContent({
 
   return (
     <>
-      <PreviewBanner />
       <div style={s.overlay}>
         <div style={s.panel}>
           {/* Header */}

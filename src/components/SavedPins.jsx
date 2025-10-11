@@ -1,12 +1,12 @@
 // src/components/SavedPins.jsx
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, memo } from 'react'
 import { LayerGroup, Marker, Tooltip, Popup, useMap } from 'react-leaflet'
 import { iconFor } from '../lib/mapUtils'
 import { titleFromSlug } from '../lib/pinsUtils'
 
 const DEFAULT_MIN_LABEL_ZOOM = 13
 
-export default function SavedPins({
+function SavedPins({
   pins = [],
   exploring = false,
   minLabelZoom = DEFAULT_MIN_LABEL_ZOOM,
@@ -307,3 +307,22 @@ export default function SavedPins({
     </LayerGroup>
   )
 }
+
+// Memoize SavedPins to prevent re-renders when props haven't changed
+// This is critical because SavedPins renders ALL pins (potentially hundreds)
+export default memo(SavedPins, (prevProps, nextProps) => {
+  // Custom comparison for performance
+  // Only re-render if these specific props change
+  return (
+    prevProps.pins === nextProps.pins &&
+    prevProps.exploring === nextProps.exploring &&
+    prevProps.highlightSlug === nextProps.highlightSlug &&
+    prevProps.minLabelZoom === nextProps.minLabelZoom &&
+    prevProps.showTooltips === nextProps.showTooltips &&
+    prevProps.highlightMs === nextProps.highlightMs &&
+    prevProps.exploreDismissMs === nextProps.exploreDismissMs &&
+    prevProps.getIcon === nextProps.getIcon &&
+    prevProps.onHighlightEnd === nextProps.onHighlightEnd &&
+    prevProps.onMessage === nextProps.onMessage
+  )
+})

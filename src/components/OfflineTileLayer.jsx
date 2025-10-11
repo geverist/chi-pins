@@ -1,12 +1,48 @@
 /**
  * Offline-capable Leaflet TileLayer component
- * Uses local storage first, falls back to network
+ * Uses 3-tier caching: Memory → Storage → Network
+ *
+ * Performance optimizations:
+ * - In-memory LRU cache (500 tiles, ~7.5MB)
+ * - No double-fetching (converts loaded image to blob)
+ * - Tracked blob URLs with automatic cleanup
+ * - Batch tile saving for Android performance
  */
 
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { getOfflineTileStorage } from '../lib/offlineTileStorage';
+import { getTileCache } from '../lib/tileCache';
+import { getBlobUrlManager } from '../lib/blobUrlManager';
+
+/**
+ * Convert loaded image element to blob without re-fetching from network
+ * @param {HTMLImageElement} imgElement
+ * @returns {Promise<Blob>}
+ */
+async function imageToBlob(imgElement) {
+  return new Promise((resolve, reject) => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = imgElement.naturalWidth || imgElement.width;
+      canvas.height = imgElement.naturalHeight || imgElement.height;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0);
+
+      canvas.toBlob(blob => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to convert image to blob'));
+        }
+      }, 'image/png', 0.95);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 export default function OfflineTileLayer({
   attribution,
@@ -22,44 +58,85 @@ export default function OfflineTileLayer({
   useEffect(() => {
     if (!map) return;
 
-    console.log('[OfflineTileLayer] Initializing with enableProgressiveCaching:', enableProgressiveCaching);
+    console.log('[OfflineTileLayer] Initializing with 3-tier caching (Memory → Storage → Network)');
     const storage = getOfflineTileStorage();
+    const memoryCache = getTileCache();
+    const blobUrlManager = getBlobUrlManager();
 
-    // Custom tile layer that checks offline storage first
+    // Log cache stats periodically in development
+    if (process.env.NODE_ENV === 'development') {
+      const statsInterval = setInterval(() => {
+        const cacheStats = memoryCache.getStats();
+        const blobStats = blobUrlManager.getStats();
+        console.log('[OfflineTileLayer] Cache stats:', cacheStats, 'Blob URLs:', blobStats);
+      }, 30000);
+
+      // Cleanup interval on unmount
+      setTimeout(() => clearInterval(statsInterval), 0);
+    }
+
+    // Custom tile layer with 3-tier caching
     const OfflineTileLayerClass = L.TileLayer.extend({
       createTile: function (coords, done) {
         const tile = document.createElement('img');
         const { x, y, z } = coords;
 
-        // Try to load from offline storage first
+        // TIER 1: Check memory cache (instant - 0ms)
+        const cachedBlob = memoryCache.get(z, x, y);
+        if (cachedBlob) {
+          const url = blobUrlManager.create(cachedBlob, 5000); // Auto-revoke after 5 seconds
+          tile.src = url;
+
+          tile.onload = () => {
+            blobUrlManager.revoke(url); // Clean up immediately after load
+            done(null, tile);
+            if (onTileLoad) onTileLoad({ x, y, z, cached: true, source: 'memory' });
+          };
+
+          tile.onerror = () => {
+            blobUrlManager.revoke(url);
+            // Memory cache had corrupted data, fallback
+            this.loadFromStorage(tile, coords, done);
+          };
+
+          return tile;
+        }
+
+        // TIER 2: Check persistent storage (5-20ms on mobile)
+        this.loadFromStorage(tile, coords, done);
+        return tile;
+      },
+
+      loadFromStorage: function (tile, coords, done) {
+        const { x, y, z } = coords;
+
         storage.getTile(z, x, y).then(blob => {
           if (blob) {
-            // Use cached tile
-            const url = URL.createObjectURL(blob);
+            // Cache in memory for next time
+            memoryCache.set(z, x, y, blob);
+
+            const url = blobUrlManager.create(blob, 5000); // Auto-revoke after 5 seconds
             tile.src = url;
 
-            // Clean up blob URL after tile loads
             tile.onload = () => {
-              URL.revokeObjectURL(url);
+              blobUrlManager.revoke(url);
               done(null, tile);
-              if (onTileLoad) onTileLoad({ x, y, z, cached: true });
+              if (onTileLoad) onTileLoad({ x, y, z, cached: true, source: 'storage' });
             };
 
             tile.onerror = () => {
-              URL.revokeObjectURL(url);
-              // Fallback to network
+              blobUrlManager.revoke(url);
+              // Storage had corrupted data, fallback to network
               this.loadFromNetwork(tile, coords, done);
             };
           } else {
-            // Load from network and cache
+            // Not in storage, load from network
             this.loadFromNetwork(tile, coords, done);
           }
         }).catch(err => {
           console.warn('[OfflineTileLayer] Storage error, falling back to network:', err);
           this.loadFromNetwork(tile, coords, done);
         });
-
-        return tile;
       },
 
       loadFromNetwork: function (tile, coords, done) {
@@ -71,13 +148,20 @@ export default function OfflineTileLayer({
 
         tile.onload = () => {
           done(null, tile);
-          if (onTileLoad) onTileLoad({ x, y, z, cached: false });
+          if (onTileLoad) onTileLoad({ x, y, z, cached: false, source: 'network' });
 
-          // Cache tile for offline use
-          fetch(url)
-            .then(response => response.blob())
-            .then(blob => storage.saveTile(z, x, y, blob))
-            .catch(err => console.warn('[OfflineTileLayer] Failed to cache tile:', err));
+          // Convert loaded image to blob WITHOUT re-fetching (MAJOR FIX)
+          imageToBlob(tile)
+            .then(blob => {
+              // Cache in memory immediately
+              memoryCache.set(z, x, y, blob);
+
+              // Queue for batch save (performance optimization for Android)
+              storage.queueTileSave(z, x, y, blob);
+            })
+            .catch(err => {
+              console.warn('[OfflineTileLayer] Failed to convert tile to blob:', err);
+            });
         };
 
         tile.onerror = (err) => {
