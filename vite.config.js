@@ -10,10 +10,14 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        // Strip console.log and console.info in production for performance
-        // Keep console.error and console.warn for debugging
-        drop_console: true,
-        pure_funcs: ['console.log', 'console.info']
+        // Strip console.log, console.info, and console.debug in production
+        // Keep console.error and console.warn for critical debugging
+        drop_console: false, // Don't drop all, be selective
+        drop_debugger: true, // Remove debugger statements
+        pure_funcs: ['console.log', 'console.info', 'console.debug']
+      },
+      mangle: {
+        safari10: true // Fix Safari 10 bugs
       }
     },
     rollupOptions: {

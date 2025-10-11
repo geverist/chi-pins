@@ -12,7 +12,9 @@ const LOG_LEVELS = {
 };
 
 // Set log level based on environment
-const currentLogLevel = isProduction ? LOG_LEVELS.ERROR : LOG_LEVELS.DEBUG;
+// In production: only show errors and warnings
+// In development: show everything
+const currentLogLevel = isProduction ? LOG_LEVELS.WARN : LOG_LEVELS.DEBUG;
 
 class Logger {
   constructor(context = 'App') {

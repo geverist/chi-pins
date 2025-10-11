@@ -445,6 +445,27 @@ export function useSmartProximityDetection({
     processTrackedPeople();
   }, [enabled, isInitialized, processTrackedPeople]);
 
+  // Cleanup: End all active sessions and clear refs on unmount
+  useEffect(() => {
+    return () => {
+      // End all active learning sessions
+      if (enableLearning) {
+        personStatesRef.current.forEach((state, personId) => {
+          if (state?.session) {
+            endSession({
+              personId,
+              outcome: 'unmounted',
+            });
+          }
+        });
+      }
+
+      // Clear all refs to prevent memory leaks
+      personStatesRef.current.clear();
+      previousTrackedPeopleRef.current.clear();
+    };
+  }, [enableLearning, endSession]);
+
   return {
     // Aggregate detection states
     isAmbientDetected,      // Anyone in ambient zone (10-30 distance)
