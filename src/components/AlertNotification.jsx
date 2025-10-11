@@ -1,11 +1,15 @@
 // src/components/AlertNotification.jsx
 // Prominent alert notification system for admin-to-kiosk messaging
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { speak, shouldUseElevenLabs, getElevenLabsOptions } from '../lib/elevenlabs';
+import { useAdminSettings } from '../state/useAdminSettings';
 
 export default function AlertNotification() {
   const [alerts, setAlerts] = useState([]);
   const [dismissedAlerts, setDismissedAlerts] = useState(new Set());
+  const spokenAlertsRef = useRef(new Set()); // Track which alerts have been spoken
+  const { settings: adminSettings } = useAdminSettings();
 
   useEffect(() => {
     // Load active alerts on mount
@@ -32,6 +36,45 @@ export default function AlertNotification() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // TTS: Speak new alerts when they arrive
+  useEffect(() => {
+    if (!adminSettings || !shouldUseElevenLabs(adminSettings)) {
+      return; // TTS not enabled or configured
+    }
+
+    const speakNewAlerts = async () => {
+      for (const alert of alerts) {
+        // Skip if already spoken, dismissed, or TTS disabled for this alert
+        if (
+          spokenAlertsRef.current.has(alert.id) ||
+          dismissedAlerts.has(alert.id) ||
+          alert.enable_tts === false
+        ) {
+          continue;
+        }
+
+        // Mark as spoken immediately to prevent duplicates
+        spokenAlertsRef.current.add(alert.id);
+
+        // Build text to speak: title + message
+        const textToSpeak = alert.title
+          ? `${alert.title}. ${alert.message}`
+          : alert.message;
+
+        console.log('[AlertNotification] Speaking alert:', alert.id, textToSpeak);
+
+        try {
+          await speak(textToSpeak, getElevenLabsOptions(adminSettings));
+          console.log('[AlertNotification] TTS completed for alert:', alert.id);
+        } catch (error) {
+          console.error('[AlertNotification] TTS failed for alert:', alert.id, error);
+        }
+      }
+    };
+
+    speakNewAlerts();
+  }, [alerts, adminSettings, dismissedAlerts]);
 
   const loadAlerts = async () => {
     try {
