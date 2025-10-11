@@ -87,6 +87,23 @@ CREATE INDEX IF NOT EXISTS idx_error_log_tenant ON public.error_log(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_auto_fix_status ON public.auto_fix_requests(status);
 CREATE INDEX IF NOT EXISTS idx_auto_fix_created ON public.auto_fix_requests(created_at DESC);
 
--- Enable realtime for these tables
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.error_log;
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS public.auto_fix_requests;
+-- Enable realtime for these tables (only if not already added)
+-- Note: ALTER PUBLICATION doesn't support IF NOT EXISTS, so we'll use DO blocks
+DO $$
+BEGIN
+  -- Add error_log to realtime if not already present
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'error_log'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.error_log;
+  END IF;
+
+  -- Add auto_fix_requests to realtime if not already present
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'auto_fix_requests'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.auto_fix_requests;
+  END IF;
+END $$;

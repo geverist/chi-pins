@@ -131,14 +131,14 @@ export default function TouchSequenceIndicator() {
       <style>{`
         @keyframes touchPulse {
           0% {
-            transform: scale(0.1) scaleY(0.8);
+            transform: scale(0.1);
             opacity: 1;
           }
           30% {
             opacity: 0.8;
           }
           100% {
-            transform: scale(2.5) scaleY(2.0);
+            transform: scale(2.5);
             opacity: 0;
           }
         }

@@ -993,6 +993,16 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
           {tab === 'kiosk' && (
             <SectionGrid>
               <Card title="Idle / Kiosk">
+                <FieldRow label="🐛 Show Debug Panel (Visual State Indicator)">
+                  <Toggle
+                    checked={settings.proximityDebugModeEnabled ?? false}
+                    onChange={(v) => setSettings(s => ({ ...s, proximityDebugModeEnabled: v }))}
+                  />
+                  <span style={{ ...s.muted, fontSize: 11, marginLeft: 8 }}>
+                    Display real-time proximity tracking overlay
+                  </span>
+                </FieldRow>
+
                 <FieldRow label="Idle attractor (seconds)">
                   <NumberInput
                     value={settings.idleAttractorSeconds}
@@ -2496,16 +2506,6 @@ export default function AdminPanel({ open, onClose, isLayoutEditMode, setLayoutE
                     checked={settings.proximityDetectionEnabled ?? false}
                     onChange={(v) => setSettings(s => ({ ...s, proximityDetectionEnabled: v }))}
                   />
-                </FieldRow>
-
-                <FieldRow label="Show Debug Panel">
-                  <Toggle
-                    checked={settings.proximityDebugModeEnabled ?? false}
-                    onChange={(v) => setSettings(s => ({ ...s, proximityDebugModeEnabled: v }))}
-                  />
-                  <span style={{ ...s.muted, fontSize: 11, marginLeft: 8 }}>
-                    Display real-time tracking data overlay
-                  </span>
                 </FieldRow>
 
                 {settings.proximityDetectionEnabled && (
