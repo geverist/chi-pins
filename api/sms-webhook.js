@@ -432,9 +432,9 @@ async function approveLastAction() {
 
 "${task.request_text}"
 
-The autonomous developer will begin implementation shortly. You'll receive SMS updates as it progresses.
+Task has been stored and is ready for execution. Check the autonomous_tasks table in Supabase or run 'node scripts/execute-sms-tasks.js' to pick it up.
 
-Implementation typically takes 2-5 minutes.`;
+Task ID: ${task.id.slice(0, 8)}...`;
   } catch (err) {
     return `❌ Failed to approve: ${err.message}`;
   }
@@ -608,7 +608,9 @@ Confidence: ${analysis.confidence}%${filesText}
 Plan:
 ${analysis.plan}
 
-${analysis.confidence >= 90 ? '✅ Auto-approved! Implementation starting...' : 'Reply YES to proceed, NO to cancel'}`;
+${analysis.confidence >= 90 ? '✅ Auto-approved! Task stored and ready for execution.' : 'Reply YES to store task, NO to cancel'}
+
+Execute with: node scripts/execute-sms-tasks.js`;
 
   } catch (err) {
     console.error('[SMS] Failed to create task:', err);
@@ -629,22 +631,24 @@ async function analyzeTaskWithAI(request) {
 
     const prompt = `You are analyzing a development task request for a React kiosk application.
 
+IMPORTANT: You are ONLY evaluating and categorizing the task. Do NOT attempt to look at code, read files, or suggest specific implementation details. Just analyze the request itself.
+
 Request: "${request}"
 
 Analyze this request and provide:
 1. taskType: feature, bug_fix, refactor, config, docs, or other
 2. complexity: simple, medium, complex, or very_complex
-3. confidence: 0-100 score of how well you understand the request
-4. affectedFiles: Array of likely files that will be modified (max 5)
-5. plan: 2-3 sentence implementation plan
+3. confidence: 0-100 score of how well you understand what is being requested
+4. affectedFiles: Array of likely file types/areas that might be affected (max 5, keep generic like "components/", "hooks/", "styles/")
+5. plan: 2-3 sentence high-level description of what needs to be done (NO specific code, file paths, or implementation details)
 
 Respond in JSON format:
 {
   "taskType": "feature",
   "complexity": "medium",
   "confidence": 85,
-  "affectedFiles": ["src/App.jsx", "src/components/Settings.jsx"],
-  "plan": "Add a dark mode toggle to the settings page. Implement theme context and CSS variables. Update all components to support theming."
+  "affectedFiles": ["components/", "styles/"],
+  "plan": "This request appears to be asking for a dark mode toggle. The implementation would involve adding theme state management and updating UI components to support both light and dark themes."
 }`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
