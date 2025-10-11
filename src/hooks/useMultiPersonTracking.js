@@ -119,6 +119,118 @@ function isLookingAtCamera(headPose) {
 }
 
 /**
+ * Calculate confidence score (0-100) for person detection
+ * Based on pose quality, gaze detection, trajectory consistency, and distance reliability
+ */
+function calculateConfidence(person) {
+  let confidence = 0;
+
+  // Pose detection quality (0-30 points)
+  const avgVisibility = person.landmarks
+    ? person.landmarks.reduce((sum, lm) => sum + (lm.visibility || 0), 0) / person.landmarks.length
+    : 0;
+  confidence += avgVisibility * 30;
+
+  // Gaze detection quality (0-30 points)
+  if (person.headPose && person.isLookingAtKiosk) {
+    confidence += person.gazeConfidence * 30;
+  }
+
+  // Trajectory consistency (0-20 points)
+  if (person.trajectory && person.trajectory.length > 5) {
+    // Calculate straightness of trajectory
+    const traj = person.trajectory.slice(-10); // Last 10 points
+    const startPoint = traj[0];
+    const endPoint = traj[traj.length - 1];
+    const directDistance = Math.sqrt(
+      Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2)
+    );
+
+    let pathLength = 0;
+    for (let i = 1; i < traj.length; i++) {
+      pathLength += Math.sqrt(
+        Math.pow(traj[i].x - traj[i - 1].x, 2) + Math.pow(traj[i].y - traj[i - 1].y, 2)
+      );
+    }
+
+    const consistency = pathLength > 0 ? directDistance / pathLength : 0;
+    confidence += consistency * 20;
+  }
+
+  // Distance reliability (0-20 points)
+  // Most reliable between 20-200 distance
+  if (person.distance > 20 && person.distance < 200) {
+    confidence += 20;
+  } else if (person.distance >= 10 && person.distance <= 300) {
+    confidence += 10;
+  }
+
+  return Math.min(100, Math.round(confidence));
+}
+
+/**
+ * Environmental context filters to prevent false positives
+ */
+const environmentalFilters = {
+  // Ignore very fast movement (likely passing by)
+  speedFilter: (velocity) => {
+    const speed = Math.sqrt(Math.pow(velocity.x || 0, 2) + Math.pow(velocity.y || 0, 2));
+    return speed < 0.8; // Ignore if moving > 0.8 units/sec
+  },
+
+  // Ignore edge cases (people at screen edges)
+  boundaryFilter: (position) => {
+    return position.x > 0.1 && position.x < 0.9 && position.y > 0.1 && position.y < 0.9;
+  },
+
+  // Ignore low-quality detections
+  qualityFilter: (person) => {
+    const avgVisibility = person.landmarks
+      ? person.landmarks.reduce((sum, lm) => sum + (lm.visibility || 0), 0) / person.landmarks.length
+      : 0;
+    return avgVisibility > 0.6;
+  },
+
+  // Ignore very brief appearances (< 1 second)
+  durationFilter: (person) => {
+    const duration = Date.now() - (person.firstSeen || Date.now());
+    return duration >= 1000;
+  },
+};
+
+/**
+ * Dead zone detection - identify common false positive patterns
+ */
+function isDeadZone(person) {
+  // Ignore people in "passing lane" (e.g., left 20% of screen)
+  if (person.lastPosition && person.lastPosition.x < 0.2) {
+    return true;
+  }
+
+  // Ignore very brief appearances (<1 second)
+  const trackingDuration = Date.now() - (person.firstSeen || Date.now());
+  if (trackingDuration < 1000) {
+    return true;
+  }
+
+  // Ignore people who never slow down (still accelerating)
+  if (person.trajectory && person.trajectory.length > 5) {
+    const avgSpeed = person.trajectory.reduce((sum, t) => {
+      const vel = t.velocity || person.velocity;
+      return sum + Math.sqrt(Math.pow(vel?.x || 0, 2) + Math.pow(vel?.y || 0, 2));
+    }, 0) / person.trajectory.length;
+
+    const currentSpeed = Math.sqrt(Math.pow(person.velocity?.x || 0, 2) + Math.pow(person.velocity?.y || 0, 2));
+
+    if (currentSpeed > avgSpeed * 1.2) {
+      return true; // Still accelerating
+    }
+  }
+
+  return false;
+}
+
+/**
  * Track person across frames using position and appearance matching
  */
 class PersonTracker {
@@ -126,6 +238,7 @@ class PersonTracker {
     this.trackedPeople = new Map(); // personId -> person data
     this.nextId = 1;
     this.maxFramesLost = 15; // Remove person after 15 frames without detection
+    this.intentHistorySize = 10; // Number of intent predictions to keep for smoothing
   }
 
   /**
@@ -215,22 +328,29 @@ class PersonTracker {
     const personId = `person-${this.nextId++}`;
     const distance = estimateDistanceFromPose(detection.landmarks);
 
-    this.trackedPeople.set(personId, {
+    const newPerson = {
       id: personId,
       firstSeen: timestamp,
       lastSeen: timestamp,
       lastPosition: center,
-      trajectory: [{ x: center.x, y: center.y, timestamp, distance: distance?.score || 0 }],
+      trajectory: [{ x: center.x, y: center.y, timestamp, distance: distance?.score || 0, velocity: { x: 0, y: 0 } }],
       distance: distance?.score || 0,
       velocity: { x: 0, y: 0 },
       intent: 'unknown',
+      intentHistory: [], // For temporal smoothing
+      confidence: 0,
       framesLost: 0,
       landmarks: detection.landmarks,
       // Gaze tracking data
       headPose: faceData?.headPose || null,
       isLookingAtKiosk: faceData?.isLookingAtKiosk || false,
       gazeConfidence: faceData?.confidence || 0,
-    });
+    };
+
+    // Calculate initial confidence
+    newPerson.confidence = calculateConfidence(newPerson);
+
+    this.trackedPeople.set(personId, newPerson);
   }
 
   /**
@@ -255,13 +375,26 @@ class PersonTracker {
       y: center.y,
       timestamp,
       distance: distance?.score || 0,
+      velocity: { ...person.velocity },
     });
     if (person.trajectory.length > 30) {
       person.trajectory.shift();
     }
 
-    // Predict intent from trajectory
-    person.intent = this.predictIntent(person);
+    // Predict intent from trajectory (raw prediction)
+    const rawIntent = this.predictIntent(person);
+
+    // Add to intent history for temporal smoothing
+    if (!person.intentHistory) {
+      person.intentHistory = [];
+    }
+    person.intentHistory.push(rawIntent);
+    if (person.intentHistory.length > this.intentHistorySize) {
+      person.intentHistory.shift();
+    }
+
+    // Smooth intent using majority vote from history
+    person.intent = this.smoothIntent(person.intentHistory);
 
     // Update gaze/face data if available
     if (faceData) {
@@ -276,6 +409,9 @@ class PersonTracker {
     person.distance = distance?.score || 0;
     person.framesLost = 0;
     person.landmarks = detection.landmarks;
+
+    // Recalculate confidence
+    person.confidence = calculateConfidence(person);
   }
 
   /**
@@ -312,10 +448,64 @@ class PersonTracker {
   }
 
   /**
-   * Get all currently tracked people
+   * Smooth intent using temporal majority vote
+   * Requires 70% agreement from intent history before changing state
+   */
+  smoothIntent(intentHistory) {
+    if (!intentHistory || intentHistory.length === 0) return 'unknown';
+
+    // Count occurrences of each intent
+    const intentCounts = {};
+    intentHistory.forEach(intent => {
+      intentCounts[intent] = (intentCounts[intent] || 0) + 1;
+    });
+
+    // Find dominant intent (requires > 70% agreement)
+    let dominantIntent = 'unknown';
+    let maxCount = 0;
+    const threshold = intentHistory.length * 0.7;
+
+    for (const [intent, count] of Object.entries(intentCounts)) {
+      if (count > maxCount && count >= threshold) {
+        dominantIntent = intent;
+        maxCount = count;
+      }
+    }
+
+    // If no intent has 70% agreement, keep the most recent
+    if (dominantIntent === 'unknown' && intentHistory.length > 0) {
+      dominantIntent = intentHistory[intentHistory.length - 1];
+    }
+
+    return dominantIntent;
+  }
+
+  /**
+   * Get all currently tracked people (with environmental filtering applied)
    */
   getTrackedPeople() {
-    return Array.from(this.trackedPeople.values()).filter(p => p.framesLost === 0);
+    return Array.from(this.trackedPeople.values())
+      .filter(p => p.framesLost === 0)
+      .filter(p => {
+        // Apply environmental filters
+        const passesSpeedFilter = environmentalFilters.speedFilter(p.velocity);
+        const passesBoundaryFilter = environmentalFilters.boundaryFilter(p.lastPosition);
+        const passesQualityFilter = environmentalFilters.qualityFilter(p);
+        const passesDurationFilter = environmentalFilters.durationFilter(p);
+
+        // Check if in dead zone
+        const inDeadZone = isDeadZone(p);
+
+        // Only include if confidence > 70 and passes all filters and not in dead zone
+        return (
+          p.confidence > 70 &&
+          passesSpeedFilter &&
+          passesBoundaryFilter &&
+          passesQualityFilter &&
+          passesDurationFilter &&
+          !inDeadZone
+        );
+      });
   }
 
   /**

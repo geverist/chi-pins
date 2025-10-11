@@ -171,6 +171,112 @@ export function useAdaptiveLearning({
     };
   };
 
+  /**
+   * Identify false positive patterns from abandoned sessions
+   * Learns common characteristics that lead to abandonments and creates adaptive dead zones
+   */
+  const identifyFalsePositivePatterns = (sessions) => {
+    const abandoned = sessions.filter(s => s.outcome === 'abandoned');
+
+    if (abandoned.length < 5) {
+      return null; // Need at least 5 abandoned sessions to identify patterns
+    }
+
+    // Calculate average characteristics of false positives
+    let totalDuration = 0;
+    let totalSpeed = 0;
+    let totalGazeDuration = 0;
+    let edgeCaseCount = 0;
+    let passingCount = 0;
+
+    abandoned.forEach(session => {
+      totalDuration += session.duration_ms || 0;
+
+      // Calculate speed from velocity
+      if (session.velocity && typeof session.velocity === 'object') {
+        const speed = Math.sqrt((session.velocity.x || 0) ** 2 + (session.velocity.y || 0) ** 2);
+        totalSpeed += speed;
+      }
+
+      totalGazeDuration += session.gaze_duration_ms || 0;
+
+      // Check if at screen edge (x < 0.2 or x > 0.8)
+      if (session.trajectory && Array.isArray(session.trajectory) && session.trajectory.length > 0) {
+        const lastPos = session.trajectory[session.trajectory.length - 1];
+        if (lastPos.x < 0.2 || lastPos.x > 0.8) {
+          edgeCaseCount++;
+        }
+      }
+
+      // Check if intent was 'passing'
+      if (session.intent === 'passing') {
+        passingCount++;
+      }
+    });
+
+    const avgDuration = totalDuration / abandoned.length;
+    const avgSpeed = totalSpeed / abandoned.length;
+    const avgGazeDuration = totalGazeDuration / abandoned.length;
+    const edgeCaseRate = (edgeCaseCount / abandoned.length) * 100;
+    const passingRate = (passingCount / abandoned.length) * 100;
+
+    // Identify pattern types
+    const patterns = [];
+
+    // Pattern 1: Fast passerbys (< 2s duration, high speed, low gaze)
+    if (avgDuration < 2000 && avgSpeed > 0.5 && avgGazeDuration < 500) {
+      patterns.push({
+        type: 'fast_passerby',
+        minDuration: 2000,
+        maxSpeed: 0.5,
+        minGaze: 500,
+        description: 'People passing by quickly without engagement',
+      });
+    }
+
+    // Pattern 2: Edge wanderers (high edge case rate)
+    if (edgeCaseRate > 50) {
+      patterns.push({
+        type: 'edge_wanderer',
+        boundaryMargin: 0.25, // Ignore people within 25% of screen edge
+        description: 'People walking along screen edges',
+      });
+    }
+
+    // Pattern 3: Passing traffic (high passing intent rate)
+    if (passingRate > 60) {
+      patterns.push({
+        type: 'passing_traffic',
+        ignorePassingIntent: true,
+        description: 'People with passing movement pattern',
+      });
+    }
+
+    // Pattern 4: Brief glances (very short gaze, short duration)
+    if (avgGazeDuration < 1000 && avgDuration < 3000) {
+      patterns.push({
+        type: 'brief_glance',
+        minGazeDuration: 1000,
+        minTotalDuration: 3000,
+        description: 'Brief glances without sustained attention',
+      });
+    }
+
+    console.log('[AdaptiveLearning] 🧠 Identified false positive patterns:', patterns);
+
+    return {
+      patterns,
+      statistics: {
+        avgDuration,
+        avgSpeed,
+        avgGazeDuration,
+        edgeCaseRate,
+        passingRate,
+        totalAbandoned: abandoned.length,
+      },
+    };
+  };
+
   // Analyze gaze patterns from session data
   const analyzeGazePatterns = (sessions) => {
     const sessionsWithGaze = sessions.filter(s => s.gaze_duration_ms != null && s.gaze_confidence != null);
@@ -241,24 +347,28 @@ export function useAdaptiveLearning({
 
       console.log(`[AdaptiveLearning] Basic stats: ${abandonment.toFixed(1)}% abandoned, ${engagement.toFixed(1)}% engaged`);
 
-      // Analyze movement vectors and gaze patterns
+      // Analyze movement vectors, gaze patterns, and false positive patterns
       const vectorAnalysis = analyzeMovementVectors(recentSessions);
       const gazeAnalysis = analyzeGazePatterns(recentSessions);
+      const falsePositiveAnalysis = identifyFalsePositivePatterns(recentSessions);
 
       console.log('[AdaptiveLearning] Vector analysis:', vectorAnalysis);
       console.log('[AdaptiveLearning] Gaze analysis:', gazeAnalysis);
+      if (falsePositiveAnalysis) {
+        console.log('[AdaptiveLearning] False positive patterns:', falsePositiveAnalysis);
+      }
 
       // Auto-adjust thresholds using ALL available intelligence
       if (!passiveLearningMode) {
-        await autoAdjustThresholds(abandonment, engagement, vectorAnalysis, gazeAnalysis, recentSessions);
+        await autoAdjustThresholds(abandonment, engagement, vectorAnalysis, gazeAnalysis, recentSessions, falsePositiveAnalysis);
       }
     } catch (error) {
       console.error('[AdaptiveLearning] Error loading stats:', error);
     }
   }, [tenantId, passiveLearningMode]);
 
-  // Automatic threshold adjustment using vector analysis, gaze patterns, and abandonment rates
-  const autoAdjustThresholds = useCallback(async (abandonment, engagement, vectorAnalysis = {}, gazeAnalysis = {}, sessions = []) => {
+  // Automatic threshold adjustment using vector analysis, gaze patterns, abandonment rates, and false positive patterns
+  const autoAdjustThresholds = useCallback(async (abandonment, engagement, vectorAnalysis = {}, gazeAnalysis = {}, sessions = [], falsePositiveAnalysis = null) => {
     try {
       // INTELLIGENT THRESHOLD ADJUSTMENT using multiple signals
       let adjustmentFactor = 0;
@@ -299,8 +409,23 @@ export function useAdaptiveLearning({
         intelligenceUsed.push(`No-gaze abandonments (${gazeAnalysis.noGazeAbandoned.toFixed(0)}%)`);
       }
 
+      // Signal 4: False positive patterns (adaptive dead zones)
+      let falsePositiveAdjustment = 0;
+      if (falsePositiveAnalysis && falsePositiveAnalysis.patterns.length > 0) {
+        // If we identified false positive patterns, increase thresholds to reduce them
+        const patternCount = falsePositiveAnalysis.patterns.length;
+        falsePositiveAdjustment = 0.05 * patternCount; // 5% increase per pattern type
+        const patternDescriptions = falsePositiveAnalysis.patterns.map(p => p.type).join(', ');
+        intelligenceUsed.push(`${patternCount} false positive pattern(s): ${patternDescriptions}`);
+
+        console.log('[AdaptiveLearning] 🚫 False positive patterns detected:', {
+          patterns: falsePositiveAnalysis.patterns,
+          adjustment: falsePositiveAdjustment,
+        });
+      }
+
       // Combine all intelligence signals
-      const totalAdjustment = baseAdjustment + vectorAdjustment + gazeAdjustment;
+      const totalAdjustment = baseAdjustment + vectorAdjustment + gazeAdjustment + falsePositiveAdjustment;
 
       // Only adjust if combined signal is significant (>3% change)
       if (Math.abs(totalAdjustment) < 0.03) {
@@ -320,6 +445,7 @@ export function useAdaptiveLearning({
         baseAdjustment,
         vectorAdjustment,
         gazeAdjustment,
+        falsePositiveAdjustment,
         totalAdjustment,
         adjustmentFactor,
         reason: adjustmentReason,

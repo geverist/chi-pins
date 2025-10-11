@@ -7,6 +7,57 @@ import { useMultiPersonTracking } from './useMultiPersonTracking';
 import { useLearningSession } from './useLearningSession';
 
 /**
+ * Hysteresis thresholds - prevents oscillation by requiring different values to enter vs exit states
+ * Higher threshold to enter, lower to exit
+ */
+const HYSTERESIS = {
+  ambient: {
+    enter: 30,  // Enter ambient zone at distance >= 30
+    exit: 25,   // Stay in ambient until distance < 25
+  },
+  walkup: {
+    enter: 60,  // Enter walkup zone at distance >= 60
+    exit: 50,   // Stay in walkup until distance < 50
+  },
+  stare: {
+    enter: 60,  // Enter stare zone at distance >= 60
+    exit: 50,   // Stay in stare until distance < 50
+  },
+};
+
+/**
+ * Multi-signal validation - requires multiple independent signals to agree
+ * Prevents false positives by checking trajectory, gaze, velocity, and distance
+ */
+function validateIntent(person, requiredIntent) {
+  const signals = {
+    // Signal 1: Distance is appropriate for intent
+    distanceMatches: requiredIntent === 'approaching'
+      ? person.distance > HYSTERESIS.walkup.enter
+      : true,
+
+    // Signal 2: Velocity direction matches intent
+    velocityMatches: requiredIntent === 'approaching'
+      ? person.velocity?.x > 0.05 || person.velocity?.y > 0.05 // Moving toward kiosk
+      : true,
+
+    // Signal 3: Gaze at kiosk (for walkup/stare only)
+    gazeMatches: ['approaching', 'stopped'].includes(requiredIntent)
+      ? person.isLookingAtKiosk === true && person.gazeConfidence > 0.7
+      : true,
+
+    // Signal 4: Intent prediction matches
+    intentMatches: person.intent === requiredIntent,
+  };
+
+  // Count agreeing signals
+  const agreementCount = Object.values(signals).filter(Boolean).length;
+
+  // Require at least 3 out of 4 signals to agree
+  return agreementCount >= 3;
+}
+
+/**
  * Smart Proximity Detection - Multi-person tracking with gaze-validated triggers
  *
  * Three-tier environmental awareness:
@@ -20,6 +71,11 @@ import { useLearningSession } from './useLearningSession';
  * - Movement vectoring (approaching vs. passing by)
  * - Per-person adaptive learning sessions
  * - Time/location-aware pattern learning
+ * - Hysteresis thresholds to prevent oscillation
+ * - Multi-signal validation (3/4 signals must agree)
+ * - Environmental filtering (speed, boundary, quality, duration)
+ * - Temporal smoothing (70% intent agreement required)
+ * - Confidence scoring (0-100 based on pose/gaze/trajectory quality)
  *
  * @param {Object} options
  * @param {boolean} options.enabled - Enable smart proximity detection
@@ -172,11 +228,17 @@ export function useSmartProximityDetection({
       maxProximity = Math.max(maxProximity, person.distance);
 
       // TIER 1: AMBIENT DETECTION (general proximity, any direction)
-      const inAmbientZone = person.distance >= ambientThreshold && person.distance < walkupThreshold;
+      // Use hysteresis: enter at >= enter threshold, exit at < exit threshold
+      const shouldEnterAmbient = person.distance >= HYSTERESIS.ambient.enter && person.distance < HYSTERESIS.walkup.enter;
+      const shouldExitAmbient = person.distance < HYSTERESIS.ambient.exit || person.distance >= HYSTERESIS.walkup.enter;
+
+      const inAmbientZone = state.inAmbientZone
+        ? !shouldExitAmbient  // If already in, stay until exit condition
+        : shouldEnterAmbient; // If not in, enter only if enter condition
 
       if (inAmbientZone && !state.inAmbientZone) {
         // Entered ambient zone
-        console.log(`[SmartProximity] 🎵 ${person.id} entered AMBIENT zone (distance: ${person.distance})`);
+        console.log(`[SmartProximity] 🎵 ${person.id} entered AMBIENT zone (distance: ${person.distance}, confidence: ${person.confidence || 0})`);
         state.inAmbientZone = true;
 
         // Start ambient session
@@ -207,13 +269,19 @@ export function useSmartProximityDetection({
       }
 
       // TIER 2: WALKUP DETECTION (approaching + looking at kiosk)
-      const inWalkupZone = person.distance >= walkupThreshold &&
-                           person.intent === 'approaching' &&
-                           person.isLookingAtKiosk === true;
+      // Use hysteresis and multi-signal validation
+      const shouldEnterWalkup = person.distance >= HYSTERESIS.walkup.enter &&
+                                validateIntent(person, 'approaching');
+      const shouldExitWalkup = person.distance < HYSTERESIS.walkup.exit ||
+                               !person.isLookingAtKiosk;
+
+      const inWalkupZone = state.inWalkupZone
+        ? !shouldExitWalkup
+        : shouldEnterWalkup;
 
       if (inWalkupZone && !state.inWalkupZone) {
-        // Entered walkup zone with gaze validation
-        console.log(`[SmartProximity] 👁️ ${person.id} entered WALKUP zone (distance: ${person.distance}, looking: true)`);
+        // Entered walkup zone with gaze validation and multi-signal agreement
+        console.log(`[SmartProximity] 👁️ ${person.id} entered WALKUP zone (distance: ${person.distance}, confidence: ${person.confidence || 0}, looking: true)`);
         state.inWalkupZone = true;
 
         // End ambient session if exists, start walkup session
@@ -263,9 +331,15 @@ export function useSmartProximityDetection({
       }
 
       // TIER 3: STARE DETECTION (close + looking at screen for extended time)
-      const isStareProximity = person.distance >= stareThreshold &&
-                               person.intent === 'stopped' &&
-                               person.isLookingAtKiosk === true;
+      // Use hysteresis and multi-signal validation
+      const shouldEnterStare = person.distance >= HYSTERESIS.stare.enter &&
+                               validateIntent(person, 'stopped');
+      const shouldExitStare = person.distance < HYSTERESIS.stare.exit ||
+                              !person.isLookingAtKiosk;
+
+      const isStareProximity = state.isStaring
+        ? !shouldExitStare
+        : shouldEnterStare;
 
       if (isStareProximity) {
         // Start tracking stare time
