@@ -152,104 +152,110 @@ function WalkupAttractor({
           {/* Shadow and Ripples Container - stays at ground level */}
           <div style={{
             position: 'relative',
-            width: '120px',
+            width: '300px',
             margin: '-90px auto 0',
-            height: '120px',
+            height: '300px',
           }}>
-            {/* Water Ripple 1 - Fast, starts on impact */}
+            {/* Water Ripple 1 - Fast, starts on impact with gradient border */}
             <div style={{
               position: 'absolute',
-              top: '75%',
+              top: '50%',
               left: '50%',
               zIndex: 0,
-              width: '80px',
-              height: '80px',
+              width: '120px',
+              height: '120px',
               borderRadius: '50%',
-              border: '3px solid rgba(255, 255, 255, 0.6)',
+              border: '4px solid rgba(56, 189, 248, 0.8)',
+              boxShadow: '0 0 20px rgba(56, 189, 248, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.3)',
               transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
               animation: 'waterRipple 2s ease-out infinite',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Water Ripple 2 - Medium speed */}
+            {/* Water Ripple 2 - Medium speed with cyan */}
             <div style={{
               position: 'absolute',
-              top: '75%',
+              top: '50%',
               left: '50%',
               zIndex: 0,
-              width: '80px',
-              height: '80px',
+              width: '120px',
+              height: '120px',
               borderRadius: '50%',
-              border: '3px solid rgba(255, 255, 255, 0.5)',
+              border: '4px solid rgba(125, 211, 252, 0.7)',
+              boxShadow: '0 0 18px rgba(125, 211, 252, 0.5), inset 0 0 12px rgba(125, 211, 252, 0.2)',
               transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
               animation: 'waterRipple 2s ease-out infinite 0.15s',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Water Ripple 3 - Slower */}
+            {/* Water Ripple 3 - Slower with white */}
             <div style={{
               position: 'absolute',
-              top: '75%',
+              top: '50%',
               left: '50%',
               zIndex: 0,
-              width: '80px',
-              height: '80px',
+              width: '120px',
+              height: '120px',
               borderRadius: '50%',
-              border: '2px solid rgba(255, 255, 255, 0.4)',
+              border: '3px solid rgba(255, 255, 255, 0.6)',
+              boxShadow: '0 0 15px rgba(255, 255, 255, 0.4)',
               transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
               animation: 'waterRipple 2s ease-out infinite 0.3s',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Water Ripple 4 - Slower still */}
+            {/* Water Ripple 4 - Slower still with light blue */}
             <div style={{
               position: 'absolute',
-              top: '75%',
+              top: '50%',
               left: '50%',
               zIndex: 0,
-              width: '80px',
-              height: '80px',
+              width: '120px',
+              height: '120px',
               borderRadius: '50%',
-              border: '2px solid rgba(255, 255, 255, 0.35)',
+              border: '3px solid rgba(186, 230, 253, 0.5)',
+              boxShadow: '0 0 12px rgba(186, 230, 253, 0.3)',
               transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
               animation: 'waterRipple 2s ease-out infinite 0.45s',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Water Ripple 5 - Slowest, largest */}
+            {/* Water Ripple 5 - Slowest, largest with fade */}
             <div style={{
               position: 'absolute',
-              top: '75%',
+              top: '50%',
               left: '50%',
               zIndex: 0,
-              width: '80px',
-              height: '80px',
+              width: '120px',
+              height: '120px',
               borderRadius: '50%',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
+              border: '2px solid rgba(240, 249, 255, 0.4)',
+              boxShadow: '0 0 10px rgba(240, 249, 255, 0.2)',
               transform: 'translate(-50%, -50%) rotateX(60deg) scale(0.3)',
               animation: 'waterRipple 2s ease-out infinite 0.6s',
               transformStyle: 'preserve-3d',
             }} />
 
-            {/* Center glow on impact */}
+            {/* Center glow on impact - enhanced with color */}
             <div style={{
               position: 'absolute',
-              top: '75%',
+              top: '50%',
               left: '50%',
               zIndex: 0,
-              width: '60px',
-              height: '60px',
+              width: '80px',
+              height: '80px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(56, 189, 248, 0.6) 0%, rgba(255, 255, 255, 0.3) 40%, transparent 70%)',
               transform: 'translate(-50%, -50%) rotateX(60deg)',
               animation: 'impactGlow 2s ease-out infinite',
               transformStyle: 'preserve-3d',
+              boxShadow: '0 0 30px rgba(56, 189, 248, 0.8)',
             }} />
 
             {/* Shadow below pin */}
             <div style={{
               position: 'absolute',
-              top: '75%',
+              top: '50%',
               left: '50%',
               zIndex: 0,
               width: '120px',
@@ -266,7 +272,7 @@ function WalkupAttractor({
         <h1
           key={currentPromptIndex}
           style={{
-            fontSize: '72px',
+            fontSize: '96px',
             fontWeight: '900',
             marginBottom: '24px',
             color: 'white',
@@ -275,6 +281,7 @@ function WalkupAttractor({
             paintOrder: 'stroke fill',
             animation: 'slideIn 0.5s ease-out',
             letterSpacing: '0.02em',
+            whiteSpace: 'nowrap',
           }}
         >
           {currentPrompt?.text || 'Welcome!'}
@@ -406,7 +413,7 @@ function WalkupAttractor({
             opacity: 1;
           }
           100% {
-            transform: translate(-50%, -50%) rotateX(60deg) scale(2.5);
+            transform: translate(-50%, -50%) rotateX(60deg) scale(4.5);
             opacity: 0;
           }
         }

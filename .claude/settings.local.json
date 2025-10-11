@@ -33,7 +33,12 @@
       "Bash(tee:*)",
       "Bash(npm outdated)",
       "Bash(npm update:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(npx cap sync:*)",
+      "Bash(export:*)",
+      "Bash(./gradlew:*)",
+      "Bash(npm run android:build:debug:*)",
+      "Bash(/Users/gileseverist/Dev/kiosk/chi-pins/android/gradlew -p /Users/gileseverist/Dev/kiosk/chi-pins/android clean assembleDebug)"
     ],
     "deny": [],
     "ask": []
