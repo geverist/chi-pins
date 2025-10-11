@@ -258,7 +258,7 @@ export default function App() {
 
   // UI state
   const [toast, setToast] = useState(null);
-  const [exploring, setExploring] = useState(false);
+  const [exploring, setExploring] = useState(isMobile); // Initialize based on mobile state
   const [selectedTeamFilter] = useState(null);
 
   // Team filter changes (logging disabled for performance)
@@ -405,14 +405,8 @@ export default function App() {
     enableImmersiveMode();
     maintainImmersiveMode();
 
-    // Set exploring mode based on mobile state
-    if (isMobile) {
-      setExploring(true);
-      console.log('App: Mobile mode - exploring enabled');
-    } else {
-      setExploring(false);
-      console.log('App: Desktop mode - exploring disabled');
-    }
+    // Log exploring mode initialization
+    console.log(`App: ${isMobile ? 'Mobile' : 'Desktop'} mode - exploring ${isMobile ? 'enabled' : 'disabled'}`);
   }, [isMobile]);
 
   // Separate useEffect for console webhook initialization that re-runs when settings change
@@ -929,7 +923,7 @@ export default function App() {
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
       try {
         mainMapRef.current?.panTo([lat, lng], { animate: false });
-      } catch (err) {
+      } catch {
         // Silently ignore map pan errors
       }
     }
@@ -1460,7 +1454,7 @@ export default function App() {
               const cz = map.getZoom() ?? 10;
               const nz = Math.min(cz + 0.5, 19);
               map.setView([ll.lat, ll.lng], nz, { animate: true });
-            } catch (err) {
+            } catch {
               // Silently ignore map view errors
             }
             closeSubmap();
