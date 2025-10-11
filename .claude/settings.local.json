@@ -15,6 +15,8 @@
       "Bash(ping:*)",
       "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb connect 192.168.2.112:40585)",
       "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:40585 install -r android/app/build/outputs/apk/debug/app-debug.apk)",
+      "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:40585 shell pm grant com.chicagomikes.chipins android.permission.CAMERA)",
+      "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:40585 shell pm grant com.chicagomikes.chipins android.permission.RECORD_AUDIO)",
       "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:40585 shell am start -n com.chipinspinboard.app/.MainActivity)",
       "Bash(/opt/homebrew/share/android-commandlinetools/platform-tools/adb -s 192.168.2.112:40585 shell monkey -p com.chipinspinboard.app -c android.intent.category.LAUNCHER 1)",
       "Bash(adb -s 192.168.2.112:40585 shell dumpsys package com.chipinspinboard.app)",
