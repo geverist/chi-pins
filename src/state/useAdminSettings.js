@@ -288,8 +288,8 @@ const DEFAULTS = {
   consoleWebhookMaxBatchSize: 50,            // Max events per batch
 
   // Autonomous Self-Healing System
-  autonomousHealingEnabled: false,           // Enable autonomous error fixing with AI
-  autonomousHealingAutoMerge: false,         // Auto-merge fixes (true) or create PRs for review (false)
+  autonomousHealingEnabled: true,            // Enable autonomous error fixing with AI ✅ ENABLED for proactive fixes
+  autonomousHealingAutoMerge: false,         // Auto-merge fixes (true) or create PRs for review (false) - SAFE: PRs for review
   autonomousHealingMaxFixesPerHour: 5,       // Safety: Maximum fixes per hour
   autonomousHealingMinConfidence: 80,        // Minimum AI confidence to apply fix (0-100)
   autonomousHealingNotifySMS: true,          // Send SMS for every auto-fix
