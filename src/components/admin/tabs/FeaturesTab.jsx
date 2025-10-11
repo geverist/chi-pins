@@ -472,6 +472,17 @@ export default function FeaturesTab({
 
         {settings.proximityDetectionEnabled && (
           <>
+            <FieldRow label="Passive Learning Mode">
+              <Toggle
+                checked={settings.proximityLearningModeEnabled ?? false}
+                onChange={(v) => updateSetting('proximityLearningModeEnabled', v)}
+              />
+            </FieldRow>
+
+            <p style={{ ...s.muted, margin: '4px 0 12px', fontSize: 11 }}>
+              Learning mode detects and logs all proximity events without triggering actions (walkup greeting, voice, etc.). Use this to calibrate thresholds and observe detection patterns before going live.
+            </p>
+
             <FieldRow label="Enable Employee Check-In">
               <Toggle
                 checked={settings.employeeCheckinEnabled ?? false}

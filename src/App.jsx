@@ -11,9 +11,9 @@ import { useFunFacts, getRandomFact } from './hooks/useFunFacts';
 import { useModalManager } from './hooks/useModalManager';
 import { useHighlightPin } from './hooks/useHighlightPin';
 import { useTouchSequence } from './hooks/useTouchSequence';
-import { useSmartProximityDetection } from './hooks/useSmartProximityDetection';
 import { useAdaptiveLearning } from './hooks/useAdaptiveLearning';
 import { useAmbientMusic } from './hooks/useAmbientMusic';
+import { useProximityHandlers } from './hooks/useProximityHandlers';
 import { initConsoleWebhook, updateWebhookUrl, sendTestEvent, getWebhookStatus } from './lib/consoleWebhook';
 import { getSyncService } from './lib/syncService';
 import { LayoutStackProvider } from './hooks/useLayoutStack';
@@ -171,10 +171,6 @@ export default function App() {
   // Business hours management
   const { isOpen: isBusinessHoursOpen, nextChange, businessHoursEnabled, openTime } = useBusinessHours();
 
-  // Adaptive learning session tracking refs
-  const currentLearningSessionRef = useRef(null);
-  const sessionEngagementStartRef = useRef(null);
-
   // Ambient music player for proximity-triggered playback (refactored into hook)
   const {
     play: playAmbientMusic,
@@ -189,143 +185,10 @@ export default function App() {
     enabled: adminSettings.ambientMusicEnabled,
   });
 
-  // Proximity detection callbacks (wrapped in useCallback to prevent infinite re-renders)
-  const handleProximityApproach = useCallback(({ proximityLevel }) => {
-    console.log('[App] Person detected approaching! Proximity:', proximityLevel);
+  // Attractor visibility state (used by both useIdleAttractor and useProximityHandlers)
+  const [showAttractor, setShowAttractor] = useState(false);
 
-    // Passive learning mode: log events without triggering actions
-    if (adminSettings.proximityLearningModeEnabled) {
-      console.log('[App] 🎓 Learning mode: Walkup detected but not triggering actions. Proximity:', proximityLevel);
-      return;
-    }
-
-    // Start learning session
-    const session = adaptiveLearning.startSession({
-      proximityLevel,
-      intent: 'approaching',
-      confidence: 85,
-      baseline: 50,
-      threshold: adminSettings.proximityThreshold || 60,
-    });
-
-    if (session) {
-      currentLearningSessionRef.current = session;
-      sessionEngagementStartRef.current = Date.now();
-    }
-
-    // Stop ambient music when person approaches for voice greeting (check ref instead of state)
-    if (ambientMusicPlayerRef.current) {
-      console.log('[App] Stopping ambient music for voice greeting');
-      stopAmbientMusic();
-    }
-
-    // Pause any jukebox music playing via GlobalAudioPlayer
-    const globalAudio = document.querySelector('audio[data-global-audio]');
-    if (globalAudio && !globalAudio.paused) {
-      console.log('[App] Pausing jukebox audio for voice greeting');
-      globalAudio.pause();
-      // Store reference so we can resume later if needed
-      globalAudio.dataset.pausedForVoice = 'true';
-    }
-
-    setShowAttractor(true);
-    // Voice greeting will be triggered by WalkupAttractor component
-    // if adminSettings.proximityTriggerVoice && adminSettings.walkupAttractorVoiceEnabled
-  }, [stopAmbientMusic, adaptiveLearning, adminSettings.proximityThreshold, adminSettings.proximityLearningModeEnabled]);
-
-  const handleProximityLeave = useCallback(() => {
-    console.log('[App] Person left walkup zone');
-  }, []);
-
-  const handleAmbientDetected = useCallback(({ proximityLevel }) => {
-    console.log('[App] Ambient motion detected! Proximity:', proximityLevel);
-
-    // Passive learning mode: log events without triggering actions
-    if (adminSettings.proximityLearningModeEnabled) {
-      console.log('[App] 🎓 Learning mode: Ambient detected but not triggering actions. Proximity:', proximityLevel);
-      return;
-    }
-
-    // Start learning session for ambient
-    const session = adaptiveLearning.startSession({
-      proximityLevel,
-      intent: 'ambient',
-      confidence: 70,
-      baseline: 50,
-      threshold: adminSettings.ambientMusicThreshold || 95,
-    });
-
-    if (session) {
-      currentLearningSessionRef.current = session;
-      sessionEngagementStartRef.current = Date.now();
-    }
-
-    // DEMO: Force play ambient music (hardcoded for demo) - plays only once (check ref instead of state)
-    if (!ambientMusicPlayerRef.current) {
-      const audio = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
-      audio.volume = 0.5;
-      audio.loop = false; // Play only once, not continuously
-      audio.play();
-      // Auto-cleanup when song ends
-      audio.addEventListener('ended', () => {
-        ambientMusicPlayerRef.current = null;
-        setAmbientMusicPlaying(false);
-        console.log('[App] Ambient music ended');
-      });
-      ambientMusicPlayerRef.current = audio;
-      setAmbientMusicPlaying(true);
-      console.log('[App] DEMO - Ambient music started (will play once)');
-    }
-  }, [adaptiveLearning, adminSettings.ambientMusicThreshold, adminSettings.proximityLearningModeEnabled]);
-
-  const handleAmbientCleared = useCallback(() => {
-    console.log('[App] Ambient area cleared');
-    // Fade out or stop ambient music after idle timeout (check ref instead of state)
-    if (adminSettings.ambientMusicEnabled && ambientMusicPlayerRef.current) {
-      stopAmbientMusic();
-    }
-  }, [adminSettings.ambientMusicEnabled, stopAmbientMusic]);
-
-  // Employee checkin modal state
-  const [employeeCheckinOpen, setEmployeeCheckinOpen] = useState(false);
-  const [staringPerson, setStaringPerson] = useState(null);
-  const [stareDuration, setStareDuration] = useState(0);
-
-  const handleStareDetected = useCallback(({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose }) => {
-    console.log('[App] 🔍 Stare detected! Person:', personId, 'Proximity:', proximityLevel, 'Duration:', Math.round(stareDuration / 1000), 's', 'Looking:', isLookingAtKiosk);
-
-    // Update stare duration state
-    setStareDuration(stareDuration);
-
-    // Passive learning mode: log events without triggering actions
-    if (adminSettings.proximityLearningModeEnabled) {
-      console.log('[App] 🎓 Learning mode: Stare detected but not triggering actions. Duration:', Math.round(stareDuration / 1000), 's');
-      return;
-    }
-
-    // Only open employee checkin modal if enabled in admin settings
-    if (adminSettings.employeeCheckinEnabled) {
-      setStaringPerson({ personId, proximityLevel, stareDuration, isLookingAtKiosk, headPose });
-      setEmployeeCheckinOpen(true);
-    } else {
-      console.log('[App] Employee checkin disabled in admin settings - ignoring stare detection');
-    }
-  }, [adminSettings.employeeCheckinEnabled, adminSettings.proximityLearningModeEnabled]);
-
-  const handleStareEnded = useCallback(({ personId, stareDuration }) => {
-    console.log('[App] Stare ended. Person:', personId, 'Duration:', Math.round(stareDuration / 1000), 's');
-    // Clear stare duration
-    setStareDuration(0);
-    // Keep modal open even if they look away briefly
-  }, []);
-
-  // Add disengagement handler
-  const handleDisengagement = useCallback(({ personId, reason }) => {
-    console.log('[App] Patron disengaged. Person:', personId, 'Reason:', reason);
-    // Return to main attractor screen if no one else is engaged
-  }, []);
-
-  // Smart Proximity Detection - Multi-person tracking with gaze validation
+  // Proximity detection with learning and employee checkin (refactored into hook)
   const {
     isAmbientDetected,
     isWalkupDetected,
@@ -335,30 +198,25 @@ export default function App() {
     maxProximityLevel,
     isInitialized,
     trackingError,
+    isPersonDetected,
+    proximityLevel,
+    cameraError,
+    employeeCheckinOpen,
+    setEmployeeCheckinOpen,
+    staringPerson,
+    setStaringPerson,
+    stareDuration,
+    recordLearningConversion,
+    recordLearningAbandonment,
     recordInteraction,
     recordConversion,
-  } = useSmartProximityDetection({
-    enabled: adminSettings.proximityDetectionEnabled,
-    ambientThreshold: adminSettings.ambientMusicThreshold || 30,
-    walkupThreshold: adminSettings.proximityThreshold || 60,
-    stareThreshold: adminSettings.stareThreshold || 90,  // Match DEFAULTS.stareThreshold
-    stareDurationMs: adminSettings.stareDurationMs || 30000,  // Match DEFAULTS.stareDurationMs (30 seconds)
-    detectionInterval: adminSettings.proximityDetectionInterval || 500,
-    onAmbientDetected: handleAmbientDetected,
-    onAmbientCleared: handleAmbientCleared,
-    onWalkupDetected: handleProximityApproach,
-    onWalkupEnded: handleProximityLeave,
-    onStareDetected: handleStareDetected,
-    onStareEnded: handleStareEnded,
-    onDisengagement: handleDisengagement,
-    enableLearning: adminSettings.proximityLearningEnabled !== false,
-    tenantId: adminSettings.tenantId || 'chicago-mikes',
+  } = useProximityHandlers({
+    adminSettings,
+    adaptiveLearning,
+    stopAmbientMusic,
+    ambientMusicPlayerRef,
+    setShowAttractor,
   });
-
-  // Compatibility: map new variables to old names for components that haven't been updated yet
-  const isPersonDetected = isWalkupDetected;
-  const proximityLevel = maxProximityLevel;
-  const cameraError = trackingError;
 
   // Debug logging for Now Playing state (disabled for performance - enable for debugging)
   // useEffect(() => {
@@ -846,7 +704,7 @@ export default function App() {
   const [clearSearchToken, setClearSearchToken] = useState(0);
 
   // idle attractor
-  const { showAttractor, setShowAttractor } = useIdleAttractor({
+  useIdleAttractor({
     deps: [mapMode],
     mainMapRef,
     draft,
@@ -855,18 +713,11 @@ export default function App() {
     adminOpen, // Don't trigger idle reset when admin panel is open
     timeoutMs: 60 * 1000,
     confettiScreensaverEnabled: adminSettings.confettiScreensaverEnabled,
+    showAttractor,
+    setShowAttractor,
     onIdle: () => {
       // Record abandonment if there's an active learning session
-      if (currentLearningSessionRef.current) {
-        adaptiveLearning.endSession({
-          outcome: 'abandoned',
-          engagedDurationMs: 0,
-          converted: false,
-        });
-
-        currentLearningSessionRef.current = null;
-        sessionEngagementStartRef.current = null;
-      }
+      recordLearningAbandonment();
 
       // Close all modals and reset to main map
       cancelEditing();
@@ -1124,20 +975,7 @@ export default function App() {
       const inserted = await setPins(rec);
 
       // Record successful pin placement as conversion in learning session
-      if (currentLearningSessionRef.current) {
-        const engagementDuration = sessionEngagementStartRef.current
-          ? Date.now() - sessionEngagementStartRef.current
-          : 0;
-
-        adaptiveLearning.endSession({
-          outcome: 'converted',
-          engagedDurationMs: engagementDuration,
-          converted: true,
-        });
-
-        currentLearningSessionRef.current = null;
-        sessionEngagementStartRef.current = null;
-      }
+      recordLearningConversion();
 
       // Facebook share with pin card image
       if (shareToFb && rec.note) {
